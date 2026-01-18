@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * BlogCard Component
  * 
@@ -73,13 +75,15 @@ function formatDate(date: Date): string {
  * Displays a blog post preview in a card format with optional cover image,
  * title, date, summary, and tags. Follows Big-AGI card patterns and ensures
  * full accessibility.
+ * 
+ * Memoized to prevent unnecessary re-renders in list views.
  */
-export function BlogCard({ 
+const BlogCardComponent = ({ 
   post, 
   onClick, 
   color = 'neutral',
   variant = 'plain' 
-}: BlogCardProps) {
+}: BlogCardProps) => {
   const date = extractDate(post);
   const formattedDate = formatDate(date);
   
@@ -216,4 +220,10 @@ export function BlogCard({
       </CardContent>
     </Card>
   );
-}
+};
+
+/**
+ * Memoized BlogCard component to prevent unnecessary re-renders in list views.
+ * Only re-renders when post data or handlers change.
+ */
+export const BlogCard = React.memo(BlogCardComponent);

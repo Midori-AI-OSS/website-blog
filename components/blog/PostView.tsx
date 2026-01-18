@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * PostView Component
  * 
@@ -12,7 +14,7 @@
  * - Follows MUI Joy patterns from Big-AGI
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -75,8 +77,9 @@ function formatDate(date: Date): string {
  * Content is rendered via react-markdown with sanitization for XSS protection.
  */
 export function PostView({ post, onClose }: PostViewProps) {
-  const date = extractDate(post);
-  const formattedDate = formatDate(date);
+  // Memoize date extraction to prevent recalculation on every render
+  const date = useMemo(() => extractDate(post), [post.filename, post.metadata.date]);
+  const formattedDate = useMemo(() => formatDate(date), [date]);
 
   /**
    * Handle Escape key to close the view
