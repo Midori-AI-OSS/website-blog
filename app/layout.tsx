@@ -1,4 +1,7 @@
+import 'highlight.js/styles/atom-one-dark.css';
 import type { Metadata } from 'next';
+import ThemeRegistry from '../components/ThemeRegistry';
+import NavBar from '../components/NavBar';
 
 export const metadata: Metadata = {
   title: 'Blog App',
@@ -11,8 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <ThemeRegistry>
+          <NavBar />
+          {children}
+        </ThemeRegistry>
+      </body>
     </html>
   );
 }

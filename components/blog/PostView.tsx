@@ -23,10 +23,14 @@ import {
   AspectRatio,
   Card,
   CardOverflow,
+  Stack,
+  Divider,
 } from '@mui/joy';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
+import rehypeHighlight from 'rehype-highlight';
+import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
 import type { ParsedPost } from '../../lib/blog/parser';
 
 /**
@@ -49,12 +53,12 @@ function extractDate(post: ParsedPost): Date {
   if (match?.[1]) {
     return new Date(match[1]);
   }
-  
+
   // Fall back to metadata.date if it exists
   if (post.metadata.date !== undefined) {
     return new Date(post.metadata.date);
   }
-  
+
   // Last resort: current date
   return new Date();
 }
@@ -90,7 +94,7 @@ export function PostView({ post, onClose }: PostViewProps) {
         onClose();
       }
     };
-    
+
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
@@ -107,10 +111,19 @@ export function PostView({ post, onClose }: PostViewProps) {
       component="article"
       sx={{
         width: '100%',
-        maxWidth: '900px',
+        maxWidth: '1000px', // Slightly wider for better reading experience
         mx: 'auto',
-        px: { xs: 2, sm: 3, md: 4 },
-        py: { xs: 3, sm: 4, md: 6 },
+        px: { xs: 2, sm: 4 },
+        py: { xs: 3, sm: 6 },
+        '@keyframes shimmer': {
+          '0%': { backgroundPosition: '-1000px 0' },
+          '100%': { backgroundPosition: '1000px 0' }
+        },
+        '@keyframes ambient-pulse': {
+          '0%': { transform: 'scale(1.1)', opacity: 0.8 },
+          '50%': { transform: 'scale(1.14)', opacity: 0.6 },
+          '100%': { transform: 'scale(1.1)', opacity: 0.8 },
+        }
       }}
     >
       {/* Back Button */}
@@ -118,12 +131,12 @@ export function PostView({ post, onClose }: PostViewProps) {
         variant="plain"
         color="neutral"
         onClick={onClose}
-        startDecorator={<span aria-hidden="true">←</span>}
+        startDecorator={<ArrowLeft size={18} />}
         sx={{
-          mb: 3,
-          px: 1,
+          mb: 4,
+          alignSelf: 'flex-start',
           '&:hover': {
-            textDecoration: 'underline',
+            backgroundColor: 'background.level1',
           },
         }}
         aria-label="Back to blog list"
@@ -131,311 +144,378 @@ export function PostView({ post, onClose }: PostViewProps) {
         Back to posts
       </Button>
 
-      {/* Cover Image */}
-      {post.metadata.cover_image && (
-        <Card
-          variant="plain"
-          sx={{
-            mb: 4,
-            overflow: 'hidden',
-          }}
-        >
-          <CardOverflow>
-            <AspectRatio ratio="16/9" sx={{ minHeight: 200 }}>
-              <img
-                src={post.metadata.cover_image}
-                alt={post.metadata.title}
-                loading="eager"
-                style={{ objectFit: 'cover' }}
-              />
-            </AspectRatio>
-          </CardOverflow>
-        </Card>
-      )}
-
-      {/* Post Header */}
+      {/* Main Content Container with Glass Effect */}
       <Box
-        component="header"
         sx={{
-          mb: 4,
-          pb: 3,
-          borderBottom: 1,
-          borderColor: 'divider',
+          bgcolor: 'rgba(19, 10, 30, 0.4)', // Purple tint glass
+          backdropFilter: 'blur(12px)',
+          border: '1px solid',
+          borderColor: 'rgba(255,255,255,0.08)',
+          p: { xs: 3, md: 6 },
+          // Removed borderRadius to keep sharp edges
         }}
       >
-        {/* Title */}
-        <Typography
-          level="h1"
-          sx={{
-            fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-            fontWeight: 700,
-            mb: 2,
-            lineHeight: 1.2,
-          }}
-        >
-          {post.metadata.title}
-        </Typography>
+        {/* Post Header */}
+        <Box component="header" sx={{ mb: 6 }}>
+          {/* Tags */}
+          {post.metadata.tags && post.metadata.tags.length > 0 && (
+            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 3 }}>
+              {post.metadata.tags.map((tag) => (
+                <Chip
+                  key={tag}
+                  size="sm"
+                  variant="outlined"
+                  color="primary"
+                  startDecorator={<Tag size={12} />}
+                  sx={{
+                    borderRadius: 0, // Sharp tags
+                    bgcolor: 'rgba(139, 92, 246, 0.1)',
+                  }}
+                >
+                  {tag}
+                </Chip>
+              ))}
+            </Stack>
+          )}
 
-        {/* Metadata Row */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          {/* Date */}
+          {/* Title */}
           <Typography
-            component="time"
-            dateTime={date.toISOString()}
-            level="body-md"
+            level="h1"
             sx={{
-              color: 'text.secondary',
+              fontSize: { xs: '2rem', sm: '3rem', md: '3.5rem' },
+              fontWeight: 800,
+              mb: 3,
+              lineHeight: 1.1,
+              background: 'linear-gradient(to right, #fff, #a78bfa)', // White to Purple gradient text
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
-            {formattedDate}
+            {post.metadata.title}
           </Typography>
 
-          {/* Author */}
-          {post.metadata.author && (
-            <>
-              <Typography
-                level="body-md"
-                sx={{ color: 'text.tertiary' }}
-              >
-                •
+          {/* Metadata Row */}
+          <Stack
+            direction="row"
+            spacing={3}
+            alignItems="center"
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.95rem',
+              mb: 4
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Calendar size={16} color="var(--joy-palette-primary-400)" />
+              <Typography component="time" dateTime={date.toISOString()}>
+                {formattedDate}
               </Typography>
-              <Typography
-                level="body-md"
-                sx={{ color: 'text.secondary' }}
-              >
-                By {post.metadata.author}
-              </Typography>
-            </>
+            </Stack>
+
+            {post.metadata.author && (
+              <Stack direction="row" spacing={1} alignItems="center">
+                <User size={16} color="var(--joy-palette-primary-400)" />
+                <Typography>
+                  {post.metadata.author}
+                </Typography>
+              </Stack>
+            )}
+          </Stack>
+
+          {/* Cover Image - Ambient Mode */}
+          {post.metadata.cover_image && (
+            <Card
+              variant="plain"
+              sx={{
+                p: 0,
+                mb: 4,
+                overflow: 'hidden',
+                borderRadius: 0,
+                border: 'none', // Remove outline
+                bgcolor: 'black',
+                position: 'relative',
+                minHeight: '300px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                // Explicitly remove any hover effects
+                '--Card-padding': '0px',
+                '&:hover, &:focus-within': {
+                  bgcolor: 'black',
+                  borderColor: 'transparent',
+                  boxShadow: 'none',
+                  outline: 'none',
+                },
+              }}
+            >
+              {/* Vignette / Feather Overlay */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 10,
+                  boxShadow: 'inset 0 0 60px 30px #000', // Heavy feathering
+                  pointerEvents: 'none',
+                }}
+              />
+              {/* Background Layer */}
+              <Box
+                component="img"
+                src={post.metadata.cover_image}
+                alt=""
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: 'blur(20px) brightness(0.6)',
+                  transform: 'scale(1.1)',
+                  zIndex: 0,
+                  opacity: 0.8,
+                  animation: 'ambient-pulse 10s ease-in-out infinite',
+                }}
+              />
+
+              {/* Foreground Image */}
+              <Box
+                component="img"
+                src={post.metadata.cover_image}
+                alt={post.metadata.title}
+                loading="lazy"
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  objectFit: 'contain',
+                  maxWidth: '50%',
+                  height: 'auto',
+                  maxHeight: '50%',
+                  width: 'auto',
+                  display: 'block',
+                  // Remove previous shadow as the vignette handles the transition
+                }}
+              />
+            </Card>
+          )}
+
+          {/* Summary */}
+          {post.metadata.summary && (
+            <Typography
+              level="body-lg"
+              sx={{
+                fontStyle: 'italic',
+                color: 'text.secondary',
+                fontSize: '1.25rem',
+                lineHeight: 1.6,
+                borderLeft: '4px solid',
+                borderColor: 'primary.500',
+                pl: 3,
+                py: 1,
+              }}
+            >
+              {post.metadata.summary}
+            </Typography>
           )}
         </Box>
 
-        {/* Tags */}
-        {post.metadata.tags && post.metadata.tags.length > 0 && (
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 1,
-            }}
-          >
-            {post.metadata.tags.map((tag) => (
-              <Chip
-                key={tag}
-                size="sm"
-                variant="soft"
-                color="neutral"
-                sx={{
-                  fontSize: '0.875rem',
-                }}
-              >
-                #{tag}
-              </Chip>
-            ))}
-          </Box>
-        )}
+        <Divider sx={{ mb: 6, bgcolor: 'rgba(255,255,255,0.1)' }} />
 
-        {/* Summary */}
-        {post.metadata.summary && (
-          <Typography
-            level="body-lg"
-            sx={{
+        {/* Markdown Content */}
+        <Box
+          sx={{
+            // Typography settings for readability
+            fontSize: '1.125rem', // 18px
+            lineHeight: 1.8,
+            color: 'text.secondary', // Slightly softer than pure white
+
+            // Prose styling for markdown elements
+            '& h1, & h2, & h3, & h4, & h5, & h6': {
+              color: 'primary.200', // Light purple for headers
+              scrollMarginTop: '100px',
+            },
+            '& h1': {
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              mt: 6,
+              mb: 3,
+            },
+            '& h2': {
+              fontSize: '2rem',
+              fontWeight: 700,
+              mt: 5,
+              mb: 2.5,
+              pb: 1,
+              borderBottom: '1px solid',
+              borderColor: 'rgba(139, 92, 246, 0.2)', // Subtle purple line
+            },
+            '& h3': {
+              fontSize: '1.5rem',
+              fontWeight: 600,
+              mt: 4,
+              mb: 2,
+              color: 'primary.300',
+            },
+            '& h4': {
+              fontSize: '1.25rem',
+              fontWeight: 600,
               mt: 3,
+              mb: 1.5,
+            },
+            '& p': {
+              mb: 3,
+            },
+            '& strong': {
+              color: 'text.primary',
+              fontWeight: 600,
+            },
+            '& ul, & ol': {
+              ml: 3,
+              mb: 3,
+              pl: 1,
+              '& li': {
+                mb: 1,
+                pl: 1,
+                '&::marker': {
+                  color: 'primary.400', // Purple bullets
+                }
+              }
+            },
+            '& blockquote': {
+              borderLeft: '4px solid',
+              borderColor: 'primary.500',
+              pl: 3,
+              py: 2,
+              my: 4,
               fontStyle: 'italic',
-              color: 'text.secondary',
-              fontSize: '1.125rem',
-              lineHeight: 1.6,
-            }}
-          >
-            {post.metadata.summary}
-          </Typography>
-        )}
-      </Box>
-
-      {/* Markdown Content */}
-      <Box
-        sx={{
-          // Typography settings for readability
-          fontSize: '1.125rem',
-          lineHeight: 1.75,
-          color: 'text.primary',
-          
-          // Prose styling for markdown elements
-          '& h1': {
-            fontSize: '2.25rem',
-            fontWeight: 700,
-            mt: 4,
-            mb: 2,
-            lineHeight: 1.2,
-          },
-          '& h2': {
-            fontSize: '1.875rem',
-            fontWeight: 600,
-            mt: 3.5,
-            mb: 1.5,
-            lineHeight: 1.3,
-          },
-          '& h3': {
-            fontSize: '1.5rem',
-            fontWeight: 600,
-            mt: 3,
-            mb: 1,
-            lineHeight: 1.4,
-          },
-          '& h4': {
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            mt: 2.5,
-            mb: 0.75,
-            lineHeight: 1.4,
-          },
-          '& h5': {
-            fontSize: '1.125rem',
-            fontWeight: 600,
-            mt: 2,
-            mb: 0.5,
-            lineHeight: 1.5,
-          },
-          '& h6': {
-            fontSize: '1rem',
-            fontWeight: 600,
-            mt: 2,
-            mb: 0.5,
-            lineHeight: 1.5,
-          },
-          '& p': {
-            mb: 2,
-            lineHeight: 1.75,
-          },
-          '& ul, & ol': {
-            ml: 3,
-            mb: 2,
-            pl: 1,
-          },
-          '& li': {
-            mb: 0.75,
-            lineHeight: 1.75,
-          },
-          '& li > p': {
-            mb: 0.5,
-          },
-          '& blockquote': {
-            borderLeft: '4px solid',
-            borderColor: 'neutral.300',
-            pl: 2,
-            py: 0.5,
-            ml: 0,
-            fontStyle: 'italic',
-            color: 'text.secondary',
-            mb: 2,
-            backgroundColor: 'background.level1',
-          },
-          '& code': {
-            backgroundColor: 'background.level2',
-            px: 0.75,
-            py: 0.25,
-            borderRadius: 'sm',
-            fontSize: '0.9em',
-            fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-          },
-          '& pre': {
-            backgroundColor: 'background.level2',
-            p: 2,
-            borderRadius: 'md',
-            overflow: 'auto',
-            mb: 2,
-            border: 1,
-            borderColor: 'divider',
+              bgcolor: 'rgba(139, 92, 246, 0.05)', // Very subtle purple tint
+              color: 'text.primary',
+            },
             '& code': {
-              backgroundColor: 'transparent',
-              px: 0,
-              py: 0,
-              fontSize: '0.875rem',
-              lineHeight: 1.6,
+              // INLINE CODE STYLING (Dark Green Highlight)
+              backgroundColor: 'rgba(20, 83, 45, 0.6)',
+              color: '#4ade80', // Bright green text
+              px: 0.75,
+              py: 0.25,
+              borderRadius: 0, // Sharp
+              fontSize: '0.9rem',
+              fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+              border: '1px solid',
+              borderColor: 'rgba(74, 222, 128, 0.2)',
+
+              // Shimmer Effect
+              background: 'linear-gradient(to right, rgba(20, 83, 45, 0.6) 0%, rgba(74, 222, 128, 0.25) 50%, rgba(20, 83, 45, 0.6) 100%)',
+              backgroundSize: '1000px 100%',
+              animation: 'shimmer 6s linear infinite',
+              // Pseudo-random durations for wave effect
+              '&:nth-of-type(2n)': { animationDuration: '4s' },
+              '&:nth-of-type(3n)': { animationDuration: '8s' },
+              '&:nth-of-type(5n)': { animationDuration: '5s' },
+              '&:nth-of-type(7n)': { animationDuration: '7s' },
             },
-          },
-          '& a': {
-            color: 'primary.500',
-            textDecoration: 'underline',
-            '&:hover': {
-              color: 'primary.600',
-              textDecoration: 'underline',
+            '& pre': {
+              // CODE BLOCK CONTAINER
+              backgroundColor: '#282c34 !important', // Match Atom One Dark background
+              p: 2,
+              borderRadius: 0, // Sharp
+              overflow: 'auto',
+              my: 4,
+              border: '1px solid',
+              borderColor: 'rgba(255,255,255,0.1)',
+              '& code': {
+                // Reset inline styles for code blocks
+                backgroundColor: 'transparent !important',
+                color: 'inherit',
+                p: 0,
+                border: 'none',
+                fontFamily: 'inherit',
+                background: 'none', // No shimmer on block code text
+                animation: 'none',
+              },
+              // Ensure highlight.js classes work
+              '& .hljs': {
+                background: 'transparent',
+              }
             },
-            '&:focus-visible': {
-              outline: '2px solid',
-              outlineColor: 'primary.500',
-              outlineOffset: 2,
-              borderRadius: 'sm',
+            '& a': {
+              color: 'primary.400',
+              textDecoration: 'none',
+              borderBottom: '1px dashed',
+              borderColor: 'primary.400',
+              transition: 'all 0.2s',
+              '&:hover': {
+                color: 'primary.300',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                borderBottomStyle: 'solid',
+              },
             },
-          },
-          '& img': {
-            maxWidth: '100%',
-            height: 'auto',
-            borderRadius: 'md',
-            my: 2,
-            display: 'block',
-          },
-          '& hr': {
-            border: 'none',
-            borderTop: 1,
-            borderColor: 'divider',
-            my: 4,
-          },
-          '& table': {
-            width: '100%',
-            borderCollapse: 'collapse',
-            mb: 2,
-            overflow: 'auto',
-            display: 'block',
-          },
-          '& th': {
-            backgroundColor: 'background.level2',
-            fontWeight: 600,
-            textAlign: 'left',
-            p: 1.5,
-            borderBottom: 2,
-            borderColor: 'divider',
-          },
-          '& td': {
-            p: 1.5,
-            borderBottom: 1,
-            borderColor: 'divider',
-          },
-          '& tr:last-child td': {
-            borderBottom: 'none',
-          },
-        }}
-      >
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeSanitize]}
+            '& img': {
+              maxWidth: '100%',
+              height: 'auto',
+              borderRadius: 0, // Sharp
+              my: 4,
+              display: 'block',
+              border: '1px solid',
+              borderColor: 'rgba(255,255,255,0.1)',
+
+              // Shimmer on content images too
+              background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)',
+              backgroundSize: '1000px 100%',
+              animation: 'shimmer 15s linear infinite',
+            },
+            '& hr': {
+              border: 'none',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              my: 6,
+            },
+            '& table': {
+              width: '100%',
+              borderCollapse: 'collapse',
+              my: 4,
+              display: 'block',
+              overflowX: 'auto',
+            },
+            '& th': {
+              textAlign: 'left',
+              p: 2,
+              borderBottom: '2px solid',
+              borderColor: 'primary.500',
+              color: 'primary.100',
+            },
+            '& td': {
+              p: 2,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            },
+          }}
         >
-          {post.content}
-        </ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeSanitize, rehypeHighlight]}
+          >
+            {post.content}
+          </ReactMarkdown>
+        </Box>
       </Box>
 
       {/* Footer - Back to top */}
       <Box
         sx={{
-          mt: 6,
-          pt: 4,
-          borderTop: 1,
-          borderColor: 'divider',
+          mt: 8,
           textAlign: 'center',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 2,
         }}
       >
         <Button
           variant="soft"
-          color="neutral"
+          color="primary"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          sx={{ mr: 2 }}
         >
           Back to top
         </Button>

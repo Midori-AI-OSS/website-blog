@@ -1,95 +1,29 @@
 'use client';
 
-/**
- * BlogCard Component
- * 
- * A reusable card component for displaying blog post preview information.
- * Features:
- * - Displays title, date, summary, cover image, and tags
- * - Clickable with keyboard navigation support (Enter key)
- * - Follows Big-AGI card layout patterns with MUI Joy
- * - Fully accessible with ARIA labels and semantic HTML
- * - Displays sanitized content from parser
- */
-
-import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardOverflow,
-  AspectRatio,
-  Typography,
-  Chip,
-  Box,
-} from '@mui/joy';
+import * as React from 'react';
+import Box from '@mui/joy/Box';
+import Card from '@mui/joy/Card';
+import CardContent from '@mui/joy/CardContent';
+import Typography from '@mui/joy/Typography';
+import Chip from '@mui/joy/Chip';
+import Stack from '@mui/joy/Stack';
+import { Calendar, User, ArrowRight, Tag } from 'lucide-react';
 import type { ParsedPost } from '../../lib/blog/parser';
 
-/**
- * Props for BlogCard component
- */
-export interface BlogCardProps {
-  /** The parsed post data to display */
+export type BlogCardProps = {
   post: ParsedPost;
-  /** Callback function when card is clicked */
   onClick: () => void;
-  /** Optional color variant for the card (default: 'neutral') */
-  color?: 'primary' | 'neutral' | 'danger' | 'success' | 'warning';
-  /** Optional card variant (default: 'plain') */
   variant?: 'plain' | 'outlined' | 'soft' | 'solid';
-}
+  color?: 'primary' | 'neutral' | 'danger' | 'success' | 'warning';
+};
 
-/**
- * Extract and format date from filename (YYYY-MM-DD.md format)
- * Falls back to metadata.date if filename doesn't match pattern
- */
-function extractDate(post: ParsedPost): Date {
-  // Try to extract from filename first
-  const match = post.filename.match(/(\d{4}-\d{2}-\d{2})/);
-  if (match?.[1]) {
-    return new Date(match[1]);
-  }
-  
-  // Fall back to metadata.date if it exists
-  if (post.metadata.date !== undefined) {
-    return new Date(post.metadata.date);
-  }
-  
-  // Last resort: current date
-  return new Date();
-}
+export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color = 'neutral' }: BlogCardProps) => {
+  const { metadata, filename } = post;
 
-/**
- * Format date for display
- */
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
+  // Extract date from filename if not in metadata (YYYY-MM-DD format)
+  const dateFromFilename = filename.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  const displayDate = metadata.date || dateFromFilename || new Date().toISOString().split('T')[0];
 
-/**
- * BlogCard Component
- * 
- * Displays a blog post preview in a card format with optional cover image,
- * title, date, summary, and tags. Follows Big-AGI card patterns and ensures
- * full accessibility.
- * 
- * Memoized to prevent unnecessary re-renders in list views.
- */
-const BlogCardComponent = ({ 
-  post, 
-  onClick, 
-  color = 'neutral',
-  variant = 'plain' 
-}: BlogCardProps) => {
-  const date = extractDate(post);
-  const formattedDate = formatDate(date);
-  
-  /**
-   * Handle keyboard interaction (Enter key triggers click)
-   */
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -99,131 +33,81 @@ const BlogCardComponent = ({
 
   return (
     <Card
-      color={color}
+      role="article"
       variant={variant}
+      color={color}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      aria-label={`Read blog post: ${metadata.title}`}
       sx={{
-        mb: 3,
-        minHeight: 32,
-        gap: 1,
+        gap: 2,
+        transition: 'all 0.2s',
         cursor: 'pointer',
-        transition: 'box-shadow 0.2s ease-in-out',
+        bgcolor: 'background.surface',
+        borderColor: 'rgba(255,255,255,0.08)',
+        p: 2,
         '&:hover': {
           boxShadow: 'md',
+          borderColor: 'primary.500',
+          transform: 'translateY(-1px)',
         },
         '&:focus-visible': {
           outline: '2px solid',
           outlineColor: 'primary.500',
-          outlineOffset: 2,
         },
       }}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="article"
-      aria-label={`Read blog post: ${post.metadata.title}`}
     >
-      {/* Cover Image (optional, shown at top with aspect ratio 2:1) */}
-      {post.metadata.cover_image && (
-        <CardOverflow>
-          <AspectRatio ratio="2">
-            <img
-              src={post.metadata.cover_image}
-              alt={post.metadata.title}
-              loading="lazy"
-              style={{ objectFit: 'cover' }}
-            />
-          </AspectRatio>
-        </CardOverflow>
-      )}
+      <CardContent>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+          <Box sx={{ flex: 1 }}>
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 0.5 }}>
+              <Typography level="title-md" sx={{ color: 'text.primary', fontWeight: 600 }}>
+                {metadata.title}
+              </Typography>
+              {metadata.tags && metadata.tags.length > 0 && (
+                <Chip
+                  variant="soft"
+                  color="primary"
+                  size="sm"
+                  startDecorator={<Tag size={12} />}
+                  sx={{ '--Chip-radius': '4px', height: 20 }}
+                >
+                  {metadata.tags[0]}
+                </Chip>
+              )}
+            </Stack>
 
-      {/* Card Content */}
-      <CardContent sx={{ position: 'relative', gap: 1 }}>
-        {/* Title */}
-        <Typography 
-          level="title-lg" 
-          component="h3"
-          sx={{ 
-            fontWeight: 600,
-            mb: 0.5,
-          }}
-        >
-          {post.metadata.title}
-        </Typography>
+            <Stack direction="row" spacing={3} alignItems="center" sx={{ color: 'text.secondary' }}>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Calendar size={14} />
+                <Typography level="body-xs" textColor="inherit">
+                  {displayDate}
+                </Typography>
+              </Stack>
 
-        {/* Date */}
-        <Typography 
-          level="body-sm" 
-          component="time"
-          dateTime={date.toISOString()}
-          sx={{ 
-            color: 'text.secondary',
-            mb: 1,
-            display: 'block',
-          }}
-        >
-          {formattedDate}
-        </Typography>
+              {metadata.author && (
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <User size={14} />
+                  <Typography level="body-xs" textColor="inherit">
+                    {metadata.author}
+                  </Typography>
+                </Stack>
+              )}
 
-        {/* Author (optional) */}
-        {post.metadata.author && (
-          <Typography 
-            level="body-sm"
-            sx={{ 
-              color: 'text.secondary',
-              mb: 1,
-              fontStyle: 'italic',
-            }}
-          >
-            By {post.metadata.author}
-          </Typography>
-        )}
-
-        {/* Summary (optional) */}
-        {post.metadata.summary && (
-          <Typography 
-            level="body-sm"
-            sx={{ 
-              color: 'text.primary',
-              mb: 2,
-              lineHeight: 1.6,
-            }}
-          >
-            {post.metadata.summary}
-          </Typography>
-        )}
-
-        {/* Tags (optional) */}
-        {post.metadata.tags && post.metadata.tags.length > 0 && (
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 0.75,
-              mt: 'auto',
-            }}
-          >
-            {post.metadata.tags.map((tag) => (
-              <Chip
-                key={tag}
-                size="sm"
-                variant="soft"
-                color="neutral"
-                sx={{
-                  fontSize: '0.75rem',
-                }}
-              >
-                {tag}
-              </Chip>
-            ))}
+              <Typography level="body-xs" textColor="text.tertiary" sx={{ display: { xs: 'none', md: 'block' }, maxWidth: '500px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {metadata.summary}
+              </Typography>
+            </Stack>
           </Box>
-        )}
+
+          <Box sx={{ color: 'text.tertiary' }}>
+            <ArrowRight size={18} />
+          </Box>
+        </Stack>
       </CardContent>
     </Card>
   );
-};
+});
 
-/**
- * Memoized BlogCard component to prevent unnecessary re-renders in list views.
- * Only re-renders when post data or handlers change.
- */
-export const BlogCard = React.memo(BlogCardComponent);
+BlogCard.displayName = 'BlogCard';

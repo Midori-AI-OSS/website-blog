@@ -1,14 +1,11 @@
-import Link from 'next/link';
+import { loadAllPosts, getRecentPosts } from '@/lib/blog/loader';
+import HomePageClient from '@/components/HomePageClient';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const allPosts = await loadAllPosts();
+  const recentPosts = getRecentPosts(allPosts, 3);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-4">Welcome to the Blog</h1>
-      <p className="mb-4">
-        <Link href="/blog" className="text-blue-600 hover:underline">
-          View all posts →
-        </Link>
-      </p>
-    </div>
+    <HomePageClient recentPosts={recentPosts} />
   );
 }

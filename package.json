@@ -25,10 +25,13 @@
     "@emotion/styled": "^11.14.1",
     "@mui/joy": "^5.0.0-beta.52",
     "gray-matter": "4.0.3",
-    "next": "15",
-    "react": "18.3.0",
-    "react-dom": "18.3.0",
+    "highlight.js": "^11.11.1",
+    "lucide-react": "^0.562.0",
+    "next": "^16.1.3",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1"
   }
