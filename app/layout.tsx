@@ -5,7 +5,7 @@ import NavBar from '../components/NavBar';
 
 export const metadata: Metadata = {
   title: 'Midori AI Blog',
-  description: 'A blog built with Next.js and MUI Joy',
+  description: 'Where Creativity and Innovation Blossom, Together',
 };
 
 export default function RootLayout({
