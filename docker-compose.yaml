@@ -1,0 +1,10 @@
+services:
+  website-blog:
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - "59382:3000"
+    environment:
+      - NODE_ENV=production
+    restart: always

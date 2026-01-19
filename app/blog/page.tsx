@@ -9,6 +9,8 @@ import { loadAllPosts, paginatePosts } from '@/lib/blog/loader';
 import { BlogPageClient } from './BlogPageClient';
 import { Box, Typography } from '@mui/joy';
 
+export const dynamic = 'force-dynamic';
+
 export default async function BlogPage() {
   // Load all posts (this runs at build time with SSG)
   const allPosts = await loadAllPosts();
