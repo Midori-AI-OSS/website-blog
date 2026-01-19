@@ -150,7 +150,7 @@ export function BlogList({
   }
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '1000px', mx: 'auto' }}>
+    <Box sx={{ width: '100%', maxWidth: '100%', mx: 'auto' }}>
       <Box
         sx={{
           position: 'absolute',

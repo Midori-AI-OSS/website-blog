@@ -111,7 +111,7 @@ export function PostView({ post, onClose }: PostViewProps) {
       component="article"
       sx={{
         width: '100%',
-        maxWidth: '1000px', // Slightly wider for better reading experience
+        maxWidth: '80%', // Slightly wider for better reading experience
         mx: 'auto',
         px: { xs: 2, sm: 4 },
         py: { xs: 3, sm: 6 },
@@ -291,9 +291,9 @@ export function PostView({ post, onClose }: PostViewProps) {
                   position: 'relative',
                   zIndex: 1,
                   objectFit: 'contain',
-                  maxWidth: '50%',
+                  maxWidth: '30%',
                   height: 'auto',
-                  maxHeight: '50%',
+                  maxHeight: '15%',
                   width: 'auto',
                   display: 'block',
                   // Remove previous shadow as the vignette handles the transition

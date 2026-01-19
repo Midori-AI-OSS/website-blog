@@ -4,7 +4,7 @@ import ThemeRegistry from '../components/ThemeRegistry';
 import NavBar from '../components/NavBar';
 
 export const metadata: Metadata = {
-  title: 'Blog App',
+  title: 'Midori AI Blog',
   description: 'A blog built with Next.js and MUI Joy',
 };
 

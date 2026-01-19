@@ -21,7 +21,7 @@ export default function HomePageClient({ recentPosts }: HomePageClientProps) {
     };
 
     return (
-        <Box sx={{ p: { xs: 2, md: 4 }, width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+        <Box sx={{ p: { xs: 2, md: 4 }, width: '100%', maxWidth: '65%', mx: 'auto' }}>
 
             {/* Hero Section */}
             <Stack spacing={4} sx={{ mb: 8, alignItems: 'center', textAlign: 'center' }}>
@@ -44,7 +44,7 @@ export default function HomePageClient({ recentPosts }: HomePageClientProps) {
                 <Typography level="h1" sx={{ fontSize: { xs: '2rem', md: '3rem' } }}>
                     Welcome to Midori AI
                 </Typography>
-                <Typography level="body-lg" sx={{ maxWidth: '800px', mx: 'auto', color: 'text.secondary' }}>
+                <Typography level="body-lg" sx={{ maxWidth: '100%', mx: 'auto', color: 'text.secondary' }}>
                     We love helping people build, break, and tinker with machine learning. This is a friendly, experimental space for makers, learners, and teams to explore practical tools, try bold ideas, and ship imperfect prototypes.
                     <br /><br />
                     **This is the home of our engineering blogs and project updates.** Come mess with models, experiment loudly, and learn together — we’ll help you every step of the way.
