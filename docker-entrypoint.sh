@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Set production environment
+export NODE_ENV=production
+
 # Run bun install if node_modules doesn't exist
 echo "Installing dependencies..."
 bun install
