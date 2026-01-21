@@ -2,9 +2,25 @@ services:
   website-blog:
     build: .
     volumes:
+      # Mount entire app directory for development and hot-reloading
       - .:/app
+      
+      # Mount public directory for static assets (images, etc.) - enables hot-reloading
+      # This allows updating images without container restart
+      - ./public:/app/public:rw
+      
+      # Mount blog content directory for hot-reloading of blog posts and images
+      - ./blog:/app/blog:rw
+      
+      # Mount Next.js image optimization cache for persistence
+      # This prevents re-optimization of images on container restart
+      - nextjs-cache:/app/.next/cache/images
     ports:
       - "59382:3000"
     environment:
       - NODE_ENV=production
     restart: always
+
+# Named volumes for persistent data
+volumes:
+  nextjs-cache:
