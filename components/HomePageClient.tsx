@@ -42,12 +42,13 @@ export default function HomePageClient({ recentPosts }: HomePageClientProps) {
                     />
                 </Link>
                 <Typography level="h1" sx={{ fontSize: { xs: '2rem', md: '3rem' } }}>
-                    Welcome to Midori AI
+                    Midori AI Blog & Updates
                 </Typography>
                 <Typography level="body-lg" sx={{ maxWidth: '100%', mx: 'auto', color: 'text.secondary' }}>
-                    We love helping people build, break, and tinker with machine learning. This is a friendly, experimental space for makers, learners, and teams to explore practical tools, try bold ideas, and ship imperfect prototypes.
-                    <br /><br />
-                    **This is the home of our engineering blogs and project updates.** Come mess with models, experiment loudly, and learn together — we’ll help you every step of the way.
+                    Welcome to our engineering blog and project updates hub! This is where we share insights, experiments, and learnings about machine learning, AI tooling, and practical development.
+                </Typography>
+                <Typography level="body-lg" sx={{ maxWidth: '100%', mx: 'auto', color: 'text.secondary', mt: 2 }}>
+                    We love helping people build, break, and tinker with machine learning. This is a friendly, experimental space for makers, learners, and teams to explore practical tools, try bold ideas, and ship imperfect prototypes. Come mess with models, experiment loudly, and learn together — we’ll help you every step of the way.
                 </Typography>
             </Stack>
 
