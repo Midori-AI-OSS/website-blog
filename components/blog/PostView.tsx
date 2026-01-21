@@ -75,6 +75,20 @@ function formatDate(date: Date): string {
 }
 
 /**
+ * Transform static blog image URLs to API route URLs
+ * Converts /blog/image.png to /api/blog-images/image.png for dynamic serving
+ */
+function transformImageUrl(url: string): string {
+  // If URL starts with /blog/, transform it to use API route
+  if (url.startsWith('/blog/')) {
+    return url.replace('/blog/', '/api/blog-images/');
+  }
+  // Otherwise return as-is (for external URLs or other paths)
+  return url;
+}
+
+
+/**
  * PostView Component
  * 
  * Displays a full blog post with all content and metadata.
@@ -264,7 +278,7 @@ export function PostView({ post, onClose }: PostViewProps) {
               {/* Background Layer */}
               <Box
                 component="img"
-                src={post.metadata.cover_image}
+                src={transformImageUrl(post.metadata.cover_image)}
                 alt=""
                 sx={{
                   position: 'absolute',
@@ -284,7 +298,7 @@ export function PostView({ post, onClose }: PostViewProps) {
               {/* Foreground Image */}
               <Box
                 component="img"
-                src={post.metadata.cover_image}
+                src={transformImageUrl(post.metadata.cover_image)}
                 alt={post.metadata.title}
                 loading="lazy"
                 sx={{
