@@ -21,6 +21,9 @@ export default async function BlogPage() {
       <Typography level="h1" sx={{ mb: 4, fontSize: { xs: '2rem', md: '2.5rem' } }}>
         Blog
       </Typography>
+      <Typography level="body-lg" sx={{ mb: 4, color: 'text.secondary' }}>
+        Engineering updates, project notes, and what we’ve learned while building.
+      </Typography>
       <BlogPageClient
         initialPosts={initialPosts}
         allPosts={allPosts}
