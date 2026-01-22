@@ -83,8 +83,8 @@ export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color
             backgroundImage: `url(${decorativeImageUrl})`,
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
-            backgroundPosition: 'right center',
-            opacity: 0.52,
+            backgroundPosition: 'right 25%',
+            opacity: 0.47,
             filter: 'blur(1.6px) saturate(1.08) contrast(1.06)',
             clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 35% 100%)',
             '&::after': {
@@ -92,7 +92,7 @@ export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color
               position: 'absolute',
               inset: 0,
               background:
-                'linear-gradient(to right, rgba(19, 10, 30, 0.95) 0%, rgba(19, 10, 30, 0.55) 18%, rgba(19, 10, 30, 0) 48%)',
+                'linear-gradient(to right, rgba(19, 10, 30, 0.98) 0%, rgba(19, 10, 30, 0.65) 28%, rgba(19, 10, 30, 0) 72%)',
             },
           }}
         />
