@@ -45,11 +45,11 @@ export default function HomePageClient({ recentPosts }: HomePageClientProps) {
                     Midori AI Blog & Updates (and a little Lore)
                 </Typography>
                 <Typography level="body-lg" sx={{ maxWidth: '100%', mx: 'auto', color: 'text.secondary' }}>
-                    Welcome to our engineering blog and project updates hub! This is where we share insights, experiments, and learnings about machine learning, AI tooling, and practical development.
+                    Welcome to our engineering blog and project updates hub! This is where we share insights, experiments, and learnings about machine learning, ML tooling, and practical development.
                 </Typography>
                 <Typography level="body-lg" sx={{ maxWidth: '100%', mx: 'auto', color: 'text.secondary', mt: 2 }}>
                     We love helping people build, break, and tinker with machine learning. This is a friendly, experimental space for makers, learners, and teams to explore practical tools, try bold ideas, and ship imperfect prototypes.
-                    Blog is for dev updates and writeups; Lore is where Luna will share DnD notes and story times as they evolve. Come mess with models, experiment loudly, and learn together — we’ll help you every step of the way.
+                    Blog is for dev updates and writeups; Lore is where Luna will share RP notes and story times as they evolve. Come mess with models, experiment loudly, and learn together — we’ll help you every step of the way.
                 </Typography>
             </Stack>
 
@@ -109,7 +109,7 @@ export default function HomePageClient({ recentPosts }: HomePageClientProps) {
                         },
                         {
                             title: "Agents Runner",
-                            desc: "Run AI agents in Docker with workspace + GitHub management.",
+                            desc: "Run ML agents in Docker with workspace + GitHub management.",
                             icon: <Play />,
                             link: "https://io.midori-ai.xyz/agent-runner/"
                         },

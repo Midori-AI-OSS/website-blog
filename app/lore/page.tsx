@@ -16,7 +16,7 @@ export default async function LorePage() {
         Lore
       </Typography>
       <Typography level="body-lg" sx={{ mb: 4, color: 'text.secondary' }}>
-        Luna’s DnD notes, story times, and campaign lore — collected over time.
+        Luna’s RP notes, story times, and campaign lore — collected over time.
       </Typography>
       <LoreListPageClient initialPosts={initialPosts} allPosts={allPosts} />
     </Box>
