@@ -87,8 +87,13 @@ export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color
             opacity: 0.62,
             filter: 'saturate(1.08) contrast(1.06)',
             clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 35% 100%)',
-            WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%)',
-            maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%)',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              background:
+                'linear-gradient(to right, rgba(19, 10, 30, 0.95) 0%, rgba(19, 10, 30, 0.55) 18%, rgba(19, 10, 30, 0) 48%)',
+            },
           }}
         />
       )}
