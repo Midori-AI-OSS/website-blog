@@ -42,13 +42,14 @@ export default function HomePageClient({ recentPosts }: HomePageClientProps) {
                     />
                 </Link>
                 <Typography level="h1" sx={{ fontSize: { xs: '2rem', md: '3rem' } }}>
-                    Midori AI — Updates, Devlog, and Lore
+                    Midori AI Blog & Updates (and a little Lore)
                 </Typography>
                 <Typography level="body-lg" sx={{ maxWidth: '100%', mx: 'auto', color: 'text.secondary' }}>
-                    Welcome to the Midori AI site journal — the place we collect project updates, engineering notes, and the story-side of what we’re building.
+                    Welcome to our engineering blog and project updates hub! This is where we share insights, experiments, and learnings about machine learning, AI tooling, and practical development.
                 </Typography>
                 <Typography level="body-lg" sx={{ maxWidth: '100%', mx: 'auto', color: 'text.secondary', mt: 2 }}>
-                    Use the Blog for development updates and release-style writeups. Lore is where Luna will drop DnD notes and story times as they evolve. If you’re here to tinker: you’re in the right place.
+                    We love helping people build, break, and tinker with machine learning. This is a friendly, experimental space for makers, learners, and teams to explore practical tools, try bold ideas, and ship imperfect prototypes.
+                    Blog is for dev updates and writeups; Lore is where Luna will share DnD notes and story times as they evolve. Come mess with models, experiment loudly, and learn together — we’ll help you every step of the way.
                 </Typography>
             </Stack>
 
