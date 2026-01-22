@@ -83,8 +83,8 @@ export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color
             backgroundImage: `url(${decorativeImageUrl})`,
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
-            backgroundPosition: 'right 25%',
-            opacity: 0.47,
+            backgroundPosition: 'right 35%',
+            opacity: 0.42,
             filter: 'blur(1.6px) saturate(1.08) contrast(1.06)',
             clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 35% 100%)',
             '&::after': {

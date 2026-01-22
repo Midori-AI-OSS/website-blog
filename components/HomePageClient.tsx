@@ -34,7 +34,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
                 <Link href="https://io.midori-ai.xyz/" style={{ width: '100%', maxWidth: '98%', display: 'flex', justifyContent: 'center' }}>
                     <Box
                         component="img"
-                        src="https://tea-cup.midori-ai.xyz/download/logo_color1.png"
+                        src="https://tea-cup.midori-ai.xyz/download/blog-logo.png"
                         alt="Midori AI Logo"
                         loading="lazy"
                         sx={{
