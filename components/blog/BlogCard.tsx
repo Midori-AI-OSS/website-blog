@@ -17,8 +17,18 @@ export type BlogCardProps = {
   color?: 'primary' | 'neutral' | 'danger' | 'success' | 'warning';
 };
 
+function transformImageUrl(url: string): string {
+  if (url.startsWith('/blog/')) {
+    return url.replace('/blog/', '/api/blog-images/');
+  }
+  return url;
+}
+
 export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color = 'neutral' }: BlogCardProps) => {
   const { metadata, filename } = post;
+  const decorativeImageUrl = typeof metadata.cover_image === 'string' && metadata.cover_image.length > 0
+    ? transformImageUrl(metadata.cover_image)
+    : null;
 
   // Extract date from filename if not in metadata (YYYY-MM-DD format)
   const dateFromFilename = filename.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
@@ -41,12 +51,14 @@ export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color
       tabIndex={0}
       aria-label={`Read blog post: ${metadata.title}`}
       sx={{
+        position: 'relative',
         gap: 2,
         transition: 'all 0.2s',
         cursor: 'pointer',
         bgcolor: 'background.surface',
         borderColor: 'rgba(255,255,255,0.08)',
         p: 2,
+        overflow: 'hidden',
         '&:hover': {
           boxShadow: 'md',
           borderColor: 'primary.500',
@@ -58,6 +70,27 @@ export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color
         },
       }}
     >
+      {decorativeImageUrl && (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: { xs: 0, sm: '30%', md: '35%' },
+            pointerEvents: 'none',
+            backgroundImage: `url(${decorativeImageUrl})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+            backgroundPosition: 'right center',
+            opacity: 0.22,
+            filter: 'saturate(1.05) contrast(1.05)',
+            WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%)',
+            maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%)',
+          }}
+        />
+      )}
       <CardContent>
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
           <Box sx={{ flex: 1 }}>
