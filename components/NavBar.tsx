@@ -7,7 +7,7 @@ import ListItem from '@mui/joy/ListItem';
 import ListItemButton from '@mui/joy/ListItemButton';
 import ListItemDecorator from '@mui/joy/ListItemDecorator';
 import Typography from '@mui/joy/Typography';
-import { Home, BookOpen, Settings, LayoutDashboard } from 'lucide-react';
+import { Home, BookOpen, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -17,6 +17,7 @@ export default function NavBar() {
     const items = [
         { name: 'Home', icon: <Home size={18} />, path: '/' },
         { name: 'Blog', icon: <BookOpen size={18} />, path: '/blog' },
+        { name: 'Lore', icon: <LayoutDashboard size={18} />, path: '/lore' },
     ];
 
     return (

@@ -41,6 +41,10 @@ export interface PostViewProps {
   post: ParsedPost;
   /** Callback function when user wants to close/go back */
   onClose: () => void;
+  /** Back button label (defaults to blog wording) */
+  backButtonLabel?: string;
+  /** Back button aria-label (defaults to blog wording) */
+  backButtonAriaLabel?: string;
 }
 
 /**
@@ -94,7 +98,12 @@ function transformImageUrl(url: string): string {
  * Displays a full blog post with all content and metadata.
  * Content is rendered via react-markdown with sanitization for XSS protection.
  */
-export function PostView({ post, onClose }: PostViewProps) {
+export function PostView({
+  post,
+  onClose,
+  backButtonLabel = 'Back to posts',
+  backButtonAriaLabel = 'Back to blog list',
+}: PostViewProps) {
   // Memoize date extraction to prevent recalculation on every render
   const date = useMemo(() => extractDate(post), [post.filename, post.metadata.date]);
   const formattedDate = useMemo(() => formatDate(date), [date]);
@@ -153,9 +162,9 @@ export function PostView({ post, onClose }: PostViewProps) {
             backgroundColor: 'background.level1',
           },
         }}
-        aria-label="Back to blog list"
+        aria-label={backButtonAriaLabel}
       >
-        Back to posts
+        {backButtonLabel}
       </Button>
 
       {/* Main Content Container with Glass Effect */}
@@ -537,8 +546,9 @@ export function PostView({ post, onClose }: PostViewProps) {
           variant="outlined"
           color="neutral"
           onClick={onClose}
+          aria-label={backButtonAriaLabel}
         >
-          Back to posts
+          {backButtonLabel}
         </Button>
       </Box>
     </Box>
