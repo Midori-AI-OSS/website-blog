@@ -9,15 +9,21 @@ import type { ParsedPost } from '../lib/blog/parser';
 
 interface HomePageClientProps {
     recentPosts: ParsedPost[];
+    recentLorePosts: ParsedPost[];
 }
 
-export default function HomePageClient({ recentPosts }: HomePageClientProps) {
+export default function HomePageClient({ recentPosts, recentLorePosts }: HomePageClientProps) {
     const router = useRouter();
 
     const handlePostClick = (post: ParsedPost) => {
         // Navigate to blog post
         const slug = post.filename.replace('.md', '');
         router.push(`/blog/${slug}`);
+    };
+
+    const handleLorePostClick = (post: ParsedPost) => {
+        const slug = post.filename.replace('.md', '');
+        router.push(`/lore/${slug}`);
     };
 
     return (
@@ -53,10 +59,10 @@ export default function HomePageClient({ recentPosts }: HomePageClientProps) {
                 </Typography>
             </Stack>
 
-            {/* Recent Updates Section */}
+            {/* Recent Updates (Blog) */}
             <Box sx={{ mb: 8 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                    <Typography level="h2">Recent Updates</Typography>
+                    <Typography level="h2">Recent Updates (Blog)</Typography>
                     <Button
                         component={Link}
                         href="/blog"
@@ -79,6 +85,37 @@ export default function HomePageClient({ recentPosts }: HomePageClientProps) {
                     {recentPosts.length === 0 && (
                         <Typography level="body-md" sx={{ color: 'text.tertiary', fontStyle: 'italic' }}>
                             No blog posts found.
+                        </Typography>
+                    )}
+                </Stack>
+            </Box>
+
+            {/* Recent Updates (Lore) */}
+            <Box sx={{ mb: 8 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                    <Typography level="h2">Recent Updates (Lore)</Typography>
+                    <Button
+                        component={Link}
+                        href="/lore"
+                        variant="plain"
+                        endDecorator={<ArrowRight size={16} />}
+                    >
+                        View all
+                    </Button>
+                </Stack>
+
+                <Stack spacing={2}>
+                    {recentLorePosts.map((post) => (
+                        <BlogCard
+                            key={post.filename}
+                            post={post}
+                            onClick={() => handleLorePostClick(post)}
+                            variant="outlined"
+                        />
+                    ))}
+                    {recentLorePosts.length === 0 && (
+                        <Typography level="body-md" sx={{ color: 'text.tertiary', fontStyle: 'italic' }}>
+                            No lore posts found.
                         </Typography>
                     )}
                 </Stack>
