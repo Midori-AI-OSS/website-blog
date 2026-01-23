@@ -88,6 +88,23 @@ function validateMetadata(data: any): boolean {
   return true;
 }
 
+function normalizeDate(value: unknown): string | undefined {
+  if (typeof value === 'string') return value.trim();
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  return undefined;
+}
+
+function parseFrontMatter(fileContent: string) {
+  if (!fileContent || typeof fileContent !== 'string') {
+    throw new Error('Invalid file content');
+  }
+  const trimmedStart = fileContent.trimStart();
+  const delimiters = trimmedStart.startsWith('+++') ? '+++' : '---';
+  return matter(fileContent, { delimiters });
+}
+
 /**
  * Sanitize and normalize metadata values
  * @param data - Raw metadata object
@@ -115,9 +132,7 @@ function sanitizeMetadata(data: any): Partial<PostMetadata> {
     sanitized.cover_image = data.cover_image.trim();
   }
   
-  if (typeof data.date === 'string') {
-    sanitized.date = data.date.trim();
-  }
+  sanitized.date = normalizeDate(data.date);
   
   if (typeof data.author === 'string') {
     sanitized.author = data.author.trim();
@@ -159,11 +174,7 @@ export function parsePost(filename: string, fileContent: string): ParsedPost {
     }
     
     // Parse front matter
-    // Note: gray-matter automatically handles both --- and +++ delimiters
-    const { data, content } = matter(fileContent, {
-      // Uncomment to force specific delimiter:
-      // delimiters: PARSER_CONFIG.delimiters
-    });
+    const { data, content } = parseFrontMatter(fileContent);
     
     // Validate metadata structure
     if (!validateMetadata(data)) {
@@ -221,7 +232,7 @@ export function parsePosts(posts: Array<{ filename: string; content: string }>):
  */
 export function extractMetadata(filename: string, fileContent: string): PostMetadata {
   try {
-    const { data } = matter(fileContent);
+    const { data } = parseFrontMatter(fileContent);
     
     if (!validateMetadata(data)) {
       console.warn(`Metadata validation failed for ${filename}`);

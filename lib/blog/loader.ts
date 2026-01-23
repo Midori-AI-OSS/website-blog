@@ -71,29 +71,30 @@ function extractDateFromFilename(filename: string): Date {
  * - Logs errors but continues processing other files
  * - Filters out failed loads
  * 
+ * @param postsDir - Override posts directory (primarily for tests)
  * @returns Array of parsed posts, sorted newest to oldest
  */
-export async function loadAllPosts(): Promise<ParsedPost[]> {
+export async function loadAllPosts(postsDir: string = POSTS_DIR): Promise<ParsedPost[]> {
   try {
     // Read directory
-    const files = await readdir(POSTS_DIR);
+    const files = await readdir(postsDir);
     
     // Filter and validate files (security: only YYYY-MM-DD.md format)
     const mdFiles = files.filter(f => isValidFilename(f));
     
     if (mdFiles.length === 0) {
-      console.info('No valid markdown files found in blog/posts/');
+      console.info(`No valid markdown files found in ${postsDir}`);
       return [];
     }
     
     // Get real path of posts directory for security check
-    const realPostsDir = await realpath(POSTS_DIR);
+    const realPostsDir = await realpath(postsDir);
     
     // Load and parse posts in parallel
     const posts = await Promise.all(
       mdFiles.map(async (filename) => {
         try {
-          const filepath = join(POSTS_DIR, filename);
+          const filepath = join(postsDir, filename);
           
           // Security: ensure path is within POSTS_DIR (prevent path traversal)
           const realFilePath = await realpath(filepath);

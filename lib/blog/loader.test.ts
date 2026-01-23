@@ -2,8 +2,9 @@
  * Tests for Blog Post Loader
  */
 
-import { test, expect, describe, beforeAll } from 'bun:test';
-import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { test, expect, describe, beforeAll, afterAll } from 'bun:test';
+import { mkdir, writeFile, rm, mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   loadAllPosts,
@@ -15,19 +16,28 @@ import {
   clearCache,
 } from './loader';
 
-const TEST_POSTS_DIR = join(process.cwd(), 'blog/posts');
+let testRootDir = '';
+let testPostsDir = '';
 
 // Helper to create test posts
 async function createTestPost(filename: string, content: string) {
-  await mkdir(TEST_POSTS_DIR, { recursive: true });
-  await writeFile(join(TEST_POSTS_DIR, filename), content, 'utf-8');
+  await mkdir(testPostsDir, { recursive: true });
+  await writeFile(join(testPostsDir, filename), content, 'utf-8');
 }
 
 describe('Post Loader', () => {
   beforeAll(async () => {
+    testRootDir = await mkdtemp(join(tmpdir(), 'website-blog-posts-'));
+    testPostsDir = join(testRootDir, 'blog', 'posts');
+
+    // Safety check: never allow tests to operate inside the repo's real posts folder
+    if (testPostsDir.startsWith(process.cwd())) {
+      throw new Error(`Refusing to run tests using real working directory: ${testPostsDir}`);
+    }
+
     // Clean up and create test posts
-    await rm(TEST_POSTS_DIR, { recursive: true, force: true });
-    await mkdir(TEST_POSTS_DIR, { recursive: true });
+    await rm(testPostsDir, { recursive: true, force: true });
+    await mkdir(testPostsDir, { recursive: true });
 
     // Create valid test posts
     await createTestPost('2026-01-17.md', `---
@@ -59,8 +69,14 @@ title: Invalid
 Content`);
   });
 
+  afterAll(async () => {
+    if (testRootDir) {
+      await rm(testRootDir, { recursive: true, force: true });
+    }
+  });
+
   test('loadAllPosts loads and sorts posts correctly', async () => {
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
 
     // Should load 3 valid posts (ignore invalid-name.md)
     expect(posts.length).toBe(3);
@@ -80,7 +96,7 @@ Content`);
   });
 
   test('paginatePosts returns correct page', async () => {
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
 
     // Page 0, size 2
     const page0 = paginatePosts(posts, 0, 2);
@@ -98,7 +114,7 @@ Content`);
   });
 
   test('paginatePosts handles edge cases', async () => {
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
 
     // Negative page number (should default to 0)
     const negativePage = paginatePosts(posts, -5, 2);
@@ -114,7 +130,7 @@ Content`);
   });
 
   test('getPostBySlug finds post by date slug', async () => {
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
 
     const post = getPostBySlug(posts, '2026-01-17');
     expect(post).not.toBeNull();
@@ -125,7 +141,7 @@ Content`);
   });
 
   test('getPostBySlug validates slug format', async () => {
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
 
     // Invalid slug format should return null
     const invalid = getPostBySlug(posts, '../../../etc/passwd');
@@ -136,7 +152,7 @@ Content`);
   });
 
   test('getPostsByTag filters posts by tag', async () => {
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
 
     const testPosts = getPostsByTag(posts, 'test');
     expect(testPosts.length).toBe(2);
@@ -149,7 +165,7 @@ Content`);
   });
 
   test('getPostsByTag is case-insensitive', async () => {
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
 
     const lowerCase = getPostsByTag(posts, 'test');
     const upperCase = getPostsByTag(posts, 'TEST');
@@ -160,7 +176,7 @@ Content`);
   });
 
   test('getAllTags returns unique sorted tags', async () => {
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
 
     const tags = getAllTags(posts);
     expect(tags).toContain('test');
@@ -177,7 +193,7 @@ Content`);
   });
 
   test('getRecentPosts returns limited posts', async () => {
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
 
     const recent = getRecentPosts(posts, 2);
     expect(recent.length).toBe(2);
@@ -190,12 +206,12 @@ Content`);
 
   test('loadAllPosts handles empty directory', async () => {
     // Clear all posts
-    await rm(TEST_POSTS_DIR, { recursive: true, force: true });
-    await mkdir(TEST_POSTS_DIR, { recursive: true });
+    await rm(testPostsDir, { recursive: true, force: true });
+    await mkdir(testPostsDir, { recursive: true });
 
     clearCache(); // Clear cache to force fresh load
 
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
     expect(posts.length).toBe(0);
   });
 
@@ -204,7 +220,7 @@ Content`);
     const maliciousFilename = '../../etc/passwd.md';
     
     // loadAllPosts should ignore it (not match YYYY-MM-DD.md pattern)
-    const posts = await loadAllPosts();
+    const posts = await loadAllPosts(testPostsDir);
     const malicious = posts.find(p => p.filename.includes('..'));
     expect(malicious).toBeUndefined();
   });
