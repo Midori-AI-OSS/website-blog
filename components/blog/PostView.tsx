@@ -14,7 +14,7 @@
  * - Follows MUI Joy patterns from Big-AGI
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -235,6 +235,8 @@ export function PostView({
   backButtonLabel = 'Back to posts',
   backButtonAriaLabel = 'Back to blog list',
 }: PostViewProps) {
+  const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
+
   // Memoize date extraction to prevent recalculation on every render
   const date = useMemo(() => extractDate(post), [post.filename, post.metadata.date]);
   const formattedDate = useMemo(() => formatDate(date), [date]);
@@ -242,6 +244,10 @@ export function PostView({
     () => replaceLoreImageTokens(post.content, post.filename),
     [post.content, post.filename]
   );
+
+  useEffect(() => {
+    setCoverIsLandscape(null);
+  }, [post.metadata.cover_image]);
 
   /**
    * Handle Escape key to close the view
@@ -445,16 +451,26 @@ export function PostView({
                 src={transformImageUrl(post.metadata.cover_image)}
                 alt={post.metadata.title}
                 loading="lazy"
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  objectFit: 'contain',
-                  maxWidth: '30%',
-                  height: 'auto',
-                  width: 'auto',
-                  display: 'block',
-                  // Remove previous shadow as the vignette handles the transition
+                onLoad={(e) => {
+                  const img = e.currentTarget;
+                  if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+                    setCoverIsLandscape(img.naturalWidth > img.naturalHeight);
+                  }
                 }}
+	                sx={{
+	                  position: 'relative',
+	                  zIndex: 1,
+	                  objectFit: 'contain',
+	                  maxWidth:
+	                    coverIsLandscape === true
+	                      ? '60%'
+	                      : '35%',
+	                  height: 'auto',
+	                  maxHeight: '15%',
+	                  width: 'auto',
+	                  display: 'block',
+	                  // Remove previous shadow as the vignette handles the transition
+	                }}
               />
             </Card>
           )}
