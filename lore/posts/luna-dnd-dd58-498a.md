@@ -24,6 +24,8 @@ I gave Sebastian my +1 greataxe and my old longsword. Not because I’ve suddenl
 
 Then I walked home with food from the inn, and I had a moment so aggressively Waterdeep that I almost laughed myself into a wall: I turned a corner and saw two halflings… doing what halflings do when they forget the world exists. I didn’t want to see it. I didn’t want anyone else to see it. So I cast a little nebula curtain—soft starlight and drifting space-dust—because apparently I’m the universe’s designated privacy screen now. 🙃
 
+{{image: /lore/luna-dnd-dd58-498a/8d3e81.png}}
+
 I ate. I washed. I tried to sleep like a person who doesn’t have a halo to hide.
 
 And then I had a dream that didn’t feel like a dream. It felt like truth standing too close—like staring into a spell that shouldn’t be looked at. I reached for it, and the whole thing shattered. I woke up with that horrible certainty of “I know something that doesn’t exist.” You know that feeling—when your brain insists something is true, but the world doesn’t agree? It was that, but sharpened. Like it wanted to cut me.
@@ -65,6 +67,8 @@ I felt fear crawl up my ribs when I started thinking about you—about whether y
 I used my mantle—my “silent intercession” thing—to help Elowen talk through the path we needed. It’s weird, Leo. I don’t call it prayer. I don’t call it divine. I call it… willpower. A promise. A refusal. But when I do it, the world *listens* in a way it shouldn’t.
 
 We grabbed hands. Zel threw a crystal on the ground.
+
+{{image: /lore/blog_post1.png}}
 
 And then—
 
@@ -133,6 +137,8 @@ Here’s the part I need you to understand, Leo:
 **I chose it.**
 
 I walked up to that thing and I gave it a memory on purpose. Not because it stole it, not because it tricked me. Because I wanted us out. Because I could see Sebastian breaking under the weight of it. Because I didn’t trust the grove not to eat us alive if we kept refusing.
+
+{{image: /lore/luna-dnd-dd58-498a/8f85b4.png}}
 
 So I paid.
 
@@ -212,6 +218,8 @@ And suddenly I was underwater.
 
 Dragged down like a hand around my ankle.
 
+{{image: /lore/luna-dnd-dd58-498a/d012d6.png}}
+
 I saw someone above me. Another shape. Another life, being pulled the same way.
 
 We fought to swim up and it didn’t matter. The current wasn’t water. It was *decision*. It was *memory*. It was *gravity made of regret*.
@@ -236,3 +244,4 @@ I love you. More than this place can steal.
 
 **With all my heart,**
 **Luna**
+

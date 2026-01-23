@@ -94,22 +94,26 @@ function transformImageUrl(url: string): string {
 
 const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
 
-function getSlugFromFilename(filename: string): string {
-  return filename.replace(/\.mdx?$/i, '');
-}
-
 function toLoreImageApiUrl(tokenValue: string, postFilename: string): string | null {
   const raw = tokenValue.trim();
-  if (!raw.toLowerCase().startsWith('lore/')) return null;
+  if (!raw) return null;
 
-  const afterPrefix = raw.slice('lore/'.length).replace(/^\/+/, '').trim();
-  if (!afterPrefix) return null;
+  // Enforce explicit lore-rooted paths only:
+  // - {{image: /lore/folder/file.png}}
+  // - {{image: /lore/file.png}}
+  const lower = raw.toLowerCase();
+  const hasLorePrefix = lower.startsWith('/lore/') || lower === '/lore';
+  if (!hasLorePrefix) return null;
 
-  const segments = afterPrefix.split('/').filter(Boolean);
-  const slug = getSlugFromFilename(postFilename);
+  const withoutLeadingSlashes = raw.replace(/^\/+/, '');
+  const withoutLorePrefix = withoutLeadingSlashes.slice('lore/'.length);
+  const normalized = withoutLorePrefix.replace(/^\/+/, '').replace(/\/+$/, '').trim();
+  if (!normalized) return null;
 
-  const finalSegments = segments.length === 1 ? [slug, segments[0]!] : segments;
-  const encoded = finalSegments.map((s) => encodeURIComponent(s)).join('/');
+  const segments = normalized.split('/').filter(Boolean);
+  if (segments.length === 0) return null;
+
+  const encoded = segments.map((s) => encodeURIComponent(s)).join('/');
   return `/api/lore-images/${encoded}`;
 }
 
