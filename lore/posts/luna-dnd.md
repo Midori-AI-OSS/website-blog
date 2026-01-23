@@ -2,7 +2,7 @@
 title: "Shadowfell: For I am Human"
 summary: Fearful Luna sends letter of hope to Leo.
 tags: [lore, "celestial-covenant"]
-cover_image: /blog/blog_post1.png
+cover_image: /lore/blog_post1.png
 author: Luna Midori
 date: 2026-01-22
 ---
