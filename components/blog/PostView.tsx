@@ -27,6 +27,7 @@ import {
   Divider,
 } from '@mui/joy';
 import ReactMarkdown from 'react-markdown';
+import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
@@ -91,6 +92,137 @@ function transformImageUrl(url: string): string {
   return url;
 }
 
+const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
+
+function getSlugFromFilename(filename: string): string {
+  return filename.replace(/\.mdx?$/i, '');
+}
+
+function toLoreImageApiUrl(tokenValue: string, postFilename: string): string | null {
+  const raw = tokenValue.trim();
+  if (!raw.toLowerCase().startsWith('lore/')) return null;
+
+  const afterPrefix = raw.slice('lore/'.length).replace(/^\/+/, '').trim();
+  if (!afterPrefix) return null;
+
+  const segments = afterPrefix.split('/').filter(Boolean);
+  const slug = getSlugFromFilename(postFilename);
+
+  const finalSegments = segments.length === 1 ? [slug, segments[0]!] : segments;
+  const encoded = finalSegments.map((s) => encodeURIComponent(s)).join('/');
+  return `/api/lore-images/${encoded}`;
+}
+
+function replaceLoreImageTokens(markdown: string, postFilename: string): string {
+  return markdown.replace(/\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi, (fullMatch, tokenValue: string) => {
+    const url = toLoreImageApiUrl(tokenValue, postFilename);
+    if (!url) return fullMatch;
+
+    const raw = tokenValue.trim();
+    const basename = raw.split('/').filter(Boolean).pop() ?? 'image';
+    const alt = basename
+      .replace(/\.[a-z0-9]+$/i, '')
+      .replace(/[_-]+/g, ' ')
+      .trim() || 'Lore image';
+
+    return `\n\n![${alt}](${url} \"${LORE_IMAGE_TOKEN_TITLE}\")\n\n`;
+  });
+}
+
+const markdownComponents: Components = {
+  img: (props) => {
+    const { node: _node, ...imgProps } = props;
+    const { src, alt, title } = imgProps;
+
+    if (title === LORE_IMAGE_TOKEN_TITLE && typeof src === 'string' && src.length > 0) {
+      return (
+        <Card
+          variant="plain"
+          sx={{
+            p: 0,
+            my: 4,
+            overflow: 'hidden',
+            borderRadius: 0,
+            border: 'none',
+            bgcolor: 'black',
+            position: 'relative',
+            minHeight: '280px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            py: { xs: 3, sm: 4 },
+            '--Card-padding': '0px',
+            '&:hover, &:focus-within': {
+              bgcolor: 'black',
+              borderColor: 'transparent',
+              boxShadow: 'none',
+              outline: 'none',
+            },
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 10,
+              boxShadow: 'inset 0 0 60px 30px #000',
+              pointerEvents: 'none',
+            }}
+          />
+
+          <Box
+            component="img"
+            src={src}
+            alt=""
+            loading="lazy"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              filter: 'blur(20px) brightness(0.55)',
+              transform: 'scale(1.1)',
+              zIndex: 0,
+              opacity: 0.85,
+              my: 0,
+              border: 'none',
+              background: 'none',
+              animation: 'none',
+            }}
+          />
+
+          <Box
+            component="img"
+            src={src}
+            alt={typeof alt === 'string' ? alt : ''}
+            loading="lazy"
+            sx={{
+              position: 'relative',
+              zIndex: 1,
+              objectFit: 'contain',
+              width: 'auto',
+              maxWidth: { xs: '92%', sm: '88%', md: '80%' },
+              height: 'auto',
+              maxHeight: { xs: 420, sm: 520, md: 640 },
+              display: 'block',
+              my: 0,
+              border: 'none',
+              background: 'none',
+              animation: 'none',
+            }}
+          />
+        </Card>
+      );
+    }
+
+    return <img {...imgProps} />;
+  },
+};
 
 /**
  * PostView Component
@@ -107,6 +239,10 @@ export function PostView({
   // Memoize date extraction to prevent recalculation on every render
   const date = useMemo(() => extractDate(post), [post.filename, post.metadata.date]);
   const formattedDate = useMemo(() => formatDate(date), [date]);
+  const markdownContent = useMemo(
+    () => replaceLoreImageTokens(post.content, post.filename),
+    [post.content, post.filename]
+  );
 
   /**
    * Handle Escape key to close the view
@@ -519,8 +655,9 @@ export function PostView({
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeSanitize, rehypeHighlight]}
+            components={markdownComponents}
           >
-            {post.content}
+            {markdownContent}
           </ReactMarkdown>
         </Box>
       </Box>
