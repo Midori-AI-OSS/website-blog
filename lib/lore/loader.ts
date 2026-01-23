@@ -5,7 +5,7 @@
  * Mirrors the blog loader, but reads from lore/posts/.
  */
 
-import { readdir, readFile, realpath } from 'node:fs/promises';
+import { readdir, readFile, realpath, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { parsePost, type ParsedPost } from '@/lib/blog/parser';
@@ -48,7 +48,15 @@ export async function loadAllLorePosts(): Promise<ParsedPost[]> {
           }
 
           const content = await readFile(filepath, 'utf-8');
-          return parsePost(filename, content);
+          const parsed = parsePost(filename, content);
+
+          // Ensure lore posts have a stable date for SSR/CSR consistency (prevents hydration mismatch).
+          if (!parsed.metadata.date) {
+            const fileStat = await stat(filepath);
+            parsed.metadata.date = fileStat.mtime.toISOString().slice(0, 10);
+          }
+
+          return parsed;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error(`Error loading ${filename}:`, errorMessage);

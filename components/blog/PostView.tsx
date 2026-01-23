@@ -88,6 +88,17 @@ function transformImageUrl(url: string): string {
   if (url.startsWith('/blog/')) {
     return url.replace('/blog/', '/api/blog-images/');
   }
+  // Lore images should use the API route so they can be served dynamically in production.
+  if (url.startsWith('/lore/')) {
+    const withoutLeadingSlashes = url.replace(/^\/+/, '');
+    const withoutLorePrefix = withoutLeadingSlashes.slice('lore/'.length);
+    const normalized = withoutLorePrefix.replace(/^\/+/, '').replace(/\/+$/, '').trim();
+    if (!normalized) return url;
+
+    const segments = normalized.split('/').filter(Boolean);
+    const encoded = segments.map((s) => encodeURIComponent(s)).join('/');
+    return `/api/lore-images/${encoded}`;
+  }
   // Otherwise return as-is (for external URLs or other paths)
   return url;
 }
