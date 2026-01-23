@@ -2,7 +2,7 @@
 title: "Shadowfell: For I am Human"
 summary: Fearful Luna sends letter of hope to Leo.
 tags: [lore, "celestial-covenant"]
-cover_image: /lore/blog_post1.png
+cover_image: /lore/rite.png
 author: Luna Midori
 date: 2026-01-22
 ---
@@ -68,7 +68,7 @@ I used my mantle—my “silent intercession” thing—to help Elowen talk thro
 
 We grabbed hands. Zel threw a crystal on the ground.
 
-{{image: /lore/blog_post1.png}}
+{{image: /lore/rite.png}}
 
 And then—
 
@@ -244,4 +244,3 @@ I love you. More than this place can steal.
 
 **With all my heart,**
 **Luna**
-
