@@ -131,6 +131,8 @@ If Leo could see me now he would either laugh or look at me with that quiet expr
 
 I miss him so much it makes my throat hurt.
 
+{{image: /lore/luna-dnd-cc-ab58-548a/walkingdownpath.png}}
+
 ---
 
 ### Wisper returns (and immediately insults me)
@@ -198,6 +200,8 @@ Silence swallowed the end of it.
 I woke up right before the truth could finish forming.
 
 Which feels… intentional.
+
+{{image: /lore/luna-dnd-cc-ab58-548a/hut-study.png}}
 
 ---
 
@@ -337,6 +341,8 @@ Because it’s proof that the mask is thinner than I want.
 And I’m not ready to be something that isn’t human.
 
 Not in a world that already treats “different” like a target.
+
+{{image: /lore/luna-dnd-cc-ab58-548a/study-moment.png}}
 
 ---
 
