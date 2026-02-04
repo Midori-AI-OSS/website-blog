@@ -25,6 +25,32 @@ function isValidFilename(filename: string): boolean {
   return /^[a-z0-9][a-z0-9-]*\.md$/i.test(filename);
 }
 
+function parseYYYYMMDDToUtcMs(dateString: string | undefined): number | null {
+  if (!dateString) return null;
+
+  const trimmed = dateString.trim();
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+
+  const ms = Date.UTC(year, month - 1, day);
+  const date = new Date(ms);
+
+  // Guard against invalid dates like 2025-02-30 rolling over.
+  if (date.getUTCFullYear() !== year) return null;
+  if (date.getUTCMonth() !== month - 1) return null;
+  if (date.getUTCDate() !== day) return null;
+
+  return ms;
+}
+
 export async function loadAllLorePosts(): Promise<ParsedPost[]> {
   try {
     const files = await readdir(POSTS_DIR);
@@ -65,7 +91,23 @@ export async function loadAllLorePosts(): Promise<ParsedPost[]> {
       })
     );
 
-    return posts.filter((p): p is ParsedPost => p !== null);
+    const parsedPosts = posts.filter((p): p is ParsedPost => p !== null);
+
+    // Sort newest -> oldest by displayed date (expected YYYY-MM-DD).
+    // Invalid/missing dates sort last. Tie-break by filename for stability.
+    parsedPosts.sort((a, b) => {
+      const dateA = parseYYYYMMDDToUtcMs(a.metadata.date);
+      const dateB = parseYYYYMMDDToUtcMs(b.metadata.date);
+
+      if (dateA === null && dateB === null) return a.filename.localeCompare(b.filename);
+      if (dateA === null) return 1;
+      if (dateB === null) return -1;
+
+      if (dateA !== dateB) return dateB - dateA;
+      return a.filename.localeCompare(b.filename);
+    });
+
+    return parsedPosts;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error loading lore posts:', errorMessage);
