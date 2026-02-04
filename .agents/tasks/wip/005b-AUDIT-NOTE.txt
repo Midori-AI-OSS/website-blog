@@ -1,0 +1,24 @@
+# AUDIT NOTE for Task 005b
+
+**Status:** Returned from DONE to WIP  
+**Date:** 2026-02-04  
+**Auditor:** Auditor Agent
+
+## Issues to Fix:
+
+1. **Missing Git Commit** - No commit was made for this task. Per repo constraints, "commit after each logical change"
+
+2. **Execution Not Per Steps** - Task reused existing server instead of following written steps. Either:
+   - Stop existing server and start fresh per task steps, OR  
+   - Document why reusing existing server is acceptable and commit that note
+
+3. **Required Action** - Add git commit with message: `chore: verify dev server running for QA task 005b`
+
+See full audit report: `/tmp/agents-artifacts/audit-005b-*.md`
+
+**Quick Fix:** If server is already running and acceptable, just:
+```bash
+git add -A
+git commit -m "chore: verify dev server running for QA task 005b (reused existing from 005a)"
+```
+Then move back to done/ folder.
