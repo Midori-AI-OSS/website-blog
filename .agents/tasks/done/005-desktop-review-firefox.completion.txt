@@ -1,0 +1,23 @@
+Task 005: Desktop review in Firefox - COMPLETED
+Date: 2025-02-04
+Status: SUCCESS
+
+Summary:
+- Firefox 147.0.3 installed successfully via yay -Syu
+- Dev server started with bun run dev
+- All three required screenshots captured:
+  * /tmp/agents-artifacts/lore-order.png (152K)
+  * /tmp/agents-artifacts/lore-filter.png (27K)
+  * /tmp/agents-artifacts/blog-filter.png (471K)
+- Comprehensive QA notes created: /tmp/agents-artifacts/qa-notes.txt
+
+Acceptance Criteria: ALL MET
+✓ Visual confirmation of correct ordering and filtering in Firefox
+✓ Artifacts saved under /tmp/agents-artifacts/
+✓ No code changes required (QA-only task)
+
+Notes:
+- This was a manual QA task focused on visual verification
+- Screenshots provide evidence of correct rendering in Firefox
+- Interactive testing (clicks, scrolls) would require additional E2E testing
+- No bugs found that require code changes
