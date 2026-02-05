@@ -114,6 +114,14 @@ export const theme = extendTheme({
                     borderRadius: 0,
                 }
             }
+        },
+        JoyChip: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 0,
+                    '--Chip-radius': '0px',
+                }
+            }
         }
     },
 });

@@ -81,7 +81,6 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
           aria-pressed={isAllSelected}
           aria-label="Show all tags"
           sx={{
-            '--Chip-radius': '4px',
             cursor: 'pointer',
             transition: 'all 0.2s',
             '&:hover': {
@@ -112,7 +111,6 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
               aria-pressed={isSelected}
               aria-label={`Filter by ${tag}`}
               sx={{
-                '--Chip-radius': '4px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 '&:hover': {

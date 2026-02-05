@@ -120,7 +120,7 @@ export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color
                   color="primary"
                   size="sm"
                   startDecorator={<Tag size={12} />}
-                  sx={{ '--Chip-radius': '4px', height: 20 }}
+                  sx={{ height: 20 }}
                 >
                   {metadata.tags[0]}
                 </Chip>
