@@ -8,11 +8,13 @@ import Typography from '@mui/joy/Typography';
 import Chip from '@mui/joy/Chip';
 import Stack from '@mui/joy/Stack';
 import { Calendar, User, ArrowRight, Tag } from 'lucide-react';
+import Link from 'next/link';
 import type { ParsedPost } from '../../lib/blog/parser';
 
 export type BlogCardProps = {
   post: ParsedPost;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string;
   variant?: 'plain' | 'outlined' | 'soft' | 'solid';
   color?: 'primary' | 'neutral' | 'danger' | 'success' | 'warning';
 };
@@ -34,7 +36,7 @@ function transformImageUrl(url: string): string {
   return url;
 }
 
-export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color = 'neutral' }: BlogCardProps) => {
+export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined', color = 'neutral' }: BlogCardProps) => {
   const { metadata, filename } = post;
   const decorativeImageUrl = typeof metadata.cover_image === 'string' && metadata.cover_image.length > 0
     ? transformImageUrl(metadata.cover_image)
@@ -47,18 +49,21 @@ export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      onClick();
+      if (onClick) {
+        onClick();
+      }
     }
   };
 
-  return (
+  // When href is provided, wrap the entire card in a Link
+  const cardContent = (
     <Card
       role="article"
       variant={variant}
       color={color}
       onClick={onClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
+      onKeyDown={!href ? handleKeyDown : undefined}
+      tabIndex={!href ? 0 : undefined}
       aria-label={`Read blog post: ${metadata.title}`}
       sx={{
         position: 'relative',
@@ -157,6 +162,19 @@ export const BlogCard = React.memo(({ post, onClick, variant = 'outlined', color
       </CardContent>
     </Card>
   );
+
+  // If href is provided, wrap in Next.js Link
+  if (href) {
+    return (
+      <Link href={href} passHref legacyBehavior>
+        <a style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+          {cardContent}
+        </a>
+      </Link>
+    );
+  }
+
+  return cardContent;
 });
 
 BlogCard.displayName = 'BlogCard';
