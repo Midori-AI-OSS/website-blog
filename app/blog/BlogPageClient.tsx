@@ -67,6 +67,11 @@ export function BlogPageClient({ initialPosts, allPosts }: BlogPageClientProps) 
     router.push(`/blog/${slug}`);
   };
   
+  const getPostHref = (post: ParsedPost) => {
+    const slug = post.filename.replace('.md', '');
+    return `/blog/${slug}`;
+  };
+  
   return (
     <>
       <TagFilterBar
@@ -79,6 +84,7 @@ export function BlogPageClient({ initialPosts, allPosts }: BlogPageClientProps) 
         initialPosts={filteredInitialPosts}
         allPosts={filteredAllPosts}
         onPostClick={handlePostClick}
+        getPostHref={getPostHref}
       />
     </>
   );

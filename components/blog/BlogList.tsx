@@ -23,6 +23,7 @@ export interface BlogListProps {
   initialPosts: ParsedPost[];
   allPosts?: ParsedPost[];
   onPostClick: (post: ParsedPost) => void;
+  getPostHref?: (post: ParsedPost) => string;
   pageSize?: number;
 }
 
@@ -30,6 +31,7 @@ export function BlogList({
   initialPosts,
   allPosts,
   onPostClick,
+  getPostHref,
   pageSize = 10
 }: BlogListProps) {
   const [posts, setPosts] = useState<ParsedPost[]>(initialPosts);
@@ -175,6 +177,7 @@ export function BlogList({
             key={post.filename}
             post={post}
             onClick={() => onPostClick(post)}
+            href={getPostHref ? getPostHref(post) : undefined}
             variant="outlined"
           />
         ))}
