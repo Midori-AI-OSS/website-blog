@@ -58,20 +58,22 @@ export function BlogCardExample() {
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
       <h1>Blog Posts</h1>
       
-      {/* Example 1: Default card */}
+      {/* Example 1: Card with href (recommended for proper linking) */}
       <BlogCard 
         post={examplePosts[0]!} 
+        href="/blog/2026-01-17"
         onClick={() => handlePostClick(examplePosts[0]!)}
       />
 
-      {/* Example 2: Card with variant */}
+      {/* Example 2: Card with variant and href */}
       <BlogCard 
         post={examplePosts[1]!} 
+        href="/blog/2026-01-15"
         onClick={() => handlePostClick(examplePosts[1]!)}
         variant="outlined"
       />
 
-      {/* Example 3: Minimal card without image/summary */}
+      {/* Example 3: Card with onClick only (legacy mode) */}
       <BlogCard 
         post={examplePosts[2]!} 
         onClick={() => handlePostClick(examplePosts[2]!)}
@@ -91,12 +93,18 @@ export function BlogCardList() {
     // Navigate to full post view
   };
 
+  const getPostHref = (post: ParsedPost) => {
+    const slug = post.filename.replace('.md', '');
+    return `/blog/${slug}`;
+  };
+
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
       {examplePosts.map((post) => (
         <BlogCard 
           key={post.filename}
           post={post}
+          href={getPostHref(post)}
           onClick={() => handlePostClick(post)}
         />
       ))}

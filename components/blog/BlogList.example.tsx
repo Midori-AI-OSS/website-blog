@@ -40,11 +40,17 @@ export function StaticBlogListExample() {
     // In Next.js: router.push(`/blog/${post.filename.replace('.md', '')}`)
   };
 
+  const getPostHref = (post: ParsedPost) => {
+    const slug = post.filename.replace('.md', '');
+    return `/blog/${slug}`;
+  };
+
   return (
     <BlogList
       initialPosts={initialPosts}
       allPosts={allPosts}
       onPostClick={handlePostClick}
+      getPostHref={getPostHref}
       pageSize={10}
     />
   );
