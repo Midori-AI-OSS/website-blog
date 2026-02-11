@@ -714,22 +714,16 @@ export default function RadioWidget() {
           </Stack>
 
           <Stack spacing={0.6}>
-            {playbackDesired ? (
-              <Tooltip
-                title="Quality changes apply on next reconnect/start."
-                placement="top-start"
-                variant="soft"
-                arrow
-              >
-                <Typography level="body-xs" sx={{ color: 'text.tertiary', cursor: 'help', width: 'fit-content' }}>
-                  Quality
-                </Typography>
-              </Tooltip>
-            ) : (
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+            <Tooltip
+              title="Quality changes apply on next reconnect/start."
+              placement="top-start"
+              variant="soft"
+              arrow
+            >
+              <Typography level="body-xs" sx={{ color: 'text.tertiary', cursor: 'help', width: 'fit-content' }}>
                 Quality
               </Typography>
-            )}
+            </Tooltip>
             <ButtonGroup
               size="sm"
               sx={{
@@ -787,21 +781,6 @@ export default function RadioWidget() {
               ))}
             </Box>
           </Stack>
-
-          {lastError !== null && (
-            <Typography
-              level="body-xs"
-              sx={{
-                color: '#ffb4b4',
-                fontFamily: 'monospace',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {lastError}
-            </Typography>
-          )}
 
           <Button
             size="sm"
