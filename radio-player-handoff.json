@@ -1,0 +1,50 @@
+{
+  "title": "Website-Blog Radio Player Handoff",
+  "status": "almost_ready_for_agent",
+  "priority": "high",
+  "objective": "Add a desktop-only floating radio control in the bottom-right that expands on hover and provides title + controls.",
+  "locked_decisions": [
+    "Use strict Midori AI naming (midoriai for keys/identifiers).",
+    "Desktop only: requires hover + fine pointer and viewport width >= 1024px.",
+    "Collapsed control by default, remember open state between sessions.",
+    "Playback persists site-wide from root layout mount.",
+    "Use https://radio.midori-ai.xyz as the radio base URL.",
+    "Control order: play/stop first, then volume slider with grabber, then q setting.",
+    "q values: low, medium, high (segmented control).",
+    "Default volume: 50 and persist volume + selected quality.",
+    "Quality change while playing applies on next play/reconnect start.",
+    "Show title and controls only.",
+    "No rounded corners in radio widget UI.",
+    "Backdrop is a strong glass blur; lazy load target image and preload placeholder fallback.",
+    "Backdrop selection is deterministic from title + track_id hash.",
+    "Image inventory comes from API route that scans public/blog."
+  ],
+  "implementation_checklist": [
+    "Create a new client radio widget component and mount it in app/layout.tsx.",
+    "Implement desktop eligibility gate based on media query and min-width.",
+    "Add hover-expand interaction with persistent sticky-open preference.",
+    "Add HTMLAudioElement playback for stream endpoint /radio/v1/stream?q={quality}.",
+    "Add play/stop control, volume slider, and segmented q control in required order.",
+    "Poll /radio/v1/current for title and track_id updates.",
+    "Add API route /api/radio-images to enumerate usable images under public/blog.",
+    "Use deterministic hash(title + track_id) to choose backdrop image.",
+    "Preload placeholder and lazy-load selected backdrop image.",
+    "Add a TODO comment where artwork/channel API integration should replace fallback logic."
+  ],
+  "questions_for_followup": [
+    "What exact radio API fields and endpoint will expose per-track artwork?",
+    "What exact channels API shape should the website player consume?",
+    "When channel changes, should stream restart immediately or defer to boundary?",
+    "Should channel selection persist per browser session or account identity?",
+    "Are any extra headers/auth required for future art/channels endpoints?"
+  ],
+  "verification_checklist": [
+    "Widget appears only on desktop contexts that meet both gate conditions.",
+    "Collapsed/expanded state survives reloads.",
+    "Play/stop actions work and stream URL includes selected q value.",
+    "Volume and quality persistence works across reloads.",
+    "Title refreshes from /radio/v1/current.",
+    "Backdrop loads placeholder first and then deterministic blur image.",
+    "UI remains square-edged with no rounded corners."
+  ]
+}
