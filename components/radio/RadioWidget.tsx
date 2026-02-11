@@ -10,7 +10,7 @@ import Sheet from '@mui/joy/Sheet';
 import Slider from '@mui/joy/Slider';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
-import { Pin, PinOff, Play, Square } from 'lucide-react';
+import { Music, Pin, PinOff, Play, Square } from 'lucide-react';
 import {
   buildStreamUrl,
   fetchArt,
@@ -34,6 +34,7 @@ import {
 
 const PLACEHOLDER_IMAGE = '/blog/placeholder.png';
 const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000, 30000] as const;
+const HOVER_CLOSE_LINGER_MS = 3000;
 
 type StreamState = 'idle' | 'connecting' | 'playing' | 'retrying' | 'error';
 type BackdropSource = 'placeholder' | 'server' | 'fallback';
@@ -114,6 +115,7 @@ export default function RadioWidget() {
   const desktopEligible = useDesktopEligibility();
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const retryTimerRef = React.useRef<number | null>(null);
+  const closeLingerTimerRef = React.useRef<number | null>(null);
   const retryAttemptRef = React.useRef(0);
   const reconnectRef = React.useRef<() => Promise<void>>(async () => undefined);
   const playbackDesiredRef = React.useRef(false);
@@ -124,6 +126,7 @@ export default function RadioWidget() {
 
   const [hydrated, setHydrated] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
+  const [closeLingerActive, setCloseLingerActive] = React.useState(false);
   const [stickyOpen, setStickyOpen] = React.useState(false);
   const [volume, setVolume] = React.useState(0.5);
   const [quality, setQuality] = React.useState<QualityName>('medium');
@@ -205,6 +208,37 @@ export default function RadioWidget() {
       retryTimerRef.current = null;
     }
   }, []);
+
+  const clearCloseLingerTimer = React.useCallback(() => {
+    if (closeLingerTimerRef.current !== null) {
+      window.clearTimeout(closeLingerTimerRef.current);
+      closeLingerTimerRef.current = null;
+    }
+  }, []);
+
+  const startCloseLinger = React.useCallback(() => {
+    if (stickyOpen) {
+      return;
+    }
+
+    clearCloseLingerTimer();
+    setCloseLingerActive(true);
+    closeLingerTimerRef.current = window.setTimeout(() => {
+      closeLingerTimerRef.current = null;
+      setCloseLingerActive(false);
+    }, HOVER_CLOSE_LINGER_MS);
+  }, [stickyOpen, clearCloseLingerTimer]);
+
+  const handleMouseEnter = React.useCallback(() => {
+    clearCloseLingerTimer();
+    setCloseLingerActive(false);
+    setHovered(true);
+  }, [clearCloseLingerTimer]);
+
+  const handleMouseLeave = React.useCallback(() => {
+    setHovered(false);
+    startCloseLinger();
+  }, [startCloseLinger]);
 
   const scheduleRetry = React.useCallback((reason: string) => {
     if (!playbackDesiredRef.current) {
@@ -296,7 +330,6 @@ export default function RadioWidget() {
   React.useEffect(() => {
     const audio = new Audio();
     audio.preload = 'none';
-    audio.crossOrigin = 'anonymous';
     audio.volume = Math.min(1, Math.max(0, volume));
     audioRef.current = audio;
 
@@ -343,6 +376,19 @@ export default function RadioWidget() {
     };
   }, [clearRetryTimer, scheduleRetry]);
 
+  React.useEffect(() => {
+    return () => {
+      clearCloseLingerTimer();
+    };
+  }, [clearCloseLingerTimer]);
+
+  React.useEffect(() => {
+    if (stickyOpen) {
+      clearCloseLingerTimer();
+      setCloseLingerActive(false);
+    }
+  }, [stickyOpen, clearCloseLingerTimer]);
+
   const refreshMetadata = React.useCallback(async () => {
     const currentRequest = metadataRequestRef.current + 1;
     metadataRequestRef.current = currentRequest;
@@ -360,6 +406,8 @@ export default function RadioWidget() {
 
       setCurrentTrack(currentPayload);
       setArtMetadata(artPayload);
+      setLastError(null);
+      clearRadioLastError();
     } catch (error) {
       const message = toErrorMessage(error);
       setLastError(message);
@@ -518,7 +566,7 @@ export default function RadioWidget() {
   }, [preferredServerArtUrl, fallbackImage, imageInventory]);
 
   const activeChannelLabel = currentTrack?.channel ?? normalizeChannel(channel);
-  const expanded = stickyOpen || hovered;
+  const expanded = stickyOpen || hovered || closeLingerActive;
 
   if (!desktopEligible) {
     return null;
@@ -527,15 +575,15 @@ export default function RadioWidget() {
   return (
     <Sheet
       variant="outlined"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       sx={{
         position: 'fixed',
         right: 24,
         bottom: 24,
         zIndex: 1300,
-        width: expanded ? 380 : 68,
-        minHeight: 68,
+        width: expanded ? 380 : 56,
+        minHeight: expanded ? 68 : 56,
         borderRadius: 0,
         overflow: 'hidden',
         borderColor: 'rgba(255,255,255,0.2)',
@@ -543,8 +591,8 @@ export default function RadioWidget() {
         boxShadow: expanded
           ? '0 24px 64px rgba(0, 0, 0, 0.5)'
           : '0 12px 32px rgba(0, 0, 0, 0.35)',
-        backgroundColor: 'rgba(8, 8, 14, 0.52)',
-        backdropFilter: 'blur(24px)',
+        backgroundColor: expanded ? 'rgba(8, 8, 14, 0.52)' : 'rgba(8, 8, 14, 0.74)',
+        backdropFilter: expanded ? 'blur(24px)' : 'blur(34px)',
       }}
     >
       <Box
@@ -554,9 +602,9 @@ export default function RadioWidget() {
           backgroundImage: `url("${backdropUrl}")`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          opacity: 0.27,
-          filter: 'blur(2px) saturate(1.05)',
-          transform: 'scale(1.04)',
+          opacity: expanded ? 0.27 : 0.58,
+          filter: expanded ? 'blur(2px) saturate(1.05)' : 'blur(15px) saturate(0.86)',
+          transform: expanded ? 'scale(1.04)' : 'scale(1.25)',
           pointerEvents: 'none',
         }}
       />
@@ -565,155 +613,178 @@ export default function RadioWidget() {
         sx={{
           position: 'absolute',
           inset: 0,
-          background:
-            'linear-gradient(180deg, rgba(8,8,14,0.18) 0%, rgba(8,8,14,0.72) 36%, rgba(8,8,14,0.9) 100%)',
+          background: expanded
+            ? 'linear-gradient(180deg, rgba(8,8,14,0.18) 0%, rgba(8,8,14,0.72) 36%, rgba(8,8,14,0.9) 100%)'
+            : 'linear-gradient(180deg, rgba(8,8,14,0.36) 0%, rgba(8,8,14,0.92) 100%)',
           pointerEvents: 'none',
         }}
       />
 
-      <Stack
-        spacing={1.1}
-        sx={{
-          position: 'relative',
-          p: 1.25,
-          minHeight: 68,
-        }}
-      >
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ minHeight: 42 }}>
-          <Typography level="title-sm" sx={{ opacity: expanded ? 1 : 0, transition: 'opacity 0.18s ease' }}>
-            Midori AI Radio
+      {expanded ? (
+        <Stack
+          spacing={1.1}
+          sx={{
+            position: 'relative',
+            p: 1.25,
+            minHeight: 68,
+          }}
+        >
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ minHeight: 42 }}>
+            <Typography level="title-sm">Midori AI Radio</Typography>
+            <Button
+              size="sm"
+              variant="soft"
+              color={streamState === 'playing' ? 'success' : 'neutral'}
+              onClick={playbackDesired ? stopPlayback : startPlayback}
+              sx={{
+                minWidth: 42,
+                width: 42,
+                height: 42,
+                borderRadius: 0,
+                px: 0,
+              }}
+            >
+              {playbackDesired ? <Square size={16} /> : <Play size={16} />}
+            </Button>
+          </Stack>
+
+          <Typography
+            level="body-sm"
+            sx={{
+              fontWeight: 700,
+              lineHeight: 1.25,
+              minHeight: 36,
+              color: 'text.primary',
+            }}
+          >
+            {currentTrack?.title ?? 'Fetching current track…'}
           </Typography>
+
+          <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
+            {statusText} • channel {activeChannelLabel} • art {backdropSource}
+          </Typography>
+
+          <Stack spacing={0.6}>
+            <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+              Volume {Math.round(volume * 100)}%
+            </Typography>
+            <Slider
+              value={volume}
+              min={0}
+              max={1}
+              step={0.01}
+              onChange={(_, nextValue) => {
+                const numeric = Array.isArray(nextValue) ? nextValue[0] : nextValue;
+                if (typeof numeric === 'number') {
+                  setVolume(Math.min(1, Math.max(0, numeric)));
+                }
+              }}
+              sx={{
+                '--Slider-thumbRadius': '0px',
+                '--Slider-trackSize': '4px',
+                '--Slider-thumbSize': '14px',
+                borderRadius: 0,
+              }}
+            />
+          </Stack>
+
+          <Stack spacing={0.6}>
+            <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+              Quality
+            </Typography>
+            <ButtonGroup
+              size="sm"
+              sx={{
+                width: '100%',
+                '--ButtonGroup-radius': '0px',
+              }}
+            >
+              {QUALITY_LEVELS.map((entry) => (
+                <Button
+                  key={entry.name}
+                  variant={quality === entry.name ? 'solid' : 'outlined'}
+                  color={quality === entry.name ? 'primary' : 'neutral'}
+                  onClick={() => setQuality(entry.name)}
+                  sx={{ textTransform: 'uppercase', letterSpacing: '0.02em' }}
+                >
+                  {entry.name}
+                </Button>
+              ))}
+            </ButtonGroup>
+          </Stack>
+
+          <Stack spacing={0.6}>
+            <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+              Channel
+            </Typography>
+            <Select
+              value={channel}
+              size="sm"
+              onChange={(_, value) => {
+                if (typeof value === 'string') {
+                  setChannel(normalizeChannel(value));
+                }
+              }}
+              sx={{ borderRadius: 0 }}
+            >
+              {(channels.length > 0 ? channels : [{ name: 'all', track_count: 0 }]).map((entry) => (
+                <Option key={entry.name} value={entry.name}>
+                  {entry.name} ({entry.track_count})
+                </Option>
+              ))}
+            </Select>
+          </Stack>
+
+          {qualityHint !== null && (
+            <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+              {qualityHint}
+            </Typography>
+          )}
+
+          {lastError !== null && (
+            <Typography level="body-xs" sx={{ color: '#ffb4b4', fontFamily: 'monospace' }}>
+              {lastError}
+            </Typography>
+          )}
+
+          <Button
+            size="sm"
+            variant="soft"
+            color="neutral"
+            startDecorator={stickyOpen ? <PinOff size={14} /> : <Pin size={14} />}
+            onClick={() => setStickyOpen((previous) => !previous)}
+            sx={{ borderRadius: 0, alignSelf: 'flex-start' }}
+          >
+            {stickyOpen ? 'Unpin Open' : 'Pin Open'}
+          </Button>
+        </Stack>
+      ) : (
+        <Box
+          sx={{
+            position: 'relative',
+            width: 56,
+            height: 56,
+            display: 'grid',
+            placeItems: 'center',
+          }}
+        >
           <Button
             size="sm"
             variant="soft"
             color={streamState === 'playing' ? 'success' : 'neutral'}
-            onClick={playbackDesired ? stopPlayback : startPlayback}
+            onClick={() => setStickyOpen(true)}
             sx={{
-              minWidth: 42,
-              width: 42,
-              height: 42,
+              minWidth: 38,
+              width: 38,
+              height: 38,
               borderRadius: 0,
               px: 0,
             }}
           >
-            {playbackDesired ? <Square size={16} /> : <Play size={16} />}
+            <Music size={16} />
           </Button>
-        </Stack>
-
-        {expanded && (
-          <>
-            <Typography
-              level="body-sm"
-              sx={{
-                fontWeight: 700,
-                lineHeight: 1.25,
-                minHeight: 36,
-                color: 'text.primary',
-              }}
-            >
-              {currentTrack?.title ?? 'Fetching current track…'}
-            </Typography>
-
-            <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
-              {statusText} • channel {activeChannelLabel} • art {backdropSource}
-            </Typography>
-
-            <Stack spacing={0.6}>
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                Volume {Math.round(volume * 100)}%
-              </Typography>
-              <Slider
-                value={volume}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={(_, nextValue) => {
-                  const numeric = Array.isArray(nextValue) ? nextValue[0] : nextValue;
-                  if (typeof numeric === 'number') {
-                    setVolume(Math.min(1, Math.max(0, numeric)));
-                  }
-                }}
-                sx={{
-                  '--Slider-thumbRadius': '0px',
-                  '--Slider-trackSize': '4px',
-                  '--Slider-thumbSize': '14px',
-                  borderRadius: 0,
-                }}
-              />
-            </Stack>
-
-            <Stack spacing={0.6}>
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                Quality
-              </Typography>
-              <ButtonGroup
-                size="sm"
-                sx={{
-                  width: '100%',
-                  '--ButtonGroup-radius': '0px',
-                }}
-              >
-                {QUALITY_LEVELS.map((entry) => (
-                  <Button
-                    key={entry.name}
-                    variant={quality === entry.name ? 'solid' : 'outlined'}
-                    color={quality === entry.name ? 'primary' : 'neutral'}
-                    onClick={() => setQuality(entry.name)}
-                    sx={{ textTransform: 'uppercase', letterSpacing: '0.02em' }}
-                  >
-                    {entry.name}
-                  </Button>
-                ))}
-              </ButtonGroup>
-            </Stack>
-
-            <Stack spacing={0.6}>
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                Channel
-              </Typography>
-              <Select
-                value={channel}
-                size="sm"
-                onChange={(_, value) => {
-                  if (typeof value === 'string') {
-                    setChannel(normalizeChannel(value));
-                  }
-                }}
-                sx={{ borderRadius: 0 }}
-              >
-                {(channels.length > 0 ? channels : [{ name: 'all', track_count: 0 }]).map((entry) => (
-                  <Option key={entry.name} value={entry.name}>
-                    {entry.name} ({entry.track_count})
-                  </Option>
-                ))}
-              </Select>
-            </Stack>
-
-            {qualityHint !== null && (
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                {qualityHint}
-              </Typography>
-            )}
-
-            {lastError !== null && (
-              <Typography level="body-xs" sx={{ color: '#ffb4b4', fontFamily: 'monospace' }}>
-                {lastError}
-              </Typography>
-            )}
-
-            <Button
-              size="sm"
-              variant="soft"
-              color="neutral"
-              startDecorator={stickyOpen ? <PinOff size={14} /> : <Pin size={14} />}
-              onClick={() => setStickyOpen((previous) => !previous)}
-              sx={{ borderRadius: 0, alignSelf: 'flex-start' }}
-            >
-              {stickyOpen ? 'Unpin Open' : 'Pin Open'}
-            </Button>
-          </>
-        )}
-      </Stack>
+        </Box>
+      )}
     </Sheet>
   );
 }

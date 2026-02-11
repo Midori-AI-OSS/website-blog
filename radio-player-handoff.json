@@ -1,16 +1,18 @@
 {
   "title": "Website-Blog Radio Player Handoff",
   "spec_ref": "midoriai.radio.webserver.v1",
-  "status": "locked_for_implementation",
+  "status": "locked_for_implementation_v1_1",
   "priority": "high",
-  "last_locked_utc": "2026-02-11T17:05:00Z",
-  "objective": "Ship a desktop-only floating radio control in the bottom-right that expands on hover and provides title + controls with contract-verified playback behavior.",
+  "last_locked_utc": "2026-02-11T17:55:00Z",
+  "objective": "Ship a desktop-only floating radio control in the bottom-right with 3s hover-close linger, icon-only collapsed state, and CORS-safe metadata proxy behavior.",
   "base_url": "https://radio.midori-ai.xyz",
   "api_version": "radio.v1",
   "locked_decisions": [
     "Use strict Midori AI naming (midoriai for keys/identifiers).",
     "Desktop only: requires hover + fine pointer and viewport width >= 1024px.",
     "Collapsed control by default, remember sticky-open state between sessions.",
+    "Collapsed state is icon-only and uses a tiny super-blurred art background.",
+    "Expanded state lingers for 3000ms after hover exits (unless pinned open).",
     "Playback persists site-wide from root layout mount.",
     "Use https://radio.midori-ai.xyz as the radio base URL.",
     "Control order is fixed: play/stop, volume slider, quality segmented control, channel selector.",
@@ -23,7 +25,10 @@
     "Backdrop uses strong glass blur with placeholder-first lazy loading.",
     "Artwork fallback chain is server art first, deterministic local fallback second.",
     "Image inventory comes from /api/radio-images scanning public/blog recursively.",
-    "When desktop gate no longer matches, playback continues while widget is hidden."
+    "When desktop gate no longer matches, playback continues while widget is hidden.",
+    "Browser JSON metadata calls must go through same-origin Next.js proxy routes to avoid CORS failures.",
+    "Stream remains direct to /radio/v1/stream and does not use audio.crossOrigin.",
+    "Collapsed icon click expands/pins open; playback controls remain expanded-only."
   ],
   "contract_endpoints": {
     "health": "/health",
@@ -31,7 +36,10 @@
     "current": "/radio/v1/current?channel=<name>",
     "art_metadata": "/radio/v1/art?channel=<name>",
     "art_image": "/radio/v1/art/image?channel=<name>",
-    "stream": "/radio/v1/stream?channel=<name>&q=<low|medium|high>"
+    "stream": "/radio/v1/stream?channel=<name>&q=<low|medium|high>",
+    "proxy_channels": "/api/radio/channels",
+    "proxy_current": "/api/radio/current?channel=<name>",
+    "proxy_art": "/api/radio/art?channel=<name>"
   },
   "runtime_policies": {
     "channel_normalization": "trim + lowercase; missing/empty -> all",
@@ -41,6 +49,9 @@
       "current_and_art_idle_ms": 20000,
       "channels_refresh_ms": 60000
     },
+    "hover_close_linger_ms": 3000,
+    "metadata_proxy_mode": "same-origin proxy for channels/current/art via /api/radio/*",
+    "stream_fetch_mode": "direct upstream stream URL with q + channel query params",
     "retry_backoff_ms": [
       1000,
       2000,
@@ -78,8 +89,20 @@
       "purpose": "Enumerate blog image inventory for deterministic fallback"
     },
     {
+      "path": "app/api/radio/channels/route.ts",
+      "purpose": "Same-origin JSON proxy for upstream /radio/v1/channels"
+    },
+    {
+      "path": "app/api/radio/current/route.ts",
+      "purpose": "Same-origin JSON proxy for upstream /radio/v1/current"
+    },
+    {
+      "path": "app/api/radio/art/route.ts",
+      "purpose": "Same-origin JSON proxy for upstream /radio/v1/art"
+    },
+    {
       "path": "components/radio/RadioWidget.tsx",
-      "purpose": "Floating desktop widget UI + playback + polling + fallback logic"
+      "purpose": "Floating desktop widget UI + playback + polling + fallback logic + hover linger + icon-only collapsed mode"
     },
     {
       "path": "app/layout.tsx",
@@ -118,6 +141,8 @@
   "verification_checklist": [
     "Widget appears only on desktop contexts that match gate conditions.",
     "Collapsed/expanded sticky-open state survives reload.",
+    "Widget remains expanded for ~3 seconds after hover leaves unless pinned.",
+    "Collapsed state shows only music icon with heavy blurred backdrop and no controls.",
     "Play/stop actions work and stream URL always includes selected channel and q.",
     "Volume, quality, and channel persistence work across reloads.",
     "Title refreshes from /radio/v1/current.",
@@ -125,6 +150,8 @@
     "Metadata polling intervals match 5s active and 20s idle.",
     "Channels refresh interval matches 60s.",
     "Retry backoff follows bounded exponential schedule and recovers automatically.",
+    "Metadata requests are same-origin via /api/radio/* and no browser CORS errors are present.",
+    "Stale metadata error text clears after successful metadata refresh.",
     "UI remains square-edged with no rounded corners."
   ],
   "open_questions": []

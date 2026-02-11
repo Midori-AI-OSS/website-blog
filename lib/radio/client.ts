@@ -177,26 +177,26 @@ export async function fetchHealth(baseUrl: string = MIDORIAI_RADIO_BASE_URL): Pr
 }
 
 export async function fetchChannels(
-  baseUrl: string = MIDORIAI_RADIO_BASE_URL
+  baseUrl: string = ''
 ): Promise<ChannelsPayload> {
-  return requestRadioData<ChannelsPayload>('/radio/v1/channels', {}, baseUrl);
+  return requestRadioData<ChannelsPayload>('/api/radio/channels', {}, baseUrl);
 }
 
 export async function fetchCurrent(
   channel: string | null | undefined,
-  baseUrl: string = MIDORIAI_RADIO_BASE_URL
+  baseUrl: string = ''
 ): Promise<CurrentPayload> {
-  return requestRadioData<CurrentPayload>(buildChannelQueryPath('/radio/v1/current', channel), {}, baseUrl);
+  return requestRadioData<CurrentPayload>(buildChannelQueryPath('/api/radio/current', channel), {}, baseUrl);
 }
 
 export async function fetchArt(
   channel: string | null | undefined,
-  baseUrl: string = MIDORIAI_RADIO_BASE_URL
+  baseUrl: string = ''
 ): Promise<ArtPayload> {
-  const art = await requestRadioData<ArtPayload>(buildChannelQueryPath('/radio/v1/art', channel), {}, baseUrl);
+  const art = await requestRadioData<ArtPayload>(buildChannelQueryPath('/api/radio/art', channel), {}, baseUrl);
   return {
     ...art,
-    art_url: toAbsoluteRadioUrl(art.art_url, baseUrl),
+    art_url: toAbsoluteRadioUrl(art.art_url, MIDORIAI_RADIO_BASE_URL),
   };
 }
 
