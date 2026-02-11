@@ -1,50 +1,131 @@
 {
   "title": "Website-Blog Radio Player Handoff",
-  "status": "almost_ready_for_agent",
+  "spec_ref": "midoriai.radio.webserver.v1",
+  "status": "locked_for_implementation",
   "priority": "high",
-  "objective": "Add a desktop-only floating radio control in the bottom-right that expands on hover and provides title + controls.",
+  "last_locked_utc": "2026-02-11T17:05:00Z",
+  "objective": "Ship a desktop-only floating radio control in the bottom-right that expands on hover and provides title + controls with contract-verified playback behavior.",
+  "base_url": "https://radio.midori-ai.xyz",
+  "api_version": "radio.v1",
   "locked_decisions": [
     "Use strict Midori AI naming (midoriai for keys/identifiers).",
     "Desktop only: requires hover + fine pointer and viewport width >= 1024px.",
-    "Collapsed control by default, remember open state between sessions.",
+    "Collapsed control by default, remember sticky-open state between sessions.",
     "Playback persists site-wide from root layout mount.",
     "Use https://radio.midori-ai.xyz as the radio base URL.",
-    "Control order: play/stop first, then volume slider with grabber, then q setting.",
-    "q values: low, medium, high (segmented control).",
-    "Default volume: 50 and persist volume + selected quality.",
-    "Quality change while playing applies on next play/reconnect start.",
-    "Show title and controls only.",
+    "Control order is fixed: play/stop, volume slider, quality segmented control, channel selector.",
+    "q values are fixed: low, medium, high.",
+    "Default volume is 50% and volume + selected quality + selected channel persist locally.",
+    "Quality changes while playing apply on next reconnect/start only.",
+    "Channel defaults to all and persists locally.",
+    "Changing channel while playing reconnects immediately to the selected channel stream.",
     "No rounded corners in radio widget UI.",
-    "Backdrop is a strong glass blur; lazy load target image and preload placeholder fallback.",
-    "Backdrop selection is deterministic from title + track_id hash.",
-    "Image inventory comes from API route that scans public/blog."
+    "Backdrop uses strong glass blur with placeholder-first lazy loading.",
+    "Artwork fallback chain is server art first, deterministic local fallback second.",
+    "Image inventory comes from /api/radio-images scanning public/blog recursively.",
+    "When desktop gate no longer matches, playback continues while widget is hidden."
   ],
-  "implementation_checklist": [
-    "Create a new client radio widget component and mount it in app/layout.tsx.",
-    "Implement desktop eligibility gate based on media query and min-width.",
-    "Add hover-expand interaction with persistent sticky-open preference.",
-    "Add HTMLAudioElement playback for stream endpoint /radio/v1/stream?q={quality}.",
-    "Add play/stop control, volume slider, and segmented q control in required order.",
-    "Poll /radio/v1/current for title and track_id updates.",
-    "Add API route /api/radio-images to enumerate usable images under public/blog.",
-    "Use deterministic hash(title + track_id) to choose backdrop image.",
-    "Preload placeholder and lazy-load selected backdrop image.",
-    "Add a TODO comment where artwork/channel API integration should replace fallback logic."
+  "contract_endpoints": {
+    "health": "/health",
+    "channels": "/radio/v1/channels",
+    "current": "/radio/v1/current?channel=<name>",
+    "art_metadata": "/radio/v1/art?channel=<name>",
+    "art_image": "/radio/v1/art/image?channel=<name>",
+    "stream": "/radio/v1/stream?channel=<name>&q=<low|medium|high>"
+  },
+  "runtime_policies": {
+    "channel_normalization": "trim + lowercase; missing/empty -> all",
+    "quality_normalization": "lowercase; missing/invalid local value -> medium",
+    "polling": {
+      "current_and_art_active_ms": 5000,
+      "current_and_art_idle_ms": 20000,
+      "channels_refresh_ms": 60000
+    },
+    "retry_backoff_ms": [
+      1000,
+      2000,
+      4000,
+      8000,
+      16000,
+      30000
+    ],
+    "stream_error_policy": "Auto-retry with bounded exponential backoff; keep manual play available.",
+    "art_fallback_policy": "Use /radio/v1/art response first; if unavailable/unloadable use deterministic /api/radio-images fallback.",
+    "cache_control_expectation": {
+      "metadata": "no-store, no-cache, must-revalidate",
+      "stream": "public, max-age=30"
+    }
+  },
+  "implementation_files": [
+    {
+      "path": "lib/radio/contract.ts",
+      "purpose": "Typed API contract, normalization helpers, URL helpers"
+    },
+    {
+      "path": "lib/radio/client.ts",
+      "purpose": "Envelope-aware HTTP client, typed endpoint functions, stream URL builder"
+    },
+    {
+      "path": "lib/radio/state.ts",
+      "purpose": "Local storage state persistence with midoriai.radio.* keys"
+    },
+    {
+      "path": "lib/radio/images.ts",
+      "purpose": "Deterministic fallback hash + image preload helpers"
+    },
+    {
+      "path": "app/api/radio-images/route.ts",
+      "purpose": "Enumerate blog image inventory for deterministic fallback"
+    },
+    {
+      "path": "components/radio/RadioWidget.tsx",
+      "purpose": "Floating desktop widget UI + playback + polling + fallback logic"
+    },
+    {
+      "path": "app/layout.tsx",
+      "purpose": "Mount radio widget globally for site-wide persistence"
+    }
   ],
-  "questions_for_followup": [
-    "What exact radio API fields and endpoint will expose per-track artwork?",
-    "What exact channels API shape should the website player consume?",
-    "When channel changes, should stream restart immediately or defer to boundary?",
-    "Should channel selection persist per browser session or account identity?",
-    "Are any extra headers/auth required for future art/channels endpoints?"
+  "local_storage_keys": [
+    "midoriai.radio.open",
+    "midoriai.radio.volume",
+    "midoriai.radio.quality",
+    "midoriai.radio.channel",
+    "midoriai.radio.last_error"
+  ],
+  "resolved_questions": [
+    {
+      "question": "What exact radio API fields and endpoint expose per-track artwork?",
+      "answer": "Use GET /radio/v1/art?channel=<name> for metadata and /radio/v1/art/image?channel=<name> for image bytes."
+    },
+    {
+      "question": "What exact channels API shape should the website player consume?",
+      "answer": "Use GET /radio/v1/channels with envelope data.channels[] entries of { name, track_count }."
+    },
+    {
+      "question": "When channel changes, should stream restart immediately or defer?",
+      "answer": "Restart immediately in the client by reconnecting stream with the new channel query."
+    },
+    {
+      "question": "Should channel selection persist per session or account?",
+      "answer": "Persist locally per browser using localStorage only. No server-side account/session state."
+    },
+    {
+      "question": "Are any extra headers/auth required for art/channels endpoints?",
+      "answer": "No auth headers are required; endpoints are public read-only."
+    }
   ],
   "verification_checklist": [
-    "Widget appears only on desktop contexts that meet both gate conditions.",
-    "Collapsed/expanded state survives reloads.",
-    "Play/stop actions work and stream URL includes selected q value.",
-    "Volume and quality persistence works across reloads.",
+    "Widget appears only on desktop contexts that match gate conditions.",
+    "Collapsed/expanded sticky-open state survives reload.",
+    "Play/stop actions work and stream URL always includes selected channel and q.",
+    "Volume, quality, and channel persistence work across reloads.",
     "Title refreshes from /radio/v1/current.",
-    "Backdrop loads placeholder first and then deterministic blur image.",
+    "Artwork refreshes from /radio/v1/art and falls back to deterministic /api/radio-images when needed.",
+    "Metadata polling intervals match 5s active and 20s idle.",
+    "Channels refresh interval matches 60s.",
+    "Retry backoff follows bounded exponential schedule and recovers automatically.",
     "UI remains square-edged with no rounded corners."
-  ]
+  ],
+  "open_questions": []
 }
