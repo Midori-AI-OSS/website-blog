@@ -9,6 +9,7 @@ import Select from '@mui/joy/Select';
 import Sheet from '@mui/joy/Sheet';
 import Slider from '@mui/joy/Slider';
 import Stack from '@mui/joy/Stack';
+import Tooltip from '@mui/joy/Tooltip';
 import Typography from '@mui/joy/Typography';
 import { Music, Pin, PinOff, Play, Square } from 'lucide-react';
 import {
@@ -35,6 +36,9 @@ import {
 const PLACEHOLDER_IMAGE = '/blog/placeholder.png';
 const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000, 30000] as const;
 const HOVER_CLOSE_LINGER_MS = 3000;
+const COLLAPSED_SIZE_PX = 56;
+const EXPANDED_WIDTH_PX = 380;
+const EXPANDED_HEIGHT_PX = 336;
 
 type StreamState = 'idle' | 'connecting' | 'playing' | 'retrying' | 'error';
 type BackdropSource = 'placeholder' | 'server' | 'fallback';
@@ -582,12 +586,14 @@ export default function RadioWidget() {
         right: 24,
         bottom: 24,
         zIndex: 1300,
-        width: expanded ? 380 : 56,
-        minHeight: expanded ? 68 : 56,
+        width: expanded ? EXPANDED_WIDTH_PX : COLLAPSED_SIZE_PX,
+        height: expanded ? EXPANDED_HEIGHT_PX : COLLAPSED_SIZE_PX,
         borderRadius: 0,
         overflow: 'hidden',
         borderColor: 'rgba(255,255,255,0.2)',
-        transition: 'width 0.24s ease, box-shadow 0.24s ease, background-color 0.24s ease',
+        transformOrigin: 'bottom right',
+        transition:
+          'width 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.24s ease, background-color 0.24s ease',
         boxShadow: expanded
           ? '0 24px 64px rgba(0, 0, 0, 0.5)'
           : '0 12px 32px rgba(0, 0, 0, 0.35)',
@@ -626,7 +632,7 @@ export default function RadioWidget() {
           sx={{
             position: 'relative',
             p: 1.25,
-            minHeight: 68,
+            height: '100%',
           }}
         >
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ minHeight: 42 }}>
@@ -661,36 +667,42 @@ export default function RadioWidget() {
           </Typography>
 
           <Stack spacing={0.6}>
-            {isAdjustingVolume && (
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                Volume {Math.round(volume * 100)}%
-              </Typography>
-            )}
-            <Slider
-              value={volume}
-              min={0}
-              max={1}
-              step={0.01}
-              onChange={(_, nextValue) => {
-                setIsAdjustingVolume(true);
-                const numeric = Array.isArray(nextValue) ? nextValue[0] : nextValue;
-                if (typeof numeric === 'number') {
-                  setVolume(Math.min(1, Math.max(0, numeric)));
-                }
-              }}
-              onChangeCommitted={() => {
-                setIsAdjustingVolume(false);
-              }}
-              onBlur={() => {
-                setIsAdjustingVolume(false);
-              }}
-              sx={{
-                '--Slider-thumbRadius': '0px',
-                '--Slider-trackSize': '4px',
-                '--Slider-thumbSize': '14px',
-                borderRadius: 0,
-              }}
-            />
+            <Tooltip
+              open={isAdjustingVolume}
+              title={`Volume ${Math.round(volume * 100)}%`}
+              placement="top"
+              variant="soft"
+              arrow
+            >
+              <Slider
+                value={volume}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={(_, nextValue) => {
+                  setIsAdjustingVolume(true);
+                  const numeric = Array.isArray(nextValue) ? nextValue[0] : nextValue;
+                  if (typeof numeric === 'number') {
+                    setVolume(Math.min(1, Math.max(0, numeric)));
+                  }
+                }}
+                onChangeCommitted={() => {
+                  setIsAdjustingVolume(false);
+                }}
+                onBlur={() => {
+                  setIsAdjustingVolume(false);
+                }}
+                onPointerUp={() => {
+                  setIsAdjustingVolume(false);
+                }}
+                sx={{
+                  '--Slider-thumbRadius': '0px',
+                  '--Slider-trackSize': '4px',
+                  '--Slider-thumbSize': '14px',
+                  borderRadius: 0,
+                }}
+              />
+            </Tooltip>
           </Stack>
 
           <Stack spacing={0.6}>
@@ -747,7 +759,16 @@ export default function RadioWidget() {
           )}
 
           {lastError !== null && (
-            <Typography level="body-xs" sx={{ color: '#ffb4b4', fontFamily: 'monospace' }}>
+            <Typography
+              level="body-xs"
+              sx={{
+                color: '#ffb4b4',
+                fontFamily: 'monospace',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {lastError}
             </Typography>
           )}
@@ -767,8 +788,8 @@ export default function RadioWidget() {
         <Box
           sx={{
             position: 'relative',
-            width: 56,
-            height: 56,
+            width: COLLAPSED_SIZE_PX,
+            height: COLLAPSED_SIZE_PX,
             display: 'grid',
             placeItems: 'center',
           }}
