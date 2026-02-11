@@ -4,8 +4,6 @@ import * as React from 'react';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import ButtonGroup from '@mui/joy/ButtonGroup';
-import Option from '@mui/joy/Option';
-import Select from '@mui/joy/Select';
 import Sheet from '@mui/joy/Sheet';
 import Slider from '@mui/joy/Slider';
 import Stack from '@mui/joy/Stack';
@@ -120,6 +118,7 @@ export default function RadioWidget() {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const retryTimerRef = React.useRef<number | null>(null);
   const closeLingerTimerRef = React.useRef<number | null>(null);
+  const reconnectInFlightRef = React.useRef(false);
   const retryAttemptRef = React.useRef(0);
   const reconnectRef = React.useRef<() => Promise<void>>(async () => undefined);
   const playbackDesiredRef = React.useRef(false);
@@ -272,11 +271,16 @@ export default function RadioWidget() {
       return;
     }
 
+    if (reconnectInFlightRef.current) {
+      return;
+    }
+
     const audio = audioRef.current;
     if (audio === null) {
       return;
     }
 
+    reconnectInFlightRef.current = true;
     const attempt = retryAttemptRef.current;
     setStreamState(attempt === 0 ? 'connecting' : 'retrying');
     setStatusText(attempt === 0 ? 'Connecting…' : 'Reconnecting…');
@@ -285,10 +289,11 @@ export default function RadioWidget() {
       const streamUrl = buildStreamUrl({
         channel: channelRef.current,
         quality: qualityRef.current,
-        cacheBust: true,
       });
 
+      audio.pause();
       audio.src = streamUrl;
+      audio.load();
       await audio.play();
     } catch (error) {
       if (error instanceof DOMException && error.name === 'NotAllowedError') {
@@ -296,10 +301,13 @@ export default function RadioWidget() {
         setStatusText('Playback blocked by browser. Press play to retry.');
         setPlaybackDesired(false);
         playbackDesiredRef.current = false;
+        reconnectInFlightRef.current = false;
         return;
       }
 
       scheduleRetry(toErrorMessage(error));
+    } finally {
+      reconnectInFlightRef.current = false;
     }
   }, [scheduleRetry]);
 
@@ -319,6 +327,7 @@ export default function RadioWidget() {
       audio.removeAttribute('src');
       audio.load();
     }
+    reconnectInFlightRef.current = false;
 
     setStreamState('idle');
     setStatusText('Stopped');
@@ -529,7 +538,6 @@ export default function RadioWidget() {
     void reconnectRef.current();
   }, [channel, refreshMetadata, clearRetryTimer, hydrated]);
 
-  const qualityHint = playbackDesired ? 'Quality change applies on next reconnect/start.' : null;
   const fallbackIdentity = `${currentTrack?.title ?? 'unknown'}::${currentTrack?.track_id ?? 'unknown'}`;
   const fallbackImage = React.useMemo(() => {
     const placeholder = imageInventory?.placeholder ?? PLACEHOLDER_IMAGE;
@@ -706,9 +714,22 @@ export default function RadioWidget() {
           </Stack>
 
           <Stack spacing={0.6}>
-            <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-              Quality
-            </Typography>
+            {playbackDesired ? (
+              <Tooltip
+                title="Quality changes apply on next reconnect/start."
+                placement="top-start"
+                variant="soft"
+                arrow
+              >
+                <Typography level="body-xs" sx={{ color: 'text.tertiary', cursor: 'help', width: 'fit-content' }}>
+                  Quality
+                </Typography>
+              </Tooltip>
+            ) : (
+              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+                Quality
+              </Typography>
+            )}
             <ButtonGroup
               size="sm"
               sx={{
@@ -734,29 +755,38 @@ export default function RadioWidget() {
             <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
               Channel
             </Typography>
-            <Select
+            <Box
+              component="select"
               value={channel}
-              size="sm"
-              onChange={(_, value) => {
-                if (typeof value === 'string') {
-                  setChannel(normalizeChannel(value));
-                }
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
+                setChannel(normalizeChannel(event.target.value));
               }}
-              sx={{ borderRadius: 0 }}
+              sx={{
+                borderRadius: 0,
+                width: '100%',
+                height: 34,
+                border: '1px solid rgba(255,255,255,0.22)',
+                background: 'rgba(9, 10, 18, 0.74)',
+                color: 'text.primary',
+                px: 1,
+                fontSize: '0.875rem',
+                outline: 'none',
+                '&:focus': {
+                  borderColor: 'primary.400',
+                },
+                '& option': {
+                  backgroundColor: '#10111a',
+                  color: '#f2f2f4',
+                },
+              }}
             >
               {(channels.length > 0 ? channels : [{ name: 'all', track_count: 0 }]).map((entry) => (
-                <Option key={entry.name} value={entry.name}>
+                <option key={entry.name} value={entry.name}>
                   {entry.name} ({entry.track_count})
-                </Option>
+                </option>
               ))}
-            </Select>
+            </Box>
           </Stack>
-
-          {qualityHint !== null && (
-            <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-              {qualityHint}
-            </Typography>
-          )}
 
           {lastError !== null && (
             <Typography
