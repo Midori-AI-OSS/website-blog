@@ -587,7 +587,7 @@ export default function RadioWidget() {
         borderRadius: 0,
         overflow: 'hidden',
         borderColor: 'rgba(255,255,255,0.2)',
-        transition: 'width 0.24s ease, box-shadow 0.24s ease',
+        transition: 'width 0.24s ease, box-shadow 0.24s ease, background-color 0.24s ease',
         boxShadow: expanded
           ? '0 24px 64px rgba(0, 0, 0, 0.5)'
           : '0 12px 32px rgba(0, 0, 0, 0.35)',
@@ -768,21 +768,19 @@ export default function RadioWidget() {
             placeItems: 'center',
           }}
         >
-          <Button
-            size="sm"
-            variant="soft"
-            color={streamState === 'playing' ? 'success' : 'neutral'}
-            onClick={() => setStickyOpen(true)}
+          <Box
+            component="span"
             sx={{
-              minWidth: 38,
-              width: 38,
-              height: 38,
-              borderRadius: 0,
-              px: 0,
+              width: 24,
+              height: 24,
+              display: 'grid',
+              placeItems: 'center',
+              color: streamState === 'playing' ? '#78e08f' : 'rgba(255,255,255,0.92)',
+              filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.45))',
             }}
           >
             <Music size={16} />
-          </Button>
+          </Box>
         </Box>
       )}
     </Sheet>
