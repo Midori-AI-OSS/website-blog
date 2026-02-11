@@ -129,6 +129,7 @@ export default function RadioWidget() {
   const [closeLingerActive, setCloseLingerActive] = React.useState(false);
   const [stickyOpen, setStickyOpen] = React.useState(false);
   const [volume, setVolume] = React.useState(0.5);
+  const [isAdjustingVolume, setIsAdjustingVolume] = React.useState(false);
   const [quality, setQuality] = React.useState<QualityName>('medium');
   const [channel, setChannel] = React.useState('all');
   const [playbackDesired, setPlaybackDesired] = React.useState(false);
@@ -565,7 +566,6 @@ export default function RadioWidget() {
     };
   }, [preferredServerArtUrl, fallbackImage, imageInventory]);
 
-  const activeChannelLabel = currentTrack?.channel ?? normalizeChannel(channel);
   const expanded = stickyOpen || hovered || closeLingerActive;
 
   if (!desktopEligible) {
@@ -660,24 +660,29 @@ export default function RadioWidget() {
             {currentTrack?.title ?? 'Fetching current track…'}
           </Typography>
 
-          <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
-            {statusText} • channel {activeChannelLabel} • art {backdropSource}
-          </Typography>
-
           <Stack spacing={0.6}>
-            <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-              Volume {Math.round(volume * 100)}%
-            </Typography>
+            {isAdjustingVolume && (
+              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+                Volume {Math.round(volume * 100)}%
+              </Typography>
+            )}
             <Slider
               value={volume}
               min={0}
               max={1}
               step={0.01}
               onChange={(_, nextValue) => {
+                setIsAdjustingVolume(true);
                 const numeric = Array.isArray(nextValue) ? nextValue[0] : nextValue;
                 if (typeof numeric === 'number') {
                   setVolume(Math.min(1, Math.max(0, numeric)));
                 }
+              }}
+              onChangeCommitted={() => {
+                setIsAdjustingVolume(false);
+              }}
+              onBlur={() => {
+                setIsAdjustingVolume(false);
               }}
               sx={{
                 '--Slider-thumbRadius': '0px',
