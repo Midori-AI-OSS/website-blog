@@ -20,7 +20,7 @@ import {
 import type { ArtPayload, ChannelEntry, CurrentPayload, QualityName } from '@/lib/radio/contract';
 import { normalizeChannel, QUALITY_LEVELS } from '@/lib/radio/contract';
 import type { RadioImageInventory } from '@/lib/radio/images';
-import { pickDeterministicImage, preloadImage } from '@/lib/radio/images';
+import { appendTrackCacheKey, pickDeterministicImage, preloadImage } from '@/lib/radio/images';
 import {
   clearRadioLastError,
   loadRadioState,
@@ -545,7 +545,18 @@ export default function RadioWidget() {
     return pickDeterministicImage(pool, fallbackIdentity, placeholder);
   }, [fallbackIdentity, imageInventory]);
 
-  const preferredServerArtUrl = artMetadata?.art_url ?? null;
+  const preferredServerArtUrl = React.useMemo(() => {
+    if (artMetadata?.has_art !== true) {
+      return null;
+    }
+
+    const artUrl = artMetadata.art_url.trim();
+    if (artUrl.length === 0) {
+      return null;
+    }
+
+    return appendTrackCacheKey(artUrl, artMetadata.track_id);
+  }, [artMetadata?.has_art, artMetadata?.art_url, artMetadata?.track_id]);
 
   React.useEffect(() => {
     let active = true;
