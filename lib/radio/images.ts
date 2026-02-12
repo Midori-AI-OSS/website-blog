@@ -30,6 +30,32 @@ export function pickDeterministicImage(
   return images[index] ?? placeholder;
 }
 
+export function appendTrackCacheKey(
+  url: string,
+  trackId: string | null | undefined
+): string {
+  const normalizedTrackId = trackId?.trim();
+  if (!normalizedTrackId) {
+    return url;
+  }
+
+  const hashIndex = url.indexOf('#');
+  const basePart = hashIndex === -1 ? url : url.slice(0, hashIndex);
+  const hashPart = hashIndex === -1 ? '' : url.slice(hashIndex);
+
+  const queryIndex = basePart.indexOf('?');
+  const pathPart = queryIndex === -1 ? basePart : basePart.slice(0, queryIndex);
+  const queryPart = queryIndex === -1 ? '' : basePart.slice(queryIndex + 1);
+
+  const params = new URLSearchParams(queryPart);
+  params.set('midoriai_track', normalizedTrackId);
+
+  const nextQuery = params.toString();
+  return nextQuery.length > 0
+    ? `${pathPart}?${nextQuery}${hashPart}`
+    : `${pathPart}${hashPart}`;
+}
+
 export async function preloadImage(url: string, timeoutMs: number = 7000): Promise<boolean> {
   if (typeof window === 'undefined') {
     return false;
