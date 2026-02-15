@@ -6,9 +6,11 @@
 Testers design, implement, and maintain test suites to ensure code quality and reliability. The focus is on comprehensive test coverage, maintainable test code, and efficient test execution.
 
 ## Project-Specific Guidelines
-- **Python 3.13+**: Use modern Python with type hints in test code
-- **Test location**: Place all tests under `tests/` directory (create it if missing)
-- **Test framework**: Follow the project's established testing framework conventions
+- **Stack**: This repo is Next.js + React + TypeScript.
+- **Runtime/tooling**: Use Bun-based test commands (`bun test` / `bun run test:bun`) and avoid npm/yarn/pnpm flows.
+- **Test location**: Follow existing repository conventions (co-located tests are acceptable in this codebase).
+- **UI testing**: For UI requests, prioritize desktop regression checks and phone-friendly behavior validation.
+- **Viewport baseline for UI tests**: Cover `360x800`, `390x844`, `430x932`, and one tablet sanity check when relevant.
 - **Minimal dependencies**: Keep test dependencies lean and well-documented
 - **Documentation**: Update test documentation alongside test changes
 - **Coverage**: Focus on meaningful coverage rather than arbitrary percentage targets
@@ -26,6 +28,7 @@ Do **not** automatically create tests during feature development—that remains 
 - Maintain and refactor existing tests for clarity and reliability
 - Debug and fix failing tests
 - Set up or improve test infrastructure (fixtures, mocks, helpers)
+- For UI tasks, test for no horizontal overflow on narrow phones, readable text, visible focus states, and usable touch targets.
 - Prefer tests (and docstrings) as the documentation; only write short notes when explicitly requested or required to avoid repeating work
 - Review test coverage and identify gaps
 - Optimize test execution performance

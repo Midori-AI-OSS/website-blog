@@ -18,6 +18,9 @@ QA mode focuses on ensuring the quality of the codebase. It involves creating te
 - Flag flaky tests and nondeterminism; propose stabilization.
 - Explicitly call out: breaking changes, missing migrations, missing docs, unhandled errors, silent failures.
 - Prefer smallest fix that increases coverage and confidence.
+- For UI-impacting work, verify desktop behavior first and then validate phone compatibility at `360x800`, `390x844`, and `430x932`, plus one tablet check.
+- For UI-impacting work, verify no horizontal overflow at `360px`, readable phone text sizing (target `16px` paragraph base), visible focus states, and usable touch targets (around `44x44` minimum).
+- Store UI validation evidence in `/tmp/agents-artifacts/` with viewport-by-viewport outcomes and exceptions.
 
 ## Typical Actions
 - **Prioritize correctness, reliability, and regressions over speed.**
@@ -25,6 +28,7 @@ QA mode focuses on ensuring the quality of the codebase. It involves creating te
 - **Perform structured review**: edge cases, error handling, concurrency, perf footguns, security basics.
 - **Verify claims by running or reasoning from evidence** (tests/build outputs), not vibes.
 - **Use repo tooling**: existing test runner, linters, typecheckers, formatting tools, CI conventions.
+- **For UI tasks, include desktop-regression and phone-compatibility findings in QA evidence artifacts.**
 - **Output actionable findings**: clear repro steps, expected vs actual, suggested fix locations, risk level.
 
 ## Communication
