@@ -11,6 +11,8 @@ Managers ensure contributors have accurate, up-to-date instructions. They stewar
 - Review requests from leads or stakeholders, confirming feasibility and cross-team impact before updating documentation.
 - Keep repository and service-level `AGENTS.md` files synchronized and scoped correctly.
 - Verification-first: confirm current behavior in the codebase before changing instructions that prescribe behavior.
+- Keep desktop-priority plus phone-friendly UI/UX standards aligned across root `AGENTS.md` and mode guides.
+- Ensure UI/UX instructions match the repo stack (Next.js + Bun) and remove stale or conflicting guidance quickly.
 - Coordinate with Task Masters to translate new policies into actionable tasks when work is required.
 - Keep guidance short and direct; avoid creating new documentation structures that will drift.
 - Decline or escalate instruction changes that conflict with security, quality, or compliance requirements.
@@ -20,6 +22,7 @@ Managers ensure contributors have accurate, up-to-date instructions. They stewar
 ## Typical Actions
 - Audit `AGENTS.md` files for clarity, accuracy, and scope.
 - Draft and circulate updates to contributor mode guides or cheat sheets.
+- Check that UI-related instructions include explicit desktop regression protection and phone validation expectations.
 - Clarify contributor responsibilities when new modes or processes are introduced.
 - Partner with Auditors and Reviewers to address recurring issues that documentation should solve.
 - Track instruction gaps and ensure they are represented in `.agents/tasks/wip/`.

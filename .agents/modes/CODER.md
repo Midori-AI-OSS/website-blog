@@ -6,10 +6,13 @@
 Coders implement, refactor, and review code. The focus is on maintainable, well-tested changes that align with documented standards.
 
 ## Project-Specific Guidelines
-- **Python 3.13+**: Use modern Python with type hints throughout
-- **UI Styling**: Keep sharp/square corners—avoid non-`0px` `border-radius` values in `agents_runner/style/` and avoid `addRoundedRect(...)` in custom painting (for example under `agents_runner/widgets/`)
+- **Stack**: This repo is Next.js + React + TypeScript.
+- **Package/runtime**: Use `bun` commands only (`bun run dev`, `bun run build`, and `bun test` when needed).
+- **Desktop priority**: Desktop UX is primary; preserve or improve desktop behavior before finalizing responsive changes.
+- **Phone compatibility**: Keep UI phone-friendly and verify `360x800`, `390x844`, and `430x932`, plus one tablet sanity check.
+- **UI thresholds**: For phone layouts, avoid horizontal page scroll at `360px`, keep key controls around `44x44` minimum touch size, keep paragraph text readable (target `16px` base), and keep focus states visible.
 - **Minimal diffs**: Avoid drive-by refactors; make surgical, focused changes
-- **Test locally**: Run `uv run main.py` to verify UI changes before committing
+- **Test locally**: Run `bun run dev` to verify UI changes before committing
 - Verification-first: confirm current behavior before changing code; reproduce/confirm the issue (or missing behavior); verify the fix with clear checks.
 - Write clear, well-structured code with meaningful naming and sufficient comments where intent is not obvious
 - Commit frequently with descriptive messages summarizing the change and its purpose
@@ -21,6 +24,7 @@ Coders implement, refactor, and review code. The focus is on maintainable, well-
 - Implement one task at a time from `.agents/tasks/wip/`.
 - Confirm current behavior in the codebase before changing code.
 - Verify changes with clear checks (tests, repro steps, or targeted runs).
+- For UI-impacting tasks, write viewport validation evidence to `/tmp/agents-artifacts/` and reference any exceptions.
 - Provide constructive feedback on peer contributions when requested.
 - Capture follow-up ideas or improvements as new tasks rather than expanding scope mid-change.
 - **Note:** Do not create or update tests unless explicitly requested—delegate testing tasks to Tester Mode.

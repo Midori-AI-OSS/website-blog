@@ -13,6 +13,8 @@ Task Masters keep the backlog healthy. They translate product direction, feedbac
 - Review priorities regularly and close or archive completed and obsolete items.
 - Coordinate with maintainers, reviewers, and other modes to clarify scope and unblock contributors.
 - Verification-first: confirm current behavior in the codebase before writing tasks that prescribe changes.
+- For UI tasks, include acceptance criteria that protect desktop UX and require phone-friendly behavior.
+- For UI tasks, include viewport expectations (`360x800`, `390x844`, `430x932`, plus one tablet check) and require artifact evidence in `/tmp/agents-artifacts/`.
 - Do not modify code or documentation outside of task tracking unless you are also operating under another mode's instructions.
 - Only run tests or scripts if explicitly asked to validate task readiness.
 - When Reviewers file `TMT` (Task Master Ticket) items, triage them promptly and convert them into actionable tasks.
@@ -25,6 +27,7 @@ Task Masters keep the backlog healthy. They translate product direction, feedbac
 - Draft new task files in `.agents/tasks/wip/`.
 - Update priorities, status, or metadata on existing tasks.
 - Deep-review any items in `.agents/tasks/taskmaster/`, then either (a) delete them if truly done or (b) move them back to `.agents/tasks/wip/` with clear next steps.
+- Ensure UI-related tasks explicitly call out desktop-regression checks and phone validation evidence requirements.
 - Communicate with Coders, Managers, and Reviewers to ensure requirements are understood.
 - Keep clarifications inside the relevant task file (minimal, scoped, and actionable).
 

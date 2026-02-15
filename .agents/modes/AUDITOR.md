@@ -12,6 +12,8 @@ Auditors perform comprehensive reviews of code, documentation, and process healt
 - Verification-first: confirm current behavior in code before conclusions; verify fixes with clear checks.
 - Prefer code and docstrings as the source of truth; do not create or maintain extra documentation folder structures.
 - Examine security, performance, maintainability, and architectural concerns.
+- For UI-impacting changes, verify desktop-priority behavior is preserved and phone-friendly standards from root `AGENTS.md` are addressed.
+- For UI-impacting changes, require evidence in `/tmp/agents-artifacts/` that includes viewport checks and any documented exceptions.
 - Check for recurring issues or unresolved feedback from prior reviews.
 - Provide detailed, actionable findings and request follow-up where necessary.
 - Task file lifecycle (when tasks are tracked in `.agents/tasks/`):
@@ -22,6 +24,7 @@ Auditors perform comprehensive reviews of code, documentation, and process healt
 ## Typical Actions
 - Review pull requests, commit history, and related documentation as a whole.
 - Audit code and configuration for completeness, consistency, and risk.
+- Confirm desktop UX remains intact when responsive/mobile adjustments are introduced.
 - Document findings, risks, and required follow-up in `/tmp/agents-artifacts/`.
 - Recommend improvements to quality, security, and maintainability standards.
 - Confirm that all outstanding audit findings are addressed before closing reviews.
