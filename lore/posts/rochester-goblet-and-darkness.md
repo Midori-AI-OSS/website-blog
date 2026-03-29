@@ -7,8 +7,6 @@ author: Luna Midori
 date: 2026-03-29
 ---
 
-# Rochester, after the goblet
-
 The Wondrous Goblet sits on its own floating disc over Rochester, which is exactly the sort of theatrical nonsense this city likes. Nothing here is allowed to be merely useful. Even the tavern has to hover.
 
 They passed the goblet around the table and made a game of it. Visions of the past. Lovely. I watched other people drink from it first and stare off like they had left their bodies somewhere near the rafters. By the time it came to me, I already hated the idea.
