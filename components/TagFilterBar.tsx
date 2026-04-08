@@ -14,12 +14,15 @@ export type TagFilterBarProps = {
 };
 
 export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: TagFilterBarProps) => {
-  // Hide the entire bar when there are no tags
+  const mobileTagPanelId = React.useId();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
   if (allTags.length === 0) {
     return null;
   }
 
   const isAllSelected = selectedTags.length === 0;
+
   const buttonBaseSx = {
     minHeight: 44,
     borderRadius: 0,
@@ -41,8 +44,33 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
     },
   } as const;
 
+  const getTagButtonSx = (isSelected: boolean, fullWidth: boolean) => ({
+    ...buttonBaseSx,
+    width: fullWidth ? '100%' : { xs: '100%', sm: 'auto' },
+    bgcolor: isSelected ? 'primary.softBg' : 'transparent',
+    borderColor: isSelected ? 'primary.400' : 'rgba(255,255,255,0.16)',
+    color: isSelected ? 'primary.100' : 'text.primary',
+    fontWeight: isSelected ? 700 : 600,
+    '&:hover': {
+      bgcolor: isSelected ? 'primary.softHoverBg' : 'background.level2',
+      borderColor: isSelected ? 'primary.500' : 'primary.400',
+    },
+  });
+
+  const menuLineSx = {
+    display: 'block',
+    width: '100%',
+    height: '2px',
+    borderRadius: 999,
+    bgcolor: 'currentColor',
+  } as const;
+
   const handleAllClick = () => {
     onChange([]);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen((current) => !current);
   };
 
   const handleTagClick = (tag: string) => {
@@ -69,11 +97,102 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
         borderColor: 'rgba(255,255,255,0.12)',
         bgcolor: 'background.level1',
       }}
-    >
+      >
       <Stack spacing={1}>
         <Box
           sx={{
-            display: 'flex',
+            display: { xs: 'flex', sm: 'none' },
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            minWidth: 0,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
+              minWidth: 0,
+            }}
+          >
+            <Typography
+              level="body-xs"
+              sx={{
+                color: 'text.tertiary',
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Filters:
+            </Typography>
+
+            <Button
+              type="button"
+              variant={isAllSelected ? 'soft' : 'outlined'}
+              color={isAllSelected ? 'primary' : 'neutral'}
+              onClick={handleAllClick}
+              aria-pressed={isAllSelected}
+              aria-label="Show all tags"
+              sx={{
+                ...getTagButtonSx(isAllSelected, false),
+                px: 1.25,
+                whiteSpace: 'nowrap',
+                width: 'auto',
+                flex: '0 0 auto',
+              }}
+            >
+              All
+            </Button>
+          </Box>
+
+          <Button
+            type="button"
+            variant={isMobileMenuOpen ? 'soft' : 'outlined'}
+            color="neutral"
+            onClick={toggleMobileMenu}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls={mobileTagPanelId}
+            aria-label={isMobileMenuOpen ? 'Hide tags' : 'Show tags'}
+            sx={{
+              minWidth: 44,
+              minHeight: 44,
+              px: 0,
+              borderRadius: 0,
+              borderColor: 'rgba(255,255,255,0.16)',
+              bgcolor: isMobileMenuOpen ? 'neutral.softBg' : 'transparent',
+              color: 'text.primary',
+              flex: '0 0 auto',
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.500',
+                outlineOffset: '2px',
+              },
+            }}
+          >
+            <Box
+              aria-hidden="true"
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: '3px',
+                width: 18,
+                height: 18,
+              }}
+            >
+              <Box sx={menuLineSx} />
+              <Box sx={menuLineSx} />
+              <Box sx={menuLineSx} />
+            </Box>
+          </Button>
+        </Box>
+
+        <Box
+          sx={{
+            display: { xs: 'none', sm: 'flex' },
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 1,
@@ -95,8 +214,7 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
 
         <Box
           sx={{
-            display: { xs: 'grid', sm: 'flex' },
-            gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))' },
+            display: { xs: 'none', sm: 'flex' },
             flexWrap: 'wrap',
             gap: 0.75,
           }}
@@ -109,15 +227,7 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
             aria-pressed={isAllSelected}
             aria-label="Show all tags"
             sx={{
-              ...buttonBaseSx,
-              width: { xs: '100%', sm: 'auto' },
-              bgcolor: isAllSelected ? 'primary.softBg' : 'transparent',
-              borderColor: isAllSelected ? 'primary.400' : 'rgba(255,255,255,0.16)',
-              color: isAllSelected ? 'primary.100' : 'text.primary',
-              '&:hover': {
-                bgcolor: isAllSelected ? 'primary.softHoverBg' : 'background.level2',
-                borderColor: isAllSelected ? 'primary.500' : 'primary.400',
-              },
+              ...getTagButtonSx(isAllSelected, false),
             }}
           >
             All
@@ -135,16 +245,7 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
                 aria-pressed={isSelected}
                 aria-label={`Filter by ${tag}`}
                 sx={{
-                  ...buttonBaseSx,
-                  width: { xs: '100%', sm: 'auto' },
-                  bgcolor: isSelected ? 'primary.softBg' : 'transparent',
-                  borderColor: isSelected ? 'primary.400' : 'rgba(255,255,255,0.16)',
-                  color: isSelected ? 'primary.100' : 'text.primary',
-                  fontWeight: isSelected ? 700 : 600,
-                  '&:hover': {
-                    bgcolor: isSelected ? 'primary.softHoverBg' : 'background.level2',
-                    borderColor: isSelected ? 'primary.500' : 'primary.400',
-                  },
+                  ...getTagButtonSx(isSelected, false),
                 }}
               >
                 {tag}
@@ -152,6 +253,40 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
             );
           })}
         </Box>
+
+        {isMobileMenuOpen ? (
+          <Box
+            id={mobileTagPanelId}
+            sx={{
+              display: { xs: 'grid', sm: 'none' },
+              gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))' },
+              gap: 0.75,
+              maxHeight: '50vh',
+              overflowY: 'auto',
+              pr: 0.25,
+            }}
+          >
+            {allTags.map((tag) => {
+              const isSelected = selectedTags.includes(tag);
+              return (
+                <Button
+                  key={tag}
+                  type="button"
+                  variant={isSelected ? 'soft' : 'outlined'}
+                  color={isSelected ? 'primary' : 'neutral'}
+                  onClick={() => handleTagClick(tag)}
+                  aria-pressed={isSelected}
+                  aria-label={`Filter by ${tag}`}
+                  sx={{
+                    ...getTagButtonSx(isSelected, true),
+                  }}
+                >
+                  {tag}
+                </Button>
+              );
+            })}
+          </Box>
+        ) : null}
       </Stack>
     </Sheet>
   );
