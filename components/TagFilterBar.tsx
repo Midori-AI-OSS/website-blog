@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import Box from '@mui/joy/Box';
-import Chip from '@mui/joy/Chip';
+import Button from '@mui/joy/Button';
+import Sheet from '@mui/joy/Sheet';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 
@@ -19,6 +20,22 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
   }
 
   const isAllSelected = selectedTags.length === 0;
+  const buttonBaseSx = {
+    minHeight: 44,
+    borderRadius: 0,
+    px: { xs: 1.25, sm: 1.5 },
+    textTransform: 'none',
+    fontWeight: 600,
+    letterSpacing: '0.01em',
+    whiteSpace: 'nowrap',
+    flex: '0 0 auto',
+    transition: 'border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease',
+    '&:focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'primary.500',
+      outlineOffset: '2px',
+    },
+  } as const;
 
   const handleAllClick = () => {
     onChange([]);
@@ -34,101 +51,101 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent, callback: () => void) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      callback();
-    }
-  };
-
   return (
-    <Box
+    <Sheet
       role="region"
       aria-label="Tag filter"
+      variant="outlined"
       sx={{
         width: '100%',
-        py: 2,
+        mb: 2.5,
+        p: { xs: 1.25, sm: 1.5 },
+        borderRadius: 0,
+        borderColor: 'rgba(255,255,255,0.12)',
+        bgcolor: 'background.level1',
       }}
     >
-      <Stack
-        direction="row"
-        spacing={1.5}
-        alignItems="center"
-        sx={{
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        <Typography
-          level="body-sm"
+      <Stack spacing={1}>
+        <Box
           sx={{
-            color: 'text.secondary',
-            fontWeight: 500,
-            mr: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            flexWrap: 'wrap',
           }}
         >
-          Filter:
-        </Typography>
+          <Typography
+            level="body-xs"
+            sx={{
+              color: 'text.tertiary',
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Filters
+          </Typography>
+        </Box>
 
-        <Chip
-          variant={isAllSelected ? 'solid' : 'outlined'}
-          color={isAllSelected ? 'primary' : 'neutral'}
-          size="sm"
-          onClick={handleAllClick}
-          onKeyDown={(e) => handleKeyDown(e, handleAllClick)}
-          tabIndex={0}
-          role="button"
-          aria-pressed={isAllSelected}
-          aria-label="Show all tags"
+        <Box
           sx={{
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            '&:hover': {
-              bgcolor: isAllSelected ? 'primary.600' : 'neutral.softHoverBg',
-            },
-            '&:focus-visible': {
-              outline: '2px solid',
-              outlineColor: 'primary.500',
-              outlineOffset: '2px',
-            },
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 0.75,
           }}
         >
-          All
-        </Chip>
+          <Button
+            type="button"
+            variant={isAllSelected ? 'soft' : 'outlined'}
+            color={isAllSelected ? 'primary' : 'neutral'}
+            onClick={handleAllClick}
+            aria-pressed={isAllSelected}
+            aria-label="Show all tags"
+            sx={{
+              ...buttonBaseSx,
+              bgcolor: isAllSelected ? 'primary.softBg' : 'transparent',
+              borderColor: isAllSelected ? 'primary.400' : 'rgba(255,255,255,0.16)',
+              color: isAllSelected ? 'primary.100' : 'text.primary',
+              '&:hover': {
+                bgcolor: isAllSelected ? 'primary.softHoverBg' : 'background.level2',
+                borderColor: isAllSelected ? 'primary.500' : 'primary.400',
+              },
+            }}
+          >
+            All
+          </Button>
 
-        {allTags.map((tag) => {
-          const isSelected = selectedTags.includes(tag);
-          return (
-            <Chip
-              key={tag}
-              variant={isSelected ? 'soft' : 'outlined'}
-              color={isSelected ? 'primary' : 'neutral'}
-              size="sm"
-              onClick={() => handleTagClick(tag)}
-              onKeyDown={(e) => handleKeyDown(e, () => handleTagClick(tag))}
-              tabIndex={0}
-              role="button"
-              aria-pressed={isSelected}
-              aria-label={`Filter by ${tag}`}
-              sx={{
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                '&:hover': {
-                  bgcolor: isSelected ? 'primary.softHoverBg' : 'neutral.softHoverBg',
-                },
-                '&:focus-visible': {
-                  outline: '2px solid',
-                  outlineColor: 'primary.500',
-                  outlineOffset: '2px',
-                },
-              }}
-            >
-              {tag}
-            </Chip>
-          );
-        })}
+          {allTags.map((tag) => {
+            const isSelected = selectedTags.includes(tag);
+            return (
+              <Button
+                key={tag}
+                type="button"
+                variant={isSelected ? 'soft' : 'outlined'}
+                color={isSelected ? 'primary' : 'neutral'}
+                onClick={() => handleTagClick(tag)}
+                aria-pressed={isSelected}
+                aria-label={`Filter by ${tag}`}
+                sx={{
+                  ...buttonBaseSx,
+                  bgcolor: isSelected ? 'primary.softBg' : 'transparent',
+                  borderColor: isSelected ? 'primary.400' : 'rgba(255,255,255,0.16)',
+                  color: isSelected ? 'primary.100' : 'text.primary',
+                  fontWeight: isSelected ? 700 : 600,
+                  '&:hover': {
+                    bgcolor: isSelected ? 'primary.softHoverBg' : 'background.level2',
+                    borderColor: isSelected ? 'primary.500' : 'primary.400',
+                  },
+                }}
+              >
+                {tag}
+              </Button>
+            );
+          })}
+        </Box>
       </Stack>
-    </Box>
+    </Sheet>
   );
 });
 
