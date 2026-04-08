@@ -63,7 +63,8 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
       sx={{
         width: '100%',
         mb: 2.5,
-        p: { xs: 1, sm: 1.5 },
+        px: { xs: 0, sm: 1.5 },
+        py: { xs: 1, sm: 1.5 },
         borderRadius: 0,
         borderColor: 'rgba(255,255,255,0.12)',
         bgcolor: 'background.level1',

@@ -84,24 +84,25 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
           outlineColor: 'primary.500',
         },
       }}
-    >
+      >
       {decorativeImageUrl && (
         <Box
           aria-hidden
           sx={{
             position: 'absolute',
             top: 0,
-            right: 0,
+            right: { xs: 0, sm: 0 },
             bottom: 0,
-            width: { xs: 0, sm: '45%', md: '45%' },
+            left: { xs: 0, sm: 'auto' },
+            width: { xs: '100%', sm: '45%', md: '45%' },
             pointerEvents: 'none',
             backgroundImage: `url(${decorativeImageUrl})`,
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
-            backgroundPosition: 'right 35%',
-            opacity: 0.42,
+            backgroundPosition: { xs: 'center', sm: 'right 35%' },
+            opacity: { xs: 0.52, sm: 0.42 },
             filter: 'blur(1.6px) saturate(1.08) contrast(1.06)',
-            clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 35% 100%)',
+            clipPath: { xs: 'none', sm: 'polygon(20% 0, 100% 0, 100% 100%, 35% 100%)' },
             '&::after': {
               content: '""',
               position: 'absolute',
@@ -112,7 +113,12 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
           }}
         />
       )}
-      <CardContent>
+      <CardContent
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={{ xs: 1.5, sm: 2 }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={{ xs: 0.75, sm: 2 }} sx={{ mb: 0.5 }}>
