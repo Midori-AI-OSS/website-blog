@@ -4,7 +4,7 @@ summary: "Luna’s first-person account of Echo’s drive-by, a violet entity, a
 tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-memoria-crystalli.png
 author: Luna Midori
-date: 2026-04-6
+date: 2026-04-06
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a

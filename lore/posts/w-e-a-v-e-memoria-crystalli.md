@@ -4,7 +4,7 @@ summary: "W.E.A.V.E.'s system log of a church clone attack, from dispersed bismu
 tags: [lore, "real-moments", "weave"]
 cover_image: /lore/w-e-a-v-e-memoria-crystalli.png
 author: Luna Midori
-date: 2026-04-6
+date: 2026-04-06
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a

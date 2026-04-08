@@ -4,7 +4,7 @@ summary: "Leo’s first-person account of answering Luna’s call, carrying the 
 tags: [lore, "real-moments", "leo"]
 cover_image: /lore/leo-memoria-crystalli.png
 author: Luna Midori
-date: 2026-04-6
+date: 2026-04-06
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
