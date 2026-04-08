@@ -23,11 +23,15 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
   const buttonBaseSx = {
     minHeight: 44,
     borderRadius: 0,
-    px: { xs: 1.25, sm: 1.5 },
+    px: { xs: 1, sm: 1.5 },
+    py: { xs: 1, sm: 0.75 },
     textTransform: 'none',
     fontWeight: 600,
     letterSpacing: '0.01em',
-    whiteSpace: 'nowrap',
+    whiteSpace: { xs: 'normal', sm: 'nowrap' },
+    textAlign: 'center',
+    justifyContent: 'center',
+    lineHeight: 1.15,
     flex: '0 0 auto',
     transition: 'border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease',
     '&:focus-visible': {
@@ -59,7 +63,7 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
       sx={{
         width: '100%',
         mb: 2.5,
-        p: { xs: 1.25, sm: 1.5 },
+        p: { xs: 1, sm: 1.5 },
         borderRadius: 0,
         borderColor: 'rgba(255,255,255,0.12)',
         bgcolor: 'background.level1',
@@ -90,7 +94,8 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
 
         <Box
           sx={{
-            display: 'flex',
+            display: { xs: 'grid', sm: 'flex' },
+            gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))' },
             flexWrap: 'wrap',
             gap: 0.75,
           }}
@@ -104,6 +109,7 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
             aria-label="Show all tags"
             sx={{
               ...buttonBaseSx,
+              width: { xs: '100%', sm: 'auto' },
               bgcolor: isAllSelected ? 'primary.softBg' : 'transparent',
               borderColor: isAllSelected ? 'primary.400' : 'rgba(255,255,255,0.16)',
               color: isAllSelected ? 'primary.100' : 'text.primary',
@@ -129,6 +135,7 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
                 aria-label={`Filter by ${tag}`}
                 sx={{
                   ...buttonBaseSx,
+                  width: { xs: '100%', sm: 'auto' },
                   bgcolor: isSelected ? 'primary.softBg' : 'transparent',
                   borderColor: isSelected ? 'primary.400' : 'rgba(255,255,255,0.16)',
                   color: isSelected ? 'primary.100' : 'text.primary',

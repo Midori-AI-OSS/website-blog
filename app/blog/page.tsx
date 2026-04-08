@@ -17,7 +17,7 @@ export default async function BlogPage() {
   const { posts: initialPosts } = paginatePosts(allPosts, 0, 10);
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '80%', mx: 'auto', px: { xs: 2, sm: 4 }, py: 8 }}>
+    <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: '100%', md: '90%', lg: '80%' }, mx: 'auto', px: { xs: 2, sm: 4 }, py: { xs: 4, sm: 8 } }}>
       <Typography level="h1" sx={{ mb: 4, fontSize: { xs: '2rem', md: '2.5rem' } }}>
         Blog
       </Typography>

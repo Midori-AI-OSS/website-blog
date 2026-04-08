@@ -27,7 +27,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
     };
 
     return (
-        <Box sx={{ p: { xs: 2, md: 4 }, width: '100%', maxWidth: '65%', mx: 'auto' }}>
+        <Box sx={{ p: { xs: 2, md: 4 }, width: '100%', maxWidth: { xs: '100%', sm: '100%', md: '80%', lg: '65%' }, mx: 'auto' }}>
 
             {/* Hero Section */}
             <Stack spacing={4} sx={{ mb: 8, alignItems: 'center', textAlign: 'center' }}>
@@ -61,13 +61,19 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
 
             {/* Recent Updates (Blog) */}
             <Box sx={{ mb: 8 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: 'flex-start', sm: 'center' }}
+                    sx={{ mb: 3, gap: 1 }}
+                >
                     <Typography level="h2">Recent Updates (Blog)</Typography>
                     <Button
                         component={Link}
                         href="/blog"
                         variant="plain"
                         endDecorator={<ArrowRight size={16} />}
+                        sx={{ minHeight: 44, px: 0 }}
                     >
                         View all
                     </Button>
@@ -92,13 +98,19 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
 
             {/* Recent Updates (Lore) */}
             <Box sx={{ mb: 8 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: 'flex-start', sm: 'center' }}
+                    sx={{ mb: 3, gap: 1 }}
+                >
                     <Typography level="h2">Recent Updates (Lore)</Typography>
                     <Button
                         component={Link}
                         href="/lore"
                         variant="plain"
                         endDecorator={<ArrowRight size={16} />}
+                        sx={{ minHeight: 44, px: 0 }}
                     >
                         View all
                     </Button>
@@ -218,6 +230,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
                             variant="outlined"
                             color="neutral"
                             startDecorator={social.icon}
+                            sx={{ minHeight: 44, width: { xs: '100%', sm: 'auto' } }}
                         >
                             {social.name}
                         </Button>

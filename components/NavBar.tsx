@@ -24,7 +24,7 @@ export default function NavBar() {
         <Box
             component="nav"
             sx={{
-                p: 2,
+                p: { xs: 1.25, sm: 2 },
                 borderBottom: '1px solid',
                 borderColor: 'background.level2',
                 bgcolor: 'background.surface',
@@ -39,12 +39,14 @@ export default function NavBar() {
                     '--List-padding': '0px',
                     '--List-gap': '8px',
                     display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    width: '100%',
                 }}
             >
                 {items.map((item) => {
                     const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
                     return (
-                        <ListItem key={item.path} role="none">
+                        <ListItem key={item.path} role="none" sx={{ width: { xs: '100%', sm: 'auto' } }}>
                             <ListItemButton
                                 role="menuitem"
                                 component={Link}
@@ -56,8 +58,10 @@ export default function NavBar() {
                                     border: '1px solid',
                                     borderColor: isActive ? 'primary.500' : 'transparent',
                                     borderRadius: 0,
-                                    minHeight: 40,
-                                    px: 2,
+                                    minHeight: 44,
+                                    width: { xs: '100%', sm: 'auto' },
+                                    justifyContent: { xs: 'flex-start', sm: 'center' },
+                                    px: { xs: 1.5, sm: 2 },
                                     transition: 'all 0.2s',
                                     '&:hover': {
                                         bgcolor: 'rgba(255,255,255,0.08)',
