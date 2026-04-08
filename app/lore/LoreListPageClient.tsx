@@ -7,6 +7,29 @@ import { BlogList } from '@/components/blog/BlogList';
 import { TagFilterBar } from '@/components/TagFilterBar';
 import type { ParsedPost } from '@/lib/blog/parser';
 
+const LORE_TAG = 'lore';
+
+function isLoreTag(tag: string): boolean {
+  return tag.trim().toLowerCase() === LORE_TAG;
+}
+
+function stripLoreTagFromPost(post: ParsedPost): ParsedPost {
+  const tags = post.metadata.tags ?? [];
+  const filteredTags = tags.filter((tag) => !isLoreTag(tag));
+
+  if (filteredTags.length === tags.length) {
+    return post;
+  }
+
+  return {
+    ...post,
+    metadata: {
+      ...post.metadata,
+      tags: filteredTags,
+    },
+  };
+}
+
 interface LoreListPageClientProps {
   initialPosts: ParsedPost[];
   allPosts: ParsedPost[];
@@ -15,6 +38,16 @@ interface LoreListPageClientProps {
 export function LoreListPageClient({ initialPosts, allPosts }: LoreListPageClientProps) {
   const router = useRouter();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const visibleInitialPosts = useMemo(
+    () => initialPosts.map(stripLoreTagFromPost),
+    [initialPosts]
+  );
+
+  const visibleAllPosts = useMemo(
+    () => allPosts.map(stripLoreTagFromPost),
+    [allPosts]
+  );
 
   const handlePostClick = (post: ParsedPost) => {
     const slug = post.filename.replace('.md', '');
@@ -25,7 +58,7 @@ export function LoreListPageClient({ initialPosts, allPosts }: LoreListPageClien
   const allTags = useMemo(() => {
     const tagMap = new Map<string, string>();
     
-    allPosts.forEach(post => {
+    visibleAllPosts.forEach(post => {
       const tags = post.metadata.tags || [];
       tags.forEach(tag => {
         const trimmed = tag.trim();
@@ -41,25 +74,29 @@ export function LoreListPageClient({ initialPosts, allPosts }: LoreListPageClien
     return Array.from(tagMap.values()).sort((a, b) => 
       a.toLowerCase().localeCompare(b.toLowerCase())
     );
-  }, [allPosts]);
+  }, [visibleAllPosts]);
 
   // Filter posts based on selected tags (match ANY selected tag)
   const filteredAllPosts = useMemo(() => {
     if (selectedTags.length === 0) {
-      return allPosts;
+      return visibleAllPosts;
     }
     
     const selectedLowerCase = selectedTags.map(tag => tag.toLowerCase());
-    return allPosts.filter(post => {
+    return visibleAllPosts.filter(post => {
       const postTags = (post.metadata.tags || []).map(tag => tag.toLowerCase());
       return selectedLowerCase.some(selectedTag => postTags.includes(selectedTag));
     });
-  }, [allPosts, selectedTags]);
+  }, [selectedTags, visibleAllPosts]);
 
   // Compute initial posts from filtered set
   const filteredInitialPosts = useMemo(() => {
+    if (selectedTags.length === 0) {
+      return visibleInitialPosts;
+    }
+
     return filteredAllPosts.slice(0, 10);
-  }, [filteredAllPosts]);
+  }, [filteredAllPosts, selectedTags, visibleInitialPosts]);
 
   return (
     <>
