@@ -289,10 +289,10 @@ export function PostView({
       component="article"
       sx={{
         width: '100%',
-        maxWidth: '80%', // Slightly wider for better reading experience
+        maxWidth: { xs: '100%', sm: '100%', md: '90%', lg: '80%' },
         mx: 'auto',
-        px: { xs: 2, sm: 4 },
-        py: { xs: 3, sm: 6 },
+        px: { xs: 0, sm: 4 },
+        py: { xs: 2.5, sm: 6 },
         '@keyframes shimmer': {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' }
@@ -311,8 +311,11 @@ export function PostView({
         onClick={onClose}
         startDecorator={<ArrowLeft size={18} />}
         sx={{
-          mb: 4,
+          mb: { xs: 2, sm: 4 },
           alignSelf: 'flex-start',
+          minHeight: 44,
+          width: { xs: '100%', sm: 'auto' },
+          justifyContent: 'flex-start',
           '&:hover': {
             backgroundColor: 'background.level1',
           },
@@ -329,7 +332,7 @@ export function PostView({
           backdropFilter: 'blur(12px)',
           border: '1px solid',
           borderColor: 'rgba(255,255,255,0.08)',
-          p: { xs: 3, md: 6 },
+          p: { xs: 1.5, md: 6 },
           // Removed borderRadius to keep sharp edges
         }}
       >
@@ -374,13 +377,13 @@ export function PostView({
 
           {/* Metadata Row */}
           <Stack
-            direction="row"
-            spacing={3}
-            alignItems="center"
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={{ xs: 1, sm: 3 }}
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
             sx={{
               color: 'text.secondary',
               fontSize: '0.95rem',
-              mb: 4
+              mb: { xs: 3, sm: 4 }
             }}
           >
             <Stack direction="row" spacing={1} alignItems="center">
@@ -402,20 +405,20 @@ export function PostView({
 
           {/* Cover Image - Ambient Mode */}
           {post.metadata.cover_image && (
-            <Card
-              variant="plain"
-              sx={{
-                p: 0,
-                mb: 4,
-                overflow: 'hidden',
-                borderRadius: 0,
-                border: 'none', // Remove outline
-                bgcolor: 'black',
-                position: 'relative',
-                minHeight: '300px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+              <Card
+                variant="plain"
+                sx={{
+                  p: 0,
+                  mb: 4,
+                  overflow: 'hidden',
+                  borderRadius: 0,
+                  border: 'none', // Remove outline
+                  bgcolor: 'black',
+                  position: 'relative',
+                  minHeight: { xs: '220px', sm: '300px' },
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 // Explicitly remove any hover effects
                 '--Card-padding': '0px',
                 '&:hover, &:focus-within': {
@@ -471,20 +474,20 @@ export function PostView({
                     setCoverIsLandscape(img.naturalWidth > img.naturalHeight);
                   }
                 }}
-	                sx={{
-	                  position: 'relative',
-	                  zIndex: 1,
-	                  objectFit: 'contain',
-	                  maxWidth:
-	                    coverIsLandscape === true
-	                      ? '60%'
-	                      : '35%',
-	                  height: 'auto',
-	                  maxHeight: '15%',
-	                  width: 'auto',
-	                  display: 'block',
-	                  // Remove previous shadow as the vignette handles the transition
-	                }}
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  objectFit: 'contain',
+                  maxWidth: {
+                    xs: coverIsLandscape === true ? '84%' : '72%',
+                    sm: coverIsLandscape === true ? '60%' : '35%',
+                  },
+                  height: 'auto',
+                  maxHeight: { xs: '22%', sm: '15%' },
+                  width: 'auto',
+                  display: 'block',
+                  // Remove previous shadow as the vignette handles the transition
+                }}
               />
             </Card>
           )}
@@ -496,11 +499,11 @@ export function PostView({
               sx={{
                 fontStyle: 'italic',
                 color: 'text.secondary',
-                fontSize: '1.25rem',
+                fontSize: { xs: '1.05rem', sm: '1.25rem' },
                 lineHeight: 1.6,
                 borderLeft: '4px solid',
                 borderColor: 'primary.500',
-                pl: 3,
+                pl: { xs: 2, sm: 3 },
                 py: 1,
               }}
             >
@@ -515,7 +518,7 @@ export function PostView({
         <Box
           sx={{
             // Typography settings for readability
-            fontSize: '1.125rem', // 18px
+            fontSize: { xs: '1rem', sm: '1.125rem' }, // 16px on phones, 18px up
             lineHeight: 1.8,
             color: 'text.secondary', // Slightly softer than pure white
 
@@ -525,13 +528,13 @@ export function PostView({
               scrollMarginTop: '100px',
             },
             '& h1': {
-              fontSize: '2.5rem',
+              fontSize: { xs: '2rem', sm: '2.5rem' },
               fontWeight: 700,
               mt: 6,
               mb: 3,
             },
             '& h2': {
-              fontSize: '2rem',
+              fontSize: { xs: '1.6rem', sm: '2rem' },
               fontWeight: 700,
               mt: 5,
               mb: 2.5,
@@ -540,14 +543,14 @@ export function PostView({
               borderColor: 'rgba(139, 92, 246, 0.2)', // Subtle purple line
             },
             '& h3': {
-              fontSize: '1.5rem',
+              fontSize: { xs: '1.25rem', sm: '1.5rem' },
               fontWeight: 600,
               mt: 4,
               mb: 2,
               color: 'primary.300',
             },
             '& h4': {
-              fontSize: '1.25rem',
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
               fontWeight: 600,
               mt: 3,
               mb: 1.5,
@@ -560,9 +563,9 @@ export function PostView({
               fontWeight: 600,
             },
             '& ul, & ol': {
-              ml: 3,
+              ml: { xs: 2, sm: 3 },
               mb: 3,
-              pl: 1,
+              pl: { xs: 0.5, sm: 1 },
               '& li': {
                 mb: 1,
                 pl: 1,
@@ -696,7 +699,9 @@ export function PostView({
           mt: 8,
           textAlign: 'center',
           display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'center',
+          alignItems: { xs: 'stretch', sm: 'center' },
           gap: 2,
         }}
       >
@@ -704,6 +709,7 @@ export function PostView({
           variant="soft"
           color="primary"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          sx={{ minHeight: 44, width: { xs: '100%', sm: 'auto' } }}
         >
           Back to top
         </Button>
@@ -712,6 +718,7 @@ export function PostView({
           color="neutral"
           onClick={onClose}
           aria-label={backButtonAriaLabel}
+          sx={{ minHeight: 44, width: { xs: '100%', sm: 'auto' } }}
         >
           {backButtonLabel}
         </Button>

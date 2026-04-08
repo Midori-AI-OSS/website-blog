@@ -84,24 +84,27 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
           outlineColor: 'primary.500',
         },
       }}
-    >
+      >
       {decorativeImageUrl && (
         <Box
           aria-hidden
           sx={{
             position: 'absolute',
             top: 0,
-            right: 0,
+            right: { xs: 0, sm: 0 },
             bottom: 0,
-            width: { xs: 0, sm: '45%', md: '45%' },
+            left: { xs: 0, sm: 'auto' },
+            width: { xs: '100%', sm: '45%', md: '45%' },
             pointerEvents: 'none',
             backgroundImage: `url(${decorativeImageUrl})`,
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
-            backgroundPosition: 'right 35%',
-            opacity: 0.42,
+            transform: { xs: 'scale(0.97)', sm: 'scale(0.96)' },
+            transformOrigin: { xs: 'center center', sm: 'center right' },
+            backgroundPosition: { xs: 'center 18%', sm: 'right 22%' },
+            opacity: { xs: 0.52, sm: 0.42 },
             filter: 'blur(1.6px) saturate(1.08) contrast(1.06)',
-            clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 35% 100%)',
+            clipPath: { xs: 'none', sm: 'polygon(20% 0, 100% 0, 100% 100%, 35% 100%)' },
             '&::after': {
               content: '""',
               position: 'absolute',
@@ -112,11 +115,16 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
           }}
         />
       )}
-      <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-          <Box sx={{ flex: 1 }}>
-            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 0.5 }}>
-              <Typography level="title-md" sx={{ color: 'text.primary', fontWeight: 600 }}>
+      <CardContent
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={{ xs: 1.5, sm: 2 }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={{ xs: 0.75, sm: 2 }} sx={{ mb: 0.5 }}>
+              <Typography level="title-md" sx={{ color: 'text.primary', fontWeight: 600, lineHeight: 1.2 }}>
                 {metadata.title}
               </Typography>
               {metadata.tags && metadata.tags.length > 0 && (
@@ -132,7 +140,7 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
               )}
             </Stack>
 
-            <Stack direction="row" spacing={3} alignItems="center" sx={{ color: 'text.secondary' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1, sm: 3 }} alignItems={{ xs: 'flex-start', sm: 'center' }} sx={{ color: 'text.secondary' }}>
               <Stack direction="row" spacing={0.5} alignItems="center">
                 <Calendar size={14} />
                 <Typography level="body-xs" textColor="inherit">
@@ -155,7 +163,7 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
             </Stack>
           </Box>
 
-          <Box sx={{ color: 'text.tertiary' }}>
+          <Box sx={{ color: 'text.tertiary', display: { xs: 'none', sm: 'block' } }}>
             <ArrowRight size={18} />
           </Box>
         </Stack>
