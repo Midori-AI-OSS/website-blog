@@ -291,7 +291,7 @@ export function PostView({
         width: '100%',
         maxWidth: { xs: '100%', sm: '100%', md: '90%', lg: '80%' },
         mx: 'auto',
-        px: { xs: 2, sm: 4 },
+        px: { xs: 0, sm: 4 },
         py: { xs: 2.5, sm: 6 },
         '@keyframes shimmer': {
           '0%': { backgroundPosition: '-1000px 0' },
@@ -332,7 +332,7 @@ export function PostView({
           backdropFilter: 'blur(12px)',
           border: '1px solid',
           borderColor: 'rgba(255,255,255,0.08)',
-          p: { xs: 3, md: 6 },
+          p: { xs: 1.5, md: 6 },
           // Removed borderRadius to keep sharp edges
         }}
       >

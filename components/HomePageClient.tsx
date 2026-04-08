@@ -27,7 +27,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
     };
 
     return (
-        <Box sx={{ p: { xs: 2, md: 4 }, width: '100%', maxWidth: { xs: '100%', sm: '100%', md: '80%', lg: '65%' }, mx: 'auto' }}>
+        <Box sx={{ px: { xs: 0, md: 4 }, py: { xs: 2, md: 4 }, width: '100%', maxWidth: { xs: '100%', sm: '100%', md: '80%', lg: '65%' }, mx: 'auto' }}>
 
             {/* Hero Section */}
             <Stack spacing={4} sx={{ mb: 8, alignItems: 'center', textAlign: 'center' }}>
