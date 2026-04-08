@@ -102,6 +102,8 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
         <Box
           sx={{
             display: { xs: 'flex', sm: 'none' },
+            width: '100%',
+            px: { xs: 1, sm: 0 },
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 1,

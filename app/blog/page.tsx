@@ -18,12 +18,14 @@ export default async function BlogPage() {
 
   return (
     <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: '100%', md: '90%', lg: '80%' }, mx: 'auto', px: { xs: 0, sm: 4 }, py: { xs: 4, sm: 8 } }}>
-      <Typography level="h1" sx={{ mb: 4, fontSize: { xs: '2rem', md: '2.5rem' } }}>
-        Blog
-      </Typography>
-      <Typography level="body-lg" sx={{ mb: 4, color: 'text.secondary' }}>
-        Engineering updates, project notes, and what we’ve learned while building.
-      </Typography>
+      <Box sx={{ px: { xs: 1, sm: 0 } }}>
+        <Typography level="h1" sx={{ mb: 4, fontSize: { xs: '2rem', md: '2.5rem' } }}>
+          Blog
+        </Typography>
+        <Typography level="body-lg" sx={{ mb: 4, color: 'text.secondary' }}>
+          Engineering updates, project notes, and what we’ve learned while building.
+        </Typography>
+      </Box>
       <BlogPageClient
         initialPosts={initialPosts}
         allPosts={allPosts}
