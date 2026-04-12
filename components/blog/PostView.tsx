@@ -33,6 +33,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
 import type { ParsedPost } from '../../lib/blog/parser';
+import { TtsPlayer } from './TtsPlayer';
 
 /**
  * Props for PostView component
@@ -46,6 +47,8 @@ export interface PostViewProps {
   backButtonLabel?: string;
   /** Back button aria-label (defaults to blog wording) */
   backButtonAriaLabel?: string;
+  /** Post type for TTS and contextual behavior */
+  postType?: 'blog' | 'lore';
 }
 
 /**
@@ -248,6 +251,7 @@ export function PostView({
   onClose,
   backButtonLabel = 'Back to posts',
   backButtonAriaLabel = 'Back to blog list',
+  postType = 'blog',
 }: PostViewProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
 
@@ -401,6 +405,17 @@ export function PostView({
                 </Typography>
               </Stack>
             )}
+
+            <TtsPlayer
+              slug={post.filename.replace(/\.md$/, '')}
+              type={postType}
+              text={post.content}
+              coverImageUrl={
+                post.metadata.cover_image
+                  ? transformImageUrl(post.metadata.cover_image)
+                  : undefined
+              }
+            />
           </Stack>
 
           {/* Cover Image - Ambient Mode */}
