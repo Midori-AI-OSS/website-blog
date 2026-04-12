@@ -18,6 +18,7 @@ export function LorePostPageClient({ post }: LorePostPageClientProps) {
       onClose={() => router.push('/lore')}
       backButtonLabel="Back to lore"
       backButtonAriaLabel="Back to lore list"
+      postType="lore"
     />
   );
 }

@@ -34,3 +34,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .DS_Store
 .next/
 next-env.d.ts
+
+# Python / uv
+tts/.venv/
+tts/.python-version
+tts/uv.lock
+tts/__pycache__/
+tts/*.pyc

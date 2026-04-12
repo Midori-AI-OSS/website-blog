@@ -33,6 +33,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
 import type { ParsedPost } from '../../lib/blog/parser';
+import { TtsPlayer } from './TtsPlayer';
 
 /**
  * Props for PostView component
@@ -46,6 +47,8 @@ export interface PostViewProps {
   backButtonLabel?: string;
   /** Back button aria-label (defaults to blog wording) */
   backButtonAriaLabel?: string;
+  /** Post type for TTS and contextual behavior */
+  postType?: 'blog' | 'lore';
 }
 
 /**
@@ -248,6 +251,7 @@ export function PostView({
   onClose,
   backButtonLabel = 'Back to posts',
   backButtonAriaLabel = 'Back to blog list',
+  postType = 'blog',
 }: PostViewProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
 
@@ -377,13 +381,13 @@ export function PostView({
 
           {/* Metadata Row */}
           <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={{ xs: 1, sm: 3 }}
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            direction="row"
+            spacing={3}
+            alignItems="center"
             sx={{
               color: 'text.secondary',
               fontSize: '0.95rem',
-              mb: { xs: 3, sm: 4 }
+              mb: { xs: 3, sm: 4 },
             }}
           >
             <Stack direction="row" spacing={1} alignItems="center">
@@ -491,6 +495,20 @@ export function PostView({
               />
             </Card>
           )}
+
+          {/* TTS Player - full width under cover image */}
+          <Box sx={{ mb: 4 }}>
+            <TtsPlayer
+              slug={post.filename.replace(/\.md$/, '')}
+              type={postType}
+              text={post.content}
+              coverImageUrl={
+                post.metadata.cover_image
+                  ? transformImageUrl(post.metadata.cover_image)
+                  : undefined
+              }
+            />
+          </Box>
 
           {/* Summary */}
           {post.metadata.summary && (
