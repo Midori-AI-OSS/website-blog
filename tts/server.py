@@ -154,7 +154,9 @@ async def generate(req: GenerateRequest):
             chunks = []
             try:
                 queue.put_nowait(_wav_header(SAMPLE_RATE, 1, 16, STREAMING_DATA_SIZE))
-                for _, ps, _ in pipeline(cleaned, voice=VOICE, speed=1):
+                for _, ps, _ in pipeline(
+                    cleaned, voice=VOICE, speed=1, split_pattern=r"\n+"
+                ):
                     ref_s = voice_pack[len(ps) - 1]
                     audio = model(ps, ref_s, 1)
                     np_audio = audio.numpy()
