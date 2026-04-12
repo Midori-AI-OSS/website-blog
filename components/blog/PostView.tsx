@@ -380,12 +380,11 @@ export function PostView({
           </Typography>
 
           {/* Metadata Row */}
-          <Box
+          <Stack
+            direction="row"
+            spacing={3}
+            alignItems="center"
             sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              gap: 1,
               color: 'text.secondary',
               fontSize: '0.95rem',
               mb: { xs: 3, sm: 4 },
@@ -406,20 +405,7 @@ export function PostView({
                 </Typography>
               </Stack>
             )}
-
-            <Box sx={{ ml: 'auto' }}>
-              <TtsPlayer
-                slug={post.filename.replace(/\.md$/, '')}
-                type={postType}
-                text={post.content}
-                coverImageUrl={
-                  post.metadata.cover_image
-                    ? transformImageUrl(post.metadata.cover_image)
-                    : undefined
-                }
-              />
-            </Box>
-          </Box>
+          </Stack>
 
           {/* Cover Image - Ambient Mode */}
           {post.metadata.cover_image && (
@@ -509,6 +495,20 @@ export function PostView({
               />
             </Card>
           )}
+
+          {/* TTS Player - full width under cover image */}
+          <Box sx={{ mb: 4 }}>
+            <TtsPlayer
+              slug={post.filename.replace(/\.md$/, '')}
+              type={postType}
+              text={post.content}
+              coverImageUrl={
+                post.metadata.cover_image
+                  ? transformImageUrl(post.metadata.cover_image)
+                  : undefined
+              }
+            />
+          </Box>
 
           {/* Summary */}
           {post.metadata.summary && (

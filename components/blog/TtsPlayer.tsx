@@ -42,6 +42,56 @@ function rgbToHex(r: number, g: number, b: number): string {
   );
 }
 
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  const rn = r / 255, gn = g / 255, bn = b / 255;
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+    else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+    else h = ((rn - gn) / d + 4) / 6;
+  }
+
+  return [h, s, l];
+}
+
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  if (s === 0) {
+    const v = Math.round(l * 255);
+    return [v, v, v];
+  }
+
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  return [
+    Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
+    Math.round(hue2rgb(p, q, h) * 255),
+    Math.round(hue2rgb(p, q, h - 1 / 3) * 255),
+  ];
+}
+
+function ensureMinLuminance(hex: string, minL = 0.55, maxS = 0.65): string {
+  const [r, g, b] = hexToRgb(hex);
+  let [h, s, l] = rgbToHsl(r, g, b);
+  if (l < minL) l = minL;
+  if (s > maxS) s = maxS;
+  const [rr, gg, bb] = hslToRgb(h, s, l);
+  return rgbToHex(rr, gg, bb);
+}
+
 function colorDistance(
   a: [number, number, number],
   b: [number, number, number]
@@ -54,9 +104,9 @@ function colorDistance(
 function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
   return new Promise((resolve) => {
     const fallback: ExtractedColors = {
-      primary: '#8b5cf6',
-      secondary: '#a78bfa',
-      tertiary: '#7c3aed',
+      primary: ensureMinLuminance('#8b5cf6'),
+      secondary: ensureMinLuminance('#a78bfa'),
+      tertiary: ensureMinLuminance('#7c3aed'),
     };
 
     const img = new Image();
@@ -90,7 +140,7 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
           const a = pixels[i + 3] ?? 0;
           if (a < 128) continue;
           if (r > 230 && g > 230 && b > 230) continue;
-          if (r < 25 && g < 25 && b < 25) continue;
+          if (r < 50 && g < 50 && b < 50) continue;
 
           const key = `${r},${g},${b}`;
           const existing = colorMap.get(key);
@@ -130,9 +180,9 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
         }
 
         resolve({
-          primary: rgbToHex(picked[0]!.r, picked[0]!.g, picked[0]!.b),
-          secondary: rgbToHex(picked[1]!.r, picked[1]!.g, picked[1]!.b),
-          tertiary: rgbToHex(picked[2]!.r, picked[2]!.g, picked[2]!.b),
+          primary: ensureMinLuminance(rgbToHex(picked[0]!.r, picked[0]!.g, picked[0]!.b)),
+          secondary: ensureMinLuminance(rgbToHex(picked[1]!.r, picked[1]!.g, picked[1]!.b)),
+          tertiary: ensureMinLuminance(rgbToHex(picked[2]!.r, picked[2]!.g, picked[2]!.b)),
         });
       } catch {
         resolve(fallback);
@@ -157,9 +207,9 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [colors, setColors] = useState<ExtractedColors>({
-    primary: '#8b5cf6',
-    secondary: '#a78bfa',
-    tertiary: '#7c3aed',
+    primary: ensureMinLuminance('#8b5cf6'),
+    secondary: ensureMinLuminance('#a78bfa'),
+    tertiary: ensureMinLuminance('#7c3aed'),
   });
   const [colorsLoaded, setColorsLoaded] = useState(false);
 
@@ -305,167 +355,148 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
     [colors]
   );
 
+  const isVisible = (target: TtsState) => state === target;
+  const transitionSx = {
+    transition: 'opacity 0.35s ease, transform 0.35s ease',
+  };
+
   return (
     <Box
       sx={{
+        width: '100%',
+        position: 'relative',
         '@keyframes tts-traveling-pulse': {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(400%)' },
         },
-        width: { xs: '100%', sm: 'auto' },
-        minWidth: { sm: 200 },
-        maxWidth: { sm: 320 },
       }}
     >
-      {/* Not generated: Listen button */}
-      {state === 'not_generated' && (
-        <IconButton
-          onClick={handleGenerate}
-          variant="outlined"
-          size="sm"
-          sx={{
-            borderRadius: 0,
+      {/* Not generated: full-width Listen button */}
+      <Box
+        onClick={handleGenerate}
+        role="button"
+        tabIndex={0}
+        aria-label="Generate audio for this post"
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleGenerate();
+          }
+        }}
+        sx={{
+          ...transitionSx,
+          opacity: isVisible('not_generated') ? 1 : 0,
+          transform: isVisible('not_generated') ? 'translateY(0)' : 'translateY(-8px)',
+          pointerEvents: isVisible('not_generated') ? 'auto' : 'none',
+          position: isVisible('not_generated') ? 'relative' : 'absolute',
+          width: '100%',
+          height: 36,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 0.75,
+          borderRadius: 0,
+          border: '1px solid',
+          borderColor: `${colors.primary}50`,
+          bgcolor: `${colors.primary}10`,
+          cursor: 'pointer',
+          color: colors.primary,
+          '&:hover': {
+            bgcolor: `${colors.primary}20`,
             borderColor: colors.primary,
-            color: colors.primary,
-            bgcolor: 'transparent',
-            px: 1.5,
-            gap: 0.5,
-            '&:hover': {
-              bgcolor: `${colors.primary}18`,
-              borderColor: colors.primary,
-            },
-            '&:focus-visible': {
-              outline: `2px solid ${colors.primary}`,
-              outlineOffset: 2,
-            },
-            minHeight: 32,
-          }}
-          aria-label="Generate audio for this post"
-        >
-          <Headphones size={14} />
-          <Typography level="body-xs" sx={{ color: 'inherit', fontWeight: 600 }}>
-            Listen
-          </Typography>
-        </IconButton>
-      )}
+          },
+          '&:focus-visible': {
+            outline: `2px solid ${colors.primary}`,
+            outlineOffset: 2,
+          },
+        }}
+      >
+        <Headphones size={16} />
+        <Typography level="body-sm" sx={{ color: 'inherit', fontWeight: 600 }}>
+          Listen
+        </Typography>
+      </Box>
 
       {/* Generating: traveling pulse bar */}
-      {state === 'generating' && (
+      <Box
+        sx={{
+          ...transitionSx,
+          opacity: isVisible('generating') ? 1 : 0,
+          transform: isVisible('generating') ? 'translateY(0)' : 'translateY(-8px)',
+          pointerEvents: isVisible('generating') ? 'auto' : 'none',
+          position: isVisible('generating') ? 'relative' : 'absolute',
+          width: '100%',
+          height: 36,
+          borderRadius: 0,
+          bgcolor: 'rgba(255,255,255,0.08)',
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: `${colors.primary}40`,
+        }}
+        role="progressbar"
+        aria-label="Generating audio"
+      >
         <Box
           sx={{
-            width: '100%',
-            height: 28,
-            borderRadius: 0,
-            bgcolor: 'rgba(255,255,255,0.08)',
-            position: 'relative',
-            overflow: 'hidden',
-            border: '1px solid',
-            borderColor: `${colors.primary}40`,
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: '25%',
+            background: gradientBg,
+            animation: 'tts-traveling-pulse 1.8s ease-in-out infinite',
           }}
-          role="progressbar"
-          aria-label="Generating audio"
-        >
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: 0,
-              width: '25%',
-              background: gradientBg,
-              animation: 'tts-traveling-pulse 1.8s ease-in-out infinite',
-            }}
-          />
-          <Typography
-            level="body-xs"
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'text.primary',
-              fontWeight: 600,
-              fontSize: '0.7rem',
-              zIndex: 1,
-            }}
-          >
-            Generating...
-          </Typography>
-        </Box>
-      )}
-
-      {/* Ready: playback controls */}
-      {state === 'ready' && (
-        <Stack
-          direction="row"
-          spacing={0}
-          alignItems="center"
+        />
+        <Typography
+          level="body-xs"
           sx={{
-            width: '100%',
-            height: 28,
-            borderRadius: 0,
-            border: '1px solid',
-            borderColor: `${colors.primary}40`,
-            bgcolor: 'rgba(255,255,255,0.05)',
-            overflow: 'hidden',
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'text.primary',
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            zIndex: 1,
           }}
         >
-          {/* Play / Pause / Stop buttons */}
-          <Stack direction="row" spacing={0} sx={{ flexShrink: 0 }}>
-            {playback === 'playing' ? (
-              <IconButton
-                onClick={handlePause}
-                size="sm"
-                variant="plain"
-                aria-label="Pause"
-                sx={{
-                  borderRadius: 0,
-                  width: 28,
-                  height: 28,
-                  minHeight: 28,
-                  color: colors.primary,
-                  '&:hover': { bgcolor: `${colors.primary}18` },
-                  '&:focus-visible': {
-                    outline: `2px solid ${colors.primary}`,
-                    outlineOffset: -2,
-                  },
-                }}
-              >
-                <Pause size={13} />
-              </IconButton>
-            ) : (
-              <IconButton
-                onClick={handlePlay}
-                size="sm"
-                variant="plain"
-                aria-label="Play"
-                sx={{
-                  borderRadius: 0,
-                  width: 28,
-                  height: 28,
-                  minHeight: 28,
-                  color: colors.primary,
-                  '&:hover': { bgcolor: `${colors.primary}18` },
-                  '&:focus-visible': {
-                    outline: `2px solid ${colors.primary}`,
-                    outlineOffset: -2,
-                  },
-                }}
-              >
-                <Play size={13} />
-              </IconButton>
-            )}
+          Generating audio...
+        </Typography>
+      </Box>
+
+      {/* Ready: full-width playback controls */}
+      <Stack
+        direction="row"
+        spacing={0}
+        alignItems="center"
+        sx={{
+          ...transitionSx,
+          opacity: isVisible('ready') ? 1 : 0,
+          transform: isVisible('ready') ? 'translateY(0)' : 'translateY(8px)',
+          pointerEvents: isVisible('ready') ? 'auto' : 'none',
+          position: isVisible('ready') ? 'relative' : 'absolute',
+          width: '100%',
+          height: 36,
+          borderRadius: 0,
+          border: '1px solid',
+          borderColor: `${colors.primary}40`,
+          bgcolor: 'rgba(255,255,255,0.05)',
+          overflow: 'hidden',
+        }}
+      >
+        <Stack direction="row" spacing={0} sx={{ flexShrink: 0 }}>
+          {playback === 'playing' ? (
             <IconButton
-              onClick={handleStop}
+              onClick={handlePause}
               size="sm"
               variant="plain"
-              aria-label="Stop"
+              aria-label="Pause"
               sx={{
                 borderRadius: 0,
-                width: 28,
-                height: 28,
-                minHeight: 28,
+                width: 36,
+                height: 36,
+                minHeight: 36,
                 color: colors.primary,
                 '&:hover': { bgcolor: `${colors.primary}18` },
                 '&:focus-visible': {
@@ -474,75 +505,113 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
                 },
               }}
             >
-              <Square size={11} />
+              <Pause size={15} />
             </IconButton>
-          </Stack>
+          ) : (
+            <IconButton
+              onClick={handlePlay}
+              size="sm"
+              variant="plain"
+              aria-label="Play"
+              sx={{
+                borderRadius: 0,
+                width: 36,
+                height: 36,
+                minHeight: 36,
+                color: colors.primary,
+                '&:hover': { bgcolor: `${colors.primary}18` },
+                '&:focus-visible': {
+                  outline: `2px solid ${colors.primary}`,
+                  outlineOffset: -2,
+                },
+              }}
+            >
+              <Play size={15} />
+            </IconButton>
+          )}
+          <IconButton
+            onClick={handleStop}
+            size="sm"
+            variant="plain"
+            aria-label="Stop"
+            sx={{
+              borderRadius: 0,
+              width: 36,
+              height: 36,
+              minHeight: 36,
+              color: colors.primary,
+              '&:hover': { bgcolor: `${colors.primary}18` },
+              '&:focus-visible': {
+                outline: `2px solid ${colors.primary}`,
+                outlineOffset: -2,
+              },
+            }}
+          >
+            <Square size={12} />
+          </IconButton>
+        </Stack>
 
-          {/* Progress bar */}
+        <Box
+          sx={{
+            flex: 1,
+            height: '100%',
+            position: 'relative',
+            bgcolor: 'rgba(255,255,255,0.06)',
+            cursor: 'pointer',
+          }}
+          onClick={(e) => {
+            if (!audioRef.current || !audioRef.current.duration) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const ratio = (e.clientX - rect.left) / rect.width;
+            audioRef.current.currentTime = ratio * audioRef.current.duration;
+          }}
+          role="slider"
+          aria-label="Audio progress"
+          aria-valuenow={Math.round(currentTime)}
+          aria-valuemax={Math.round(duration)}
+        >
           <Box
             sx={{
-              flex: 1,
-              height: '100%',
-              position: 'relative',
-              bgcolor: 'rgba(255,255,255,0.06)',
-              cursor: 'pointer',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: `${progress}%`,
+              background: gradientBg,
+              transition: 'width 0.15s linear',
             }}
-            onClick={(e) => {
-              if (!audioRef.current || !audioRef.current.duration) return;
-              const rect = e.currentTarget.getBoundingClientRect();
-              const ratio = (e.clientX - rect.left) / rect.width;
-              audioRef.current.currentTime = ratio * audioRef.current.duration;
-            }}
-            role="slider"
-            aria-label="Audio progress"
-            aria-valuenow={Math.round(currentTime)}
-            aria-valuemax={Math.round(duration)}
-          >
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                bottom: 0,
-                width: `${progress}%`,
-                background: gradientBg,
-                transition: 'width 0.15s linear',
-              }}
-            />
-            {/* Playhead pip */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 2,
-                bottom: 2,
-                width: 3,
-                left: `${progress}%`,
-                transform: 'translateX(-50%)',
-                bgcolor: colors.primary,
-                borderRadius: 0,
-                boxShadow: `0 0 4px ${colors.primary}80`,
-              }}
-            />
-          </Box>
-
-          {/* Time display */}
-          <Typography
-            level="body-xs"
+          />
+          <Box
             sx={{
-              px: 1,
-              color: 'text.secondary',
-              fontSize: '0.65rem',
-              fontFamily: 'monospace',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              minWidth: 72,
-              textAlign: 'right',
+              position: 'absolute',
+              top: 4,
+              bottom: 4,
+              width: 3,
+              left: `${progress}%`,
+              transform: 'translateX(-50%)',
+              bgcolor: colors.primary,
+              borderRadius: 0,
+              boxShadow: `0 0 4px ${colors.primary}80`,
             }}
-          >
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </Typography>
-        </Stack>
-      )}
+          />
+        </Box>
+
+        <Typography
+          level="body-xs"
+          sx={{
+            px: 1.25,
+            color: 'text.secondary',
+            fontSize: '0.7rem',
+            fontFamily: 'monospace',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+            minWidth: 80,
+            textAlign: 'right',
+          }}
+        >
+          {formatTime(currentTime)} / {formatTime(duration)}
+        </Typography>
+      </Stack>
     </Box>
   );
 }
