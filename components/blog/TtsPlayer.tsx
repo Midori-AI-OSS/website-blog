@@ -84,10 +84,10 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
         const colorMap = new Map<string, { count: number; r: number; g: number; b: number }>();
 
         for (let i = 0; i < pixels.length; i += 4) {
-          const r = quantize(pixels[i]);
-          const g = quantize(pixels[i + 1]);
-          const b = quantize(pixels[i + 2]);
-          const a = pixels[i + 3];
+          const r = quantize(pixels[i] ?? 0);
+          const g = quantize(pixels[i + 1] ?? 0);
+          const b = quantize(pixels[i + 2] ?? 0);
+          const a = pixels[i + 3] ?? 0;
           if (a < 128) continue;
           if (r > 230 && g > 230 && b > 230) continue;
           if (r < 25 && g < 25 && b < 25) continue;
@@ -110,11 +110,11 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
           return;
         }
 
-        const picked: typeof sorted = [sorted[0]];
+        const picked: typeof sorted = [sorted[0]!];
         const minDist = 3000;
 
         for (let i = 1; i < sorted.length && picked.length < 3; i++) {
-          const candidate = sorted[i];
+          const candidate = sorted[i]!;
           const tooClose = picked.some(
             (p) =>
               colorDistance([p.r, p.g, p.b], [candidate.r, candidate.g, candidate.b]) <
@@ -126,13 +126,13 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
         }
 
         while (picked.length < 3) {
-          picked.push(picked[picked.length - 1]);
+          picked.push(picked[picked.length - 1]!);
         }
 
         resolve({
-          primary: rgbToHex(picked[0].r, picked[0].g, picked[0].b),
-          secondary: rgbToHex(picked[1].r, picked[1].g, picked[1].b),
-          tertiary: rgbToHex(picked[2].r, picked[2].g, picked[2].b),
+          primary: rgbToHex(picked[0]!.r, picked[0]!.g, picked[0]!.b),
+          secondary: rgbToHex(picked[1]!.r, picked[1]!.g, picked[1]!.b),
+          tertiary: rgbToHex(picked[2]!.r, picked[2]!.g, picked[2]!.b),
         });
       } catch {
         resolve(fallback);
@@ -305,13 +305,13 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
     [colors]
   );
 
-  const loadingWidth = state === 'generating' ? Math.min(progress || 50, 100) : 0;
-
   return (
     <Box
       sx={{
-        ml: { sm: 'auto' },
-        mt: { xs: 1, sm: 0 },
+        '@keyframes tts-traveling-pulse': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(400%)' },
+        },
         width: { xs: '100%', sm: 'auto' },
         minWidth: { sm: 200 },
         maxWidth: { sm: 320 },
@@ -349,7 +349,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
         </IconButton>
       )}
 
-      {/* Generating: center-out loading bar */}
+      {/* Generating: traveling pulse bar */}
       {state === 'generating' && (
         <Box
           sx={{
@@ -370,11 +370,10 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
               position: 'absolute',
               top: 0,
               bottom: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: `${loadingWidth}%`,
+              left: 0,
+              width: '25%',
               background: gradientBg,
-              transition: 'width 0.6s ease-out',
+              animation: 'tts-traveling-pulse 1.8s ease-in-out infinite',
             }}
           />
           <Typography
@@ -389,7 +388,6 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
               fontWeight: 600,
               fontSize: '0.7rem',
               zIndex: 1,
-              mixBlendMode: 'difference',
             }}
           >
             Generating...
