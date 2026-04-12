@@ -15,6 +15,7 @@ RUN yay -Syu --noconfirm unzip && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm npm && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm bun && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm espeak-ng && yay -Yccc --noconfirm
+RUN yay -Syu --noconfirm uv && yay -Yccc --noconfirm
 
 WORKDIR /app
 EXPOSE 59382
