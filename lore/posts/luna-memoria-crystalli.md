@@ -273,7 +273,7 @@ The room narrowed to targets and vectors. My shirt was going red at the shoulder
 
 The pastor-clone stood armless at the edge of my vision. Clay knitting back into stolen limbs — wet and wrong, arms regrowing from nothing.
 
-It struck before I could shout. Echo's face. The impact. My twin staggering back, hand to her cheek, blood between her fingers.
+It struck before I could shout. Echo's face. The impact. My friend staggering back, hand to her cheek, blood between her fingers.
 
 *They hurt her.*
 
