@@ -313,7 +313,7 @@ I felt each blade leave me. Sixty-four small wounds. Sixty-four pieces of myself
 
 No.
 
-The clones needed to end. Both of them. Pastor-copy, armless and still trying to move toward us. Healed Riley-copy, saber up and whole where the real one wasn't. Gone. Ash. Ended.
+The clones needed to end. Both of them. Pastor-copy, arms regrown and still moving toward us. Healed Riley-copy, saber up and whole where the real one wasn't. Gone. Ash. Ended.
 
 I paid for that ending in full.
 
