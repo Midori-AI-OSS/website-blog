@@ -6,6 +6,7 @@ import { Headphones, Play, Pause, Square } from 'lucide-react';
 
 type TtsState = 'not_generated' | 'generating' | 'ready';
 type PlaybackState = 'stopped' | 'playing' | 'paused';
+const STATUS_POLL_INTERVAL_MS = 3000;
 
 interface TtsPlayerProps {
   slug: string;
@@ -215,7 +216,8 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
+  const generateRequestInFlightRef = useRef(false);
+  const sharedAudioUrl = `/api/tts/audio/${encodeURIComponent(type)}/${encodeURIComponent(slug)}`;
 
   useEffect(() => {
     if (coverImageUrl && !colorsLoaded) {
@@ -226,27 +228,80 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
     }
   }, [coverImageUrl, colorsLoaded]);
 
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  }, []);
+
+  const loadReadyAudio = useCallback(
+    async (autoplay = false) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      const currentSrc = audio.src;
+      if (!currentSrc.endsWith(sharedAudioUrl)) {
+        audio.src = sharedAudioUrl;
+        audio.load();
+      }
+
+      setState('ready');
+      setCurrentTime(0);
+      setProgress(0);
+      setPlayback(autoplay ? 'playing' : 'stopped');
+
+      if (!autoplay) return;
+
+      try {
+        await audio.play();
+      } catch {
+        setPlayback('stopped');
+      }
+    },
+    [sharedAudioUrl]
+  );
+
   const checkStatus = useCallback(async () => {
     try {
       const res = await fetch(
-        `/api/tts/status?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}`
+        `/api/tts/status?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}`,
+        { cache: 'no-store' }
       );
-      if (!res.ok) return;
+      if (!res.ok) return null;
       const data = await res.json();
+      if (data.status === 'generating') {
+        setState('generating');
+        return 'generating';
+      }
       if (data.status === 'ready') {
-        setState('ready');
-        if (pollingRef.current) {
-          clearInterval(pollingRef.current);
-          pollingRef.current = null;
+        stopPolling();
+        await loadReadyAudio();
+        return 'ready';
+      }
+      if (data.status === 'not_generated') {
+        if (!generateRequestInFlightRef.current) {
+          setState('not_generated');
         }
+        return 'not_generated';
       }
     } catch {
       // ignore polling errors
     }
-  }, [slug, type]);
+    return null;
+  }, [slug, type, loadReadyAudio, stopPolling]);
+
+  const startPolling = useCallback(() => {
+    if (pollingRef.current) return;
+    pollingRef.current = setInterval(() => {
+      void checkStatus();
+    }, STATUS_POLL_INTERVAL_MS);
+  }, [checkStatus]);
 
   const handleGenerate = useCallback(async () => {
     setState('generating');
+    startPolling();
+    generateRequestInFlightRef.current = true;
 
     try {
       const res = await fetch('/api/tts/generate', {
@@ -256,9 +311,6 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
       });
 
       if (res.status === 409) {
-        if (!pollingRef.current) {
-          pollingRef.current = setInterval(checkStatus, 3000);
-        }
         return;
       }
 
@@ -267,30 +319,14 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
         return;
       }
 
-      const blob = await res.blob();
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-      }
-      const url = URL.createObjectURL(blob);
-      objectUrlRef.current = url;
-
-      if (audioRef.current) {
-        audioRef.current.src = url;
-        audioRef.current.load();
-      }
-
-      setState('ready');
-      setPlayback('playing');
-
-      setTimeout(() => {
-        audioRef.current?.play().catch(() => {
-          setPlayback('stopped');
-        });
-      }, 100);
+      stopPolling();
+      await loadReadyAudio(true);
     } catch {
       setState('not_generated');
+    } finally {
+      generateRequestInFlightRef.current = false;
     }
-  }, [text, slug, type, checkStatus]);
+  }, [text, slug, type, loadReadyAudio, startPolling, stopPolling]);
 
   const handlePlay = useCallback(() => {
     if (audioRef.current) {
@@ -340,14 +376,25 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
     return () => {
       audio.pause();
       audio.src = '';
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-      }
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-      }
+      stopPolling();
     };
-  }, []);
+  }, [stopPolling]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const syncInitialStatus = async () => {
+      const status = await checkStatus();
+      if (!isActive || status === 'ready') return;
+      startPolling();
+    };
+
+    void syncInitialStatus();
+
+    return () => {
+      isActive = false;
+    };
+  }, [checkStatus, startPolling]);
 
   const gradientBg = useMemo(
     () =>
@@ -375,8 +422,9 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
       <Box
         onClick={handleGenerate}
         role="button"
-        tabIndex={0}
+        tabIndex={isVisible('not_generated') ? 0 : -1}
         aria-label="Generate audio for this post"
+        aria-hidden={!isVisible('not_generated')}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -435,6 +483,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
         }}
         role="progressbar"
         aria-label="Generating audio"
+        aria-hidden={!isVisible('generating')}
       >
         <Box
           sx={{
@@ -470,6 +519,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
         direction="row"
         spacing={0}
         alignItems="center"
+        aria-hidden={!isVisible('ready')}
         sx={{
           ...transitionSx,
           opacity: isVisible('ready') ? 1 : 0,
