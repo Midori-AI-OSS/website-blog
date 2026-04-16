@@ -32,6 +32,11 @@ import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
+import {
+  extractIsoDateFromBlogFilename,
+  formatLongDate,
+  normalizeIsoDateString,
+} from '@/lib/content/publish';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
@@ -49,37 +54,17 @@ export interface PostViewProps {
   backButtonAriaLabel?: string;
   /** Post type for TTS and contextual behavior */
   postType?: 'blog' | 'lore';
+  /** Whether to render a scheduled teaser instead of the full post */
+  isScheduledPreview?: boolean;
+  /** The scheduled publish date to show in teaser mode */
+  scheduledPublishDate?: string;
 }
 
 /**
- * Extract and format date from filename (YYYY-MM-DD.md format)
- * Falls back to metadata.date if filename doesn't match pattern
+ * Get the stable YYYY-MM-DD string for display and teaser logic.
  */
-function extractDate(post: ParsedPost): Date {
-  // Try to extract from filename first
-  const match = post.filename.match(/(\d{4}-\d{2}-\d{2})/);
-  if (match?.[1]) {
-    return new Date(match[1]);
-  }
-
-  // Fall back to metadata.date if it exists
-  if (post.metadata.date !== undefined) {
-    return new Date(post.metadata.date);
-  }
-
-  // Last resort: current date
-  return new Date();
-}
-
-/**
- * Format date for display
- */
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+function getPostDateString(post: ParsedPost): string | undefined {
+  return extractIsoDateFromBlogFilename(post.filename) ?? normalizeIsoDateString(post.metadata.date) ?? undefined;
 }
 
 /**
@@ -252,12 +237,20 @@ export function PostView({
   backButtonLabel = 'Back to posts',
   backButtonAriaLabel = 'Back to blog list',
   postType = 'blog',
+  isScheduledPreview = false,
+  scheduledPublishDate,
 }: PostViewProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
 
-  // Memoize date extraction to prevent recalculation on every render
-  const date = useMemo(() => extractDate(post), [post.filename, post.metadata.date]);
-  const formattedDate = useMemo(() => formatDate(date), [date]);
+  const dateString = useMemo(() => getPostDateString(post), [post.filename, post.metadata.date]);
+  const formattedDate = useMemo(
+    () => formatLongDate(dateString) ?? 'Unknown date',
+    [dateString]
+  );
+  const scheduledPublishLabel = useMemo(
+    () => formatLongDate(scheduledPublishDate ?? dateString) ?? formattedDate,
+    [scheduledPublishDate, dateString, formattedDate]
+  );
   const markdownContent = useMemo(
     () => replaceLoreImageTokens(post.content, post.filename),
     [post.content, post.filename]
@@ -392,7 +385,7 @@ export function PostView({
           >
             <Stack direction="row" spacing={1} alignItems="center">
               <Calendar size={16} color="var(--joy-palette-primary-400)" />
-              <Typography component="time" dateTime={date.toISOString()}>
+              <Typography component="time" dateTime={dateString}>
                 {formattedDate}
               </Typography>
             </Stack>
@@ -458,7 +451,7 @@ export function PostView({
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
-                  filter: 'blur(20px) brightness(0.6)',
+                  filter: isScheduledPreview ? 'blur(34px) brightness(0.45)' : 'blur(20px) brightness(0.6)',
                   transform: 'scale(1.1)',
                   zIndex: 0,
                   opacity: 0.8,
@@ -490,25 +483,27 @@ export function PostView({
                   maxHeight: { xs: '22%', sm: '15%' },
                   width: 'auto',
                   display: 'block',
-                  // Remove previous shadow as the vignette handles the transition
+                  filter: isScheduledPreview ? 'blur(18px) saturate(0.72) brightness(0.7)' : 'none',
+                  transform: isScheduledPreview ? 'scale(1.08)' : 'none',
                 }}
               />
             </Card>
           )}
 
-          {/* TTS Player - full width under cover image */}
-          <Box sx={{ mb: 4 }}>
-            <TtsPlayer
-              slug={post.filename.replace(/\.md$/, '')}
-              type={postType}
-              text={post.content}
-              coverImageUrl={
-                post.metadata.cover_image
-                  ? transformImageUrl(post.metadata.cover_image)
-                  : undefined
-              }
-            />
-          </Box>
+          {!isScheduledPreview && (
+            <Box sx={{ mb: 4 }}>
+              <TtsPlayer
+                slug={post.filename.replace(/\.md$/, '')}
+                type={postType}
+                text={post.content}
+                coverImageUrl={
+                  post.metadata.cover_image
+                    ? transformImageUrl(post.metadata.cover_image)
+                    : undefined
+                }
+              />
+            </Box>
+          )}
 
           {/* Summary */}
           {post.metadata.summary && (
@@ -532,183 +527,200 @@ export function PostView({
 
         <Divider sx={{ mb: 6, bgcolor: 'rgba(255,255,255,0.1)' }} />
 
-        {/* Markdown Content */}
-        <Box
-          sx={{
-            // Typography settings for readability
-            fontSize: { xs: '1rem', sm: '1.125rem' }, // 16px on phones, 18px up
-            lineHeight: 1.8,
-            color: 'text.secondary', // Slightly softer than pure white
-
-            // Prose styling for markdown elements
-            '& h1, & h2, & h3, & h4, & h5, & h6': {
-              color: 'primary.200', // Light purple for headers
-              scrollMarginTop: '100px',
-            },
-            '& h1': {
-              fontSize: { xs: '2rem', sm: '2.5rem' },
-              fontWeight: 700,
-              mt: 6,
-              mb: 3,
-            },
-            '& h2': {
-              fontSize: { xs: '1.6rem', sm: '2rem' },
-              fontWeight: 700,
-              mt: 5,
-              mb: 2.5,
-              pb: 1,
-              borderBottom: '1px solid',
-              borderColor: 'rgba(139, 92, 246, 0.2)', // Subtle purple line
-            },
-            '& h3': {
-              fontSize: { xs: '1.25rem', sm: '1.5rem' },
-              fontWeight: 600,
-              mt: 4,
-              mb: 2,
-              color: 'primary.300',
-            },
-            '& h4': {
-              fontSize: { xs: '1.1rem', sm: '1.25rem' },
-              fontWeight: 600,
-              mt: 3,
-              mb: 1.5,
-            },
-            '& p': {
-              mb: 3,
-            },
-            '& strong': {
-              color: 'text.primary',
-              fontWeight: 600,
-            },
-            '& ul, & ol': {
-              ml: { xs: 2, sm: 3 },
-              mb: 3,
-              pl: { xs: 0.5, sm: 1 },
-              '& li': {
-                mb: 1,
-                pl: 1,
-                '&::marker': {
-                  color: 'primary.400', // Purple bullets
-                }
-              }
-            },
-            '& blockquote': {
-              borderLeft: '4px solid',
-              borderColor: 'primary.500',
-              pl: 3,
-              py: 2,
-              my: 4,
-              fontStyle: 'italic',
-              bgcolor: 'rgba(139, 92, 246, 0.05)', // Very subtle purple tint
-              color: 'text.primary',
-            },
-            '& code': {
-              // INLINE CODE STYLING (Dark Green Highlight)
-              backgroundColor: 'rgba(20, 83, 45, 0.6)',
-              color: '#4ade80', // Bright green text
-              px: 0.75,
-              py: 0.25,
-              borderRadius: 0, // Sharp
-              fontSize: '0.9rem',
-              fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+        {isScheduledPreview ? (
+          <Card
+            variant="soft"
+            color="neutral"
+            sx={{
+              p: { xs: 2, sm: 3 },
+              borderRadius: 0,
               border: '1px solid',
-              borderColor: 'rgba(74, 222, 128, 0.2)',
-
-              // Shimmer Effect
-              background: 'linear-gradient(to right, rgba(20, 83, 45, 0.6) 0%, rgba(74, 222, 128, 0.25) 50%, rgba(20, 83, 45, 0.6) 100%)',
-              backgroundSize: '1000px 100%',
-              animation: 'shimmer 6s linear infinite',
-              // Pseudo-random durations for wave effect
-              '&:nth-of-type(2n)': { animationDuration: '4s' },
-              '&:nth-of-type(3n)': { animationDuration: '8s' },
-              '&:nth-of-type(5n)': { animationDuration: '5s' },
-              '&:nth-of-type(7n)': { animationDuration: '7s' },
-            },
-            '& pre': {
-              // CODE BLOCK CONTAINER
-              backgroundColor: '#282c34 !important', // Match Atom One Dark background
-              p: 2,
-              borderRadius: 0, // Sharp
-              overflow: 'auto',
-              my: 4,
-              border: '1px solid',
-              borderColor: 'rgba(255,255,255,0.1)',
-              '& code': {
-                // Reset inline styles for code blocks
-                backgroundColor: 'transparent !important',
-                color: 'inherit',
-                p: 0,
-                border: 'none',
-                fontFamily: 'inherit',
-                background: 'none', // No shimmer on block code text
-                animation: 'none',
-              },
-              // Ensure highlight.js classes work
-              '& .hljs': {
-                background: 'transparent',
-              }
-            },
-            '& a': {
-              color: 'primary.400',
-              textDecoration: 'none',
-              borderBottom: '1px dashed',
-              borderColor: 'primary.400',
-              transition: 'all 0.2s',
-              '&:hover': {
-                color: 'primary.300',
-                backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                borderBottomStyle: 'solid',
-              },
-            },
-            '& img': {
-              maxWidth: '100%',
-              height: 'auto',
-              borderRadius: 0, // Sharp
-              my: 4,
-              display: 'block',
-              border: '1px solid',
-              borderColor: 'rgba(255,255,255,0.1)',
-
-              // Shimmer on content images too
-              background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)',
-              backgroundSize: '1000px 100%',
-              animation: 'shimmer 15s linear infinite',
-            },
-            '& hr': {
-              border: 'none',
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              my: 6,
-            },
-            '& table': {
-              width: '100%',
-              borderCollapse: 'collapse',
-              my: 4,
-              display: 'block',
-              overflowX: 'auto',
-            },
-            '& th': {
-              textAlign: 'left',
-              p: 2,
-              borderBottom: '2px solid',
-              borderColor: 'primary.500',
-              color: 'primary.100',
-            },
-            '& td': {
-              p: 2,
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-            },
-          }}
-        >
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeSanitize, rehypeHighlight]}
-            components={markdownComponents}
+              borderColor: 'rgba(255,255,255,0.08)',
+              bgcolor: 'rgba(255,255,255,0.03)',
+            }}
           >
-            {markdownContent}
-          </ReactMarkdown>
-        </Box>
+            <Typography level="title-lg" sx={{ mb: 1 }}>
+              Scheduled for {scheduledPublishLabel}
+            </Typography>
+            <Typography level="body-md" sx={{ color: 'text.secondary', fontSize: { xs: '1rem', sm: '1.05rem' } }}>
+              This post is already queued in the site, but it stays hidden until that date begins in Portland time.
+            </Typography>
+            <Typography level="body-sm" sx={{ mt: 1.5, color: 'text.tertiary', fontSize: '0.98rem' }}>
+              The full post content and listen-along player will unlock automatically when the publish date arrives.
+            </Typography>
+          </Card>
+        ) : (
+          <Box
+            sx={{
+              // Typography settings for readability
+              fontSize: { xs: '1rem', sm: '1.125rem' }, // 16px on phones, 18px up
+              lineHeight: 1.8,
+              color: 'text.secondary', // Slightly softer than pure white
+
+              // Prose styling for markdown elements
+              '& h1, & h2, & h3, & h4, & h5, & h6': {
+                color: 'primary.200', // Light purple for headers
+                scrollMarginTop: '100px',
+              },
+              '& h1': {
+                fontSize: { xs: '2rem', sm: '2.5rem' },
+                fontWeight: 700,
+                mt: 6,
+                mb: 3,
+              },
+              '& h2': {
+                fontSize: { xs: '1.6rem', sm: '2rem' },
+                fontWeight: 700,
+                mt: 5,
+                mb: 2.5,
+                pb: 1,
+                borderBottom: '1px solid',
+                borderColor: 'rgba(139, 92, 246, 0.2)', // Subtle purple line
+              },
+              '& h3': {
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                fontWeight: 600,
+                mt: 4,
+                mb: 2,
+                color: 'primary.300',
+              },
+              '& h4': {
+                fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                fontWeight: 600,
+                mt: 3,
+                mb: 1.5,
+              },
+              '& p': {
+                mb: 3,
+              },
+              '& strong': {
+                color: 'text.primary',
+                fontWeight: 600,
+              },
+              '& ul, & ol': {
+                ml: { xs: 2, sm: 3 },
+                mb: 3,
+                pl: { xs: 0.5, sm: 1 },
+                '& li': {
+                  mb: 1,
+                  pl: 1,
+                  '&::marker': {
+                    color: 'primary.400', // Purple bullets
+                  }
+                }
+              },
+              '& blockquote': {
+                borderLeft: '4px solid',
+                borderColor: 'primary.500',
+                pl: 3,
+                py: 2,
+                my: 4,
+                fontStyle: 'italic',
+                bgcolor: 'rgba(139, 92, 246, 0.05)', // Very subtle purple tint
+                color: 'text.primary',
+              },
+              '& code': {
+                // INLINE CODE STYLING (Dark Green Highlight)
+                backgroundColor: 'rgba(20, 83, 45, 0.6)',
+                color: '#4ade80', // Bright green text
+                px: 0.75,
+                py: 0.25,
+                borderRadius: 0, // Sharp
+                fontSize: '0.9rem',
+                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                border: '1px solid',
+                borderColor: 'rgba(74, 222, 128, 0.2)',
+
+                // Shimmer Effect
+                background: 'linear-gradient(to right, rgba(20, 83, 45, 0.6) 0%, rgba(74, 222, 128, 0.25) 50%, rgba(20, 83, 45, 0.6) 100%)',
+                backgroundSize: '1000px 100%',
+                animation: 'shimmer 6s linear infinite',
+                '&:nth-of-type(2n)': { animationDuration: '4s' },
+                '&:nth-of-type(3n)': { animationDuration: '8s' },
+                '&:nth-of-type(5n)': { animationDuration: '5s' },
+                '&:nth-of-type(7n)': { animationDuration: '7s' },
+              },
+              '& pre': {
+                backgroundColor: '#282c34 !important',
+                p: 2,
+                borderRadius: 0,
+                overflow: 'auto',
+                my: 4,
+                border: '1px solid',
+                borderColor: 'rgba(255,255,255,0.1)',
+                '& code': {
+                  backgroundColor: 'transparent !important',
+                  color: 'inherit',
+                  p: 0,
+                  border: 'none',
+                  fontFamily: 'inherit',
+                  background: 'none',
+                  animation: 'none',
+                },
+                '& .hljs': {
+                  background: 'transparent',
+                }
+              },
+              '& a': {
+                color: 'primary.400',
+                textDecoration: 'none',
+                borderBottom: '1px dashed',
+                borderColor: 'primary.400',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  color: 'primary.300',
+                  backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                  borderBottomStyle: 'solid',
+                },
+              },
+              '& img': {
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: 0,
+                my: 4,
+                display: 'block',
+                border: '1px solid',
+                borderColor: 'rgba(255,255,255,0.1)',
+                background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)',
+                backgroundSize: '1000px 100%',
+                animation: 'shimmer 15s linear infinite',
+              },
+              '& hr': {
+                border: 'none',
+                borderTop: '1px solid',
+                borderColor: 'divider',
+                my: 6,
+              },
+              '& table': {
+                width: '100%',
+                borderCollapse: 'collapse',
+                my: 4,
+                display: 'block',
+                overflowX: 'auto',
+              },
+              '& th': {
+                textAlign: 'left',
+                p: 2,
+                borderBottom: '2px solid',
+                borderColor: 'primary.500',
+                color: 'primary.100',
+              },
+              '& td': {
+                p: 2,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              },
+            }}
+          >
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeSanitize, rehypeHighlight]}
+              components={markdownComponents}
+            >
+              {markdownContent}
+            </ReactMarkdown>
+          </Box>
+        )}
       </Box>
 
       {/* Footer - Back to top */}

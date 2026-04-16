@@ -16,6 +16,7 @@
 import { readdir, readFile, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parsePost, type ParsedPost } from './parser';
+import { extractIsoDateFromBlogFilename, getPublishState } from '@/lib/content/publish';
 
 const POSTS_DIR = join(process.cwd(), 'blog/posts');
 const DEFAULT_PAGE_SIZE = 10;
@@ -29,6 +30,11 @@ export interface PaginatedPosts {
   totalCount: number;
   currentPage: number;
   totalPages: number;
+}
+
+export interface LoadAllPostsOptions {
+  includeScheduled?: boolean;
+  now?: Date | string;
 }
 
 /**
@@ -74,7 +80,10 @@ function extractDateFromFilename(filename: string): Date {
  * @param postsDir - Override posts directory (primarily for tests)
  * @returns Array of parsed posts, sorted newest to oldest
  */
-export async function loadAllPosts(postsDir: string = POSTS_DIR): Promise<ParsedPost[]> {
+export async function loadAllPosts(
+  postsDir: string = POSTS_DIR,
+  options: LoadAllPostsOptions = {}
+): Promise<ParsedPost[]> {
   try {
     // Read directory
     const files = await readdir(postsDir);
@@ -118,7 +127,7 @@ export async function loadAllPosts(postsDir: string = POSTS_DIR): Promise<Parsed
     );
     
     // Filter out failed loads and sort by date (newest first)
-    return posts
+    const sortedPosts = posts
       .filter((p): p is ParsedPost => p !== null)
       .sort((a, b) => {
         try {
@@ -130,6 +139,14 @@ export async function loadAllPosts(postsDir: string = POSTS_DIR): Promise<Parsed
           return 0; // Keep original order on error
         }
       });
+
+    if (options.includeScheduled) {
+      return sortedPosts;
+    }
+
+    return sortedPosts.filter((post) =>
+      getPublishState(extractIsoDateFromBlogFilename(post.filename), options.now).isPublished
+    );
   } catch (error) {
     // Error handling: empty directory or permissions issue
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

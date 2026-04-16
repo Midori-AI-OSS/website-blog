@@ -9,6 +9,7 @@ import { readdir, readFile, realpath, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { parsePost, type ParsedPost } from '@/lib/blog/parser';
+import { getPublishState } from '@/lib/content/publish';
 
 const POSTS_DIR = join(process.cwd(), 'lore/posts');
 const DEFAULT_PAGE_SIZE = 10;
@@ -19,6 +20,11 @@ export interface PaginatedLorePosts {
   totalCount: number;
   currentPage: number;
   totalPages: number;
+}
+
+export interface LoadAllLorePostsOptions {
+  includeScheduled?: boolean;
+  now?: Date | string;
 }
 
 function isValidFilename(filename: string): boolean {
@@ -51,22 +57,25 @@ function parseYYYYMMDDToUtcMs(dateString: string | undefined): number | null {
   return ms;
 }
 
-export async function loadAllLorePosts(): Promise<ParsedPost[]> {
+export async function loadAllLorePosts(
+  options: LoadAllLorePostsOptions = {},
+  postsDir: string = POSTS_DIR
+): Promise<ParsedPost[]> {
   try {
-    const files = await readdir(POSTS_DIR);
+    const files = await readdir(postsDir);
     const mdFiles = files.filter(f => isValidFilename(f));
 
     if (mdFiles.length === 0) {
-      console.info('No valid markdown files found in lore/posts/');
+      console.info(`No valid markdown files found in ${postsDir}`);
       return [];
     }
 
-    const realPostsDir = await realpath(POSTS_DIR);
+    const realPostsDir = await realpath(postsDir);
 
     const posts = await Promise.all(
       mdFiles.map(async (filename) => {
         try {
-          const filepath = join(POSTS_DIR, filename);
+          const filepath = join(postsDir, filename);
           const realFilePath = await realpath(filepath);
           if (!realFilePath.startsWith(realPostsDir)) {
             console.error(`Security: Path traversal attempt detected for ${filename}`);
@@ -75,6 +84,7 @@ export async function loadAllLorePosts(): Promise<ParsedPost[]> {
 
           const content = await readFile(filepath, 'utf-8');
           const parsed = parsePost(filename, content);
+          const explicitPublishDate = parsed.metadata.date;
 
           // Ensure lore posts have a stable date for SSR/CSR consistency (prevents hydration mismatch).
           if (!parsed.metadata.date) {
@@ -82,7 +92,10 @@ export async function loadAllLorePosts(): Promise<ParsedPost[]> {
             parsed.metadata.date = fileStat.mtime.toISOString().slice(0, 10);
           }
 
-          return parsed;
+          return {
+            parsed,
+            explicitPublishDate,
+          };
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error(`Error loading ${filename}:`, errorMessage);
@@ -91,23 +104,36 @@ export async function loadAllLorePosts(): Promise<ParsedPost[]> {
       })
     );
 
-    const parsedPosts = posts.filter((p): p is ParsedPost => p !== null);
+    const parsedPosts = posts.filter(
+      (
+        post
+      ): post is {
+        parsed: ParsedPost;
+        explicitPublishDate: string | undefined;
+      } => post !== null
+    );
 
     // Sort newest -> oldest by displayed date (expected YYYY-MM-DD).
     // Invalid/missing dates sort last. Tie-break by filename for stability.
     parsedPosts.sort((a, b) => {
-      const dateA = parseYYYYMMDDToUtcMs(a.metadata.date);
-      const dateB = parseYYYYMMDDToUtcMs(b.metadata.date);
+      const dateA = parseYYYYMMDDToUtcMs(a.parsed.metadata.date);
+      const dateB = parseYYYYMMDDToUtcMs(b.parsed.metadata.date);
 
-      if (dateA === null && dateB === null) return a.filename.localeCompare(b.filename);
+      if (dateA === null && dateB === null) return a.parsed.filename.localeCompare(b.parsed.filename);
       if (dateA === null) return 1;
       if (dateB === null) return -1;
 
       if (dateA !== dateB) return dateB - dateA;
-      return a.filename.localeCompare(b.filename);
+      return a.parsed.filename.localeCompare(b.parsed.filename);
     });
 
-    return parsedPosts;
+    if (options.includeScheduled) {
+      return parsedPosts.map((post) => post.parsed);
+    }
+
+    return parsedPosts.filter((post) =>
+      getPublishState(post.explicitPublishDate, options.now).isPublished
+    ).map((post) => post.parsed);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error loading lore posts:', errorMessage);

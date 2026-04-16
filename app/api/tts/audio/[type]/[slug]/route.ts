@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 const TTS_BASE = 'http://127.0.0.1:8888';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ type: string; slug: string }> }
 ) {
   try {
@@ -19,9 +19,18 @@ export async function GET(
       );
     }
 
+    const upstreamHeaders = new Headers();
+    const range = request.headers.get('range');
+    if (range) {
+      upstreamHeaders.set('Range', range);
+    }
+
     const upstream = await fetch(
       `${TTS_BASE}/audio/${encodeURIComponent(type)}/${encodeURIComponent(slug)}`,
-      { cache: 'no-store' }
+      {
+        cache: 'no-store',
+        headers: upstreamHeaders,
+      }
     );
 
     if (upstream.status === 404) {
@@ -38,15 +47,13 @@ export async function GET(
       );
     }
 
-    const audioBuffer = await upstream.arrayBuffer();
+    const responseHeaders = new Headers(upstream.headers);
+    responseHeaders.set('Cache-Control', 'public, max-age=86400');
+    responseHeaders.set('Content-Disposition', `inline; filename="${slug}.wav"`);
 
-    return new NextResponse(audioBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'audio/wav',
-        'Cache-Control': 'public, max-age=86400',
-        'Content-Disposition': `inline; filename="${slug}.wav"`,
-      },
+    return new NextResponse(upstream.body, {
+      status: upstream.status,
+      headers: responseHeaders,
     });
   } catch (error) {
     const message =

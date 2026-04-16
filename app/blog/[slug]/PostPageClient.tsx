@@ -11,9 +11,15 @@ import type { ParsedPost } from '@/lib/blog/parser';
 
 interface PostPageClientProps {
   post: ParsedPost;
+  isScheduledPreview?: boolean;
+  scheduledPublishDate?: string;
 }
 
-export function PostPageClient({ post }: PostPageClientProps) {
+export function PostPageClient({
+  post,
+  isScheduledPreview = false,
+  scheduledPublishDate,
+}: PostPageClientProps) {
   const router = useRouter();
   
   const handleClose = () => {
@@ -25,6 +31,8 @@ export function PostPageClient({ post }: PostPageClientProps) {
     <PostView
       post={post}
       onClose={handleClose}
+      isScheduledPreview={isScheduledPreview}
+      scheduledPublishDate={scheduledPublishDate}
     />
   );
 }

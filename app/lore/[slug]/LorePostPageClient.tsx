@@ -7,9 +7,15 @@ import type { ParsedPost } from '@/lib/blog/parser';
 
 interface LorePostPageClientProps {
   post: ParsedPost;
+  isScheduledPreview?: boolean;
+  scheduledPublishDate?: string;
 }
 
-export function LorePostPageClient({ post }: LorePostPageClientProps) {
+export function LorePostPageClient({
+  post,
+  isScheduledPreview = false,
+  scheduledPublishDate,
+}: LorePostPageClientProps) {
   const router = useRouter();
 
   return (
@@ -19,6 +25,8 @@ export function LorePostPageClient({ post }: LorePostPageClientProps) {
       backButtonLabel="Back to lore"
       backButtonAriaLabel="Back to lore list"
       postType="lore"
+      isScheduledPreview={isScheduledPreview}
+      scheduledPublishDate={scheduledPublishDate}
     />
   );
 }
