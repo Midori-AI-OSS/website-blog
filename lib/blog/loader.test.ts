@@ -62,6 +62,13 @@ tags: [another]
 
 # Third Post Content`);
 
+    await createTestPost('2099-12-31.md', `---
+title: Future Post
+tags: [future]
+---
+
+# Future Post Content`);
+
     // Create a post with invalid filename (should be ignored)
     await createTestPost('invalid-name.md', `---
 title: Invalid
@@ -78,7 +85,7 @@ Content`);
   test('loadAllPosts loads and sorts posts correctly', async () => {
     const posts = await loadAllPosts(testPostsDir);
 
-    // Should load 3 valid posts (ignore invalid-name.md)
+    // Should load 3 published posts and ignore invalid-name.md
     expect(posts.length).toBe(3);
 
     // Should be sorted newest first
@@ -202,6 +209,26 @@ Content`);
 
     const all = getRecentPosts(posts, 10);
     expect(all.length).toBe(3);
+  });
+
+  test('loadAllPosts hides scheduled posts by default', async () => {
+    const posts = await loadAllPosts(testPostsDir, { now: '2026-01-17T18:00:00Z' });
+
+    expect(posts.map(post => post.filename)).toEqual([
+      '2026-01-17.md',
+      '2026-01-16.md',
+      '2026-01-15.md',
+    ]);
+  });
+
+  test('loadAllPosts can include scheduled posts for direct slugs', async () => {
+    const posts = await loadAllPosts(testPostsDir, {
+      includeScheduled: true,
+      now: '2026-01-17T18:00:00Z',
+    });
+
+    expect(posts[0]?.filename).toBe('2099-12-31.md');
+    expect(posts.some(post => post.filename === '2099-12-31.md')).toBe(true);
   });
 
   test('loadAllPosts handles empty directory', async () => {

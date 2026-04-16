@@ -6,6 +6,7 @@
  */
 
 import { loadAllPosts, getPostBySlug } from '@/lib/blog/loader';
+import { extractIsoDateFromBlogFilename, formatLongDate, getPublishState } from '@/lib/content/publish';
 import { notFound } from 'next/navigation';
 import { PostPageClient } from './PostPageClient';
 
@@ -15,7 +16,7 @@ export const dynamic = 'force-dynamic';
  * Generate static params for all posts at build time
  */
 export async function generateStaticParams() {
-  const posts = await loadAllPosts();
+  const posts = await loadAllPosts(undefined, { includeScheduled: true });
   return posts.map(post => ({
     slug: post.filename.replace('.md', '')
   }));
@@ -23,7 +24,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const allPosts = await loadAllPosts();
+  const allPosts = await loadAllPosts(undefined, { includeScheduled: true });
   const post = getPostBySlug(allPosts, slug);
 
   if (!post) {
@@ -32,27 +33,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  // Extract date logic (similar to PostView)
-  let date: Date = new Date();
-
-  // Try to extract from filename first
-  const match = post.filename.match(/(\d{4}-\d{2}-\d{2})/);
-  if (match?.[1]) {
-    date = new Date(match[1]);
-  } else if (post.metadata.date !== undefined) {
-    // Fall back to metadata.date if it exists
-    date = new Date(post.metadata.date);
-  }
-
-  const formattedDate = date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const publishState = getPublishState(extractIsoDateFromBlogFilename(post.filename));
+  const formattedDate = formatLongDate(publishState.publishDate) ?? 'Unknown Date';
 
   return {
-    title: `Midori AI Blog - ${formattedDate}`,
-    description: post.metadata.summary || post.metadata.title,
+    title: publishState.isScheduled
+      ? `Midori AI Blog - Scheduled for ${formattedDate}`
+      : `Midori AI Blog - ${formattedDate}`,
+    description: publishState.isScheduled
+      ? `This post is scheduled for ${formattedDate} in Portland time.`
+      : post.metadata.summary || post.metadata.title,
   };
 }
 
@@ -68,7 +58,7 @@ export default async function PostPage({
   const { slug } = await params;
 
   // Load all posts and find the requested one
-  const allPosts = await loadAllPosts();
+  const allPosts = await loadAllPosts(undefined, { includeScheduled: true });
   const post = getPostBySlug(allPosts, slug);
 
   // Handle 404 for non-existent posts
@@ -76,7 +66,13 @@ export default async function PostPage({
     notFound();
   }
 
+  const publishState = getPublishState(extractIsoDateFromBlogFilename(post.filename));
+
   return (
-    <PostPageClient post={post} />
+    <PostPageClient
+      post={post}
+      isScheduledPreview={publishState.isScheduled}
+      scheduledPublishDate={publishState.publishDate ?? undefined}
+    />
   );
 }

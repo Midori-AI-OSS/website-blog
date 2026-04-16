@@ -6,6 +6,7 @@
 
 import { notFound } from 'next/navigation';
 
+import { getPublishState } from '@/lib/content/publish';
 import { getLorePostBySlug, loadAllLorePosts } from '@/lib/lore/loader';
 
 import { LorePostPageClient } from './LorePostPageClient';
@@ -13,7 +14,7 @@ import { LorePostPageClient } from './LorePostPageClient';
 export const dynamic = 'force-dynamic';
 
 export async function generateStaticParams() {
-  const posts = await loadAllLorePosts();
+  const posts = await loadAllLorePosts({ includeScheduled: true });
   return posts.map(post => ({
     slug: post.filename.replace('.md', ''),
   }));
@@ -21,12 +22,20 @@ export async function generateStaticParams() {
 
 export default async function LoreEntryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const allPosts = await loadAllLorePosts();
+  const allPosts = await loadAllLorePosts({ includeScheduled: true });
   const post = getLorePostBySlug(allPosts, slug);
 
   if (!post) {
     notFound();
   }
 
-  return <LorePostPageClient post={post} />;
+  const publishState = getPublishState(post.metadata.date);
+
+  return (
+    <LorePostPageClient
+      post={post}
+      isScheduledPreview={publishState.isScheduled}
+      scheduledPublishDate={publishState.publishDate ?? undefined}
+    />
+  );
 }
