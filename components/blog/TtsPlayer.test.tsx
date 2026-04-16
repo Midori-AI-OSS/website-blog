@@ -22,6 +22,8 @@ class MockAudio {
   src = '';
   duration = 75;
   currentTime = 0;
+  paused = true;
+  playCalls = 0;
   private listeners = new Map<string, Set<(event: Event) => void>>();
 
   constructor() {
@@ -33,12 +35,20 @@ class MockAudio {
   }
 
   async play() {
+    this.playCalls += 1;
+    this.paused = false;
     this.emit('playing');
     return;
   }
 
   pause() {
+    if (this.paused) return;
+    this.paused = true;
     this.emit('pause');
+  }
+
+  dispatch(type: string) {
+    this.emit(type);
   }
 
   addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
@@ -171,6 +181,23 @@ async function waitForElement<T>(
   throw new Error(`${failureMessage}\n${container.innerHTML}`);
 }
 
+async function waitForCondition(
+  predicate: () => boolean,
+  failureMessage: string
+): Promise<void> {
+  const deadline = Date.now() + 1000;
+
+  while (Date.now() < deadline) {
+    if (predicate()) return;
+
+    await act(async () => {
+      await flushEffects();
+    });
+  }
+
+  throw new Error(`${failureMessage}\n${container.innerHTML}`);
+}
+
 function getVisibleGeneratingBar() {
   return getAllElements(container).find(
     (element) =>
@@ -287,6 +314,7 @@ describe('TtsPlayer', () => {
 
     expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected visible Play button')).not.toBeNull();
     expect(lastAudio?.src.endsWith('/api/tts/audio/blog/shared-post')).toBe(true);
+    expect(lastAudio?.playCalls).toBe(0);
     expect(clearIntervalCalls).toBeGreaterThan(0);
   });
 
@@ -335,5 +363,55 @@ describe('TtsPlayer', () => {
 
     expect(await waitForElement(() => getVisibleReadyButton('Pause'), 'Expected visible Pause button after generation finishes')).not.toBeNull();
     expect(lastAudio?.src.endsWith('/api/tts/audio/blog/shared-post')).toBe(true);
+    expect(lastAudio?.playCalls).toBe(1);
+  });
+
+  test('does not autoplay when audio is already ready for another viewer', async () => {
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse({ status: 'ready' satisfies TtsState });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer();
+
+    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected Play button for remote-ready audio')).not.toBeNull();
+    expect(getVisibleReadyButton('Pause')).toBeNull();
+    expect(lastAudio?.playCalls).toBe(0);
+  });
+
+  test('renders safe time labels when audio metadata is non-finite', async () => {
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse({ status: 'ready' satisfies TtsState });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer();
+
+    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected ready controls before timeline check')).not.toBeNull();
+
+    if (!lastAudio) {
+      throw new Error('Expected audio instance');
+    }
+
+    await act(async () => {
+      lastAudio.duration = Number.POSITIVE_INFINITY;
+      lastAudio.currentTime = Number.NaN;
+      lastAudio.dispatch('durationchange');
+      lastAudio.dispatch('timeupdate');
+      await flushEffects();
+    });
+
+    await waitForCondition(
+      () => (container.textContent ?? '').includes('0:00 / 0:00'),
+      'Expected safe fallback timeline text'
+    );
+    expect(container.textContent ?? '').not.toContain('Infinity');
+    expect(container.textContent ?? '').not.toContain('NaN');
   });
 });

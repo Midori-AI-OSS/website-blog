@@ -196,9 +196,37 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
 }
 
 function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return '0:00';
+  }
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function getSafeDuration(value: number): number {
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function getSafeCurrentTime(value: number, duration: number): number {
+  if (!Number.isFinite(value) || value < 0 || duration <= 0) {
+    return 0;
+  }
+  return Math.min(value, duration);
+}
+
+function getTimelineState(audio: HTMLAudioElement) {
+  const safeDuration = getSafeDuration(audio.duration);
+  const safeCurrentTime = getSafeCurrentTime(audio.currentTime, safeDuration);
+
+  return {
+    duration: safeDuration,
+    currentTime: safeCurrentTime,
+    progress:
+      safeDuration > 0
+        ? Math.min(100, Math.max(0, (safeCurrentTime / safeDuration) * 100))
+        : 0,
+  };
 }
 
 export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
@@ -235,11 +263,26 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
     }
   }, []);
 
+  const syncTimelineFromAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const timeline = getTimelineState(audio);
+    setDuration(timeline.duration);
+    setCurrentTime(timeline.currentTime);
+    setProgress(timeline.progress);
+  }, []);
+
   const loadReadyAudio = useCallback(
     async (autoplay = false) => {
       const audio = audioRef.current;
       if (!audio) return;
 
+      if (!autoplay && !audio.paused) {
+        audio.pause();
+      }
+
+      audio.currentTime = 0;
       const currentSrc = audio.src;
       if (!currentSrc.endsWith(sharedAudioUrl)) {
         audio.src = sharedAudioUrl;
@@ -247,9 +290,10 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
       }
 
       setState('ready');
+      setDuration(0);
       setCurrentTime(0);
       setProgress(0);
-      setPlayback(autoplay ? 'playing' : 'stopped');
+      setPlayback('stopped');
 
       if (!autoplay) return;
 
@@ -330,15 +374,15 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
 
   const handlePlay = useCallback(() => {
     if (audioRef.current) {
-      audioRef.current.play();
-      setPlayback('playing');
+      audioRef.current.play().catch(() => {
+        setPlayback('stopped');
+      });
     }
   }, []);
 
   const handlePause = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
-      setPlayback('paused');
     }
   }, []);
 
@@ -356,29 +400,53 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
     const audio = new Audio();
     audioRef.current = audio;
 
-    audio.addEventListener('loadedmetadata', () => {
-      setDuration(audio.duration || 0);
-    });
+    const handleLoadedMetadata = () => {
+      syncTimelineFromAudio();
+    };
 
-    audio.addEventListener('timeupdate', () => {
-      if (audio.duration) {
-        setCurrentTime(audio.currentTime);
-        setProgress((audio.currentTime / audio.duration) * 100);
-      }
-    });
+    const handleDurationChange = () => {
+      syncTimelineFromAudio();
+    };
 
-    audio.addEventListener('ended', () => {
+    const handleTimeUpdate = () => {
+      syncTimelineFromAudio();
+    };
+
+    const handlePlaying = () => {
+      setPlayback('playing');
+      syncTimelineFromAudio();
+    };
+
+    const handlePause = () => {
+      setPlayback(audio.currentTime > 0 ? 'paused' : 'stopped');
+      syncTimelineFromAudio();
+    };
+
+    const handleEnded = () => {
       setPlayback('stopped');
       setCurrentTime(0);
       setProgress(0);
-    });
+    };
+
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('durationchange', handleDurationChange);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('playing', handlePlaying);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
 
     return () => {
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('durationchange', handleDurationChange);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('playing', handlePlaying);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
       audio.pause();
       audio.src = '';
       stopPolling();
     };
-  }, [stopPolling]);
+  }, [stopPolling, syncTimelineFromAudio]);
 
   useEffect(() => {
     let isActive = true;
