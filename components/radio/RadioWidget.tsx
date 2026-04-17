@@ -34,6 +34,7 @@ import {
 const PLACEHOLDER_IMAGE = '/blog/placeholder.png';
 const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000, 30000] as const;
 const HOVER_CLOSE_LINGER_MS = 3000;
+const MAX_STREAM_SESSION_MS = 2 * 60 * 60 * 1000;
 const COLLAPSED_SIZE_PX = 56;
 const EXPANDED_WIDTH_PX = 380;
 const EXPANDED_HEIGHT_PX = 336;
@@ -117,6 +118,7 @@ export default function RadioWidget() {
   const desktopEligible = useDesktopEligibility();
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const retryTimerRef = React.useRef<number | null>(null);
+  const sessionRefreshTimerRef = React.useRef<number | null>(null);
   const closeLingerTimerRef = React.useRef<number | null>(null);
   const reconnectInFlightRef = React.useRef(false);
   const retryAttemptRef = React.useRef(0);
@@ -126,6 +128,8 @@ export default function RadioWidget() {
   const channelRef = React.useRef('all');
   const metadataRequestRef = React.useRef(0);
   const initializedChannelRef = React.useRef(false);
+  const currentTrackIdRef = React.useRef<string | null>(null);
+  const observedTrackIdRef = React.useRef<string | null>(null);
 
   const [hydrated, setHydrated] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
@@ -158,6 +162,11 @@ export default function RadioWidget() {
   React.useEffect(() => {
     playbackDesiredRef.current = playbackDesired;
   }, [playbackDesired]);
+
+  React.useEffect(() => {
+    const normalizedTrackId = currentTrack?.track_id?.trim();
+    currentTrackIdRef.current = normalizedTrackId && normalizedTrackId.length > 0 ? normalizedTrackId : null;
+  }, [currentTrack?.track_id]);
 
   React.useEffect(() => {
     const restored = loadRadioState();
@@ -210,6 +219,13 @@ export default function RadioWidget() {
     if (retryTimerRef.current !== null) {
       window.clearTimeout(retryTimerRef.current);
       retryTimerRef.current = null;
+    }
+  }, []);
+
+  const clearSessionRefreshTimer = React.useCallback(() => {
+    if (sessionRefreshTimerRef.current !== null) {
+      window.clearTimeout(sessionRefreshTimerRef.current);
+      sessionRefreshTimerRef.current = null;
     }
   }, []);
 
@@ -281,6 +297,7 @@ export default function RadioWidget() {
     }
 
     reconnectInFlightRef.current = true;
+    clearSessionRefreshTimer();
     const attempt = retryAttemptRef.current;
     setStreamState(attempt === 0 ? 'connecting' : 'retrying');
     setStatusText(attempt === 0 ? 'Connecting…' : 'Reconnecting…');
@@ -289,6 +306,9 @@ export default function RadioWidget() {
       const streamUrl = buildStreamUrl({
         channel: channelRef.current,
         quality: qualityRef.current,
+        baseUrl: window.location.origin,
+        path: '/api/radio/stream',
+        cacheBust: true,
       });
 
       audio.pause();
@@ -309,17 +329,46 @@ export default function RadioWidget() {
     } finally {
       reconnectInFlightRef.current = false;
     }
-  }, [scheduleRetry]);
+  }, [clearSessionRefreshTimer, scheduleRetry]);
 
   React.useEffect(() => {
     reconnectRef.current = reconnectStream;
   }, [reconnectStream]);
+
+  const refreshLiveSession = React.useCallback(
+    (statusMessage: string) => {
+      if (!playbackDesiredRef.current) {
+        return;
+      }
+
+      clearRetryTimer();
+      clearSessionRefreshTimer();
+      retryAttemptRef.current = 0;
+      setStatusText(statusMessage);
+      void reconnectRef.current();
+    },
+    [clearRetryTimer, clearSessionRefreshTimer]
+  );
+
+  const scheduleSessionRefresh = React.useCallback(() => {
+    if (!playbackDesiredRef.current) {
+      return;
+    }
+
+    clearSessionRefreshTimer();
+    sessionRefreshTimerRef.current = window.setTimeout(() => {
+      sessionRefreshTimerRef.current = null;
+      refreshLiveSession('Refreshing live session…');
+    }, MAX_STREAM_SESSION_MS);
+  }, [clearSessionRefreshTimer, refreshLiveSession]);
 
   const stopPlayback = React.useCallback(() => {
     setPlaybackDesired(false);
     playbackDesiredRef.current = false;
     retryAttemptRef.current = 0;
     clearRetryTimer();
+    clearSessionRefreshTimer();
+    observedTrackIdRef.current = currentTrackIdRef.current;
 
     const audio = audioRef.current;
     if (audio !== null) {
@@ -331,15 +380,17 @@ export default function RadioWidget() {
 
     setStreamState('idle');
     setStatusText('Stopped');
-  }, [clearRetryTimer]);
+  }, [clearRetryTimer, clearSessionRefreshTimer]);
 
   const startPlayback = React.useCallback(() => {
     setPlaybackDesired(true);
     playbackDesiredRef.current = true;
     retryAttemptRef.current = 0;
     clearRetryTimer();
+    clearSessionRefreshTimer();
+    observedTrackIdRef.current = currentTrackIdRef.current;
     void reconnectRef.current();
-  }, [clearRetryTimer]);
+  }, [clearRetryTimer, clearSessionRefreshTimer]);
 
   React.useEffect(() => {
     const audio = new Audio();
@@ -349,11 +400,14 @@ export default function RadioWidget() {
 
     const handlePlaying = () => {
       clearRetryTimer();
+      clearSessionRefreshTimer();
       retryAttemptRef.current = 0;
+      observedTrackIdRef.current = currentTrackIdRef.current;
       setStreamState('playing');
       setStatusText('Live');
       setLastError(null);
       clearRadioLastError();
+      scheduleSessionRefresh();
     };
 
     const handlePause = () => {
@@ -367,6 +421,7 @@ export default function RadioWidget() {
         return;
       }
 
+      clearSessionRefreshTimer();
       scheduleRetry('Stream interrupted.');
     };
 
@@ -378,6 +433,7 @@ export default function RadioWidget() {
 
     return () => {
       clearRetryTimer();
+      clearSessionRefreshTimer();
       audio.pause();
       audio.removeAttribute('src');
       audio.load();
@@ -388,13 +444,14 @@ export default function RadioWidget() {
       audio.removeEventListener('ended', handleError);
       audioRef.current = null;
     };
-  }, [clearRetryTimer, scheduleRetry]);
+  }, [clearRetryTimer, clearSessionRefreshTimer, scheduleRetry, scheduleSessionRefresh]);
 
   React.useEffect(() => {
     return () => {
       clearCloseLingerTimer();
+      clearSessionRefreshTimer();
     };
-  }, [clearCloseLingerTimer]);
+  }, [clearCloseLingerTimer, clearSessionRefreshTimer]);
 
   React.useEffect(() => {
     if (stickyOpen) {
@@ -534,9 +591,34 @@ export default function RadioWidget() {
 
     clearRetryTimer();
     retryAttemptRef.current = 0;
-    setStatusText('Switching channel…');
-    void reconnectRef.current();
-  }, [channel, refreshMetadata, clearRetryTimer, hydrated]);
+    observedTrackIdRef.current = null;
+    refreshLiveSession('Switching channel…');
+  }, [channel, refreshMetadata, clearRetryTimer, hydrated, refreshLiveSession]);
+
+  React.useEffect(() => {
+    const trackId = currentTrackIdRef.current;
+
+    if (!playbackDesired) {
+      observedTrackIdRef.current = trackId;
+      return;
+    }
+
+    if (trackId === null) {
+      return;
+    }
+
+    if (observedTrackIdRef.current === null) {
+      observedTrackIdRef.current = trackId;
+      return;
+    }
+
+    if (observedTrackIdRef.current === trackId) {
+      return;
+    }
+
+    observedTrackIdRef.current = trackId;
+    refreshLiveSession('Refreshing stream for the next track…');
+  }, [currentTrack?.track_id, playbackDesired, refreshLiveSession]);
 
   const fallbackIdentity = `${currentTrack?.title ?? 'unknown'}::${currentTrack?.track_id ?? 'unknown'}`;
   const fallbackImage = React.useMemo(() => {
