@@ -20,6 +20,14 @@ const JSON_HEADERS = {
   Accept: 'application/json',
 } as const;
 
+function createCacheBustToken(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.round(Math.random() * 1_000_000_000)}`;
+}
+
 export class RadioApiError extends Error {
   code: string;
   status: number;
@@ -157,16 +165,17 @@ export function buildStreamUrl(options: {
   channel: string | null | undefined;
   quality: QualityName | string | null | undefined;
   baseUrl?: string;
+  path?: string;
   cacheBust?: boolean;
 }): string {
   const normalizedChannel = normalizeChannel(options.channel);
   const normalizedQuality = normalizeQuality(options.quality);
-  const url = new URL('/radio/v1/stream', options.baseUrl ?? MIDORIAI_RADIO_BASE_URL);
+  const url = new URL(options.path ?? '/radio/v1/stream', options.baseUrl ?? MIDORIAI_RADIO_BASE_URL);
   url.searchParams.set('channel', normalizedChannel);
   url.searchParams.set('q', normalizedQuality);
 
   if (options.cacheBust === true) {
-    url.searchParams.set('ts', Date.now().toString());
+    url.searchParams.set('ts', createCacheBustToken());
   }
 
   return url.toString();
