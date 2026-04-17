@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! command -v yay >/dev/null 2>&1; then
-  exit 1
-fi
-
 if ! command -v bun >/dev/null 2>&1; then
-  exit 1
+  yay -Syu --noconfirm --needed bun
 fi
 
 PLAYWRIGHT_SYSTEM_PACKAGES=(
