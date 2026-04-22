@@ -1,9 +1,11 @@
+---
 title: "Echo POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
 summary: "Echo's first-person account of getting Riley to the Midori house, helping hold the room while the copy threat gets mapped into something survivable, waking into Luna's brutal healing, and driving toward Thorncrown with the fight already active."
 tags: [lore, "real-moments", "echo"]
 cover_image: /lore/echo-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
+---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
 > tabletop RPG context. It may use real names, familiar personal details, or

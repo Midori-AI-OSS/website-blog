@@ -1,9 +1,11 @@
+---
 title: "Riley POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
 summary: "Riley's first-person account of arriving at the Midori house under pressure, consenting to a protection plan built around the copy threat, watching Luna's brutal healing, and rolling toward Thorncrown with the fight already active."
 tags: [lore, "real-moments", "riley"]
 cover_image: /lore/riley-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
+---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
 > tabletop RPG context. It may use real names, familiar personal details, or

@@ -1,9 +1,11 @@
+---
 title: "Luna POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
 summary: "Luna’s first-person account of Lady Light’s warning, Riley asleep in her lap while the room builds a plan for Eureka, brutal healing that closes without restoring, and the convoy rolling toward Thorncrown."
 tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
+---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
 > tabletop RPG context. It may use real names, familiar personal details, or
