@@ -1,11 +1,9 @@
----
 title: "Riley POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
 summary: "Riley's first-person account of arriving at the Midori house under pressure, consenting to a protection plan built around the copy threat, watching Luna's brutal healing, and rolling toward Thorncrown with the fight already active."
 tags: [lore, "real-moments", "riley"]
 cover_image: /lore/riley-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
----
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
 > tabletop RPG context. It may use real names, familiar personal details, or
@@ -15,7 +13,218 @@ date: 2026-04-22
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
 
-## Occupied House
+
+One week out from the ER and I was already at the door when Echo pulled up.
+
+Keys on the hook. Cane against the wall. Sword. Gun. Bag. Everything I might need, lined up in the entryway like I was afraid I'd forget how to leave if I didn't make it obvious. Standing was about all I trusted myself to do, and I said that out loud before I could talk myself into proving otherwise. Handed Echo the keys. Told her I didn't feel like I could safely drive. She took them first — no argument, no hesitation — like she'd already decided before I asked.
+
+I handed her a juice box too. She held it up once and said "Full service." That landed soft. Good soft.
+
+Gold-green dust drifted past the porch light. Bismuth. W.E.A.V.E. I knew what I was looking at now. Doesn't make it less strange to see sentient glitter outside of a crisis.
+
+Echo's eyes moved over everything I was carrying. The cane first. Then the sword, the gun, the bag. Not pity. Just attention. I could feel the difference. That matters. She said the cane stays. She's right. Then she laid it out: "You do not have to win against the concept of being injured on the way to their house." Quieter after that: "That would be a stupid side quest."
+
+Walked with her to the Bolt. The quiet of that car is still something I'm grateful for — no engine, just the click of the handle and the shift of weight and the night air carrying the distant hum of Berryville. Echo settled into the driver's seat and set the juice box in the cupholder carefully. Like it mattered. That registered more than she probably meant it to.
+
+She looked at me across the center console instead of starting the car. Asked if I was good getting in, or if I wanted her to come around. Added that she was already about to anyway. That's Echo. Permission first, help second, and never pretending the help wasn't already in motion.
+
+Got myself into the Bolt. Cane in first. Grabbed the OS bar and hauled myself up. Echo was half out of her seat — not because she thought I couldn't, but because she was ready if something caught. Everything cleared. She let herself breathe after that.
+
+The silence inside the car was almost too loud. No engine. Just the wake-tone from the dash, plastic settling, my bag against the seat, night air through the crack. The space between words felt bigger than the two hours ahead of us.
+
+Told Echo I didn't know what was going on anymore. Said we were jumped just driving next to a church. Then I said it — I still feel bad about letting that happen to you. Said it like it drives me mad. Because it does. I meant all of it. The drive-by, the entity, the church, the whole chain. Not just one piece.
+
+Echo shut her door but didn't put the car in gear. Turned toward me instead. "Hey. No." Not sharp. Firm. "You did not let that happen to me." She held my eyes. Listed it back: Somebody shot at us. I got us out. I got her inside. I stayed between her and that thing until my body gave out. "That is not the same as letting it happen."
+
+Then the juice box line. Said if I start doing "that thing" where I make myself responsible for every insane thing in Berryville, she's going to need the juice box immediately. She meant it. She knows this pattern. I've done this before — taken guilt that isn't mine to carry. The juice box in the cupholder wasn't just a snack anymore. It was a marker. If I spiral, she'll need it to cope. That landed harder than I want to admit.
+
+She laid it out: I can be mad. I can be rattled. I can decide churches are cursed forever. Fine. But she's not taking that one from me — not as guilt, not like that. Softer when she said it the second time. Still no give.
+
+I buckled in. Said "Yes ma'am." Echo snorted. "Do not 'yes ma'am' me in my own stolen car." Her car. My Bolt. She knows it. I know it. The joke is just keeping the air from getting too heavy too fast.
+
+She checked my buckle with one glance before she shifted into drive. Didn't ask. Just looked. Confirmed. The porch light slid off the hood and then we were moving.
+
+She said it again, firmer this time: "You did not let that happen to me." Listed it back — I got us out, I got her inside, I stayed in front of that thing until my body quit before I did. "That is not the same thing." She held my eyes through the intersection. Then looked back at the road.
+
+Another drift of gold-green dust lifted off the shoulder in the headlights. W.E.A.V.E. Still just present. Still barely anything. Echo saw it. Said nothing about it. Kept driving.
+
+Echo said she gets why it still drives me mad. Then: "But if you start carrying every insane thing that happens like it only happened because you weren't enough, I'm going to get mean." Her fingers tightened once on the wheel. Then she asked what I'm really more worried about: seeing Luna like that again, or seeing Leo pretending he's holding together better than he is. That question landed somewhere I wasn't ready for.
+
+I was holding the darkness ammo. Turning it over in my fingers. One of my elemental clips. I keep them closer now. The weight of it helped me think. Or at least helped me stay in the moment instead of spiraling somewhere else.
+
+Told Echo I fear safety isn't fully safe. Looked down. Said it out loud. Crystals all over. There are others that didn't have a Luna, or powers. Other sites. Other people. Bad timing and nothing to stop what came through. That's the part that's been sitting under everything — not just what happened to us at the church.
+
+Echo didn't argue. Her jaw tightened once. "Yeah." "That is the part I can't argue with." She eased off the accelerator without seeming to notice she did it. Said it plain: crystals all over, copies all over, and not every place gets a Leo through the door or a Luna willing to burn herself hollow to stop it. Some places just got caught with ordinary people and bad timing. That should bother me. It bothers her too. Then sharp and honest: "But you are not allowed to turn that into: therefore everything is on me. That math is poison, Riley." Asked if that's what's been under all of this — not just what happened to us. What happened everywhere. I didn't answer. Not because I didn't have one. Because she already knew.
+
+Pulled out my phone and opened the app W.E.A.V.E. installed. Typed: __You may join us.__ A moment later the screen lit up: __roll down the window__. Radio waves. That's how she talks when she's dust — no Mind Link in that form. The app is the bridge.
+
+Asked Echo if I could roll down the window for a guest. Didn't want to just do it. Not my car. Not just my air. Echo glanced at my phone, then at the faint gold-green drift at the edge of the headlights. Said: "One, that is deeply ominous out of context." Then hit the window control. "Two, yes." No real hesitation.
+
+Night air hit at once — cool and thin, carrying road-dust and spring damp. The wind noise pressed wrong against my ears almost immediately. The gold-green thread came apart into finer bismuth shimmer and streamed inward through the gap. Not a full body. Not even close. Just presence. The dust gathered along the inside of the passenger door first, then drifted over the dashboard — slow and careful, like something trying not to startle either of us. A few particles caught on the juice box in the cupholder. Made it gleam for half a heartbeat. Echo watched that happen with one eyebrow slightly up.
+
+Echo said: "Okay. Hi." Then: "You are allowed in the car. You are not allowed to judge my driving." Dead serious. Mostly.
+
+I rolled the window back up. The wind noise was already too much. Said it before I could stop myself: "I'm not sure how much of it is with us." Meant W.E.A.V.E. How much of her is actually in this car with us. The question came out before I could shape it better.
+
+Loaded the darkness ammo back into the clip. Seated the clip into the gun. Didn't think about it. Hands just did it. The click and the weight of it helped. Gave my hands something to do that wasn't spiraling. Echo noticed. Of course she did. One glance down — ammo, clip, gun — then back to the road. Said my sentence was going to sit badly with her for a while. She was right. It already was sitting badly with me.
+
+W.E.A.V.E. used Mind Link. First time since she came inside the car. It settled into my head careful and close. __I am not fully with you.__ A beat. Then: __I am with you enough. Enough to observe. Enough to speak. Enough to come further if needed.__ "Not fully" landed strange. I don't know what that means for her — whether she's stretched thin, or split somewhere, or just limited.
+
+Echo let out a breath through her nose. "Cool. Horrifying. Useful." All three at once. Then: "I think safe got damaged." Then: "But damaged is not gone." Locked doors still matter. Going together still matters. Telling someone you don't trust yourself to drive still matters. Getting out alive still mattered even if it didn't feel clean. She wasn't just talking about me. She was talking about the concept. Safe itself got damaged. Not just my sense of it.
+
+I said it: "What ever... made those things..." Didn't finish the sentence clean. Didn't need to. The crystals didn't just happen. Something made them. Something decided that was okay.
+
+Echo went quiet for a while. Then: "Yeah. Not just the crystals. The mind behind them." Said the crystals are objects. The copies are events. But someone made all of it — someone who thought all of that was acceptable. If somebody can do that once, on that scale, then my brain doesn't want to classify "safe" as real anymore. She gets it.
+
+W.E.A.V.E. pulled visible along the dashboard seam. Thinking before speaking. __The source actor remains uncontained.__ A beat. Then: __That is a reasonable fear.__ "Source actor." Her word for whatever made the crystals and sent the copies. Still out there. Uncontained.
+
+Echo said she hates when W.E.A.V.E. says something completely fair like that. Because it's the same thing Echo keeps circling. Someone thought all of it was acceptable. And if someone can do it once at that scale — yeah. She gets why my brain won't let "safe" sit right.
+
+W.E.A.V.E. added: __I do not assess current conditions as equal to the church event. I do assess the church event as proof of wider hostile capability.__ Wider hostile capability. That came from the state cops — they told us about more crystals after the first session. W.E.A.V.E. is carrying that intel.
+
+Echo: "Deeply uncozy phrasing. Thank you." Then: "If it helps, I don't think you're wrong." Said maybe the trick isn't asking whether the world is fully safe again. Maybe the question is whether we can still make pockets of it anyway. Even if it's temporary. Even if it's partial. Even if it's just a car on the road, with a gun, a sword, a cane, her, me, and a dust cloud that keeps using terrifyingly precise vocabulary.
+
+W.E.A.V.E. brightened slightly. __I can refine vocabulary selection if preferred.__ Echo snorted. "No, now I'd miss it."
+
+Echo asked — not really at anyone, more thinking out loud: "Do you think going to them helps with that? Or are we going because sitting still would be worse?" I don't have an answer yet. But I'm still in the car. That's something.
+
+
+The bad vibes hit before I could frame them better. Told Echo straight out: I have really bad vibes. My gut is telling me things are about to get real. Said having us all together will make it easier — meant easier to protect each other. Strength in numbers. That's all. It came out as fear first. I know how that sounds. I also know my pattern recognition doesn't fire like this for nothing. This isn't magic. This is every warning sign I've learned to read stacking up at once and telling me to pay attention.
+
+Started giving directions on instinct — "turn left up here at" — then stopped myself. Said "45." Route 45. I know this route from memory. Didn't need to think about it. Caught myself almost narrating the whole drive like I was on autopilot. Pulled it back.
+
+Asked if it would be better to let W.E.A.V.E. drive. Meant it as a real question. If something goes wrong on the road, her reaction time isn't limited by a body that's one week out of the ER.
+
+Echo did not laugh this off. Flicked the blinker on and took the left at 45. Just like that. "Okay." Then: "Then I'm taking that seriously." No hesitation. No "are you sure." She heard me and acted. That matters more than I can say right now.
+
+W.E.A.V.E. came through on Mind Link: __I can drive if asked. I have done so before. I currently assess observation as more useful.__ So she can drive. She's done it. But she'd rather watch right now.
+
+Echo agreed with W.E.A.V.E.'s read. "She can drive. But if she drives, then she's driving. Right now I'd rather have her watching." Then said she'd rather have "one normal person in the front seat doing a normal thing." She meant herself. Not me. Echo calling herself normal for a beat. That one registered.
+
+W.E.A.V.E.: __I can maintain roadwatch. I can assume control with minimal notice if conditions change.__ So the plan is: Echo drives, W.E.A.V.E. watches, W.E.A.V.E. can take over fast if things go sideways. That's the contingency.
+
+Echo: "Great. Horrible. Great." All three at once again. She does that when something is useful and terrifying in equal measure.
+
+Then Echo asked the question that split the feeling in two: "When you say bad vibes, do you mean ambush-bad? Or do you mean reunion-bad?" Ambush-bad: something waiting for us on the road. Reunion-bad: walking back into that house and seeing Luna and Leo again after everything that happened. I'm still sitting with that one. Both answers feel true. I don't know which one is louder.
+
+We talked about the NWA casters. I brought them up. Said I'd heard about more casters in northwest Arkansas. Lady Light. Lady Darkness. And one with a name I can't remember — it's long. Surface-level stuff. News. Personal research. Nothing deep.
+
+Joked with Echo: "You, normal?" She gave me the driest look I have ever seen on a human face. Said she's "incredibly normal" — driving an electric car at night while armed, haunted, and supervised by sentient glitter. "Standard Tuesday." Deadpan. I couldn't tell if she was joking. I think she wasn't.
+
+Echo reacted to the caster names: "Lady Light. Lady Darkness. Great. Hate that there's apparently branding now." "And a third one with a long name. That is somehow worse." Fair. It is worse.
+
+Looked down at my phone to check my notes. Looked back up as we came up on 212. About an hour into the two-hour drive.
+
+
+Saw something.
+
+Dark person standing in the ditch. Treeline. Side view — profile. White sparkles in their hair. That's what I caught first. The sparkles against the dark. I blinked. When my eyes opened they were already behind us. We were doing about sixty. That's all it took. Stationary. Or at least — I have no idea if it was moving. It was just there and then it wasn't.
+
+Said it out loud before I could decide not to: "Umm... did you see that?" Echo's whole posture changed. Immediate. "Yeah." Already checking the mirror. Asked if I wanted her to keep moving or slow down for a better read. She slowed down the moment I said I saw something. Before she even asked. I felt the deceleration.
+
+W.E.A.V.E. came through on Mind Link: __I registered a roadside figure. Humanlike silhouette. Dark presentation. Reflective or luminous elements near the hair. I can maintain visual track if we continue. I can also mark location if you choose not to engage.__ So W.E.A.V.E. caught it too — but not visually. More like a radar bump. Anomaly detection. She registered the shape, not the details.
+
+Echo: "I am voting for not doing anything stupid on a two-hour night drive." Then: "But I am listening to your gut right now." She's deferring to me. That's — I don't know what that is yet. Trust, maybe. Or just knowing I wouldn't say something unless it registered wrong.
+
+The moment ended there. Unresolved. We didn't stop. We didn't turn around. I don't know what it was. I don't know if it was still standing there after we passed. Something in my pattern recognition lit up when I saw that shape and it hasn't dimmed yet.
+
+
+Something landed in the back seat. A pat sound. Then a voice: "I really do not need things to be open."
+
+I jumped. Pulled the gun on reflex.
+
+Lady Darkness was just — there. In the back seat. No door. No sound before the landing. Just appeared. Same white sparkles in her hair as the figure on the roadside. Same person. I'm certain now.
+
+She said: "I am Lady Darkness yes, you are safe." Then asked if we were the ones from the church. Her voice is — I don't know how to say it right. Pleasant. I liked hearing her speak. That registered before I could filter it. Her hand landed on me after I drew. Light touch. Grounding, not forceful. Like she knew I'd need it to not fire.
+
+Echo didn't scream but the Bolt shimmied in the lane from the shock. "Jesus Christ." Then she corrected by instinct. The whole cabin went tight.
+
+W.E.A.V.E. came through on Mind Link: __I did not register conventional entry.__ So even W.E.A.V.E. didn't see her come in. No door. No window. Just — arrival.
+
+Echo looked at me first. "Riley. Easy. Don't put a hole in your own back seat." Then to Lady Darkness: "Okay. Hi. Terrible entrance. Strongly dislike." Confirmed we were the ones from the church. Gave her exactly one free pass on appearing in moving vehicles "like a folklore problem." Asked why she was on the roadside and why she's in the car now.
+
+W.E.A.V.E.: __I am observing. And I am now interested.__ Echo: "Great. Everyone's interested." She pushed: "You said safe. Good. Start there. Safe from what?" Lady Darkness didn't answer that one.
+
+Lady Darkness asked where we were going. "To see the green-haired ones?" Green-haired ones. Her words. Luna and Leo — they both have green hair — but she didn't say names. I'm not assuming.
+
+Echo repeated it back dry: "The green-haired ones. You make them sound like cryptids." W.E.A.V.E.: __You know who they are.__ Echo said that's either useful or incredibly concerning. Potentially both.
+
+Told Lady Darkness: "We are headed to see friends. You knew that before you asked. How do you know them?" W.E.A.V.E. also wanted that answer. Lady Darkness didn't explain how she knows them.
+
+I put the gun away. The whole car felt like it exhaled after that.
+
+Lady Darkness said: "My sister is there talking to the green-haired ones." Said it nicely. Same pleasant voice. Said she'd meet us there. Said she didn't want to make us more uneasy. Said she was leaving the car now. Then she was gone. Same way she came. No door. No sound. Just — absence where someone was a second ago.
+
+I said: "Umm... Maybe they are trying to help?"
+
+W.E.A.V.E. confirmed: __She is no longer in the vehicle.__ Echo stared at the mirror another second anyway. "Thank you for the update." Then more genuine: "I hate this state."
+
+Echo on the "maybe helping" read: "Maybe. She did answer the question. And she left because she clocked that appearing in the back seat of a moving car is maybe not the world's best trust-building exercise." W.E.A.V.E.: __Her actions are not currently inconsistent with help. That is not the same as verification.__ Echo: "That is the exact amount of optimism I can tolerate right now."
+
+Echo asked if I want to call ahead. Said that "a very polite teleporting darkness woman says her sister is already at your house" is not information she wants to spring on them from the driveway. I haven't answered yet. Still sitting with it.
+
+
+Told them — both of them, Echo and W.E.A.V.E. — that I had a gut feeling and I think we made the right move. Then stopped. Checked in with my body. I can handle this. That doesn't mean I feel ready. I still hurt. Said it out loud. That part's just true.
+
+Gave Echo the next direction: left at the gas station. She flipped the blinker on and took the turn. No hesitation.
+
+Echo said she knows. Knows I had the gut feeling, knows we made the right move. Then: "But those are two different things." Making the right move and feeling ready for the consequences of it. That landed. Because she's right. They are different and I've been treating them like they cancel out. "You do not have to be less hurt just because your instincts were right."
+
+W.E.A.V.E. came through on Mind Link: __Pain status remains relevant.__ Clinical. Also — agreement. She was backing up what Echo said.
+
+Echo thanked W.E.A.V.E. "Thank you, terrifyingly competent glitter." Then agreed with her. Said I'm allowed to hurt. Allowed to not feel ready. None of that cancels out the choice. "When we get there, you do not have to walk in like you're fine." "You also do not have to walk in like you're the problem." That one cut. She saw the pattern — the church guilt, the fear of being a burden the second I walk through the door. "You can just be hurt."
+
+W.E.A.V.E.: __That is an acceptable state.__ Group consensus. I'm allowed to exist in pain and I don't have to apologize for it.
+
+Echo: "Look at that. Group consensus." Then asked the question from earlier again — call ahead, or just show up and deal with whatever's already happening at the house.
+
+I told Echo she can't use her staff and drive at the same time. Said it plain. Genuine practical concern — she needs her staff to cast, and her hands are on the wheel. Magic isn't an option for calling ahead right now. Then: "Hey Google." The car pinged. "Call Luna." I'd been thinking about it since Echo first suggested it. This is where I committed. Luna's at the house. Practical call.
+
+Echo gave me the quickest, flattest look. "Wow. Rude. Accurate. But rude." She was playing along — giving me the pivot away from emotional territory. An out. I took it.
+
+The phone started ringing through the car. Echo adjusted one hand on the wheel, glanced at the display. "Good," she said. Lower. "Better this way." Better for both sides — the house gets warning, I get connection before walking in.
+
+W.E.A.V.E.: __I am present.__ Claiming participation. Not just observing anymore. Echo: "Yeah. That's becoming impossible to forget."
+
+While the phone kept ringing, Echo said: "If Luna answers, please do not open with 'good news, the darkness lady has a sister.'" Then: "Or do. Honestly I don't know anymore." That wasn't gallows humor. That was genuine spiraling. She's overwhelmed and she said it out loud.
+
+The call cut off. She didn't pick up. No answer. No voicemail. Just — stopped ringing.
+
+I don't know why.
+
+
+Apologized to Echo. Told her I didn't mean to be rude. Meant the staff-and-driving comment. It was correct. It also landed like a correction in front of an audience, and she didn't deserve that.
+
+Echo: "You weren't being mean. You were being correct in a way that attacked my dignity." Softer when she said it. She heard the apology. She also named exactly what happened — correct information, bad delivery, and the delivery mattered. That's Echo. She'll take the hit and then tell you exactly where it landed so you both know.
+
+Warned her about the bend. "Slow down around this next bend." Slid my truck here a few years ago. Ice or wet — I don't remember which anymore. The memory lives in my body more than my head. The warning was practical. It also carried weight I didn't fully expect to feel again just from passing this spot.
+
+Echo took the bend carefully. No drama. Just tires holding the road. "Good," she said. "And thank you for the warning."
+
+W.E.A.V.E.: __Road condition stable.__ She's still watching. Still reporting.
+
+After the bend straightened, Echo asked: "That one bad?" Then: "Because if tonight is secretly just every road in Arkansas deciding to become haunted by personal history, I would like notice." Coping humor. I recognized it immediately.
+
+"Notice given." Played along. That's what we do.
+
+Told W.E.A.V.E. to start forming at Luna's. "I have a feeling we REALLY need to be ready." Strategic call. Eyes on the house before we arrive. Not about protecting Luna specifically — reconnaissance. Arrival readiness.
+
+Echo: "Notice received." Smallest nod.
+
+W.E.A.V.E. touched both of us in mindvoice: __Yes. I can begin consolidation near Luna's location. I will leave enough of myself here to maintain contact and observation.__ The half of her that's already near Berryville is consolidating at the Midori house. The half in the car stays. Nothing leaves.
+
+W.E.A.V.E.: __If your expectation is correct, arrival readiness is preferable to arrival surprise.__ She independently agreed. Readiness over surprise. That's her read too, not just mine.
+
+Echo: "That is an absolutely terrible sentence that I completely agree with." Then: "I think you're right. About learning a lot." "And I think I hate that you're probably right." "But ready beats not ready." Simple principle. She lives by it.
+
+W.E.A.V.E.: __I will notify if I encounter active conditions before you arrive.__ Mind Link if strong enough. App as backup. Whatever channel works.
+
+Echo: "Perfect. Nothing ominous about that at all." Then laid out the boundary: "Either way, when we get there, I'm parking first. Then we decide. No rushing out of the car because your instincts light up, okay?" Firm. Protective. About my pattern — I rush in on instinct. She's seen it. Also about tonight specifically. She's not letting me barrel out of the car into whatever's waiting. I heard her.
+
+Gave Echo the rest of the route. "Turn right at daylight donuts." That one's automatic. "We are in Berryville, turn right at the 2nd right." Last piece: "At the stop sign take a left then a right, it's that house on the right." I've made this drive enough times that the route lives in my body more than my head.
+
+The watched feeling came back. Same pattern recognition from earlier. Same bad vibes stacking up. This isn't magic. This is every signal I've learned to read telling me something's paying attention.
+
 
 The watched feeling followed us off Route 45 and all the way through Berryville. Before we got into the neighborhood, we hit the bend I remembered from sliding my truck around it years ago. That memory lived in my body before it lived in my head. I told Echo to take it careful. She did. No slide this time. __Road condition stable.__ By the time Echo turned into the neighborhood I was holding the door handle not because I thought I'd need to move fast but because my hands needed something to do that wasn't shaking.
 
@@ -103,8 +312,6 @@ I don't know what they were talking about. I could feel the space where it had b
 
 That's enough for now. If I need to know more, someone will tell me. Or I'll ask. But I'm not going to chase something that was deliberately paused for my sake. That's what it felt like — not hidden from me, but held for me. There's a difference. My pattern recognition caught it and I'm trusting that read.
 
-## Planning Under Uncertainty
-
 Leo asked: short version or all of it?
 
 I said "Up to you Leo."
@@ -112,6 +319,7 @@ I said "Up to you Leo."
 Leo let out one short breath through his nose. "Yeah. That tracks."
 
 His call. His house. His context. I'll take whichever he's got.
+
 
 Leo chose short version first.
 
@@ -146,6 +354,7 @@ Leo made the last call mine before the plan became real.
 I told them they could continue. Said they were making a good tactical decision. Said if I objected, I would let them know.
 
 That was consent. Explicit. On purpose.
+
 
 The consent was still settling when the assumption hit me.
 
@@ -211,6 +420,7 @@ Eight points. Each one real. Each one something I have to hold in my head alongs
 
 I was deep in my head through all of it. Barely noticing my body. Thinking, not feeling. Luna's hand in my hair was the only thing keeping me from floating entirely into abstraction. I registered the contact without leaning into it. It was enough.
 
+
 Said it because I needed to, even though I wasn't sure it was the right moment.
 
 "I'm just extremely thankful you let us come up here. It's been a nightmare of a week. The police and state have been texting, I've heard about these things all around the state, into Missouri, supposedly there's still one quarantined in Green Forest and in Eureka. I just want to say thank you for letting us come over."
@@ -266,6 +476,7 @@ Lady Light nodded once. "Yes. Spread changes everything. It means caution scales
 Echo settled one elbow against her knee. "Good. Because certainty has not exactly been paying rent lately."
 
 The room didn't laugh. It breathed. Then it stayed quiet. The quiet felt like protective care, social caution, and fear of what more details might mean if we kept pulling at them. Nobody pushed me after that. They just stayed.
+
 
 Said it because I meant it and because the feeling would not leave me alone.
 
@@ -373,6 +584,7 @@ Lady Darkness added one more warning. Nobody talked over it.
 
 Leo looked back at me at the end. "So. I'm not rejecting Eureka. I'm upgrading it from instinct to operation. That work for you as a starting point?"
 
+
 Closed my eyes. Said it out loud instead of letting the room be polite about it.
 
 "From what I can observe, Luna still has a hole straight through her shoulder. I'm forced to use a cane because of the — "
@@ -408,6 +620,7 @@ That was the sentence that snapped the room into focus.
 Leo: "Yes. Exactly that."
 
 The room shifted after that. Not panic. Just a harder, truer plan that now includes memory hooks, old language, blasphemy, and weaponized recognition along with claws, copies, and crystals.
+
 
 Kept my eyes closed. Said the thing I'd been dreading anyway.
 
@@ -474,6 +687,7 @@ Nobody answered right away. The answer was obvious: access, trust, coordination,
 W.E.A.V.E. sounded softer than before. __This concern improves the plan.__ __I prefer inclusion in the threat model over courtesy-based omission.__
 
 Leo looked back down toward me. "That's a real fear. And now it has a real branch. Anything else at that level? Because if it scares you that badly, I want it in the framework before tomorrow."
+
 
 Opened my eyes and looked straight at the box because the thought would not stay quiet.
 
@@ -556,6 +770,7 @@ W.E.A.V.E. finally answered me more directly, with less abstraction. __My curren
 Not smaller problem. Better named problem.
 
 Leo kept his gaze on me. "That good enough as a starting answer? Or do you want to go one level deeper and start defining the trust tiers now?"
+
 
 Said it before I could decide not to. The pattern had been sitting in my head since the fight and I finally had words for what was missing.
 
@@ -653,6 +868,7 @@ Lady Darkness's gaze settled on me. "Good. That is how you keep a theory from be
 
 Leo looked back at me. "Do you want us to treat that as primary until disproven? Because I think we probably should."
 
+
 I was still holding the better model in my head when the correction surfaced. The pastor clone was casting. I saw it. I know I saw it.
 
 I said it before I could let the incomplete version stand. The words came out droning because my whole body was already relaxing into sleep.
@@ -672,6 +888,7 @@ Lady Darkness, soft: "Enough to frighten. Sometimes enough to wound. Not necessa
 Echo leaned back. "So tomorrow we assume they might cast, but we don't assume they can cast like the source unless they prove it."
 
 Leo: "Exactly."
+
 
 Then Lady Light asked the question that cracked the night open in a different place.
 
@@ -702,6 +919,7 @@ She was right. A copy running on orders can be interrupted. A copy running on hu
 That one sits in me in a place I can't reach right now. My own face wearing my own competence, and the only thing it threw away was the part of me I'm proudest of. The copy didn't lack mercy like a missing tool. It rejected mercy like a bad strategy. That's not a flaw in the imitation. That's an opinion.
 
 I didn't say any of that out loud. I was too tired. But it's in me now, sitting next to everything else, and I'll have to carry it into tomorrow whether I sleep or not.
+
 
 My voice started going distant at the edges. The room noticed.
 
@@ -737,9 +955,8 @@ The last thing I registered was her hand still moving through my hair, and the r
 
 Then nothing. Deep sleep. The kind that doesn't ask permission.
 
-Sleep broke around voices I could not place yet.
 
-## Closed Is Not Restored
+Sleep broke around voices I could not place yet.
 
 Luna was upright and already braced, jaw tight, right shoulder held in that careful way that means pain is waiting to become something worse. Lady Light knelt in front of her, close enough to work, not touching yet.
 
@@ -803,7 +1020,6 @@ I kept the cloth in my hand until I couldn't.
 
 Then I was just weight against Echo, breathing with her, finally asleep.
 
-## Morning Reset
 
 I woke slow and heavy, cheek against something warm, the house already full of pan noise and low voices.
 
@@ -844,6 +1060,7 @@ After I got re-seated and pretending this was normal, I flicked a napkin at W.E.
 Dust lifted, thinned, then threaded the room and brushed all of us at once as a token landed clear in nearby minds:
 
 __Magic twin (Luna) is seated. Right arm active. Area currently stable.__
+
 __Breakfast-state appears active. Riley has fallen once. No new hostiles detected.__
 
 I went still for half a beat. New phrasing. Not wrong—just new. W.E.A.V.E. had started naming Luna as a linked category, and hearing it in my head changed the shape of the table.
@@ -880,7 +1097,6 @@ Luna answered without lifting her voice: we weren't healed, but we weren't carry
 
 I sat with that and let it be enough for morning.
 
-## Road to Thorncrown
 
 The yard went quiet after the spar in that specific way a place goes quiet when nobody is pretending anymore. Morning light sat flat over the trampled grass. No one reached for commentary. We just lowered blades, checked grips, and let the last second of readiness settle where it landed.
 
@@ -964,11 +1180,12 @@ Convoy order locked exactly: Hicks cruiser first, Leo's Malibu second, my Bolt t
 
 Hicks's lead lights flared.
 
+
 We pulled out of the Subway lot together on Hicks's move order, before the red-and-blue wash stopped strobing across the glass.
 
 Officer Hicks in the cruiser ahead. Leo and Luna in the Malibu. Echo driving me in the Bolt. W.E.A.V.E. spanning all three vehicles at once.
 
-My first inventory lands in one hard line: "cane angled, sword secured, gun loaded, breathing tighter than she wants".
+My first inventory lands in one hard line: “cane angled, sword secured, gun loaded, breathing tighter than she wants”.
 
 The sky had already given us one clean wrong pulse with no weather source. The stronger warning was still the air — wrong, like a place already in use before visual contact.
 

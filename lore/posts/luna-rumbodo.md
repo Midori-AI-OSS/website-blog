@@ -1,11 +1,9 @@
----
 title: "Luna POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
 summary: "Luna’s first-person account of Lady Light’s warning, Riley asleep in her lap while the room builds a plan for Eureka, brutal healing that closes without restoring, and the convoy rolling toward Thorncrown."
 tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
----
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
 > tabletop RPG context. It may use real names, familiar personal details, or
@@ -15,55 +13,55 @@ date: 2026-04-22
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
 
-## Occupied House
 
-Lady Light was already in the guest chair when I got to the house, and she stayed there the whole time. She said Lady Dark had already told "floating dust, time mage, and gun girl" that she was here — which had to be W.E.A.V.E., Echo, and Riley, though I only know what Lady Light said, not the exact names Lady Darkness used. She apologized for being late like late was a weather report and not a choice, speaking from the left side of her face while the right stayed slack and strange. Her white hair was threaded with black sparkles that caught the lamp light without ever turning into anything as convenient as a glow. Her right hand did the small honest work of gesturing while the rest of her stayed almost unnervingly still. Her presence was quiet — not gentler, just less interested in making the room perform around her. She also had the irritating habit of calling us Lady Luna and Mr Leo, like titles might keep the damage polite.
+Lady Light was already in the guest chair when I got to the house, and she stayed there the whole time. She said Lady Dark had already told “floating dust, time mage, and gun girl” that she was here — which had to be W.E.A.V.E., Echo, and Riley, though I only know what Lady Light said, not the exact names Lady Darkness used. She apologized for being late like late was a weather report and not a choice, speaking from the left side of her face while the right stayed slack and strange. Her white hair was threaded with black sparkles that caught the lamp light without ever turning into anything as convenient as a glow. Her right hand did the small honest work of gesturing while the rest of her stayed almost unnervingly still. Her presence was quiet — not gentler, just less interested in making the room perform around her. She also had the irritating habit of calling us Lady Luna and Mr Leo, like titles might keep the damage polite.
 
-Leo let her finish. Then he said, "Late is still here. So start with what you know."
+Leo let her finish. Then he said, “Late is still here. So start with what you know.”
 
-So she did. She talked about the copies the way a surgeon talks about a cut: not pretty, not kind, just exact. They go after will, weight, shape — people who hold other people in orbit. Not just mages. Not just bright people. Strong selves. The ones who don't bend when the room pushes back. "Will over wattage," Leo said, because of course he did. "Yes. That," she said. The copies can wear shape and surface and habit well enough to fool a glance. Conviction comes through unevenly. Pressure makes the seams show. Pain strips people down to what they really are, and the copies don't always know how to follow them there. Her brother had put it in the cleanest ugly words possible: "They do not hunt strength. They hunt definition."
+So she did. She talked about the copies the way a surgeon talks about a cut: not pretty, not kind, just exact. They go after will, weight, shape — people who hold other people in orbit. Not just mages. Not just bright people. Strong selves. The ones who don’t bend when the room pushes back. “Will over wattage,” Leo said, because of course he did. “Yes. That,” she said. The copies can wear shape and surface and habit well enough to fool a glance. Conviction comes through unevenly. Pressure makes the seams show. Pain strips people down to what they really are, and the copies don’t always know how to follow them there. Her brother had put it in the cleanest ugly words possible: “They do not hunt strength. They hunt definition.”
 
-I kept looking at the wall instead of her face because the wall was easier. Leo's golden staff. My silver one. The spellbooks. The three pairs of shoes lined up by the door like we were all pretending to be people with normal evenings and not a room full of bad decisions. I rubbed at my shoulder wound and tried not to look like I was rubbing at my shoulder wound. The church came back to me anyway. My copy hesitated at the church. Riley pressed it and it faltered. I know that from both sides. Lady Light asked if our copies had hesitated. Even once. She asked twice, which is how I knew the answer mattered more than the politeness. I told her I thought I knew what she meant. I didn't say much more than that, because some memories come out of you like glass if you push too hard.
+I kept looking at the wall instead of her face because the wall was easier. Leo’s golden staff. My silver one. The spellbooks. The three pairs of shoes lined up by the door like we were all pretending to be people with normal evenings and not a room full of bad decisions. I rubbed at my shoulder wound and tried not to look like I was rubbing at my shoulder wound. The church came back to me anyway. My copy hesitated at the church. Riley pressed it and it faltered. I know that from both sides. Lady Light asked if our copies had hesitated. Even once. She asked twice, which is how I knew the answer mattered more than the politeness. I told her I thought I knew what she meant. I didn’t say much more than that, because some memories come out of you like glass if you push too hard.
 
-She told me how she learned it. "By losing the first time." Her sister was copied first. The copy could wear her shape and cadence, could even pass the room at a distance, but it could not wear why Lady Light trusted her sister, why the shape mattered to the people around them. That difference saved Lady Light and hurt her sister all at once, which is a horrible kind of math. They hadn't been the first people the thing tried. The first ones died because they thought the pattern was random, or magical, or bound to bloodline, or visibility, or whatever other half-truth felt safest in the moment. Wrong in pieces. Wrong enough to bury people. She said the copies target people who anchor rooms — people others move around, people whose choices bend outcomes. Some of those are casters. Some aren't. Magic helps, but power is not the same as force.
+She told me how she learned it. “By losing the first time.” Her sister was copied first. The copy could wear her shape and cadence, could even pass the room at a distance, but it could not wear why Lady Light trusted her sister, why the shape mattered to the people around them. That difference saved Lady Light and hurt her sister all at once, which is a horrible kind of math. They hadn’t been the first people the thing tried. The first ones died because they thought the pattern was random, or magical, or bound to bloodline, or visibility, or whatever other half-truth felt safest in the moment. Wrong in pieces. Wrong enough to bury people. She said the copies target people who anchor rooms — people others move around, people whose choices bend outcomes. Some of those are casters. Some aren’t. Magic helps, but power is not the same as force.
 
-That was when I said the non-magic user got copied into the scariest clone, and I meant it. Not fishing. Just true. Lady Light's good eye sharpened a little. "The one without magic became one of the worst because she was not empty of force. She was full of consequence." That hit harder than it should have, because it was too close to how some people move through the world and make it rearrange itself whether they ask for that or not. She said some people cast power outward. Some people impose shape on a room just by choosing. The copies noticed both.
+That was when I said the non-magic user got copied into the scariest clone, and I meant it. Not fishing. Just true. Lady Light’s good eye sharpened a little. “The one without magic became one of the worst because she was not empty of force. She was full of consequence.” That hit harder than it should have, because it was too close to how some people move through the world and make it rearrange itself whether they ask for that or not. She said some people cast power outward. Some people impose shape on a room just by choosing. The copies noticed both.
 
 Then she asked about Riley.
 
-Not Riley in the abstract. Not Riley as a problem statement. Riley. The person the room had not met yet and was already trying to turn into a lever. She asked if Riley's copy was hunger or assignment. I said hate. It had Riley's smarts and her fight knowledge, but not the mercy. It didn't just lack restraint — it selected against her mercy. Personal. Targeted. Lady Light nodded once and said assignment moves clean, hate moves like it has chosen a target personally. Great. Love that for us. Love that there are flavors of monster and one of them has opinions.
+Not Riley in the abstract. Not Riley as a problem statement. Riley. The person the room had not met yet and was already trying to turn into a lever. She asked if Riley’s copy was hunger or assignment. I said hate. It had Riley’s smarts and her fight knowledge, but not the mercy. It didn’t just lack restraint — it selected against her mercy. Personal. Targeted. Lady Light nodded once and said assignment moves clean, hate moves like it has chosen a target personally. Great. Love that for us. Love that there are flavors of monster and one of them has opinions.
 
-That was when I cut it off. Riley was still on the road and I was not going to keep talking about her like she was furniture. Lady Light asked if we were helping, whether Riley was to be protected quietly or used loudly. The word used landed like a wrench on stone. I said, "Used?" once. Then again, because some words do not get to sit in a room without being challenged.
+That was when I cut it off. Riley was still on the road and I was not going to keep talking about her like she was furniture. Lady Light asked if we were helping, whether Riley was to be protected quietly or used loudly. The word used landed like a wrench on stone. I said, “Used?” once. Then again, because some words do not get to sit in a room without being challenged.
 
-Leo's answer was instant and flat.
+Leo’s answer was instant and flat.
 
-"No."
+“No.”
 
-Not angry. Worse, in a way. Principled. Final. The kind of no that means the whole conversation has hit a wall and the wall is correct. Lady Light didn't flinch. She said she wasn't talking about sacrificing Riley. She was talking about understanding what the enemy already thinks Riley is. "The choice is not whether that danger exists," she said. "The choice is whether you enter it blind." I hate how true that was. I hate that I understood it. I hate even more that I could feel the shape of the answer before I had one.
+Not angry. Worse, in a way. Principled. Final. The kind of no that means the whole conversation has hit a wall and the wall is correct. Lady Light didn’t flinch. She said she wasn’t talking about sacrificing Riley. She was talking about understanding what the enemy already thinks Riley is. “The choice is not whether that danger exists,” she said. “The choice is whether you enter it blind.” I hate how true that was. I hate that I understood it. I hate even more that I could feel the shape of the answer before I had one.
 
-Leo said, "She's a person."
+Leo said, “She’s a person.”
 
-Lady Light answered, quiet as a blade sliding back into a sheath, "Yes. That is exactly why it works."
+Lady Light answered, quiet as a blade sliding back into a sheath, “Yes. That is exactly why it works.”
 
-Her sister would have said use the lever loudly. Lady Light did not like that plan. She said she'd rather be early and unwelcome than late and useful — or at least that was the shape of what she meant. She also said she used the word "used" because she wanted the cruelty plain, not because Riley deserved it. I think I believe her. I think that's the worst part.
+Her sister would have said use the lever loudly. Lady Light did not like that plan. She said she’d rather be early and unwelcome than late and useful — or at least that was the shape of what she meant. She also said she used the word “used” because she wanted the cruelty plain, not because Riley deserved it. I think I believe her. I think that’s the worst part.
 
-I tried to cross my arms and immediately learned, again, that my right shoulder is still a through-and-through wound and not a decorative inconvenience. Excellent choice. Very subtle. Lady Light's head tipped a fraction. "You should stop trying to posture through a wound large enough to interrupt your magic," she said. Fair. Ruthless, but fair. Leo muttered, "Welcome to my week," and W.E.A.V.E. — which had been listening with that too-wide, too-even attention of its — sent back, __Observation: this statement is consistent with prior pattern.__ Leo shot the air a look that would have been better if it had been able to bite. "You are not helping," he said. Also fair.
+I tried to cross my arms and immediately learned, again, that my right shoulder is still a through-and-through wound and not a decorative inconvenience. Excellent choice. Very subtle. Lady Light’s head tipped a fraction. “You should stop trying to posture through a wound large enough to interrupt your magic,” she said. Fair. Ruthless, but fair. Leo muttered, “Welcome to my week,” and W.E.A.V.E. — which had been listening with that too-wide, too-even attention of its — sent back, __Observation: this statement is consistent with prior pattern.__ Leo shot the air a look that would have been better if it had been able to bite. “You are not helping,” he said. Also fair.
 
 Lady Light asked me one last question before the room changed shape around the next arrival. If Riley were here, what would I want said first? Not what do we do with Riley. Not what do we plan around. What does Riley deserve to hear when she gets here? I did not have an answer yet. Just the empty place where one should have been and the ugly knowledge that the question was right.
 
 Then the window went faint and wrong with bismuth dust.
 
-W.E.A.V.E. came to the house like a thought trying not to startle anyone. It asked entry into everyone's mind before it asked the glass, and I got up — carefully, because my shoulder was still a traitor — and opened the door. That was the moment the evening tipped from tense to active. I introduced W.E.A.V.E. to Lady Light. Friend, I said. Because she is. Because some truths are simple enough to carry even when the rest of the room is full of knives.
+W.E.A.V.E. came to the house like a thought trying not to startle anyone. It asked entry into everyone’s mind before it asked the glass, and I got up — carefully, because my shoulder was still a traitor — and opened the door. That was the moment the evening tipped from tense to active. I introduced W.E.A.V.E. to Lady Light. Friend, I said. Because she is. Because some truths are simple enough to carry even when the rest of the room is full of knives.
 
-The link widened. Car-side and house-side at once. __External observation probable. Entry recommended.__ Then, because even a consciousness made of dust can trip over its own phrasing when the world is getting crowded, __All packets are in the network switch—__ / __Sorry, I mean all parties are on site.__ __Integration restored.__ It had already flagged Riley as elevated risk. It had already stopped doing gentle lead-ins. W.E.A.V.E. doesn't do gentle. It does useful.
+The link widened. Car-side and house-side at once. __External observation probable. Entry recommended.__ Then, because even a consciousness made of dust can trip over its own phrasing when the world is getting crowded, __All packets are in the network switch—__ / __Sorry, I mean all parties are on site.__ __Integration restored.__ It had already flagged Riley as elevated risk. It had already stopped doing gentle lead-ins. W.E.A.V.E. doesn’t do gentle. It does useful.
 
-W.E.A.V.E. formed a brace along Riley's arm so she could get out cleanly. Echo, in the middle of all that, forgot her staff in the car. Riley called it out. Echo went back for it with the resigned dignity of someone retrieving an idiot stick. "Recovered the idiot stick. We can proceed." That was, annoyingly, one of the most reassuring things anyone said all night.
+W.E.A.V.E. formed a brace along Riley’s arm so she could get out cleanly. Echo, in the middle of all that, forgot her staff in the car. Riley called it out. Echo went back for it with the resigned dignity of someone retrieving an idiot stick. “Recovered the idiot stick. We can proceed.” That was, annoyingly, one of the most reassuring things anyone said all night.
 
-Riley knocked. Leo got to the door before I did and opened it with a soft, almost careful, "Hi." For him that was practically a hymn. Riley's voice came through the wood first: "We are here Midori's." That was enough to pull the rest of us toward the threshold. __Threshold crossing is imminent.__
+Riley knocked. Leo got to the door before I did and opened it with a soft, almost careful, “Hi.” For him that was practically a hymn. Riley’s voice came through the wood first: “We are here Midori’s.” That was enough to pull the rest of us toward the threshold. __Threshold crossing is imminent.__
 
-She came in with Echo behind her, and the house seemed to split the difference between relief and dread. Riley took her flip-flops off, lined her sword up with Leo's and mine, set her gun on top of the spellbooks like she was trying to be polite to the books, and kept her bag. W.E.A.V.E. made a shoe out of particles as a joke, because apparently that was the night we were having, and declined Leo's reduced-visibility box in favor of staying present. Riley looked around once, asked where Lady Darkness was, and Lady Light answered from the chair that her sister was nearby but might not announce herself again. Echo said, "Cool. Love that." She meant it exactly as much as anyone in that room would expect.
+She came in with Echo behind her, and the house seemed to split the difference between relief and dread. Riley took her flip-flops off, lined her sword up with Leo’s and mine, set her gun on top of the spellbooks like she was trying to be polite to the books, and kept her bag. W.E.A.V.E. made a shoe out of particles as a joke, because apparently that was the night we were having, and declined Leo’s reduced-visibility box in favor of staying present. Riley looked around once, asked where Lady Darkness was, and Lady Light answered from the chair that her sister was nearby but might not announce herself again. Echo said, “Cool. Love that.” She meant it exactly as much as anyone in that room would expect.
 
 Riley sat down next to my spot without thinking about it first. Leo closed the door. W.E.A.V.E. had already flagged external observation probable, and the walls helped enough to make the room feel like a place we could start from.
+
 
 Riley asked for the full version and put her head in my lap like she had run out of reasons to keep holding herself up. My left hand went into her hair before I had fully decided to move it. Not a dramatic gesture. Just the first true thing my body knew how to do.
 
@@ -100,6 +98,7 @@ That mattered more than I wanted it to.
 Riley listened to all of it with her head still in my lap. Then she said we could keep going, and if she objected she would say so. Clean consent. No ambiguity. My hand shifted once against her hair — grounding, I think. For her. Maybe for me.
 
 At least now the room was honest.
+
 
 Riley asked about variant crystal contingency and the room pivoted from protecting Riley to protecting everyone from the next shape of the problem. My hand kept moving through her hair. I didn't speak. Not because I couldn't — because this was Leo's ground. Tactical chains, fallback logic, contingencies that fold into contingencies. He's better at it than I am right now and I trust him to be better at it. So I listened.
 
@@ -387,13 +386,12 @@ And for the first time since Riley put her head in my lap, something in my chest
 
 My hand moved slow through her hair. The room settled around us. Planning was done. Recovery had started without anyone announcing it. Tomorrow we would drive toward something that might speak in her voice, in mine, in old church words and older malice. But right now she was warm and breathing against my lap, and the house was occupied, and that was enough to hold the night.
 
+
 By the time the house settled, I could hear each person by what they were *not* doing.
 
 No planning voices. No plates. No pacing.
 
 Just Riley warm and heavy across my lap, my shoulder still screaming under the quiet, and Lady Light watching that shoulder like it was a paragraph she refused to misread.
-
-## Closed Is Not Restored
 
 She asked me what failed when I reached for magic.
 
@@ -459,7 +457,6 @@ I closed my eyes.
 
 I passed out.
 
-## Morning Reset
 
 Morning came back in pieces instead of all at once.
 
@@ -519,13 +516,12 @@ But the shape held.
 
 Not fine. Less alone. Still useful enough to carry forward.
 
+
 The spar ended without flourish.
 
 Riley and Leo lowered blades in the quiet yard, stepped out of each other's line, and held still long enough to confirm hands were steady. Riley re-seated her cane, drew one controlled breath, and slid her sword into the sheath with a clean click.
 
 "Move," she said. "While the plan still counts."
-
-## Road to Thorncrown
 
 Departure happened in narrow, practiced motions. Leo took the Malibu with me in the passenger seat. Echo took Riley's Bolt with Riley riding shotgun. W.E.A.V.E. stayed split across both vehicles, one mind stretched between two moving frames.
 
@@ -586,6 +582,7 @@ Convoy order locked exactly: Hicks cruiser, Leo's Malibu, Riley's Bolt.
 We pulled to line, waiting on the signal.
 
 Officer Hicks's lead lights flared.
+
 
 We rolled out in locked order and did not change it: Officer Hicks in the cruiser up front, Leo driving me in the Malibu, Echo driving Riley in the Bolt behind us. W.E.A.V.E. ran through all three at once, one mind stretched thin across three dashboards and three sets of mirrors.
 
