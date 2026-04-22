@@ -26,6 +26,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .eslintcache
 .cache
 *.tsbuildinfo
+.playwright/
+.playwright-mcp/
 
 # IntelliJ based IDEs
 .idea
