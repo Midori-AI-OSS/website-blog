@@ -39,6 +39,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         status: 'not_generated',
+        generated_chunks: 0,
+        total_chunks: 0,
+        playable: false,
         error: 'TTS service unavailable',
         detail: message,
       },
