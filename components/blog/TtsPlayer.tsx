@@ -2,11 +2,15 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, IconButton, Stack, Typography } from '@mui/joy';
-import { Headphones, Play, Pause, Square } from 'lucide-react';
+import { Headphones, Pause, Play, Square } from 'lucide-react';
 
 type TtsState = 'not_generated' | 'generating' | 'ready';
 type PlaybackState = 'stopped' | 'playing' | 'paused';
+type StatusSource = 'poll' | 'generate' | 'init';
+
 const STATUS_POLL_INTERVAL_MS = 3000;
+const CHUNK_RETRY_DELAY_MS = 800;
+const MIN_PLAYABLE_CHUNKS = 3;
 
 interface TtsPlayerProps {
   slug: string;
@@ -19,6 +23,44 @@ interface ExtractedColors {
   primary: string;
   secondary: string;
   tertiary: string;
+}
+
+interface TtsStatusPayload {
+  status: TtsState;
+  generated_chunks: number;
+  total_chunks: number;
+  playable: boolean;
+}
+
+function parseStatusPayload(raw: unknown): TtsStatusPayload | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const value = raw as Record<string, unknown>;
+  const status = value.status;
+  if (status !== 'not_generated' && status !== 'generating' && status !== 'ready') {
+    return null;
+  }
+
+  const parsedGenerated = Number(value.generated_chunks ?? 0);
+  const parsedTotal = Number(value.total_chunks ?? 0);
+  const totalChunks =
+    Number.isFinite(parsedTotal) && parsedTotal > 0 ? Math.floor(parsedTotal) : 0;
+  const generatedChunks =
+    Number.isFinite(parsedGenerated) && parsedGenerated > 0
+      ? Math.floor(parsedGenerated)
+      : 0;
+  const boundedGenerated =
+    totalChunks > 0 ? Math.min(generatedChunks, totalChunks) : generatedChunks;
+  const playable =
+    status === 'ready'
+      ? true
+      : Boolean(value.playable ?? boundedGenerated >= MIN_PLAYABLE_CHUNKS);
+
+  return {
+    status,
+    generated_chunks: boundedGenerated,
+    total_chunks: totalChunks,
+    playable,
+  };
 }
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -44,10 +86,14 @@ function rgbToHex(r: number, g: number, b: number): string {
 }
 
 function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
-  const rn = r / 255, gn = g / 255, bn = b / 255;
-  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
   const l = (max + min) / 2;
-  let h = 0, s = 0;
+  let h = 0;
+  let s = 0;
 
   if (max !== min) {
     const d = max - min;
@@ -97,9 +143,7 @@ function colorDistance(
   a: [number, number, number],
   b: [number, number, number]
 ): number {
-  return (
-    (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
-  );
+  return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
 }
 
 function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
@@ -132,7 +176,10 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
         const pixels = imageData.data;
 
         const quantize = (v: number) => Math.round(v / 32) * 32;
-        const colorMap = new Map<string, { count: number; r: number; g: number; b: number }>();
+        const colorMap = new Map<
+          string,
+          { count: number; r: number; g: number; b: number }
+        >();
 
         for (let i = 0; i < pixels.length; i += 4) {
           const r = quantize(pixels[i] ?? 0);
@@ -152,10 +199,7 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
           }
         }
 
-        const sorted = Array.from(colorMap.values()).sort(
-          (a, b) => b.count - a.count
-        );
-
+        const sorted = Array.from(colorMap.values()).sort((a, b) => b.count - a.count);
         if (sorted.length === 0) {
           resolve(fallback);
           return;
@@ -171,9 +215,7 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
               colorDistance([p.r, p.g, p.b], [candidate.r, candidate.g, candidate.b]) <
               minDist
           );
-          if (!tooClose) {
-            picked.push(candidate);
-          }
+          if (!tooClose) picked.push(candidate);
         }
 
         while (picked.length < 3) {
@@ -182,7 +224,9 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
 
         resolve({
           primary: ensureMinLuminance(rgbToHex(picked[0]!.r, picked[0]!.g, picked[0]!.b)),
-          secondary: ensureMinLuminance(rgbToHex(picked[1]!.r, picked[1]!.g, picked[1]!.b)),
+          secondary: ensureMinLuminance(
+            rgbToHex(picked[1]!.r, picked[1]!.g, picked[1]!.b)
+          ),
           tertiary: ensureMinLuminance(rgbToHex(picked[2]!.r, picked[2]!.g, picked[2]!.b)),
         });
       } catch {
@@ -196,9 +240,7 @@ function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
 }
 
 function formatTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) {
-    return '0:00';
-  }
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
@@ -209,16 +251,13 @@ function getSafeDuration(value: number): number {
 }
 
 function getSafeCurrentTime(value: number, duration: number): number {
-  if (!Number.isFinite(value) || value < 0 || duration <= 0) {
-    return 0;
-  }
+  if (!Number.isFinite(value) || value < 0 || duration <= 0) return 0;
   return Math.min(value, duration);
 }
 
 function getTimelineState(audio: HTMLAudioElement) {
   const safeDuration = getSafeDuration(audio.duration);
   const safeCurrentTime = getSafeCurrentTime(audio.currentTime, safeDuration);
-
   return {
     duration: safeDuration,
     currentTime: safeCurrentTime,
@@ -235,6 +274,8 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [isGenerationActive, setIsGenerationActive] = useState(false);
+  const [canSeek, setCanSeek] = useState(false);
   const [colors, setColors] = useState<ExtractedColors>({
     primary: ensureMinLuminance('#8b5cf6'),
     secondary: ensureMinLuminance('#a78bfa'),
@@ -244,8 +285,29 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentChunkObjectUrlRef = useRef<string | null>(null);
+
   const generateRequestInFlightRef = useRef(false);
+  const generationRequestedRef = useRef(false);
+  const generationCompleteRef = useRef(false);
+  const playbackRef = useRef<PlaybackState>('stopped');
+
+  const streamingActiveRef = useRef(false);
+  const streamingShouldPlayRef = useRef(false);
+  const currentChunkIndexRef = useRef<number | null>(null);
+  const nextChunkIndexRef = useRef(0);
+  const generatedChunksRef = useRef(0);
+  const totalChunksRef = useRef(0);
+  const streamingOffsetRef = useRef(0);
+  const chunkDurationsRef = useRef<Map<number, number>>(new Map());
+
   const sharedAudioUrl = `/api/tts/audio/${encodeURIComponent(type)}/${encodeURIComponent(slug)}`;
+  const sharedChunkBaseUrl = `/api/tts/chunk/${encodeURIComponent(type)}/${encodeURIComponent(slug)}`;
+
+  useEffect(() => {
+    playbackRef.current = playback;
+  }, [playback]);
 
   useEffect(() => {
     if (coverImageUrl && !colorsLoaded) {
@@ -263,20 +325,80 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
     }
   }, []);
 
+  const clearChunkRetry = useCallback(() => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+  }, []);
+
+  const revokeCurrentChunkUrl = useCallback(() => {
+    const objectUrl = currentChunkObjectUrlRef.current;
+    if (!objectUrl) return;
+    URL.revokeObjectURL(objectUrl);
+    currentChunkObjectUrlRef.current = null;
+  }, []);
+
+  const sumKnownChunkDurations = useCallback((exclusiveEnd: number) => {
+    let total = 0;
+    for (let i = 0; i < exclusiveEnd; i++) {
+      total += chunkDurationsRef.current.get(i) ?? 0;
+    }
+    return total;
+  }, []);
+
   const syncTimelineFromAudio = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const timeline = getTimelineState(audio);
-    setDuration(timeline.duration);
-    setCurrentTime(timeline.currentTime);
-    setProgress(timeline.progress);
-  }, []);
+    if (!streamingActiveRef.current) {
+      const timeline = getTimelineState(audio);
+      setDuration(timeline.duration);
+      setCurrentTime(timeline.currentTime);
+      setProgress(timeline.progress);
+      return;
+    }
+
+    const activeIndex = currentChunkIndexRef.current;
+    const baseOffset =
+      activeIndex !== null
+        ? sumKnownChunkDurations(activeIndex)
+        : streamingOffsetRef.current;
+
+    const chunkDuration = getSafeDuration(audio.duration);
+    const chunkCurrent = getSafeCurrentTime(audio.currentTime, chunkDuration);
+    const totalCurrent = baseOffset + chunkCurrent;
+    const generatedDuration = sumKnownChunkDurations(generatedChunksRef.current);
+    const totalDuration = Math.max(totalCurrent, generatedDuration);
+    const nextProgress =
+      totalDuration > 0
+        ? Math.min(100, Math.max(0, (totalCurrent / totalDuration) * 100))
+        : 0;
+
+    setDuration(totalDuration);
+    setCurrentTime(totalCurrent);
+    setProgress(nextProgress);
+  }, [sumKnownChunkDurations]);
 
   const loadReadyAudio = useCallback(
     async (autoplay = false) => {
       const audio = audioRef.current;
       if (!audio) return;
+
+      clearChunkRetry();
+      revokeCurrentChunkUrl();
+      streamingActiveRef.current = false;
+      streamingShouldPlayRef.current = false;
+      currentChunkIndexRef.current = null;
+      nextChunkIndexRef.current = 0;
+      chunkDurationsRef.current.clear();
+      streamingOffsetRef.current = 0;
+      setCanSeek(true);
+      setState('ready');
+      setPlayback('stopped');
+      setDuration(0);
+      setCurrentTime(0);
+      setProgress(0);
 
       if (!autoplay && !audio.paused) {
         audio.pause();
@@ -289,122 +411,326 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
         audio.load();
       }
 
-      setState('ready');
-      setDuration(0);
-      setCurrentTime(0);
-      setProgress(0);
-      setPlayback('stopped');
-
       if (!autoplay) return;
-
       try {
         await audio.play();
       } catch {
         setPlayback('stopped');
       }
     },
-    [sharedAudioUrl]
+    [clearChunkRetry, revokeCurrentChunkUrl, sharedAudioUrl]
   );
 
-  const checkStatus = useCallback(async () => {
-    try {
-      const res = await fetch(
-        `/api/tts/status?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}`,
-        { cache: 'no-store' }
-      );
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data.status === 'generating') {
-        setState('generating');
-        return 'generating';
+  const tryStartChunkPlayback = useCallback(
+    async (chunkIndex: number, autoplay: boolean): Promise<boolean> => {
+      const audio = audioRef.current;
+      if (!audio || !streamingActiveRef.current) return false;
+
+      if (
+        generationCompleteRef.current &&
+        totalChunksRef.current > 0 &&
+        chunkIndex >= totalChunksRef.current
+      ) {
+        return false;
       }
-      if (data.status === 'ready') {
+
+      if (generatedChunksRef.current <= chunkIndex) {
+        if (autoplay && streamingShouldPlayRef.current) {
+          clearChunkRetry();
+          retryTimeoutRef.current = setTimeout(() => {
+            void tryStartChunkPlayback(chunkIndex, true);
+          }, CHUNK_RETRY_DELAY_MS);
+        }
+        return false;
+      }
+
+      try {
+        const response = await fetch(`${sharedChunkBaseUrl}/${chunkIndex}`, {
+          cache: 'no-store',
+        });
+        if (!response.ok) {
+          if (
+            (response.status === 404 || response.status === 425) &&
+            autoplay &&
+            streamingShouldPlayRef.current
+          ) {
+            clearChunkRetry();
+            retryTimeoutRef.current = setTimeout(() => {
+              void tryStartChunkPlayback(chunkIndex, true);
+            }, CHUNK_RETRY_DELAY_MS);
+          }
+          return false;
+        }
+
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        revokeCurrentChunkUrl();
+        currentChunkObjectUrlRef.current = objectUrl;
+
+        currentChunkIndexRef.current = chunkIndex;
+        nextChunkIndexRef.current = chunkIndex + 1;
+        streamingOffsetRef.current = sumKnownChunkDurations(chunkIndex);
+
+        audio.src = objectUrl;
+        audio.currentTime = 0;
+        audio.load();
+        syncTimelineFromAudio();
+
+        if (!autoplay || !streamingShouldPlayRef.current) return true;
+        try {
+          await audio.play();
+          return true;
+        } catch {
+          setPlayback('stopped');
+          return false;
+        }
+      } catch {
+        if (autoplay && streamingShouldPlayRef.current) {
+          clearChunkRetry();
+          retryTimeoutRef.current = setTimeout(() => {
+            void tryStartChunkPlayback(chunkIndex, true);
+          }, CHUNK_RETRY_DELAY_MS);
+        }
+        return false;
+      }
+    },
+    [
+      clearChunkRetry,
+      revokeCurrentChunkUrl,
+      sharedChunkBaseUrl,
+      sumKnownChunkDurations,
+      syncTimelineFromAudio,
+    ]
+  );
+
+  const beginStreamingPlayback = useCallback(async () => {
+    if (streamingActiveRef.current) return;
+
+    streamingActiveRef.current = true;
+    streamingShouldPlayRef.current = true;
+    currentChunkIndexRef.current = null;
+    nextChunkIndexRef.current = 0;
+    streamingOffsetRef.current = 0;
+    chunkDurationsRef.current.clear();
+
+    setCanSeek(false);
+    setState('ready');
+    setPlayback('stopped');
+    setDuration(0);
+    setCurrentTime(0);
+    setProgress(0);
+
+    await tryStartChunkPlayback(0, true);
+  }, [tryStartChunkPlayback]);
+
+  const applyStatus = useCallback(
+    async (statusData: TtsStatusPayload, source: StatusSource): Promise<TtsState> => {
+      generatedChunksRef.current = statusData.generated_chunks;
+      totalChunksRef.current = statusData.total_chunks;
+      generationCompleteRef.current = statusData.status === 'ready';
+      setIsGenerationActive(statusData.status === 'generating');
+
+      if (statusData.status === 'ready') {
         stopPolling();
-        await loadReadyAudio();
+
+        if (streamingActiveRef.current) {
+          setState('ready');
+          if (playbackRef.current === 'stopped') {
+            await loadReadyAudio(false);
+          }
+          return 'ready';
+        }
+
+        const shouldAutoplay = source === 'generate' && generationRequestedRef.current;
+        await loadReadyAudio(shouldAutoplay);
         return 'ready';
       }
-      if (data.status === 'not_generated') {
-        if (!generateRequestInFlightRef.current) {
-          setState('not_generated');
+
+      if (statusData.status === 'generating') {
+        if (!streamingActiveRef.current) {
+          setState('generating');
+        } else {
+          setState('ready');
         }
-        return 'not_generated';
+
+        const canStartPlayback =
+          statusData.playable || statusData.generated_chunks >= MIN_PLAYABLE_CHUNKS;
+        if (
+          canStartPlayback &&
+          generationRequestedRef.current &&
+          !streamingActiveRef.current
+        ) {
+          await beginStreamingPlayback();
+        }
+        return 'generating';
       }
-    } catch {
-      // ignore polling errors
-    }
-    return null;
-  }, [slug, type, loadReadyAudio, stopPolling]);
+
+      if (!generateRequestInFlightRef.current && !streamingActiveRef.current) {
+        setState('not_generated');
+      }
+      return 'not_generated';
+    },
+    [beginStreamingPlayback, loadReadyAudio, stopPolling]
+  );
+
+  const checkStatus = useCallback(
+    async (source: StatusSource = 'poll') => {
+      try {
+        const response = await fetch(
+          `/api/tts/status?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}`,
+          { cache: 'no-store' }
+        );
+        if (!response.ok) return null;
+        const raw = await response.json();
+        const payload = parseStatusPayload(raw);
+        if (!payload) return null;
+        return await applyStatus(payload, source);
+      } catch {
+        return null;
+      }
+    },
+    [applyStatus, slug, type]
+  );
 
   const startPolling = useCallback(() => {
     if (pollingRef.current) return;
     pollingRef.current = setInterval(() => {
-      void checkStatus();
+      void checkStatus('poll');
     }, STATUS_POLL_INTERVAL_MS);
   }, [checkStatus]);
 
   const handleGenerate = useCallback(async () => {
     setState('generating');
+    setIsGenerationActive(true);
+    setCanSeek(false);
     startPolling();
+    generationRequestedRef.current = true;
     generateRequestInFlightRef.current = true;
 
     try {
-      const res = await fetch('/api/tts/generate', {
+      const response = await fetch('/api/tts/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, slug, type }),
       });
 
-      if (res.status === 409) {
+      let payload: TtsStatusPayload | null = null;
+      try {
+        payload = parseStatusPayload(await response.json());
+      } catch {
+        payload = null;
+      }
+
+      if (payload) {
+        await applyStatus(payload, 'generate');
         return;
       }
 
-      if (!res.ok) {
-        setState('not_generated');
+      if (response.status === 409 || response.ok) {
+        await checkStatus('generate');
         return;
       }
 
-      stopPolling();
-      await loadReadyAudio(true);
+      setState('not_generated');
+      setIsGenerationActive(false);
+      generationRequestedRef.current = false;
     } catch {
       setState('not_generated');
+      setIsGenerationActive(false);
+      generationRequestedRef.current = false;
     } finally {
       generateRequestInFlightRef.current = false;
     }
-  }, [text, slug, type, loadReadyAudio, startPolling, stopPolling]);
+  }, [applyStatus, checkStatus, slug, startPolling, text, type]);
 
   const handlePlay = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.play().catch(() => {
-        setPlayback('stopped');
-      });
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (streamingActiveRef.current) {
+      streamingShouldPlayRef.current = true;
+      clearChunkRetry();
+
+      if (audio.src && audio.paused) {
+        audio.play().catch(() => {
+          setPlayback('stopped');
+        });
+        return;
+      }
+
+      void tryStartChunkPlayback(nextChunkIndexRef.current, true);
+      return;
     }
-  }, []);
+
+    audio.play().catch(() => {
+      setPlayback('stopped');
+    });
+  }, [clearChunkRetry, tryStartChunkPlayback]);
 
   const handlePause = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
+    if (!audioRef.current) return;
+    if (streamingActiveRef.current) {
+      streamingShouldPlayRef.current = false;
+      clearChunkRetry();
     }
-  }, []);
+    audioRef.current.pause();
+  }, [clearChunkRetry]);
 
   const handleStop = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (streamingActiveRef.current) {
+      streamingShouldPlayRef.current = false;
+      clearChunkRetry();
+      audio.pause();
+      audio.currentTime = 0;
+      currentChunkIndexRef.current = null;
+      nextChunkIndexRef.current = 0;
+      streamingOffsetRef.current = 0;
       setPlayback('stopped');
       setCurrentTime(0);
       setProgress(0);
+      if (generationCompleteRef.current) {
+        void loadReadyAudio(false);
+      }
+      return;
     }
-  }, []);
+
+    audio.pause();
+    audio.currentTime = 0;
+    setPlayback('stopped');
+    setCurrentTime(0);
+    setProgress(0);
+  }, [clearChunkRetry, loadReadyAudio]);
 
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
 
     const handleLoadedMetadata = () => {
+      if (streamingActiveRef.current) {
+        const activeIndex = currentChunkIndexRef.current;
+        if (activeIndex !== null) {
+          const safe = getSafeDuration(audio.duration);
+          if (safe > 0) {
+            chunkDurationsRef.current.set(activeIndex, safe);
+          }
+        }
+      }
       syncTimelineFromAudio();
     };
 
     const handleDurationChange = () => {
+      if (streamingActiveRef.current) {
+        const activeIndex = currentChunkIndexRef.current;
+        if (activeIndex !== null) {
+          const safe = getSafeDuration(audio.duration);
+          if (safe > 0) {
+            chunkDurationsRef.current.set(activeIndex, safe);
+          }
+        }
+      }
       syncTimelineFromAudio();
     };
 
@@ -412,17 +738,48 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
       syncTimelineFromAudio();
     };
 
-    const handlePlaying = () => {
+    const handlePlayingEvent = () => {
       setPlayback('playing');
       syncTimelineFromAudio();
     };
 
-    const handlePause = () => {
+    const handlePauseEvent = () => {
       setPlayback(audio.currentTime > 0 ? 'paused' : 'stopped');
       syncTimelineFromAudio();
     };
 
     const handleEnded = () => {
+      if (streamingActiveRef.current) {
+        const nextIndex =
+          currentChunkIndexRef.current === null
+            ? nextChunkIndexRef.current
+            : currentChunkIndexRef.current + 1;
+
+        nextChunkIndexRef.current = nextIndex;
+
+        if (!streamingShouldPlayRef.current) {
+          setPlayback('paused');
+          return;
+        }
+
+        if (
+          generationCompleteRef.current &&
+          totalChunksRef.current > 0 &&
+          nextIndex >= totalChunksRef.current
+        ) {
+          streamingActiveRef.current = false;
+          streamingShouldPlayRef.current = false;
+          setPlayback('stopped');
+          setCurrentTime(0);
+          setProgress(0);
+          void loadReadyAudio(false);
+          return;
+        }
+
+        void tryStartChunkPlayback(nextIndex, true);
+        return;
+      }
+
       setPlayback('stopped');
       setCurrentTime(0);
       setProgress(0);
@@ -431,29 +788,38 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('durationchange', handleDurationChange);
     audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('playing', handlePlaying);
-    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('playing', handlePlayingEvent);
+    audio.addEventListener('pause', handlePauseEvent);
     audio.addEventListener('ended', handleEnded);
 
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('durationchange', handleDurationChange);
       audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('playing', handlePlaying);
-      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('playing', handlePlayingEvent);
+      audio.removeEventListener('pause', handlePauseEvent);
       audio.removeEventListener('ended', handleEnded);
       audio.pause();
       audio.src = '';
       stopPolling();
+      clearChunkRetry();
+      revokeCurrentChunkUrl();
     };
-  }, [stopPolling, syncTimelineFromAudio]);
+  }, [
+    clearChunkRetry,
+    loadReadyAudio,
+    revokeCurrentChunkUrl,
+    stopPolling,
+    syncTimelineFromAudio,
+    tryStartChunkPlayback,
+  ]);
 
   useEffect(() => {
     let isActive = true;
 
     const syncInitialStatus = async () => {
-      const status = await checkStatus();
-      if (!isActive || status === 'ready') return;
+      const currentStatus = await checkStatus('init');
+      if (!isActive || currentStatus === 'ready') return;
       startPolling();
     };
 
@@ -471,6 +837,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
   );
 
   const isVisible = (target: TtsState) => state === target;
+  const showGeneratingBadge = state === 'ready' && isGenerationActive;
   const transitionSx = {
     transition: 'opacity 0.35s ease, transform 0.35s ease',
   };
@@ -484,9 +851,13 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(400%)' },
         },
+        '@keyframes tts-dot-pulse': {
+          '0%': { transform: 'scale(0.85)', opacity: 0.55 },
+          '50%': { transform: 'scale(1)', opacity: 1 },
+          '100%': { transform: 'scale(0.85)', opacity: 0.55 },
+        },
       }}
     >
-      {/* Not generated: full-width Listen button */}
       <Box
         onClick={handleGenerate}
         role="button"
@@ -506,7 +877,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
           pointerEvents: isVisible('not_generated') ? 'auto' : 'none',
           position: isVisible('not_generated') ? 'relative' : 'absolute',
           width: '100%',
-          height: 36,
+          height: 44,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -533,7 +904,6 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
         </Typography>
       </Box>
 
-      {/* Generating: traveling pulse bar */}
       <Box
         sx={{
           ...transitionSx,
@@ -542,7 +912,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
           pointerEvents: isVisible('generating') ? 'auto' : 'none',
           position: isVisible('generating') ? 'relative' : 'absolute',
           width: '100%',
-          height: 36,
+          height: 44,
           borderRadius: 0,
           bgcolor: 'rgba(255,255,255,0.08)',
           overflow: 'hidden',
@@ -578,11 +948,10 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
             zIndex: 1,
           }}
         >
-          Generating audio...
+          Preparing audio...
         </Typography>
       </Box>
 
-      {/* Ready: full-width playback controls */}
       <Stack
         direction="row"
         spacing={0}
@@ -595,7 +964,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
           pointerEvents: isVisible('ready') ? 'auto' : 'none',
           position: isVisible('ready') ? 'relative' : 'absolute',
           width: '100%',
-          height: 36,
+          height: 44,
           borderRadius: 0,
           border: '1px solid',
           borderColor: `${colors.primary}40`,
@@ -612,9 +981,9 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
               aria-label="Pause"
               sx={{
                 borderRadius: 0,
-                width: 36,
-                height: 36,
-                minHeight: 36,
+                width: 44,
+                height: 44,
+                minHeight: 44,
                 color: colors.primary,
                 '&:hover': { bgcolor: `${colors.primary}18` },
                 '&:focus-visible': {
@@ -623,7 +992,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
                 },
               }}
             >
-              <Pause size={15} />
+              <Pause size={16} />
             </IconButton>
           ) : (
             <IconButton
@@ -633,9 +1002,9 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
               aria-label="Play"
               sx={{
                 borderRadius: 0,
-                width: 36,
-                height: 36,
-                minHeight: 36,
+                width: 44,
+                height: 44,
+                minHeight: 44,
                 color: colors.primary,
                 '&:hover': { bgcolor: `${colors.primary}18` },
                 '&:focus-visible': {
@@ -644,7 +1013,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
                 },
               }}
             >
-              <Play size={15} />
+              <Play size={16} />
             </IconButton>
           )}
           <IconButton
@@ -654,9 +1023,9 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
             aria-label="Stop"
             sx={{
               borderRadius: 0,
-              width: 36,
-              height: 36,
-              minHeight: 36,
+              width: 44,
+              height: 44,
+              minHeight: 44,
               color: colors.primary,
               '&:hover': { bgcolor: `${colors.primary}18` },
               '&:focus-visible': {
@@ -665,7 +1034,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
               },
             }}
           >
-            <Square size={12} />
+            <Square size={13} />
           </IconButton>
         </Stack>
 
@@ -675,10 +1044,10 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
             height: '100%',
             position: 'relative',
             bgcolor: 'rgba(255,255,255,0.06)',
-            cursor: 'pointer',
+            cursor: canSeek ? 'pointer' : 'default',
           }}
           onClick={(e) => {
-            if (!audioRef.current || !audioRef.current.duration) return;
+            if (!canSeek || !audioRef.current || !audioRef.current.duration) return;
             const rect = e.currentTarget.getBoundingClientRect();
             const ratio = (e.clientX - rect.left) / rect.width;
             audioRef.current.currentTime = ratio * audioRef.current.duration;
@@ -714,21 +1083,60 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
           />
         </Box>
 
-        <Typography
-          level="body-xs"
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
           sx={{
-            px: 1.25,
-            color: 'text.secondary',
-            fontSize: '0.7rem',
-            fontFamily: 'monospace',
-            whiteSpace: 'nowrap',
+            pl: 1,
+            pr: 1.25,
             flexShrink: 0,
-            minWidth: 80,
-            textAlign: 'right',
           }}
         >
-          {formatTime(currentTime)} / {formatTime(duration)}
-        </Typography>
+          {showGeneratingBadge && (
+            <Stack
+              direction="row"
+              spacing={0.5}
+              alignItems="center"
+              aria-label="Audio generation in progress"
+            >
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  bgcolor: colors.primary,
+                  animation: 'tts-dot-pulse 1.1s ease-in-out infinite',
+                }}
+              />
+              <Typography
+                level="body-xs"
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: '0.68rem',
+                  letterSpacing: '0.02em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Generating...
+              </Typography>
+            </Stack>
+          )}
+
+          <Typography
+            level="body-xs"
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.7rem',
+              fontFamily: 'monospace',
+              whiteSpace: 'nowrap',
+              minWidth: 80,
+              textAlign: 'right',
+            }}
+          >
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </Typography>
+        </Stack>
       </Stack>
     </Box>
   );

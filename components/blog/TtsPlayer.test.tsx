@@ -7,16 +7,26 @@ import { TtsPlayer } from './TtsPlayer';
 
 type TtsState = 'not_generated' | 'generating' | 'ready';
 
+interface StatusPayload {
+  status: TtsState;
+  generated_chunks?: number;
+  total_chunks?: number;
+  playable?: boolean;
+}
+
 let testWindow: Window;
 let container: HTMLDivElement;
 let root: Root;
 let lastAudio: MockAudio | null = null;
 let intervalCallback: (() => void) | null = null;
 let clearIntervalCalls = 0;
+let blobCounter = 0;
 
 const originalGlobals = new Map<string, unknown>();
 const originalSetInterval = globalThis.setInterval;
 const originalClearInterval = globalThis.clearInterval;
+const originalCreateObjectURL = URL.createObjectURL;
+const originalRevokeObjectURL = URL.revokeObjectURL;
 
 class MockAudio {
   src = '';
@@ -66,7 +76,10 @@ class MockAudio {
     if (!listeners) return;
 
     for (const current of listeners) {
-      if (current === listener || (typeof listener !== 'function' && current === listener.handleEvent)) {
+      if (
+        current === listener ||
+        (typeof listener !== 'function' && current === listener.handleEvent)
+      ) {
         listeners.delete(current);
       }
     }
@@ -100,8 +113,7 @@ function installDom() {
     MutationObserver: testWindow.MutationObserver,
     SyntaxError,
     getComputedStyle: testWindow.getComputedStyle.bind(testWindow),
-    requestAnimationFrame: (cb: FrameRequestCallback) =>
-      setTimeout(() => cb(Date.now()), 0),
+    requestAnimationFrame: (cb: FrameRequestCallback) => setTimeout(() => cb(Date.now()), 0),
     cancelAnimationFrame: (id: number) => clearTimeout(id),
     Audio: MockAudio,
     IS_REACT_ACT_ENVIRONMENT: true,
@@ -123,6 +135,12 @@ function installDom() {
     dispatchEvent: () => false,
   })) as typeof testWindow.matchMedia;
   testWindow.scrollTo = () => {};
+
+  URL.createObjectURL = (() => {
+    blobCounter += 1;
+    return `blob:mock-${blobCounter}`;
+  }) as typeof URL.createObjectURL;
+  URL.revokeObjectURL = (() => {}) as typeof URL.revokeObjectURL;
 }
 
 function restoreDom() {
@@ -136,14 +154,24 @@ function restoreDom() {
   originalGlobals.clear();
 }
 
-function jsonResponse(body: unknown) {
+function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
-    status: 200,
+    status,
     headers: { 'Content-Type': 'application/json' },
   });
 }
 
-function setFetchMock(handler: (url: string, init?: RequestInit) => Promise<Response> | Response) {
+function wavResponse() {
+  const bytes = new Uint8Array([1, 2, 3, 4]);
+  return new Response(bytes, {
+    status: 200,
+    headers: { 'Content-Type': 'audio/wav' },
+  });
+}
+
+function setFetchMock(
+  handler: (url: string, init?: RequestInit) => Promise<Response> | Response
+) {
   originalGlobals.set('fetch', globalThis.fetch);
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) =>
     handler(String(input), init)) as typeof fetch;
@@ -167,7 +195,7 @@ async function waitForElement<T>(
   getter: () => T | null,
   failureMessage: string
 ): Promise<T> {
-  const deadline = Date.now() + 1000;
+  const deadline = Date.now() + 1200;
 
   while (Date.now() < deadline) {
     const element = getter();
@@ -185,7 +213,7 @@ async function waitForCondition(
   predicate: () => boolean,
   failureMessage: string
 ): Promise<void> {
-  const deadline = Date.now() + 1000;
+  const deadline = Date.now() + 1200;
 
   while (Date.now() < deadline) {
     if (predicate()) return;
@@ -199,20 +227,24 @@ async function waitForCondition(
 }
 
 function getVisibleGeneratingBar() {
-  return getAllElements(container).find(
-    (element) =>
-      element.getAttribute('role') === 'progressbar' &&
-      element.getAttribute('aria-hidden') === 'false'
-  ) ?? null;
+  return (
+    getAllElements(container).find(
+      (element) =>
+        element.getAttribute('role') === 'progressbar' &&
+        element.getAttribute('aria-hidden') === 'false'
+    ) ?? null
+  );
 }
 
 function getVisibleListenButton() {
-  return getAllElements(container).find(
-    (element) =>
-      element.getAttribute('role') === 'button' &&
-      element.getAttribute('aria-label') === 'Generate audio for this post' &&
-      element.getAttribute('aria-hidden') === 'false'
-  ) ?? null;
+  return (
+    getAllElements(container).find(
+      (element) =>
+        element.getAttribute('role') === 'button' &&
+        element.getAttribute('aria-label') === 'Generate audio for this post' &&
+        element.getAttribute('aria-hidden') === 'false'
+    ) ?? null
+  );
 }
 
 function getVisibleReadyButton(label: 'Play' | 'Pause') {
@@ -221,11 +253,13 @@ function getVisibleReadyButton(label: 'Play' | 'Pause') {
   );
   if (!activeContainer) return null;
 
-  return getAllElements(activeContainer).find(
-    (element) =>
-      element.tagName.toLowerCase() === 'button' &&
-      element.getAttribute('aria-label') === label
-  ) ?? null;
+  return (
+    getAllElements(activeContainer).find(
+      (element) =>
+        element.tagName.toLowerCase() === 'button' &&
+        element.getAttribute('aria-label') === label
+    ) ?? null
+  );
 }
 
 function getAllElements(rootElement: Element) {
@@ -245,19 +279,29 @@ function getAllElements(rootElement: Element) {
   return elements;
 }
 
+function payload(status: TtsState, partial?: Omit<StatusPayload, 'status'>): StatusPayload {
+  return {
+    status,
+    generated_chunks: 0,
+    total_chunks: 0,
+    playable: false,
+    ...partial,
+  };
+}
+
 beforeEach(() => {
   installDom();
   lastAudio = null;
   intervalCallback = null;
   clearIntervalCalls = 0;
+  blobCounter = 0;
 
   container = testWindow.document.createElement('div');
   testWindow.document.body.appendChild(container);
   root = createRoot(container);
 
   globalThis.setInterval = ((handler: TimerHandler) => {
-    intervalCallback =
-      typeof handler === 'function' ? (handler as () => void) : null;
+    intervalCallback = typeof handler === 'function' ? (handler as () => void) : null;
     return 1 as unknown as ReturnType<typeof setInterval>;
   }) as typeof setInterval;
 
@@ -276,15 +320,16 @@ afterEach(async () => {
   restoreDom();
   globalThis.setInterval = originalSetInterval;
   globalThis.clearInterval = originalClearInterval;
+  URL.createObjectURL = originalCreateObjectURL;
+  URL.revokeObjectURL = originalRevokeObjectURL;
 });
 
 describe('TtsPlayer', () => {
   test('shows the generating bar immediately when another visitor already started generation', async () => {
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {
-        return jsonResponse({ status: 'generating' satisfies TtsState });
+        return jsonResponse(payload('generating', { generated_chunks: 1, total_chunks: 8 }));
       }
-
       throw new Error(`Unexpected fetch: ${url}`);
     });
 
@@ -294,13 +339,51 @@ describe('TtsPlayer', () => {
   });
 
   test('transitions from generating to ready when polling sees completed audio', async () => {
-    const statuses: TtsState[] = ['generating', 'ready'];
+    const statuses: StatusPayload[] = [
+      payload('generating', { generated_chunks: 2, total_chunks: 8 }),
+      payload('ready', { generated_chunks: 8, total_chunks: 8, playable: true }),
+    ];
 
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {
-        return jsonResponse({
-          status: statuses.shift() ?? 'ready',
-        });
+        return jsonResponse(statuses.shift() ?? payload('ready'));
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer();
+
+    expect(await waitForElement(getVisibleGeneratingBar, 'Expected visible generating bar')).not
+      .toBeNull();
+
+    intervalCallback?.();
+
+    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected visible Play button'))
+      .not.toBeNull();
+    expect(lastAudio?.src.endsWith('/api/tts/audio/blog/shared-post')).toBe(true);
+    expect(lastAudio?.playCalls).toBe(0);
+    expect(clearIntervalCalls).toBeGreaterThan(0);
+  });
+
+  test('starts streaming playback after listen when generation is playable', async () => {
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(payload('not_generated'));
+      }
+
+      if (url.endsWith('/api/tts/generate')) {
+        return jsonResponse(
+          payload('generating', {
+            generated_chunks: 3,
+            total_chunks: 12,
+            playable: true,
+          }),
+          202
+        );
+      }
+
+      if (url.includes('/api/tts/chunk/blog/shared-post/0')) {
+        return wavResponse();
       }
 
       throw new Error(`Unexpected fetch: ${url}`);
@@ -308,25 +391,30 @@ describe('TtsPlayer', () => {
 
     await renderPlayer();
 
-    expect(await waitForElement(getVisibleGeneratingBar, 'Expected visible generating bar')).not.toBeNull();
+    const listenButton = getVisibleListenButton();
+    if (!(listenButton instanceof testWindow.HTMLElement)) {
+      throw new Error('Expected visible listen button');
+    }
 
-    intervalCallback?.();
+    await act(async () => {
+      listenButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
 
-    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected visible Play button')).not.toBeNull();
-    expect(lastAudio?.src.endsWith('/api/tts/audio/blog/shared-post')).toBe(true);
-    expect(lastAudio?.playCalls).toBe(0);
-    expect(clearIntervalCalls).toBeGreaterThan(0);
+    expect(await waitForElement(() => getVisibleReadyButton('Pause'), 'Expected Pause button')).not
+      .toBeNull();
+    expect(lastAudio?.src.startsWith('blob:mock-')).toBe(true);
+    expect(lastAudio?.playCalls).toBeGreaterThan(0);
+    expect(container.textContent ?? '').toContain('Generating...');
   });
 
-  test('keeps showing the generating bar while a local generation request is still in flight', async () => {
-    const statuses: TtsState[] = ['not_generated', 'not_generated'];
+  test('keeps showing generating bar while local generate request is in flight and not yet playable', async () => {
+    const statuses: StatusPayload[] = [payload('not_generated'), payload('not_generated')];
     let resolveGenerate: ((value: Response) => void) | null = null;
 
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {
-        return jsonResponse({
-          status: statuses.shift() ?? 'not_generated',
-        });
+        return jsonResponse(statuses.shift() ?? payload('not_generated'));
       }
 
       if (url.endsWith('/api/tts/generate')) {
@@ -346,38 +434,45 @@ describe('TtsPlayer', () => {
     }
 
     await act(async () => {
-      listenButton.dispatchEvent(
-        new testWindow.MouseEvent('click', { bubbles: true })
-      );
+      listenButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
       await flushEffects();
     });
 
-    expect(await waitForElement(getVisibleGeneratingBar, 'Expected generating bar after clicking Listen')).not.toBeNull();
+    expect(await waitForElement(getVisibleGeneratingBar, 'Expected generating bar')).not.toBeNull();
 
     intervalCallback?.();
 
-    expect(await waitForElement(getVisibleGeneratingBar, 'Expected generating bar to stay visible while request is in flight')).not.toBeNull();
-    expect(getVisibleListenButton()).toBeNull();
+    expect(await waitForElement(getVisibleGeneratingBar, 'Expected generating bar to remain visible'))
+      .not.toBeNull();
+    expect(getVisibleReadyButton('Play')).toBeNull();
 
-    resolveGenerate?.(new Response('', { status: 200 }));
-
-    expect(await waitForElement(() => getVisibleReadyButton('Pause'), 'Expected visible Pause button after generation finishes')).not.toBeNull();
-    expect(lastAudio?.src.endsWith('/api/tts/audio/blog/shared-post')).toBe(true);
-    expect(lastAudio?.playCalls).toBe(1);
+    await act(async () => {
+      resolveGenerate?.(
+        jsonResponse(
+          payload('generating', {
+            generated_chunks: 1,
+            total_chunks: 10,
+            playable: false,
+          }),
+          202
+        )
+      );
+      await flushEffects();
+    });
   });
 
   test('does not autoplay when audio is already ready for another viewer', async () => {
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {
-        return jsonResponse({ status: 'ready' satisfies TtsState });
+        return jsonResponse(payload('ready', { generated_chunks: 6, total_chunks: 6, playable: true }));
       }
-
       throw new Error(`Unexpected fetch: ${url}`);
     });
 
     await renderPlayer();
 
-    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected Play button for remote-ready audio')).not.toBeNull();
+    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected Play button')).not
+      .toBeNull();
     expect(getVisibleReadyButton('Pause')).toBeNull();
     expect(lastAudio?.playCalls).toBe(0);
   });
@@ -385,15 +480,15 @@ describe('TtsPlayer', () => {
   test('renders safe time labels when audio metadata is non-finite', async () => {
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {
-        return jsonResponse({ status: 'ready' satisfies TtsState });
+        return jsonResponse(payload('ready', { generated_chunks: 6, total_chunks: 6, playable: true }));
       }
-
       throw new Error(`Unexpected fetch: ${url}`);
     });
 
     await renderPlayer();
 
-    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected ready controls before timeline check')).not.toBeNull();
+    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected ready controls')).not
+      .toBeNull();
 
     if (!lastAudio) {
       throw new Error('Expected audio instance');

@@ -32,31 +32,17 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, slug, type }),
+      cache: 'no-store',
     });
 
-    if (upstream.status === 409) {
-      return NextResponse.json(
-        { error: 'Audio is already being generated for this post' },
-        { status: 409 }
-      );
-    }
+    const upstreamBody = await upstream.text();
+    const contentType = upstream.headers.get('content-type') ?? 'application/json';
 
-    if (!upstream.ok) {
-      const err = await upstream.text();
-      return NextResponse.json(
-        { error: 'TTS generation failed', detail: err },
-        { status: upstream.status }
-      );
-    }
-
-    const audioBuffer = await upstream.arrayBuffer();
-
-    return new NextResponse(audioBuffer, {
-      status: 200,
+    return new NextResponse(upstreamBody, {
+      status: upstream.status,
       headers: {
-        'Content-Type': 'audio/wav',
-        'Cache-Control': 'public, max-age=86400',
-        'Content-Disposition': `inline; filename="${slug}.wav"`,
+        'Content-Type': contentType,
+        'Cache-Control': 'no-store',
       },
     });
   } catch (error) {
