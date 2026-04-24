@@ -15,14 +15,21 @@ from fastapi.responses import FileResponse, JSONResponse
 from kokoro import KModel, KPipeline
 from pydantic import BaseModel
 
-VOICE = "af_heart"
+VOICE = "af_heart,af_bella"
 SAMPLE_RATE = 24000
 TTS_DIR = Path("/tmp/tts")
 LOCK_TIMEOUT = 300
 MIN_PLAYABLE_CHUNKS = 3
-TARGET_CHUNK_CHARS = 480
-MAX_CHUNK_CHARS = 760
+TARGET_CHUNK_CHARS = 640
+MAX_CHUNK_CHARS = 960
 VALID_TYPES = {"blog", "lore"}
+
+STANDARD_DISCLAIMER_RE = re.compile(
+    r"\A\s*(?:>\s*)?(?:\*\*|__)?Disclaimer:(?:\*\*|__)?[^\n]*\n(?:\s*>\s*.*\n?)*\s*",
+    flags=re.IGNORECASE,
+)
+MARKDOWN_HEADING_RE = re.compile(r"^\s*#{1,6}\s+")
+HORIZONTAL_RULE_RE = re.compile(r"^\s*(?:---+|\*\*\*+|___+)\s*$")
 
 active_locks: dict[str, float] = {}
 generation_status: dict[str, dict[str, Any]] = {}
@@ -86,22 +93,42 @@ def _release_lock(type_: str, slug: str):
         active_locks.pop(_lock_key(type_, slug), None)
 
 
+def _strip_standard_disclaimer(text: str) -> str:
+    return STANDARD_DISCLAIMER_RE.sub("", text, count=1)
+
+
 def _clean_text(text: str) -> str:
+    text = text.replace("\r\n", "\n")
+    text = _strip_standard_disclaimer(text)
     text = re.sub(r"\{\{image:[^}]*\}\}", "", text)
     text = re.sub(r"!\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
-    text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
     text = re.sub(r"\*{1,3}([^*]+)\*{1,3}", r"\1", text)
     text = re.sub(r"_{1,3}([^_]+)_{1,3}", r"\1", text)
     text = re.sub(r"```[\s\S]*?```", "", text)
     text = re.sub(r"`([^`]+)`", r"\1", text)
     text = re.sub(r"<[^>]+>", "", text)
-    text = re.sub(r"^---+$", "", text, flags=re.MULTILINE)
-    text = re.sub(r"^>\s+", "", text, flags=re.MULTILINE)
-    text = re.sub(r"^\s*[-*+]\s+", "", text, flags=re.MULTILINE)
-    text = re.sub(r"^\s*\d+\.\s+", "", text, flags=re.MULTILINE)
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    return text.strip()
+
+    cleaned_lines: list[str] = []
+    for raw_line in text.splitlines():
+        if MARKDOWN_HEADING_RE.match(raw_line) or HORIZONTAL_RULE_RE.match(raw_line):
+            continue
+
+        line = re.sub(r"^>\s+", "", raw_line)
+        line = re.sub(r"^\s*[-*+]\s+", "", line)
+        line = re.sub(r"^\s*\d+\.\s+", "", line)
+        line = line.strip()
+
+        if not line:
+            if cleaned_lines and cleaned_lines[-1] != "":
+                cleaned_lines.append("")
+            continue
+
+        cleaned_lines.append(line)
+
+    cleaned = "\n".join(cleaned_lines)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
 
 
 def _split_long_sentence(sentence: str, limit: int) -> list[str]:
@@ -145,6 +172,58 @@ def _split_long_sentence(sentence: str, limit: int) -> list[str]:
     return parts
 
 
+def _paragraph_segments(paragraph: str) -> list[str]:
+    sentence_candidates = [
+        s.strip() for s in re.split(r"(?<=[.!?])\s+", paragraph) if s.strip()
+    ]
+    if not sentence_candidates:
+        sentence_candidates = [paragraph]
+
+    normalized_sentences: list[str] = []
+    for sentence in sentence_candidates:
+        if len(sentence) > MAX_CHUNK_CHARS:
+            normalized_sentences.extend(_split_long_sentence(sentence, MAX_CHUNK_CHARS))
+        else:
+            normalized_sentences.append(sentence)
+
+    segments: list[str] = []
+    current: list[str] = []
+    current_len = 0
+
+    def flush_current():
+        nonlocal current_len
+        if current:
+            segments.append(" ".join(current).strip())
+            current.clear()
+            current_len = 0
+
+    for sentence in normalized_sentences:
+        sentence_len = len(sentence)
+        if not current:
+            current = [sentence]
+            current_len = sentence_len
+            continue
+
+        projected_len = current_len + 1 + sentence_len
+        if projected_len > MAX_CHUNK_CHARS:
+            flush_current()
+            current = [sentence]
+            current_len = sentence_len
+            continue
+
+        if current_len >= TARGET_CHUNK_CHARS:
+            flush_current()
+            current = [sentence]
+            current_len = sentence_len
+            continue
+
+        current.append(sentence)
+        current_len = projected_len
+
+    flush_current()
+    return [segment for segment in segments if segment]
+
+
 def _text_chunks(cleaned: str) -> list[str]:
     paragraphs = [p.strip() for p in re.split(r"\n{2,}", cleaned) if p.strip()]
     if not paragraphs:
@@ -157,48 +236,40 @@ def _text_chunks(cleaned: str) -> list[str]:
     def flush_current():
         nonlocal current_len
         if current:
-            chunks.append(" ".join(current).strip())
+            chunks.append("\n\n".join(current).strip())
             current.clear()
             current_len = 0
 
     for paragraph in paragraphs:
-        sentence_candidates = [
-            s.strip() for s in re.split(r"(?<=[.!?])\s+", paragraph) if s.strip()
-        ]
-        if not sentence_candidates:
-            sentence_candidates = [paragraph]
+        paragraph_segments = _paragraph_segments(paragraph)
+        for index, paragraph_segment in enumerate(paragraph_segments):
+            if index > 0:
+                flush_current()
 
-        normalized_sentences: list[str] = []
-        for sentence in sentence_candidates:
-            if len(sentence) > MAX_CHUNK_CHARS:
-                normalized_sentences.extend(
-                    _split_long_sentence(sentence, MAX_CHUNK_CHARS)
-                )
-            else:
-                normalized_sentences.append(sentence)
-
-        for sentence in normalized_sentences:
-            sentence_len = len(sentence)
+            segment_len = len(paragraph_segment)
             if not current:
-                current = [sentence]
-                current_len = sentence_len
+                current = [paragraph_segment]
+                current_len = segment_len
                 continue
 
-            projected_len = current_len + 1 + sentence_len
+            projected_len = current_len + 2 + segment_len
             if projected_len > MAX_CHUNK_CHARS:
                 flush_current()
-                current = [sentence]
-                current_len = sentence_len
+                current = [paragraph_segment]
+                current_len = segment_len
                 continue
 
             if current_len >= TARGET_CHUNK_CHARS:
                 flush_current()
-                current = [sentence]
-                current_len = sentence_len
+                current = [paragraph_segment]
+                current_len = segment_len
                 continue
 
-            current.append(sentence)
+            current.append(paragraph_segment)
             current_len = projected_len
+
+        if current_len >= TARGET_CHUNK_CHARS:
+            flush_current()
 
     flush_current()
     return [chunk for chunk in chunks if chunk]
