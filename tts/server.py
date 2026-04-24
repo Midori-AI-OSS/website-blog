@@ -172,56 +172,21 @@ def _split_long_sentence(sentence: str, limit: int) -> list[str]:
     return parts
 
 
-def _paragraph_segments(paragraph: str) -> list[str]:
+def _statement_chunks(paragraph: str) -> list[str]:
     sentence_candidates = [
         s.strip() for s in re.split(r"(?<=[.!?])\s+", paragraph) if s.strip()
     ]
     if not sentence_candidates:
         sentence_candidates = [paragraph]
 
-    normalized_sentences: list[str] = []
+    chunks: list[str] = []
     for sentence in sentence_candidates:
         if len(sentence) > MAX_CHUNK_CHARS:
-            normalized_sentences.extend(_split_long_sentence(sentence, MAX_CHUNK_CHARS))
+            chunks.extend(_split_long_sentence(sentence, MAX_CHUNK_CHARS))
         else:
-            normalized_sentences.append(sentence)
+            chunks.append(sentence)
 
-    segments: list[str] = []
-    current: list[str] = []
-    current_len = 0
-
-    def flush_current():
-        nonlocal current_len
-        if current:
-            segments.append(" ".join(current).strip())
-            current.clear()
-            current_len = 0
-
-    for sentence in normalized_sentences:
-        sentence_len = len(sentence)
-        if not current:
-            current = [sentence]
-            current_len = sentence_len
-            continue
-
-        projected_len = current_len + 1 + sentence_len
-        if projected_len > MAX_CHUNK_CHARS:
-            flush_current()
-            current = [sentence]
-            current_len = sentence_len
-            continue
-
-        if current_len >= TARGET_CHUNK_CHARS:
-            flush_current()
-            current = [sentence]
-            current_len = sentence_len
-            continue
-
-        current.append(sentence)
-        current_len = projected_len
-
-    flush_current()
-    return [segment for segment in segments if segment]
+    return [chunk for chunk in chunks if chunk]
 
 
 def _text_chunks(cleaned: str) -> list[str]:
@@ -230,48 +195,10 @@ def _text_chunks(cleaned: str) -> list[str]:
         return []
 
     chunks: list[str] = []
-    current: list[str] = []
-    current_len = 0
-
-    def flush_current():
-        nonlocal current_len
-        if current:
-            chunks.append("\n\n".join(current).strip())
-            current.clear()
-            current_len = 0
 
     for paragraph in paragraphs:
-        paragraph_segments = _paragraph_segments(paragraph)
-        for index, paragraph_segment in enumerate(paragraph_segments):
-            if index > 0:
-                flush_current()
+        chunks.extend(_statement_chunks(paragraph))
 
-            segment_len = len(paragraph_segment)
-            if not current:
-                current = [paragraph_segment]
-                current_len = segment_len
-                continue
-
-            projected_len = current_len + 2 + segment_len
-            if projected_len > MAX_CHUNK_CHARS:
-                flush_current()
-                current = [paragraph_segment]
-                current_len = segment_len
-                continue
-
-            if current_len >= TARGET_CHUNK_CHARS:
-                flush_current()
-                current = [paragraph_segment]
-                current_len = segment_len
-                continue
-
-            current.append(paragraph_segment)
-            current_len = projected_len
-
-        if current_len >= TARGET_CHUNK_CHARS:
-            flush_current()
-
-    flush_current()
     return [chunk for chunk in chunks if chunk]
 
 

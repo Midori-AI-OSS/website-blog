@@ -33,7 +33,7 @@ Another line.
 
         self.assertEqual(cleaned, "Paragraph with emphasis and signal.\n\nAnother line.")
 
-    def test_text_chunks_preserve_paragraph_boundaries_without_spoken_headings(self):
+    def test_text_chunks_emit_one_statement_per_chunk_without_spoken_headings(self):
         source = """
 ## Transit
 
@@ -49,16 +49,19 @@ About one hour into the drive, near the 212 intersection, I registered a roadsid
         self.assertEqual(
             chunks,
             [
-                "Her predictive pattern had been reliable before. I took it seriously.\n\nAbout one hour into the drive, near the 212 intersection, I registered a roadside anomaly."
+                "Her predictive pattern had been reliable before.",
+                "I took it seriously.",
+                "About one hour into the drive, near the 212 intersection, I registered a roadside anomaly.",
             ],
         )
 
-    def test_text_chunks_flush_between_large_paragraph_segments(self):
-        paragraph = " ".join(["Sentence." for _ in range(80)])
+    def test_text_chunks_split_long_statements_by_word_boundary(self):
+        paragraph = " ".join(["Sentence" for _ in range(200)]) + "."
 
         chunks = _text_chunks(_clean_text(paragraph))
 
         self.assertGreaterEqual(len(chunks), 2)
+        self.assertTrue(all(len(chunk) <= 960 for chunk in chunks))
         self.assertTrue(all("\n\n" not in chunk for chunk in chunks))
 
 
