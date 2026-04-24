@@ -430,7 +430,7 @@ def _synthesize_chunk(text: str) -> np.ndarray:
         raise RuntimeError("TTS model is not initialized")
 
     parts: list[np.ndarray] = []
-    for _, ps, _ in pipeline(text, voice=VOICE, speed=0.95, split_pattern=r"\n+"):
+    for _, ps, _ in pipeline(text, voice=VOICE, speed=0.85, split_pattern=r"\n+"):
         ref_s = voice_pack[len(ps) - 1]
         audio = model(ps, ref_s, 1)
         parts.append(audio.numpy())
