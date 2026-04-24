@@ -408,6 +408,47 @@ describe('TtsPlayer', () => {
     expect(container.textContent ?? '').toContain('Generating...');
   });
 
+  test('shows ready controls and streams when another viewer opens a playable in-progress generation', async () => {
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(
+          payload('generating', {
+            generated_chunks: 12,
+            total_chunks: 420,
+            playable: true,
+          })
+        );
+      }
+
+      if (url.includes('/api/tts/chunk/blog/shared-post/0')) {
+        return wavResponse();
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer();
+
+    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected Play button')).not
+      .toBeNull();
+    expect(getVisibleGeneratingBar()).toBeNull();
+
+    const playButton = getVisibleReadyButton('Play');
+    if (!(playButton instanceof testWindow.HTMLElement)) {
+      throw new Error('Expected visible play button');
+    }
+
+    await act(async () => {
+      playButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    expect(await waitForElement(() => getVisibleReadyButton('Pause'), 'Expected Pause button')).not
+      .toBeNull();
+    expect(lastAudio?.src.startsWith('blob:mock-')).toBe(true);
+    expect(lastAudio?.playCalls).toBeGreaterThan(0);
+  });
+
   test('keeps showing generating bar while local generate request is in flight and not yet playable', async () => {
     const statuses: StatusPayload[] = [payload('not_generated'), payload('not_generated')];
     let resolveGenerate: ((value: Response) => void) | null = null;

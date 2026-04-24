@@ -523,6 +523,25 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
     await tryStartChunkPlayback(0, true);
   }, [tryStartChunkPlayback]);
 
+  const prepareStreamingControls = useCallback(() => {
+    if (streamingActiveRef.current) return;
+
+    clearChunkRetry();
+    revokeCurrentChunkUrl();
+    streamingShouldPlayRef.current = false;
+    currentChunkIndexRef.current = null;
+    nextChunkIndexRef.current = 0;
+    streamingOffsetRef.current = 0;
+    chunkDurationsRef.current.clear();
+
+    setCanSeek(false);
+    setState('ready');
+    setPlayback('stopped');
+    setDuration(0);
+    setCurrentTime(0);
+    setProgress(0);
+  }, [clearChunkRetry, revokeCurrentChunkUrl]);
+
   const applyStatus = useCallback(
     async (statusData: TtsStatusPayload, source: StatusSource): Promise<TtsState> => {
       generatedChunksRef.current = statusData.generated_chunks;
@@ -547,14 +566,17 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
       }
 
       if (statusData.status === 'generating') {
-        if (!streamingActiveRef.current) {
+        const canStartPlayback =
+          statusData.playable || statusData.generated_chunks >= MIN_PLAYABLE_CHUNKS;
+
+        if (!streamingActiveRef.current && canStartPlayback && !generationRequestedRef.current) {
+          prepareStreamingControls();
+        } else if (!streamingActiveRef.current) {
           setState('generating');
         } else {
           setState('ready');
         }
 
-        const canStartPlayback =
-          statusData.playable || statusData.generated_chunks >= MIN_PLAYABLE_CHUNKS;
         if (
           canStartPlayback &&
           generationRequestedRef.current &&
@@ -570,7 +592,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
       }
       return 'not_generated';
     },
-    [beginStreamingPlayback, loadReadyAudio, stopPolling]
+    [beginStreamingPlayback, loadReadyAudio, prepareStreamingControls, stopPolling]
   );
 
   const checkStatus = useCallback(
@@ -662,10 +684,15 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
       return;
     }
 
+    if (!generationCompleteRef.current && generatedChunksRef.current >= MIN_PLAYABLE_CHUNKS) {
+      void beginStreamingPlayback();
+      return;
+    }
+
     audio.play().catch(() => {
       setPlayback('stopped');
     });
-  }, [clearChunkRetry, tryStartChunkPlayback]);
+  }, [beginStreamingPlayback, clearChunkRetry, tryStartChunkPlayback]);
 
   const handlePause = useCallback(() => {
     if (!audioRef.current) return;
