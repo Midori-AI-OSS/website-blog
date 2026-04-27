@@ -1,5 +1,5 @@
 ---
-title: "Echo POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
+title: "Echo: Full Service and Bad Vibes"
 summary: "Echo's first-person account of getting Riley to the Midori house, helping hold the room while the copy threat gets mapped into something survivable, waking into Luna's brutal healing, and driving toward Thorncrown with the fight already active."
 tags: [lore, "real-moments", "echo"]
 cover_image: /lore/echo-rumbodo.png
@@ -14,7 +14,7 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee: Wrong Ice at the Bar](/lore/luz-blessee-bar)
+> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
 > **Previous Post:** [Echo POV: Memoria Crystalli, Blood in the Bismuth Light](/lore/echo-memoria-crystalli)
 
 

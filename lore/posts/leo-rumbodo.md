@@ -1,5 +1,5 @@
 ---
-title: "Leo POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
+title: "Leo: Late Is Still Here"
 summary: "Leo's first-person account of Lady Light's warning, the briefing with Riley in the room, breakfast after a bad night, the regroup at the edge of Eureka, and the convoy rolling toward Thorncrown."
 tags: [lore, "real-moments", "leo"]
 cover_image: /lore/leo-rumbodo.png
@@ -14,7 +14,7 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee: Wrong Ice at the Bar](/lore/luz-blessee-bar)
+> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
 > **Previous Post:** [Leo POV: Memoria Crystalli, The Contract I Never Signed](/lore/leo-memoria-crystalli)
 
 

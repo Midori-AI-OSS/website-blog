@@ -14,8 +14,8 @@ date: 2026-04-06
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee: Wrong Ice at the Bar](/lore/luz-blessee-bar)
-> **Previous Post:** [Luz Blessee: Stillglass House Intake](/lore/luz-blessee-stillglass)
+> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
+> **Previous Post:** [Stillglass: Luz Blessee, One Action, One Confirmation](/lore/luz-blessee-stillglass)
 
 The shot came for Echo.
 
@@ -498,4 +498,4 @@ It's a stretch of time where you wait for your body to remember how to be itself
 We did that. All of us. Together.
 
 
-**Next Post:** [Luna POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown](/lore/luna-rumbodo)
+**Next Post:** [Luna: Closed Is Not Restored](/lore/luna-rumbodo)

@@ -1,5 +1,5 @@
 ---
-title: "Luna POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
+title: "Luna: Closed Is Not Restored"
 summary: "Luna’s first-person account of Lady Light’s warning, Riley asleep in her lap while the room builds a plan for Eureka, brutal healing that closes without restoring, and the convoy rolling toward Thorncrown."
 tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-rumbodo.png
@@ -14,7 +14,7 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee: Wrong Ice at the Bar](/lore/luz-blessee-bar)
+> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
 > **Previous Post:** [Luna POV: Memoria Crystalli, Sixty-Four Blades and a Hollow Halo](/lore/luna-memoria-crystalli)
 
 

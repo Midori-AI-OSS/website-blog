@@ -1,5 +1,5 @@
 ---
-title: "W.E.A.V.E. System Log: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
+title: "W.E.A.V.E. System Log: Anomaly Stack en Route to Thorncrown"
 summary: "W.E.A.V.E.'s first-person system log of reduced-visibility roadside support, dual-location coordination at the Midori house, variant copy planning, shutdown and morning reboot, and convoy approach toward active combat at Thorncrown."
 tags: [lore, "real-moments", "weave"]
 cover_image: /lore/w-e-a-v-e-rumbodo.png
@@ -14,7 +14,7 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee: Wrong Ice at the Bar](/lore/luz-blessee-bar)
+> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
 > **Previous Post:** [W.E.A.V.E. System Log: Memoria Crystalli, Reduced Visibility](/lore/w-e-a-v-e-memoria-crystalli)
 
 ## Reduced Visibility
