@@ -29,13 +29,13 @@ We crest into Orabar and it starts raining like the sky is mad at us. The cart b
 
 New ppl. New voices. All layered on top of each other. Too loud. I stay close to James because he’s my safe point. I tuck my chin and twist my hair around my fingers until it feels even.
 
-James cleans up, jumps down, and says, “I am ready, who else is ready?” like it’s easy to be ready.
+James cleans up, jumps down, and says, "I am ready, who else is ready?" like it’s easy to be ready.
 
 {{image: /lore/echo/echo5.png}}
 
 ### The shop (keys + a missing husband)
 
-The shop is tight and busy and I bump into James at the door because someone is already yelling about “a person” and my brain trips over the sound. A small person steps up to the counter. James talks to them like volume is how you win.
+The shop is tight and busy and I bump into James at the door because someone is already yelling about "a person" and my brain trips over the sound. A small person steps up to the counter. James talks to them like volume is how you win.
 
 Then he points me out to the shopkeeper.
 
@@ -77,7 +77,7 @@ Upstairs there are four doors. End of the hall says `workshop`. Another door say
 
 I open the workshop and it’s tools for smithing, and a set of clockwork boots sitting on a table like they’re waiting for someone to come home. They look important in a way I can’t explain. Like a promise you can touch.
 
-Somebody sets off a trap somewhere and then yells, “we are okay.”
+Somebody sets off a trap somewhere and then yells, "we are okay."
 
 My body does not believe them.
 

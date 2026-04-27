@@ -17,6 +17,7 @@ interface TtsPlayerProps {
   type: 'blog' | 'lore';
   text: string;
   coverImageUrl?: string;
+  onPrimaryColorChange?: (color: string) => void;
 }
 
 interface ExtractedColors {
@@ -268,7 +269,7 @@ function getTimelineState(audio: HTMLAudioElement) {
   };
 }
 
-export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
+export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChange }: TtsPlayerProps) {
   const [state, setState] = useState<TtsState>('not_generated');
   const [playback, setPlayback] = useState<PlaybackState>('stopped');
   const [progress, setProgress] = useState(0);
@@ -317,6 +318,10 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
       });
     }
   }, [coverImageUrl, colorsLoaded]);
+
+  useEffect(() => {
+    onPrimaryColorChange?.(colors.primary);
+  }, [colors.primary, onPrimaryColorChange]);
 
   const stopPolling = useCallback(() => {
     if (pollingRef.current) {

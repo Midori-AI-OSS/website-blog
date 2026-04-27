@@ -31,6 +31,7 @@ import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
 import {
   extractIsoDateFromBlogFilename,
@@ -130,6 +131,21 @@ function replaceLoreImageTokens(markdown: string, postFilename: string): string 
 
     return `\n\n![${alt}](${url} \"${LORE_IMAGE_TOKEN_TITLE}\")\n\n`;
   });
+}
+
+function lightenHexColor(hex: string, ratio: number): string {
+  const normalized = hex.trim().replace(/^#/, '');
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return hex;
+  }
+
+  const clampRatio = Math.max(0, Math.min(1, ratio));
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+
+  const mix = (channel: number) => Math.round(channel + (255 - channel) * clampRatio);
+  return `rgb(${mix(red)}, ${mix(green)}, ${mix(blue)})`;
 }
 
 const markdownComponents: Components = {
@@ -241,6 +257,7 @@ export function PostView({
   scheduledPublishDate,
 }: PostViewProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
+  const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
 
   const dateString = useMemo(() => getPostDateString(post), [post.filename, post.metadata.date]);
   const formattedDate = useMemo(
@@ -254,6 +271,10 @@ export function PostView({
   const markdownContent = useMemo(
     () => replaceLoreImageTokens(post.content, post.filename),
     [post.content, post.filename]
+  );
+  const dialogueColor = useMemo(
+    () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)'),
+    [ttsPrimaryColor]
   );
 
   useEffect(() => {
@@ -496,6 +517,7 @@ export function PostView({
                 slug={post.filename.replace(/\.md$/, '')}
                 type={postType}
                 text={post.content}
+                onPrimaryColorChange={setTtsPrimaryColor}
                 coverImageUrl={
                   post.metadata.cover_image
                     ? transformImageUrl(post.metadata.cover_image)
@@ -673,6 +695,9 @@ export function PostView({
                   borderBottomStyle: 'solid',
                 },
               },
+              '& [data-dialogue="true"]': {
+                color: dialogueColor,
+              },
               '& img': {
                 maxWidth: '100%',
                 height: 'auto',
@@ -714,7 +739,7 @@ export function PostView({
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeSanitize, rehypeHighlight]}
+              rehypePlugins={[rehypeSanitize, rehypeHighlight, rehypeDialogueQuotes]}
               components={markdownComponents}
             >
               {markdownContent}

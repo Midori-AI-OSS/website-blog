@@ -12,15 +12,15 @@ date: 2026-01-22
 If you’re reading this, it means one of two things:
 
 1. I’m alive long enough to hand you paper, which would be *nice*, or
-2. I’m dead and someone looted my bag and decided my private angst mail looked “important.”
+2. I’m dead and someone looted my bag and decided my private angst mail looked "important."
 
 Either way—hi. I miss you so much it makes my teeth hurt.
 
-Before everything went gray and miserable, we had this tiny slice of *normal* again, and I’m forcing myself to write it down because “normal” is starting to feel like a story somebody told me once.
+Before everything went gray and miserable, we had this tiny slice of *normal* again, and I’m forcing myself to write it down because "normal" is starting to feel like a story somebody told me once.
 
-We walked back to Trollskull at around… evening. I think. Time’s been weird ever since the manor and the headband and the endless tunnels and the whole “Faerûn is optional” situation. Sebastian and I actually talked like people for a bit—about my magic, about his knives, about how I keep notes in my spellbook so I don’t lose myself. (That line hits different now. I didn’t know it would turn into a threat.)
+We walked back to Trollskull at around… evening. I think. Time’s been weird ever since the manor and the headband and the endless tunnels and the whole "Faerûn is optional" situation. Sebastian and I actually talked like people for a bit—about my magic, about his knives, about how I keep notes in my spellbook so I don’t lose myself. (That line hits different now. I didn’t know it would turn into a threat.)
 
-I gave Sebastian my +1 greataxe and my old longsword. Not because I’ve suddenly become generous—don’t get used to it—but because the Shadowfell doesn’t feel like a “show up under-geared and improvise” kind of place. Zeldosian, Sebastian, and I sat down like we were planning a catering order, except the menu was “ways to not die.” We have a book on the plane. It’s not comforting. It reads like a warning label somebody wrote while bleeding.
+I gave Sebastian my +1 greataxe and my old longsword. Not because I’ve suddenly become generous—don’t get used to it—but because the Shadowfell doesn’t feel like a "show up under-geared and improvise" kind of place. Zeldosian, Sebastian, and I sat down like we were planning a catering order, except the menu was "ways to not die." We have a book on the plane. It’s not comforting. It reads like a warning label somebody wrote while bleeding.
 
 Then I walked home with food from the inn, and I had a moment so aggressively Waterdeep that I almost laughed myself into a wall: I turned a corner and saw two halflings… doing what halflings do when they forget the world exists. I didn’t want to see it. I didn’t want anyone else to see it. So I cast a little nebula curtain—soft starlight and drifting space-dust—because apparently I’m the universe’s designated privacy screen now. 🙃
 
@@ -28,16 +28,16 @@ Then I walked home with food from the inn, and I had a moment so aggressively Wa
 
 I ate. I washed. I tried to sleep like a person who doesn’t have a halo to hide.
 
-And then I had a dream that didn’t feel like a dream. It felt like truth standing too close—like staring into a spell that shouldn’t be looked at. I reached for it, and the whole thing shattered. I woke up with that horrible certainty of “I know something that doesn’t exist.” You know that feeling—when your brain insists something is true, but the world doesn’t agree? It was that, but sharpened. Like it wanted to cut me.
+And then I had a dream that didn’t feel like a dream. It felt like truth standing too close—like staring into a spell that shouldn’t be looked at. I reached for it, and the whole thing shattered. I woke up with that horrible certainty of "I know something that doesn’t exist." You know that feeling—when your brain insists something is true, but the world doesn’t agree? It was that, but sharpened. Like it wanted to cut me.
 
-**Flamerule 17**: I got up early and walked back to Trollskull. On the way I passed a house fire—real flames, real screaming—and then some wizard ran up and used a magic item like it was a casual chore. Fire gone. Everyone alive. And I laughed, because it was so stupidly *simple*. “Oh no, the world is burning—hold on, I’ve got a thing.”
+**Flamerule 17**: I got up early and walked back to Trollskull. On the way I passed a house fire—real flames, real screaming—and then some wizard ran up and used a magic item like it was a casual chore. Fire gone. Everyone alive. And I laughed, because it was so stupidly *simple*. "Oh no, the world is burning—hold on, I’ve got a thing."
 What I wouldn’t give for *that* to be our biggest problem again.
 
 When I got to the inn, Korreth smacked my butt like I’m some tavern girl in a joke. I looked him dead in the eye and told him not to do that again. I paid him. I thanked him. I kept walking. It was normal, too—normal in the way a knife is normal in a kitchen. Useful. Sharp. Not a surprise.
 
-Seraphine said Zel and Sebastian were upstairs. I found them, and the server called Zeldosian “King Zeldosian,” like it was casual. I asked him why. He did that thing where he smiles like he knows more than he’s saying. (Which is most of his face, honestly.)
+Seraphine said Zel and Sebastian were upstairs. I found them, and the server called Zeldosian "King Zeldosian," like it was casual. I asked him why. He did that thing where he smiles like he knows more than he’s saying. (Which is most of his face, honestly.)
 
-We decided we needed a guide. I remembered where we could find someone who doesn’t flinch at “Shadowfell” the way sane people should, and we went to the Yawning Portal. I summoned my Phantom Steed—ghostly, polite, and somehow the only one in the group who doesn’t make everything harder. I tied it up outside like it wouldn’t evaporate out of spite.
+We decided we needed a guide. I remembered where we could find someone who doesn’t flinch at "Shadowfell" the way sane people should, and we went to the Yawning Portal. I summoned my Phantom Steed—ghostly, polite, and somehow the only one in the group who doesn’t make everything harder. I tied it up outside like it wouldn’t evaporate out of spite.
 
 Inside, Zel played music for the crowd like he wasn’t about to walk into a realm made of regret.
 
@@ -45,18 +45,18 @@ That’s where I saw her—shadar-kai. And Ms. Obaya. I sat with Obaya first, tr
 
 I messaged her too. She looked straight at us like my words had weight, and then she came over and introduced herself:
 
-**Elowen “Shade-Thread” Vossaryn.**
+**Elowen "Shade-Thread" Vossaryn.**
 
 She’s a tour guide for the Shadowfell, Leo. I’m saying that like it’s a normal job, because she said it like it was. Sebastian offered five thousand gold. She didn’t blink. She just started negotiating like we were buying a carriage ride.
 
 On the way back, Waterdeep tried to kill a tower full of people. The whole thing started to tip, and for one bright, stupid moment I thought, *Oh. So we’re dying before we even leave the city. That’s funny.*
-I Enlarged Sebastian and told him to toss me. He did. I Astral-Stepped up to the top like a reckless idiot, grabbed on, and then fell anyway—because of course I did. Zel Feather-Falled me at the last second and I hit the ground furious and alive and yelling, “What the fuck, we could’ve just asked them to jump?!”
+I Enlarged Sebastian and told him to toss me. He did. I Astral-Stepped up to the top like a reckless idiot, grabbed on, and then fell anyway—because of course I did. Zel Feather-Falled me at the last second and I hit the ground furious and alive and yelling, "What the fuck, we could’ve just asked them to jump?!"
 
 Elowen looked at the situation—tower, screaming, us, chaos—and said, completely flat:
 
-“We are all going to die.”
+"We are all going to die."
 
-It wasn’t a threat. It was a *fact*, the way someone says, “It’s going to rain.”
+It wasn’t a threat. It was a *fact*, the way someone says, "It’s going to rain."
 
 I got mad at Zel again (I’ve been doing that a lot lately) and rode back to Trollskull. Korreth stared at Elowen like he’d never seen someone that sharp-edged in his life, and I told him to behave.
 
@@ -64,7 +64,7 @@ Then we went downstairs to do the thing.
 
 I felt fear crawl up my ribs when I started thinking about you—about whether you’d be safe if something found me there. Like the Shadowfell could reach *through me* and put its fingers on my brother. I hate that I think like that now.
 
-I used my mantle—my “silent intercession” thing—to help Elowen talk through the path we needed. It’s weird, Leo. I don’t call it prayer. I don’t call it divine. I call it… willpower. A promise. A refusal. But when I do it, the world *listens* in a way it shouldn’t.
+I used my mantle—my "silent intercession" thing—to help Elowen talk through the path we needed. It’s weird, Leo. I don’t call it prayer. I don’t call it divine. I call it… willpower. A promise. A refusal. But when I do it, the world *listens* in a way it shouldn’t.
 
 We grabbed hands. Zel threw a crystal on the ground.
 
@@ -84,7 +84,7 @@ Zel drank holy water like it was medicine. He snapped back. Sebastian did too, e
 
 We walked. We found a man resting with his steed.
 
-Elowen told us, like it was a casual landmark, “That’s Death.”
+Elowen told us, like it was a casual landmark, "That’s Death."
 
 I don’t know what I expected Death to look like. I don’t know why I expected *anything*. He was just there, the way a mountain is there. Unmoved. Unhurried.
 
@@ -108,7 +108,7 @@ Elowen looked unsettled. That matters, because she’s the kind of person who li
 
 The whispers weren’t random. I could almost make them out. It felt like they were saying: *come to me and share.* Feed me.
 
-Sebastian, bless his reckless little heart, said out loud: “I think I’m going to do something dumb.”
+Sebastian, bless his reckless little heart, said out loud: "I think I’m going to do something dumb."
 
 And I, because I’m me, decided I didn’t want to be standing next to the dumb thing when it happened—so I moved. Not away. Not to leave. Just… *up*. I used my night-step and slipped into the treetops to watch from a distance. I wasn’t running. I was making sure I could see the whole board before the pieces got knocked over.
 
@@ -146,7 +146,7 @@ And the memory I gave it was… that portal room I told you about. Remember? Sta
 
 I prayed.
 
-Not formal. Not pretty. Not “holy.” Just me, cross-legged, raw, talking to Mystra like she was an old machine I was trying to fix with my bare hands.
+Not formal. Not pretty. Not "holy." Just me, cross-legged, raw, talking to Mystra like she was an old machine I was trying to fix with my bare hands.
 
 That memory mattered, Leo. It was one of the only moments lately where I felt a flicker of *hope* that wasn’t forced.
 
@@ -164,7 +164,7 @@ We kept walking for hours.
 
 And then Zel told me something that made my stomach drop.
 
-He said he’s “half of what I am.”
+He said he’s "half of what I am."
 
 I told him I’m human. A human with gifts. Like you. Like we always said.
 
@@ -178,7 +178,7 @@ How many of my memories are mine?
 
 How many of my certainties are just… stories somebody handed me because they liked the shape of them?
 
-We argued in the Tiny Hut for an hour, and I kept saying “I’m human” like repetition makes reality.
+We argued in the Tiny Hut for an hour, and I kept saying "I’m human" like repetition makes reality.
 
 That night I dreamed of my house—except it was too perfect, like a replica made by someone who’d never lived there. I sat in my study and wrote **I am human**, and the ink vanished. Again and again. Like the page refused to hold the lie.
 
@@ -206,7 +206,7 @@ Sebastian pulled a soulstone from her with magic like it was an extraction. Sere
 
 Cross the **River of Souls**.
 
-We walked for hours until we reached it, and it was exactly what it sounds like: an impossible black span, still as glass, humming with corrupted ley energy. The “bridge” is broken like a snapped bone. No ferryman. No mercy. Just water that feels like it remembers too much.
+We walked for hours until we reached it, and it was exactly what it sounds like: an impossible black span, still as glass, humming with corrupted ley energy. The "bridge" is broken like a snapped bone. No ferryman. No mercy. Just water that feels like it remembers too much.
 
 I tried to make a way. I summoned a floating disk and started ferrying people over like it was a normal river crossing and not a threshold into something worse.
 
