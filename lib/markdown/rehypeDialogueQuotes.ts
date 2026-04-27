@@ -1,4 +1,4 @@
-import type { Content, Element, Parent, Root, Text } from 'hast';
+import type { Content, Element, Root, Text } from 'hast';
 import type { Plugin } from 'unified';
 
 const QUOTE_CHAR = '"';
@@ -22,10 +22,6 @@ function isText(node: Content): node is Text {
   return node.type === 'text';
 }
 
-function isParent(node: Content): node is Parent {
-  return 'children' in node && Array.isArray((node as Parent).children);
-}
-
 function normalizeText(value: string): string {
   return value
     .replace(CURLY_DOUBLE_QUOTES, QUOTE_CHAR)
@@ -41,7 +37,7 @@ function createDialogueSpan(children: Content[]): Element {
     type: 'element',
     tagName: 'span',
     properties: { 'data-dialogue': 'true' },
-    children,
+    children: children as Element['children'],
   };
 }
 
@@ -133,7 +129,7 @@ function transformChildren(children: Content[], context: TraverseContext): Conte
       continue;
     }
 
-    if (!isElement(child) || !isParent(child)) {
+    if (!isElement(child)) {
       transformed.push(child);
       continue;
     }
@@ -146,7 +142,7 @@ function transformChildren(children: Content[], context: TraverseContext): Conte
 
     transformed.push({
       ...child,
-      children: transformChildren(child.children as Content[], nextContext),
+      children: transformChildren(child.children as Content[], nextContext) as Element['children'],
     });
   }
 

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { CssVarsProvider } from '@mui/joy/styles';
 import CssBaseline from '@mui/joy/CssBaseline';
 import { theme } from '../lib/theme';
+import DynamicBackdropProvider from './DynamicBackdropProvider';
 
 export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
     // Client-side only to avoid hydration mismatch with dark mode preference
@@ -22,7 +23,7 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
     return (
         <CssVarsProvider theme={theme} defaultMode="dark" disableTransitionOnChange>
             <CssBaseline />
-            {children}
+            <DynamicBackdropProvider>{children}</DynamicBackdropProvider>
         </CssVarsProvider>
     );
 }

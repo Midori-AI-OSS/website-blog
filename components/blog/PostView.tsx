@@ -38,6 +38,7 @@ import {
   formatLongDate,
   normalizeIsoDateString,
 } from '@/lib/content/publish';
+import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
@@ -256,6 +257,7 @@ export function PostView({
   isScheduledPreview = false,
   scheduledPublishDate,
 }: PostViewProps) {
+  const { setPostCoverUrl } = useDynamicBackdrop();
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
 
@@ -272,6 +274,10 @@ export function PostView({
     () => replaceLoreImageTokens(post.content, post.filename),
     [post.content, post.filename]
   );
+  const transformedCoverImageUrl = useMemo(
+    () => (post.metadata.cover_image ? transformImageUrl(post.metadata.cover_image) : null),
+    [post.metadata.cover_image]
+  );
   const dialogueColor = useMemo(
     () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)'),
     [ttsPrimaryColor]
@@ -279,7 +285,14 @@ export function PostView({
 
   useEffect(() => {
     setCoverIsLandscape(null);
-  }, [post.metadata.cover_image]);
+  }, [transformedCoverImageUrl]);
+
+  useEffect(() => {
+    setPostCoverUrl(transformedCoverImageUrl);
+    return () => {
+      setPostCoverUrl(null);
+    };
+  }, [setPostCoverUrl, transformedCoverImageUrl]);
 
   /**
    * Handle Escape key to close the view
@@ -422,7 +435,7 @@ export function PostView({
           </Stack>
 
           {/* Cover Image - Ambient Mode */}
-          {post.metadata.cover_image && (
+          {transformedCoverImageUrl && (
               <Card
                 variant="plain"
                 sx={{
@@ -463,7 +476,7 @@ export function PostView({
               {/* Background Layer */}
               <Box
                 component="img"
-                src={transformImageUrl(post.metadata.cover_image)}
+                src={transformedCoverImageUrl}
                 alt=""
                 sx={{
                   position: 'absolute',
@@ -483,7 +496,7 @@ export function PostView({
               {/* Foreground Image */}
               <Box
                 component="img"
-                src={transformImageUrl(post.metadata.cover_image)}
+                src={transformedCoverImageUrl}
                 alt={post.metadata.title}
                 loading="lazy"
                 onLoad={(e) => {
@@ -518,11 +531,7 @@ export function PostView({
                 type={postType}
                 text={post.content}
                 onPrimaryColorChange={setTtsPrimaryColor}
-                coverImageUrl={
-                  post.metadata.cover_image
-                    ? transformImageUrl(post.metadata.cover_image)
-                    : undefined
-                }
+                coverImageUrl={transformedCoverImageUrl ?? undefined}
               />
             </Box>
           )}
