@@ -212,7 +212,7 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
               borderRadius: '50%',
               backgroundColor: palette.primary,
               filter: 'blur(170px)',
-              opacity: 0.34,
+              opacity: 0.51,
               animation: blobAnimation,
               transition: 'background-color 45s linear, opacity 45s linear, filter 45s linear',
               willChange: animated ? 'transform' : 'auto',
@@ -229,7 +229,7 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
               borderRadius: '50%',
               backgroundColor: palette.secondary,
               filter: 'blur(200px)',
-              opacity: 0.3,
+              opacity: 0.45,
               animation: animated
                 ? 'dynamic-backdrop-drift-reverse 210s ease-in-out infinite alternate'
                 : 'none',
@@ -248,7 +248,7 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
               borderRadius: '50%',
               backgroundColor: palette.tertiary,
               filter: 'blur(190px)',
-              opacity: 0.26,
+              opacity: 0.39,
               animation: animated
                 ? 'dynamic-backdrop-drift 240s ease-in-out infinite alternate-reverse'
                 : 'none',
