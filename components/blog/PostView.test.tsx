@@ -88,4 +88,17 @@ describe('PostView', () => {
     expect(html).not.toContain('“');
     expect(html).not.toContain('”');
   });
+
+  test('normalizes em dashes in prose', () => {
+    const html = renderPostContent('Quiet progress — steady results.');
+
+    expect(html).toContain('Quiet progress - steady results.');
+    expect(html).not.toContain('Quiet progress — steady results.');
+  });
+
+  test('does not normalize em dashes inside inline code', () => {
+    const html = renderPostContent('Use `a—b` as the token.');
+
+    expect(html).toContain('<code>a—b</code>');
+  });
 });

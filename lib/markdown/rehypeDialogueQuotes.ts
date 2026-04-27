@@ -2,7 +2,9 @@ import type { Content, Element, Parent, Root, Text } from 'hast';
 import type { Plugin } from 'unified';
 
 const QUOTE_CHAR = '"';
+const HYPHEN_CHAR = '-';
 const CURLY_DOUBLE_QUOTES = /[“”]/g;
+const EM_DASH = /—/g;
 
 const DIALOGUE_EXCLUDED_TAGS = new Set(['blockquote', 'code', 'pre', 'script', 'style']);
 const NORMALIZE_EXCLUDED_TAGS = new Set(['code', 'pre', 'script', 'style']);
@@ -24,8 +26,10 @@ function isParent(node: Content): node is Parent {
   return 'children' in node && Array.isArray((node as Parent).children);
 }
 
-function normalizeQuotes(value: string): string {
-  return value.replace(CURLY_DOUBLE_QUOTES, QUOTE_CHAR);
+function normalizeText(value: string): string {
+  return value
+    .replace(CURLY_DOUBLE_QUOTES, QUOTE_CHAR)
+    .replace(EM_DASH, HYPHEN_CHAR);
 }
 
 function createText(value: string): Text {
@@ -124,7 +128,7 @@ function transformChildren(children: Content[], context: TraverseContext): Conte
       if (context.normalizeExcluded) {
         transformed.push(child);
       } else {
-        transformed.push(createText(normalizeQuotes(child.value)));
+        transformed.push(createText(normalizeText(child.value)));
       }
       continue;
     }
