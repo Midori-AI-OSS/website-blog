@@ -10,6 +10,13 @@ import Stack from '@mui/joy/Stack';
 import { Calendar, User, ArrowRight, Tag } from 'lucide-react';
 import Link from 'next/link';
 import type { ParsedPost } from '../../lib/blog/parser';
+import {
+  DEFAULT_ART_PALETTE,
+  extractPaletteFromImage,
+  hexToRgb,
+  type ExtractedPalette,
+} from '@/lib/theme/artPalette';
+import { toDarkMediumBackdropPalette } from '@/lib/theme/dynamicBackdrop';
 
 export type BlogCardProps = {
   post: ParsedPost;
@@ -36,15 +43,63 @@ function transformImageUrl(url: string): string {
   return url;
 }
 
+function toRgba(hex: string, alpha: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  const a = Math.max(0, Math.min(1, alpha));
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
 export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined', color = 'neutral' }: BlogCardProps) => {
   const { metadata, filename } = post;
   const decorativeImageUrl = typeof metadata.cover_image === 'string' && metadata.cover_image.length > 0
     ? transformImageUrl(metadata.cover_image)
     : null;
+  const [palette, setPalette] = React.useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
 
   // Extract date from filename if not in metadata (YYYY-MM-DD format)
   const dateFromFilename = filename.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
   const displayDate = metadata.date || dateFromFilename || new Date().toISOString().split('T')[0];
+
+  React.useEffect(() => {
+    if (!decorativeImageUrl) {
+      return;
+    }
+
+    let active = true;
+
+    const syncPalette = async () => {
+      const extracted = await extractPaletteFromImage(decorativeImageUrl, {
+        fallback: DEFAULT_ART_PALETTE,
+      });
+      if (!active) return;
+      setPalette(extracted);
+    };
+
+    void syncPalette();
+
+    return () => {
+      active = false;
+    };
+  }, [decorativeImageUrl]);
+
+  const tintStyles = React.useMemo(() => {
+    if (!decorativeImageUrl) return null;
+
+    const darkPalette = toDarkMediumBackdropPalette(palette);
+    const borderColor = toRgba(darkPalette.secondary, 0.55);
+    const hoverBorderColor = toRgba(palette.primary, 0.76);
+    const backgroundGradient =
+      `linear-gradient(120deg, rgba(4, 5, 9, 0.94) 0%, ${toRgba(darkPalette.primary, 0.36)} 42%, rgba(4, 5, 9, 0.9) 100%)`;
+    const decorativeOverlay =
+      `linear-gradient(to right, rgba(4, 5, 9, 0.97) 0%, ${toRgba(darkPalette.secondary, 0.72)} 30%, rgba(4, 5, 9, 0.06) 74%)`;
+
+    return {
+      borderColor,
+      hoverBorderColor,
+      backgroundGradient,
+      decorativeOverlay,
+    };
+  }, [decorativeImageUrl, palette]);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -70,18 +125,19 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
         gap: 2,
         transition: 'all 0.2s',
         cursor: 'pointer',
-        bgcolor: 'background.surface',
-        borderColor: 'rgba(255,255,255,0.08)',
+        bgcolor: decorativeImageUrl ? 'rgba(4, 5, 9, 0.94)' : 'background.surface',
+        backgroundImage: tintStyles?.backgroundGradient,
+        borderColor: tintStyles?.borderColor ?? 'rgba(255,255,255,0.08)',
         p: 2,
         overflow: 'hidden',
         '&:hover': {
           boxShadow: 'md',
-          borderColor: 'primary.500',
+          borderColor: tintStyles?.hoverBorderColor ?? 'primary.500',
           transform: 'translateY(-1px)',
         },
         '&:focus-visible': {
           outline: '2px solid',
-          outlineColor: 'primary.500',
+          outlineColor: tintStyles?.hoverBorderColor ?? 'primary.500',
         },
       }}
       >
@@ -109,8 +165,8 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
               content: '""',
               position: 'absolute',
               inset: 0,
-              background:
-                'linear-gradient(to right, rgba(19, 10, 30, 0.98) 0%, rgba(19, 10, 30, 0.65) 28%, rgba(19, 10, 30, 0) 72%)',
+              background: tintStyles?.decorativeOverlay
+                ?? 'linear-gradient(to right, rgba(19, 10, 30, 0.98) 0%, rgba(19, 10, 30, 0.65) 28%, rgba(19, 10, 30, 0) 72%)',
             },
           }}
         />
