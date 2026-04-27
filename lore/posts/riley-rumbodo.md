@@ -14,6 +14,7 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+> **Previous Post:** [Memoria Crystalli, Keep Moving, Don’t Stop](/lore/riley-memoria-crystalli)
 
 One week out from the ER and I was already at the door when Echo pulled up.
 

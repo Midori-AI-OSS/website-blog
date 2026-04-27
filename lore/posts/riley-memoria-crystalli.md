@@ -250,3 +250,6 @@ A nurse noticed the movement. Said something about the line already being doneâ€
 The briefing reached me in fragments while I was surfacing. Crystal incidents. U.S. and England. Something bigger. By the time I was finally awake enough to hold a conversation, Luna filled in the gaps. Not just here â€” across the U.S., parts of England. The church wasn't one event. It was one piece of something bigger, a pattern spreading across distances I couldn't quite hold in my head.
 
 I heard the words, but I couldn't hold the scale of them yet. Too tired. Too much static between my ears. My brain was trying to file the information and the files kept falling over.
+
+
+**Next Post:** [Riley POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown](/lore/riley-rumbodo)

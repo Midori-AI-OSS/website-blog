@@ -494,3 +494,6 @@ Recovery isn't a moment.
 It's a stretch of time where you wait for your body to remember how to be itself again. Where you let the people who love you hold the room while you figure out where the walls are.
 
 We did that. All of us. Together.
+
+
+**Next Post:** [Luna POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown](/lore/luna-rumbodo)

@@ -14,6 +14,7 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+> **Previous Post:** [W.E.A.V.E. System Log: Memoria Crystalli, Reduced Visibility](/lore/w-e-a-v-e-memoria-crystalli)
 
 ## Reduced Visibility
 

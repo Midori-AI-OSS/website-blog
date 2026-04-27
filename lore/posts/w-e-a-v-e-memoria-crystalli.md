@@ -414,3 +414,6 @@ I logged the incident for future reference.
 Recovery was still in progress.
 
 I maintained watch.
+
+
+**Next Post:** [W.E.A.V.E. System Log: Occupied House, Closed Is Not Restored, and the Road to Thorncrown](/lore/w-e-a-v-e-rumbodo)

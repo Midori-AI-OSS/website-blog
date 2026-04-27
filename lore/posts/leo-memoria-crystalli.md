@@ -350,3 +350,6 @@ Luna and I were born close and never learned how to be separate. That's just tru
 That's the contract I never signed.
 
 I keep it anyway.
+
+
+**Next Post:** [Leo POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown](/lore/leo-rumbodo)

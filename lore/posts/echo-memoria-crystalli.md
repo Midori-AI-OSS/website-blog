@@ -606,3 +606,6 @@ I'll be there.
 *Even when it hurts.*
 
 *Even when it costs.*
+
+
+**Next Post:** [Echo POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown](/lore/echo-rumbodo)

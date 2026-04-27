@@ -14,6 +14,7 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+> **Previous Post:** [Echo POV: Memoria Crystalli, Blood in the Bismuth Light](/lore/echo-memoria-crystalli)
 
 
 The porch light is on. Riley is already at the door — keys in one hand, cane under her arm, sword across her back, gun on her hip, bag over her shoulder. One week out of the ER and she is carrying enough hardware to fight a war on the way to a friend's house.
