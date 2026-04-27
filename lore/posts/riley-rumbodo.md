@@ -1,5 +1,5 @@
 ---
-title: "Riley POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
+title: "Occupied House, Closed Is Not Restored, and the Road to Thorncrown"
 summary: "Riley's first-person account of arriving at the Midori house under pressure, consenting to a protection plan built around the copy threat, watching Luna's brutal healing, and rolling toward Thorncrown with the fight already active."
 tags: [lore, "real-moments", "riley"]
 cover_image: /lore/riley-rumbodo.png
@@ -14,6 +14,7 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+> **Start of Story:** [Luz Blessee: Wrong Ice at the Bar](/lore/luz-blessee-bar)
 > **Previous Post:** [Memoria Crystalli, Keep Moving, Don’t Stop](/lore/riley-memoria-crystalli)
 
 One week out from the ER and I was already at the door when Echo pulled up.

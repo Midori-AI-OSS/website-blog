@@ -14,6 +14,8 @@ date: 2026-04-06
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+> **Start of Story:** [Luz Blessee: Wrong Ice at the Bar](/lore/luz-blessee-bar)
+> **Previous Post:** [Luz Blessee: Stillglass House Intake](/lore/luz-blessee-stillglass)
 
 The shot came for her head.
 
@@ -252,4 +254,4 @@ The briefing reached me in fragments while I was surfacing. Crystal incidents. U
 I heard the words, but I couldn't hold the scale of them yet. Too tired. Too much static between my ears. My brain was trying to file the information and the files kept falling over.
 
 
-**Next Post:** [Riley POV: Occupied House, Closed Is Not Restored, and the Road to Thorncrown](/lore/riley-rumbodo)
+**Next Post:** [Occupied House, Closed Is Not Restored, and the Road to Thorncrown](/lore/riley-rumbodo)

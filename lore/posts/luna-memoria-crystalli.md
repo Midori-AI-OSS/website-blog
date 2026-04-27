@@ -14,6 +14,8 @@ date: 2026-04-06
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+> **Start of Story:** [Luz Blessee: Wrong Ice at the Bar](/lore/luz-blessee-bar)
+> **Previous Post:** [Luz Blessee: Stillglass House Intake](/lore/luz-blessee-stillglass)
 
 The shot came for Echo.
 
