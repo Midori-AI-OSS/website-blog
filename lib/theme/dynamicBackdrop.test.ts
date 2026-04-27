@@ -69,9 +69,9 @@ describe('toDarkMediumBackdropPalette', () => {
     });
 
     expect(palette).toEqual({
-      primary: '#242424',
-      secondary: '#1f1f1f',
-      tertiary: '#292929',
+      primary: '#292929',
+      secondary: '#242424',
+      tertiary: '#2e2e2e',
     });
   });
 });

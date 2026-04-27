@@ -49,8 +49,8 @@ export function toDarkMediumBackdropPalette(
   palette: ExtractedPalette = DEFAULT_ART_PALETTE
 ): ExtractedPalette {
   return {
-    primary: darkenHex(palette.primary, 0.72),
-    secondary: darkenHex(palette.secondary, 0.76),
-    tertiary: darkenHex(palette.tertiary, 0.68),
+    primary: darkenHex(palette.primary, 0.68),
+    secondary: darkenHex(palette.secondary, 0.72),
+    tertiary: darkenHex(palette.tertiary, 0.64),
   };
 }
