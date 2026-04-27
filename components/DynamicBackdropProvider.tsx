@@ -205,14 +205,14 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
           <Box
             sx={{
               position: 'absolute',
-              width: '60vw',
-              height: '60vw',
-              left: '-12vw',
-              top: '-20vh',
+              width: '70vw',
+              height: '70vw',
+              left: '-34vw',
+              top: '-36vh',
               borderRadius: '50%',
               backgroundColor: palette.primary,
-              filter: 'blur(160px)',
-              opacity: 0.35,
+              filter: 'blur(170px)',
+              opacity: 0.34,
               animation: blobAnimation,
               transition: 'background-color 45s linear, opacity 45s linear, filter 45s linear',
               willChange: animated ? 'transform' : 'auto',
@@ -222,14 +222,14 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
           <Box
             sx={{
               position: 'absolute',
-              width: '55vw',
-              height: '55vw',
-              right: '-10vw',
-              top: '-12vh',
+              width: '68vw',
+              height: '68vw',
+              right: '-34vw',
+              top: '-30vh',
               borderRadius: '50%',
               backgroundColor: palette.secondary,
-              filter: 'blur(190px)',
-              opacity: 0.28,
+              filter: 'blur(200px)',
+              opacity: 0.3,
               animation: animated
                 ? 'dynamic-backdrop-drift-reverse 210s ease-in-out infinite alternate'
                 : 'none',
@@ -241,14 +241,14 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
           <Box
             sx={{
               position: 'absolute',
-              width: '62vw',
-              height: '62vw',
-              left: '20vw',
-              bottom: '-30vh',
+              width: '76vw',
+              height: '76vw',
+              left: '12vw',
+              bottom: '-58vh',
               borderRadius: '50%',
               backgroundColor: palette.tertiary,
-              filter: 'blur(170px)',
-              opacity: 0.24,
+              filter: 'blur(190px)',
+              opacity: 0.26,
               animation: animated
                 ? 'dynamic-backdrop-drift 240s ease-in-out infinite alternate-reverse'
                 : 'none',
