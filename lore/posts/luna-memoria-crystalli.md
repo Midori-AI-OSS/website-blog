@@ -1,10 +1,13 @@
 ---
-title: "Luna POV: Memoria Crystalli, Sixty-Four Blades and a Hollow Halo"
+title: "Memoria Crystalli, Sixty-Four Blades and a Hollow Halo"
 summary: "Luna’s first-person account of Echo’s drive-by, a violet entity, and a church full of stolen faces, where she calls Leo in, overcasts a swarm of photon blades, and burns through her light to keep Riley and the others alive."
 tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-memoria-crystalli.png
 author: Luna Midori
 date: 2026-04-06
+game: real-moments
+story_order: 4
+episode_label: "Memoria Crystalli"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
@@ -14,9 +17,6 @@ date: 2026-04-06
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Stillglass: Luz Blessee, One Action, One Confirmation](/lore/luz-blessee-stillglass)
-
 The shot came for Echo.
 
 I heard Riley's voice crack on the word *no* — or maybe that was later, memory isn't clean about when things happened, only how they felt. The car drifting, metal and glass and the smell of cordite. I reached for magic before I could think, and my halo flared with it — heat at the crown of my skull, soft gold bleeding into the air. My eyes lit up too, warm and bright, the same light that spills from my hands when I cast.
@@ -498,4 +498,3 @@ It's a stretch of time where you wait for your body to remember how to be itself
 We did that. All of us. Together.
 
 
-**Next Post:** [Luna: Closed Is Not Restored](/lore/luna-rumbodo)

@@ -1,10 +1,13 @@
 ---
-title: "Leo: Late Is Still Here"
+title: "Late Is Still Here"
 summary: "Leo's first-person account of Lady Light's warning, the briefing with Riley in the room, breakfast after a bad night, the regroup at the edge of Eureka, and the convoy rolling toward Thorncrown."
 tags: [lore, "real-moments", "leo"]
 cover_image: /lore/leo-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
+game: real-moments
+story_order: 8
+episode_label: "Rumbodo"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
@@ -14,9 +17,6 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Leo POV: Memoria Crystalli, The Contract I Never Signed](/lore/leo-memoria-crystalli)
-
 
 
 She was already sitting when I came back into the room.

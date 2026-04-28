@@ -5,6 +5,8 @@ tags: [lore, "celestial-covenant"]
 cover_image: /lore/blog_post2.png
 author: Luna Midori
 date: 2026-01-23
+game: celestial-covenant
+story_order: 2
 ---
 
 ## Luna’s Diary — "The Day the Water Tried to Keep Me"  

@@ -1,14 +1,13 @@
 import { Box, Typography } from '@mui/joy';
 
-import { loadAllLorePosts, paginateLorePosts } from '@/lib/lore/loader';
+import { loadLoreGameGroups } from '@/lib/lore/loader';
 
 import { LoreListPageClient } from './LoreListPageClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LorePage() {
-  const allPosts = await loadAllLorePosts();
-  const { posts: initialPosts } = paginateLorePosts(allPosts, 0, 10);
+  const gameGroups = await loadLoreGameGroups();
 
   return (
     <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: '100%', md: '90%', lg: '80%' }, mx: 'auto', px: { xs: 0, sm: 4 }, py: { xs: 4, sm: 8 } }}>
@@ -20,7 +19,7 @@ export default async function LorePage() {
           Luna’s RP notes, story times, and campaign lore — collected over time.
         </Typography>
       </Box>
-      <LoreListPageClient initialPosts={initialPosts} allPosts={allPosts} />
+      <LoreListPageClient gameGroups={gameGroups} />
     </Box>
   );
 }

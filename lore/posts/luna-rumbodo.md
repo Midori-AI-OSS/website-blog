@@ -1,10 +1,13 @@
 ---
-title: "Luna: Closed Is Not Restored"
+title: "Closed Is Not Restored"
 summary: "Luna’s first-person account of Lady Light’s warning, Riley asleep in her lap while the room builds a plan for Eureka, brutal healing that closes without restoring, and the convoy rolling toward Thorncrown."
 tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
+game: real-moments
+story_order: 9
+episode_label: "Rumbodo"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
@@ -14,9 +17,6 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Luna POV: Memoria Crystalli, Sixty-Four Blades and a Hollow Halo](/lore/luna-memoria-crystalli)
-
 
 Lady Light was already in the guest chair when I got to the house, and she stayed there the whole time. She said Lady Dark had already told "floating dust, time mage, and gun girl" that she was here — which had to be W.E.A.V.E., Echo, and Riley, though I only know what Lady Light said, not the exact names Lady Darkness used. She apologized for being late like late was a weather report and not a choice, speaking from the left side of her face while the right stayed slack and strange. Her white hair was threaded with black sparkles that caught the lamp light without ever turning into anything as convenient as a glow. Her right hand did the small honest work of gesturing while the rest of her stayed almost unnervingly still. Her presence was quiet — not gentler, just less interested in making the room perform around her. She also had the irritating habit of calling us Lady Luna and Mr Leo, like titles might keep the damage polite.
 

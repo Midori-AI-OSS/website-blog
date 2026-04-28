@@ -19,12 +19,12 @@ import {
   Box,
   Typography,
   Button,
+  IconButton,
   Chip,
-  AspectRatio,
   Card,
-  CardOverflow,
   Stack,
   Divider,
+  Tooltip,
 } from '@mui/joy';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
@@ -32,13 +32,15 @@ import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
-import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   extractIsoDateFromBlogFilename,
   formatLongDate,
   normalizeIsoDateString,
 } from '@/lib/content/publish';
+import { transformPostImageUrl, toLoreImageApiUrl } from '@/lib/content/imageUrl';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
+import { AmbientCoverArt, AMBIENT_PULSE_KEYFRAMES } from '@/components/blog/AmbientCoverArt';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
@@ -56,10 +58,28 @@ export interface PostViewProps {
   backButtonAriaLabel?: string;
   /** Post type for TTS and contextual behavior */
   postType?: 'blog' | 'lore';
+  /** Previous lore story link (older timeline entry) */
+  previousStory?: {
+    href: string;
+    title: string;
+    summary?: string;
+  } | null;
+  /** Next lore story link (newer timeline entry) */
+  nextStory?: {
+    href: string;
+    title: string;
+    summary?: string;
+  } | null;
+  /** Lore story navigation callback */
+  onNavigateStory?: (href: string) => void;
   /** Whether to render a scheduled teaser instead of the full post */
   isScheduledPreview?: boolean;
   /** The scheduled publish date to show in teaser mode */
   scheduledPublishDate?: string;
+  /** Whether to hide the back button (e.g. nested chapter view) */
+  hideBackButton?: boolean;
+  /** Disable dynamic backdrop updates (e.g. multiple PostViews stacking) */
+  disableDynamicBackdrop?: boolean;
 }
 
 /**
@@ -69,58 +89,11 @@ function getPostDateString(post: ParsedPost): string | undefined {
   return extractIsoDateFromBlogFilename(post.filename) ?? normalizeIsoDateString(post.metadata.date) ?? undefined;
 }
 
-/**
- * Transform static blog image URLs to API route URLs
- * Converts /blog/image.png to /api/blog-images/image.png for dynamic serving
- */
-function transformImageUrl(url: string): string {
-  // If URL starts with /blog/, transform it to use API route
-  if (url.startsWith('/blog/')) {
-    return url.replace('/blog/', '/api/blog-images/');
-  }
-  // Lore images should use the API route so they can be served dynamically in production.
-  if (url.startsWith('/lore/')) {
-    const withoutLeadingSlashes = url.replace(/^\/+/, '');
-    const withoutLorePrefix = withoutLeadingSlashes.slice('lore/'.length);
-    const normalized = withoutLorePrefix.replace(/^\/+/, '').replace(/\/+$/, '').trim();
-    if (!normalized) return url;
-
-    const segments = normalized.split('/').filter(Boolean);
-    const encoded = segments.map((s) => encodeURIComponent(s)).join('/');
-    return `/api/lore-images/${encoded}`;
-  }
-  // Otherwise return as-is (for external URLs or other paths)
-  return url;
-}
-
 const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
 
-function toLoreImageApiUrl(tokenValue: string, postFilename: string): string | null {
-  const raw = tokenValue.trim();
-  if (!raw) return null;
-
-  // Enforce explicit lore-rooted paths only:
-  // - {{image: /lore/folder/file.png}}
-  // - {{image: /lore/file.png}}
-  const lower = raw.toLowerCase();
-  const hasLorePrefix = lower.startsWith('/lore/') || lower === '/lore';
-  if (!hasLorePrefix) return null;
-
-  const withoutLeadingSlashes = raw.replace(/^\/+/, '');
-  const withoutLorePrefix = withoutLeadingSlashes.slice('lore/'.length);
-  const normalized = withoutLorePrefix.replace(/^\/+/, '').replace(/\/+$/, '').trim();
-  if (!normalized) return null;
-
-  const segments = normalized.split('/').filter(Boolean);
-  if (segments.length === 0) return null;
-
-  const encoded = segments.map((s) => encodeURIComponent(s)).join('/');
-  return `/api/lore-images/${encoded}`;
-}
-
-function replaceLoreImageTokens(markdown: string, postFilename: string): string {
+function replaceLoreImageTokens(markdown: string): string {
   return markdown.replace(/\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi, (fullMatch, tokenValue: string) => {
-    const url = toLoreImageApiUrl(tokenValue, postFilename);
+    const url = toLoreImageApiUrl(tokenValue);
     if (!url) return fullMatch;
 
     const raw = tokenValue.trim();
@@ -147,6 +120,17 @@ function lightenHexColor(hex: string, ratio: number): string {
 
   const mix = (channel: number) => Math.round(channel + (255 - channel) * clampRatio);
   return `rgb(${mix(red)}, ${mix(green)}, ${mix(blue)})`;
+}
+
+function buildTooltipText(
+  prefix: string,
+  story: { title: string; summary?: string } | null | undefined
+): string {
+  if (!story) return prefix;
+  const summary = (story.summary ?? '').trim();
+  if (!summary) return `${prefix}: ${story.title}`;
+  const snippet = summary.length > 110 ? `${summary.slice(0, 109).trimEnd()}…` : summary;
+  return `${prefix}: ${story.title} - ${snippet}`;
 }
 
 const markdownComponents: Components = {
@@ -254,11 +238,16 @@ export function PostView({
   backButtonLabel = 'Back to posts',
   backButtonAriaLabel = 'Back to blog list',
   postType = 'blog',
+  previousStory = null,
+  nextStory = null,
+  onNavigateStory,
   isScheduledPreview = false,
   scheduledPublishDate,
+  hideBackButton = false,
+  disableDynamicBackdrop = false,
 }: PostViewProps) {
   const { setPostCoverUrl } = useDynamicBackdrop();
-  const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
+  const [, setCoverIsLandscape] = useState<boolean | null>(null);
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
 
   const dateString = useMemo(() => getPostDateString(post), [post.filename, post.metadata.date]);
@@ -271,28 +260,26 @@ export function PostView({
     [scheduledPublishDate, dateString, formattedDate]
   );
   const markdownContent = useMemo(
-    () => replaceLoreImageTokens(post.content, post.filename),
-    [post.content, post.filename]
+    () => replaceLoreImageTokens(post.content),
+    [post.content]
   );
   const transformedCoverImageUrl = useMemo(
-    () => (post.metadata.cover_image ? transformImageUrl(post.metadata.cover_image) : null),
+    () => (post.metadata.cover_image ? transformPostImageUrl(post.metadata.cover_image) : null),
     [post.metadata.cover_image]
   );
   const dialogueColor = useMemo(
     () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)'),
     [ttsPrimaryColor]
   );
+  const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
 
   useEffect(() => {
-    setCoverIsLandscape(null);
-  }, [transformedCoverImageUrl]);
-
-  useEffect(() => {
+    if (disableDynamicBackdrop) return;
     setPostCoverUrl(transformedCoverImageUrl);
     return () => {
       setPostCoverUrl(null);
     };
-  }, [setPostCoverUrl, transformedCoverImageUrl]);
+  }, [setPostCoverUrl, transformedCoverImageUrl, disableDynamicBackdrop]);
 
   /**
    * Handle Escape key to close the view
@@ -328,33 +315,31 @@ export function PostView({
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' }
         },
-        '@keyframes ambient-pulse': {
-          '0%': { transform: 'scale(1.1)', opacity: 0.8 },
-          '50%': { transform: 'scale(1.14)', opacity: 0.6 },
-          '100%': { transform: 'scale(1.1)', opacity: 0.8 },
-        }
+        ...AMBIENT_PULSE_KEYFRAMES,
       }}
     >
       {/* Back Button */}
-      <Button
-        variant="plain"
-        color="neutral"
-        onClick={onClose}
-        startDecorator={<ArrowLeft size={18} />}
-        sx={{
-          mb: { xs: 2, sm: 4 },
-          alignSelf: 'flex-start',
-          minHeight: 44,
-          width: { xs: '100%', sm: 'auto' },
-          justifyContent: 'flex-start',
-          '&:hover': {
-            backgroundColor: 'background.level1',
-          },
-        }}
-        aria-label={backButtonAriaLabel}
-      >
-        {backButtonLabel}
-      </Button>
+      {!hideBackButton && (
+        <Button
+          variant="plain"
+          color="neutral"
+          onClick={onClose}
+          startDecorator={<ArrowLeft size={18} />}
+          sx={{
+            mb: { xs: 2, sm: 4 },
+            alignSelf: 'flex-start',
+            minHeight: 44,
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: 'flex-start',
+            '&:hover': {
+              backgroundColor: 'background.level1',
+            },
+          }}
+          aria-label={backButtonAriaLabel}
+        >
+          {backButtonLabel}
+        </Button>
+      )}
 
       {/* Main Content Container with Glass Effect */}
       <Box
@@ -436,92 +421,117 @@ export function PostView({
 
           {/* Cover Image - Ambient Mode */}
           {transformedCoverImageUrl && (
-              <Card
-                variant="plain"
-                sx={{
-                  p: 0,
-                  mb: 4,
-                  overflow: 'hidden',
-                  borderRadius: 0,
-                  border: 'none', // Remove outline
-                  bgcolor: 'black',
-                  position: 'relative',
-                  minHeight: { xs: '220px', sm: '300px' },
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                // Explicitly remove any hover effects
-                '--Card-padding': '0px',
-                '&:hover, &:focus-within': {
-                  bgcolor: 'black',
-                  borderColor: 'transparent',
-                  boxShadow: 'none',
-                  outline: 'none',
-                },
-              }}
-            >
-              {/* Vignette / Feather Overlay */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 10,
-                  boxShadow: 'inset 0 0 60px 30px #000', // Heavy feathering
-                  pointerEvents: 'none',
-                }}
-              />
-              {/* Background Layer */}
-              <Box
-                component="img"
-                src={transformedCoverImageUrl}
-                alt=""
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  filter: isScheduledPreview ? 'blur(34px) brightness(0.45)' : 'blur(20px) brightness(0.6)',
-                  transform: 'scale(1.1)',
-                  zIndex: 0,
-                  opacity: 0.8,
-                  animation: 'ambient-pulse 10s ease-in-out infinite',
-                }}
-              />
-
-              {/* Foreground Image */}
-              <Box
-                component="img"
-                src={transformedCoverImageUrl}
+            <Box sx={{ mb: 4 }}>
+              <AmbientCoverArt
+                coverImageUrl={transformedCoverImageUrl}
                 alt={post.metadata.title}
-                loading="lazy"
-                onLoad={(e) => {
-                  const img = e.currentTarget;
-                  if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-                    setCoverIsLandscape(img.naturalWidth > img.naturalHeight);
-                  }
-                }}
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  objectFit: 'contain',
-                  maxWidth: {
-                    xs: coverIsLandscape === true ? '84%' : '72%',
-                    sm: coverIsLandscape === true ? '60%' : '35%',
-                  },
-                  height: 'auto',
-                  maxHeight: { xs: '22%', sm: '15%' },
-                  width: 'auto',
-                  display: 'block',
-                  filter: isScheduledPreview ? 'blur(18px) saturate(0.72) brightness(0.7)' : 'none',
-                  transform: isScheduledPreview ? 'scale(1.08)' : 'none',
-                }}
-              />
-            </Card>
+                isScheduledPreview={isScheduledPreview}
+                onAspectRatioChange={(val) => setCoverIsLandscape(val)}
+              >
+                {hasLoreStoryNavigation && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      px: { xs: 1, sm: 1.5 },
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <Box sx={{ pointerEvents: 'auto' }}>
+                      {previousStory ? (
+                        <Tooltip
+                          arrow
+                          variant="soft"
+                          title={buildTooltipText('Past story', previousStory)}
+                          enterTouchDelay={0}
+                          placement="right"
+                        >
+                          <IconButton
+                            variant="soft"
+                            color="neutral"
+                            onClick={() => {
+                              if (onNavigateStory) {
+                                onNavigateStory(previousStory.href);
+                              } else {
+                                window.location.assign(previousStory.href);
+                              }
+                            }}
+                            aria-label="Go back to past story"
+                            sx={{
+                              minWidth: 44,
+                              minHeight: 44,
+                              borderRadius: 0,
+                              bgcolor: 'rgba(10, 12, 20, 0.75)',
+                              backdropFilter: 'blur(6px)',
+                              border: '1px solid',
+                              borderColor: 'rgba(255,255,255,0.24)',
+                              transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                              '&:focus-visible': {
+                                outline: '2px solid',
+                                outlineColor: 'primary.400',
+                                outlineOffset: '2px',
+                              },
+                            }}
+                          >
+                            <ChevronLeft size={20} />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        <Box sx={{ width: 44, height: 44 }} />
+                      )}
+                    </Box>
+
+                    <Box sx={{ pointerEvents: 'auto' }}>
+                      {nextStory ? (
+                        <Tooltip
+                          arrow
+                          variant="soft"
+                          title={buildTooltipText('Next story', nextStory)}
+                          enterTouchDelay={0}
+                          placement="left"
+                        >
+                          <IconButton
+                            variant="soft"
+                            color="neutral"
+                            onClick={() => {
+                              if (onNavigateStory) {
+                                onNavigateStory(nextStory.href);
+                              } else {
+                                window.location.assign(nextStory.href);
+                              }
+                            }}
+                            aria-label="Go to next story"
+                            sx={{
+                              minWidth: 44,
+                              minHeight: 44,
+                              borderRadius: 0,
+                              bgcolor: 'rgba(10, 12, 20, 0.75)',
+                              backdropFilter: 'blur(6px)',
+                              border: '1px solid',
+                              borderColor: 'rgba(255,255,255,0.24)',
+                              transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                              '&:focus-visible': {
+                                outline: '2px solid',
+                                outlineColor: 'primary.400',
+                                outlineOffset: '2px',
+                              },
+                            }}
+                          >
+                            <ChevronRight size={20} />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        <Box sx={{ width: 44, height: 44 }} />
+                      )}
+                    </Box>
+                  </Box>
+                )}
+              </AmbientCoverArt>
+            </Box>
           )}
 
           {!isScheduledPreview && (
@@ -756,6 +766,44 @@ export function PostView({
           </Box>
         )}
       </Box>
+
+      {postType === 'lore' && nextStory && (
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-start' } }}>
+          <Tooltip
+            arrow
+            variant="soft"
+            title={buildTooltipText('Next story', nextStory)}
+            enterTouchDelay={0}
+          >
+            <Button
+              variant="solid"
+              color="primary"
+              onClick={() => {
+                if (onNavigateStory) {
+                  onNavigateStory(nextStory.href);
+                } else {
+                  window.location.assign(nextStory.href);
+                }
+              }}
+              sx={{
+                minHeight: 44,
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 0,
+                textTransform: 'none',
+                fontWeight: 700,
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: 'primary.500',
+                  outlineOffset: '2px',
+                },
+              }}
+            >
+              Go to next story
+            </Button>
+          </Tooltip>
+        </Box>
+      )}
 
       {/* Footer - Back to top */}
       <Box

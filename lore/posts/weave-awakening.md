@@ -5,6 +5,8 @@ tags: [lore, "automata-dreams"]
 cover_image: /lore/weave.png
 author: Luna Midori
 date: 2026-03-16
+game: automata-dreams
+story_order: 2
 ---
 
 **Date:** 2026-03-14 (Session 10)

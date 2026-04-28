@@ -5,6 +5,9 @@ tags: [lore, "real-moments", "weave"]
 cover_image: /lore/w-e-a-v-e-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
+game: real-moments
+story_order: 10
+episode_label: "Rumbodo"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
@@ -14,9 +17,6 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [W.E.A.V.E. System Log: Memoria Crystalli, Reduced Visibility](/lore/w-e-a-v-e-memoria-crystalli)
-
 ## Reduced Visibility
 
 One week after the ER, I was dust.

@@ -5,6 +5,9 @@ tags: [lore, "real-moments", "weave"]
 cover_image: /lore/w-e-a-v-e-memoria-crystalli.png
 author: Luna Midori
 date: 2026-04-06
+game: real-moments
+story_order: 5
+episode_label: "Memoria Crystalli"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
@@ -14,9 +17,6 @@ date: 2026-04-06
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Stillglass: Luz Blessee, One Action, One Confirmation](/lore/luz-blessee-stillglass)
-
 # Absence
 
 I was dispersed when the shooting started. Distant. Low-resolution observation mode. By the time I reformed enough to matter, the house fight was over. The entity dead. Riley and Echo wounded.
@@ -418,4 +418,3 @@ Recovery was still in progress.
 I maintained watch.
 
 
-**Next Post:** [W.E.A.V.E. System Log: Anomaly Stack en Route to Thorncrown](/lore/w-e-a-v-e-rumbodo)

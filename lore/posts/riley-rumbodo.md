@@ -5,6 +5,9 @@ tags: [lore, "real-moments", "riley"]
 cover_image: /lore/riley-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
+game: real-moments
+story_order: 6
+episode_label: "Rumbodo"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
@@ -14,9 +17,6 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Memoria Crystalli, Keep Moving, Don’t Stop](/lore/riley-memoria-crystalli)
-
 One week out from the ER and I was already at the door when Echo pulled up.
 
 Keys on the hook. Cane against the wall. Sword. Gun. Bag. Everything I might need, lined up in the entryway like I was afraid I'd forget how to leave if I didn't make it obvious. Standing was about all I trusted myself to do, and I said that out loud before I could talk myself into proving otherwise. Handed Echo the keys. Told her I didn't feel like I could safely drive. She took them first — no argument, no hesitation — like she'd already decided before I asked.

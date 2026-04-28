@@ -1,10 +1,13 @@
 ---
-title: "Echo: Full Service and Bad Vibes"
+title: "Full Service and Bad Vibes"
 summary: "Echo's first-person account of getting Riley to the Midori house, helping hold the room while the copy threat gets mapped into something survivable, waking into Luna's brutal healing, and driving toward Thorncrown with the fight already active."
 tags: [lore, "real-moments", "echo"]
 cover_image: /lore/echo-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
+game: real-moments
+story_order: 7
+episode_label: "Rumbodo"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
@@ -14,9 +17,6 @@ date: 2026-04-22
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Echo POV: Memoria Crystalli, Blood in the Bismuth Light](/lore/echo-memoria-crystalli)
-
 
 The porch light is on. Riley is already at the door — keys in one hand, cane under her arm, sword across her back, gun on her hip, bag over her shoulder. One week out of the ER and she is carrying enough hardware to fight a war on the way to a friend's house.
 

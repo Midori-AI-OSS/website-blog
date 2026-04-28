@@ -5,6 +5,9 @@ tags: [lore, "real-moments", "riley"]
 cover_image: /lore/riley-memoria-crystalli.png
 author: Luna Midori
 date: 2026-04-06
+game: real-moments
+story_order: 1
+episode_label: "Memoria Crystalli"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
@@ -14,9 +17,6 @@ date: 2026-04-06
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Stillglass: Luz Blessee, One Action, One Confirmation](/lore/luz-blessee-stillglass)
-
 The shot came for her head.
 
 I saw the shot before I had words for it. Something was coming straight for Echo's head, and my hands were already turning the wheel hard to break the line.
@@ -254,4 +254,3 @@ The briefing reached me in fragments while I was surfacing. Crystal incidents. U
 I heard the words, but I couldn't hold the scale of them yet. Too tired. Too much static between my ears. My brain was trying to file the information and the files kept falling over.
 
 
-**Next Post:** [Road to Thorncrown, No Safe Version](/lore/riley-rumbodo)

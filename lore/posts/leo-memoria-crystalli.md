@@ -1,10 +1,13 @@
 ---
-title: "Leo POV: Memoria Crystalli, The Contract I Never Signed"
+title: "Memoria Crystalli, The Contract I Never Signed"
 summary: "Leo’s first-person account of answering Luna’s call, carrying the wounded through a violet attack, cutting down mirror-copies in the church, and staying awake long enough to keep the people he loves alive."
 tags: [lore, "real-moments", "leo"]
 cover_image: /lore/leo-memoria-crystalli.png
 author: Luna Midori
 date: 2026-04-06
+game: real-moments
+story_order: 3
+episode_label: "Memoria Crystalli"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a
@@ -14,9 +17,6 @@ date: 2026-04-06
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Stillglass: Luz Blessee, One Action, One Confirmation](/lore/luz-blessee-stillglass)
-
 Some twins are born separate and learn to be close. Luna and I were born close and never learned to be separate.
 
 That's not complaint. That's just fact. The bond between us runs deeper than blood. When she hurts, I feel it. When she's afraid, I feel that too. And when her voice hit me through the Sending spell, I felt the fear before I understood the words.
@@ -354,4 +354,3 @@ That's the contract I never signed.
 I keep it anyway.
 
 
-**Next Post:** [Leo: Late Is Still Here](/lore/leo-rumbodo)
