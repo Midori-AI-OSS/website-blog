@@ -18,6 +18,7 @@ export function FullStoryClient({ posts }: FullStoryClientProps) {
           post={post}
           postType="lore"
           hideBackButton
+          disableDynamicBackdrop
           onClose={() => {}}
         />
       ))}

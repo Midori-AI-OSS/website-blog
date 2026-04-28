@@ -78,6 +78,8 @@ export interface PostViewProps {
   scheduledPublishDate?: string;
   /** Whether to hide the back button (e.g. nested chapter view) */
   hideBackButton?: boolean;
+  /** Disable dynamic backdrop updates (e.g. multiple PostViews stacking) */
+  disableDynamicBackdrop?: boolean;
 }
 
 /**
@@ -242,6 +244,7 @@ export function PostView({
   isScheduledPreview = false,
   scheduledPublishDate,
   hideBackButton = false,
+  disableDynamicBackdrop = false,
 }: PostViewProps) {
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
@@ -271,11 +274,12 @@ export function PostView({
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
 
   useEffect(() => {
+    if (disableDynamicBackdrop) return;
     setPostCoverUrl(transformedCoverImageUrl);
     return () => {
       setPostCoverUrl(null);
     };
-  }, [setPostCoverUrl, transformedCoverImageUrl]);
+  }, [setPostCoverUrl, transformedCoverImageUrl, disableDynamicBackdrop]);
 
   /**
    * Handle Escape key to close the view

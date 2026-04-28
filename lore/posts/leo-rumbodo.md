@@ -17,9 +17,6 @@ episode_label: "Rumbodo"
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Leo POV: Memoria Crystalli, The Contract I Never Signed](/lore/leo-memoria-crystalli)
-
 
 
 She was already sitting when I came back into the room.

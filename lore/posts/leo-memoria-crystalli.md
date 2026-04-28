@@ -17,9 +17,6 @@ episode_label: "Memoria Crystalli"
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Stillglass: Luz Blessee, One Action, One Confirmation](/lore/luz-blessee-stillglass)
-
 Some twins are born separate and learn to be close. Luna and I were born close and never learned to be separate.
 
 That's not complaint. That's just fact. The bond between us runs deeper than blood. When she hurts, I feel it. When she's afraid, I feel that too. And when her voice hit me through the Sending spell, I felt the fear before I understood the words.
@@ -357,4 +354,3 @@ That's the contract I never signed.
 I keep it anyway.
 
 
-**Next Post:** [Leo: Late Is Still Here](/lore/leo-rumbodo)

@@ -17,9 +17,6 @@ episode_label: "Memoria Crystalli"
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [Stillglass: Luz Blessee, One Action, One Confirmation](/lore/luz-blessee-stillglass)
-
 The sound comes first.
 
 I don't know that's what it is. Not yet. Just—something. Something wrong and loud and then the world tilts and there's white at the edges of everything, white eating the corners of my vision, and I feel the blood before I understand what it is.
@@ -613,4 +610,3 @@ I'll be there.
 *Even when it costs.*
 
 
-**Next Post:** [Echo: Full Service and Bad Vibes](/lore/echo-rumbodo)
