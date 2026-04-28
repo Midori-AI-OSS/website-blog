@@ -226,6 +226,8 @@ At first, nothing happened.
 
 That was useful too.
 
+{{image: /lore/real-moments/intuitio-crystalli.png}}
+
 The first card said **Intuitio** under a purple-pink piece with a glassy face, a duller edge at the back, and the sort of pretty finish that made me distrust it on principle.
 
 "Look-only," the Quiet Host said. Then she touched the symptom card beside my water glass. "If anything shifts, plain language is enough. Room, body, pull, pressure, less yourself, uncertain. We can sort categories after."
@@ -248,6 +250,8 @@ The House Reader set it within reach and waited for my nod before I touched it. 
 
 The House Reader slid the small dome back over **Intuitio**, waited for the glass to settle cleanly, and only then drew the tray section back.
 
+{{image: /lore/real-moments/inscripta-crystalli.png}}
+
 The next card said **Inscripta** under a clear crystal with internal lines that looked one bad decision away from becoming handwriting.
 
 "Same pass," the Quiet Host said. "Room first. Then body."
@@ -268,6 +272,8 @@ I set **Inscripta** back where it had come from. The Quiet Host re-domed it imme
 
 Because the room stayed quiet, the House Reader asked permission before the next dome came off. I appreciated that more than I said.
 
+{{image: /lore/real-moments/vexia-crystalli.png}}
+
 The card under the third crystal read **Vexia**. Clear again, but colder-looking somehow, all hard planes and pale reflections.
 
 "What am I watching for with this one?" I asked.
@@ -287,6 +293,8 @@ Luna shifted one hand against her own knee, quiet and steady where I could track
 "All right," I said. "Still no."
 
 The House Reader waited for me to release **Vexia** fully, then covered it and reset the tray once more with the same neat, practiced hands.
+
+{{image: /lore/real-moments/anima-crystalli.png}}
 
 The fourth card read **Anima** under a dark stone that looked almost black until the light found a glassy surface over the darker grit.
 
@@ -309,6 +317,8 @@ I put **Anima** back in its well. The dome came down over it. Only after that di
 Four pieces in, all four cold in my hand and all four still ordinary, I was starting to trust the baseline enough to forget that trust was exactly what rooms like this were built to earn.
 
 The House Reader nodded and swapped the tray.
+
+{{image: /lore/real-moments/lacuna-crystalli.png}}
 
 The next piece looked almost austere: white crystal, sharp quiet body, red lines along its edges like something had once tried to measure it and failed.
 
@@ -521,6 +531,8 @@ I went still at that.
 "Okay," I said. "That's extremely useful, actually."
 
 The Quiet Host gave the smallest nod. "We're going to keep it one interval at a time."
+
+{{image: /lore/real-moments/disjuncta-crystalli.png}}
 
 Then the House Reader uncovered a piece the size of a large clock jewel, red enough to look like blood had been cut into edges.
 
@@ -808,6 +820,8 @@ That one I kept simple too. I looked. Picked it up when they offered it. Turned 
 
 The Quiet Host closed **Vexia** under glass, checked that the dome had settled cleanly, and marked the comparison set complete.
 
+{{image: /lore/real-moments/celestia-crystalli.png}}
+
 The House Reader swapped trays. Then they set down a pale-gold specimen with a restrained glow. Not flashy. Not aggressive. Just clean light that already felt too sure of itself.
 
 I looked at it.
@@ -899,6 +913,8 @@ The House Reader inclined her head once. "Comparison first. Six pieces. None are
 "Cool," I said. "A private tutorial. Exactly what every nervous person wants right before a test. Love that for me."
 
 The Quiet Host smiled like she had heard worse and drew the first tray forward.
+
+{{image: /lore/real-moments/intuitio-crystalli.png}}
 
 The card read **Intuitio** under an unusual purple-pink crystal that looked decorative until you kept looking and started suspecting it of intentions.
 
@@ -1031,6 +1047,8 @@ The House Reader took **Scintilla** back. The Quiet Host re-covered it and marke
 By then the room had managed the neat trick of making me feel more informed and not one bit less wary.
 
 Then the House Reader drew the last tray forward and set down the pale-gold specimen.
+
+{{image: /lore/real-moments/celestia-crystalli.png}}
 
 "`Celestia Crystalli`," the House Reader said. "Celestial resonance amplifier. It usually targets full Aasimar, celestial-touched bloodlines, and divine-lineage families. Pressure first. Sensory sharpening. If it answers harder, family-line tells can surface without conscious activation."
 
@@ -1242,6 +1260,8 @@ The move to the linked room was all Stillglass procedure and no theater. The Qui
 Inside, the room read as controlled before it read as eerie. Distance markers were already set between the twin benches. A frosted screen stood ready to cut the room in half if things began answering in the wrong direction. The Ward-Tech checked the screen glide once, then adjusted the shielded box on the table between them.
 
 The crystal itself was almost offensively honest-looking.
+
+{{image: /lore/real-moments/noctilux-crystalli.png}}
 
 Eight clear cubes sat in the box under shielded glass, faceted just enough to pass for drink ice at first glance.
 
