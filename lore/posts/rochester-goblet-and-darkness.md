@@ -1,11 +1,11 @@
 ---
 title: "Rochester, after the goblet"
 summary: Lady Light recounts the goblet vision, murder trail, and shuttle ambush that left trust fractured.
-tags: [lore, "thursday-nights"]
+tags: [lore, "rochester", "lady-light"]
 cover_image: /lore/ladylight2.png
 author: Luna Midori
 date: 2026-03-29
-game: thursday-nights
+game: rochester
 story_order: 1
 ---
 
