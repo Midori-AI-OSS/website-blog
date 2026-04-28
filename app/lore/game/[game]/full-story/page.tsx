@@ -1,10 +1,9 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { Box, Button } from '@mui/joy'
-import { ArrowLeft } from 'lucide-react'
+import { Box } from '@mui/joy'
 
 import { loadLoreGameGroups, getLorePovPosts, sortLorePosts } from '@/lib/lore/loader'
 import { FullStoryClient } from './FullStoryClient'
+import { LoreBackButton } from './LoreBackButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,22 +34,7 @@ export default async function LoreGameFullStoryPage({
         py: { xs: 2.5, sm: 6 },
       }}
     >
-      <Button
-        component={Link}
-        href="/lore"
-        variant="plain"
-        color="neutral"
-        startDecorator={<ArrowLeft size={18} />}
-        sx={{
-          mb: { xs: 2, sm: 4 },
-          alignSelf: 'flex-start',
-          minHeight: 44,
-          width: { xs: '100%', sm: 'auto' },
-          justifyContent: 'flex-start',
-        }}
-      >
-        Back to lore
-      </Button>
+      <LoreBackButton />
 
       <FullStoryClient posts={storyPosts} />
     </Box>
