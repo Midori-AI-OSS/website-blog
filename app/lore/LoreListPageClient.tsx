@@ -318,11 +318,12 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                   <AmbientCoverArt
                     coverImageUrl={cover}
                     alt={`${group.game.title} cover`}
+                    minHeight={{ xs: '100px', sm: '140px' }}
                   />
                 ) : (
                   <Box
                     sx={{
-                      minHeight: { xs: '220px', sm: '300px' },
+                      minHeight: { xs: '100px', sm: '140px' },
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

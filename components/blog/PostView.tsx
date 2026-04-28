@@ -76,6 +76,8 @@ export interface PostViewProps {
   isScheduledPreview?: boolean;
   /** The scheduled publish date to show in teaser mode */
   scheduledPublishDate?: string;
+  /** Whether to hide the back button (e.g. nested chapter view) */
+  hideBackButton?: boolean;
 }
 
 /**
@@ -239,6 +241,7 @@ export function PostView({
   onNavigateStory,
   isScheduledPreview = false,
   scheduledPublishDate,
+  hideBackButton = false,
 }: PostViewProps) {
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
@@ -312,25 +315,27 @@ export function PostView({
       }}
     >
       {/* Back Button */}
-      <Button
-        variant="plain"
-        color="neutral"
-        onClick={onClose}
-        startDecorator={<ArrowLeft size={18} />}
-        sx={{
-          mb: { xs: 2, sm: 4 },
-          alignSelf: 'flex-start',
-          minHeight: 44,
-          width: { xs: '100%', sm: 'auto' },
-          justifyContent: 'flex-start',
-          '&:hover': {
-            backgroundColor: 'background.level1',
-          },
-        }}
-        aria-label={backButtonAriaLabel}
-      >
-        {backButtonLabel}
-      </Button>
+      {!hideBackButton && (
+        <Button
+          variant="plain"
+          color="neutral"
+          onClick={onClose}
+          startDecorator={<ArrowLeft size={18} />}
+          sx={{
+            mb: { xs: 2, sm: 4 },
+            alignSelf: 'flex-start',
+            minHeight: 44,
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: 'flex-start',
+            '&:hover': {
+              backgroundColor: 'background.level1',
+            },
+          }}
+          aria-label={backButtonAriaLabel}
+        >
+          {backButtonLabel}
+        </Button>
+      )}
 
       {/* Main Content Container with Glass Effect */}
       <Box
