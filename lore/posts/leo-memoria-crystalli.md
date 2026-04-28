@@ -1,5 +1,5 @@
 ---
-title: "Leo POV: Memoria Crystalli, The Contract I Never Signed"
+title: "Memoria Crystalli, The Contract I Never Signed"
 summary: "Leo’s first-person account of answering Luna’s call, carrying the wounded through a violet attack, cutting down mirror-copies in the church, and staying awake long enough to keep the people he loves alive."
 tags: [lore, "real-moments", "leo"]
 cover_image: /lore/leo-memoria-crystalli.png

@@ -1,5 +1,5 @@
 ---
-title: "Luna POV: Memoria Crystalli, Sixty-Four Blades and a Hollow Halo"
+title: "Memoria Crystalli, Sixty-Four Blades and a Hollow Halo"
 summary: "Luna’s first-person account of Echo’s drive-by, a violet entity, and a church full of stolen faces, where she calls Leo in, overcasts a swarm of photon blades, and burns through her light to keep Riley and the others alive."
 tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-memoria-crystalli.png

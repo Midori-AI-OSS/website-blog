@@ -1,5 +1,5 @@
 ---
-title: "Leo: Late Is Still Here"
+title: "Late Is Still Here"
 summary: "Leo's first-person account of Lady Light's warning, the briefing with Riley in the room, breakfast after a bad night, the regroup at the edge of Eureka, and the convoy rolling toward Thorncrown."
 tags: [lore, "real-moments", "leo"]
 cover_image: /lore/leo-rumbodo.png

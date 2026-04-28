@@ -1,5 +1,5 @@
 ---
-title: "Luna: Closed Is Not Restored"
+title: "Closed Is Not Restored"
 summary: "Luna’s first-person account of Lady Light’s warning, Riley asleep in her lap while the room builds a plan for Eureka, brutal healing that closes without restoring, and the convoy rolling toward Thorncrown."
 tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-rumbodo.png

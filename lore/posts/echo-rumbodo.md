@@ -1,5 +1,5 @@
 ---
-title: "Echo: Full Service and Bad Vibes"
+title: "Full Service and Bad Vibes"
 summary: "Echo's first-person account of getting Riley to the Midori house, helping hold the room while the copy threat gets mapped into something survivable, waking into Luna's brutal healing, and driving toward Thorncrown with the fight already active."
 tags: [lore, "real-moments", "echo"]
 cover_image: /lore/echo-rumbodo.png

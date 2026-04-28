@@ -1,5 +1,5 @@
 ---
-title: "Echo POV: Memoria Crystalli, Blood in the Bismuth Light"
+title: "Memoria Crystalli, Blood in the Bismuth Light"
 summary: "Echo’s first-person account of a drive-by, a violet entity, and a church full of stolen faces, where protecting Riley and Luna comes at a cost she keeps paying."
 tags: [lore, "real-moments", "echo"]
 cover_image: /lore/echo-memoria-crystalli.png
