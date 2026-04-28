@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -287,7 +288,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                     enterTouchDelay={0}
                   >
                     <Button
-                      component="a"
+                      component={Link}
                       href={group.fullStoryHref}
                       variant="solid"
                       color="primary"
@@ -318,11 +319,12 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                   <AmbientCoverArt
                     coverImageUrl={cover}
                     alt={`${group.game.title} cover`}
+                    minHeight={{ xs: '100px', sm: '100px' }}
                   />
                 ) : (
                   <Box
                     sx={{
-                      minHeight: { xs: '220px', sm: '300px' },
+                      minHeight: { xs: '100px', sm: '100px' },
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

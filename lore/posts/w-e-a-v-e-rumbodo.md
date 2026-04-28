@@ -17,9 +17,6 @@ episode_label: "Rumbodo"
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
-> **Start of Story:** [Luz Blessee, Don’t Drink the Clear Ice](/lore/luz-blessee-bar)
-> **Previous Post:** [W.E.A.V.E. System Log: Memoria Crystalli, Reduced Visibility](/lore/w-e-a-v-e-memoria-crystalli)
-
 ## Reduced Visibility
 
 One week after the ER, I was dust.
