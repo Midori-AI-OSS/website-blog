@@ -6,7 +6,7 @@ cover_image: /lore/luna-memoria-crystalli.png
 author: Luna Midori
 date: 2026-04-06
 game: real-moments
-story_order: 4
+story_order: 6
 episode_label: "Memoria Crystalli"
 ---
 
@@ -496,5 +496,4 @@ Recovery isn't a moment.
 It's a stretch of time where you wait for your body to remember how to be itself again. Where you let the people who love you hold the room while you figure out where the walls are.
 
 We did that. All of us. Together.
-
 

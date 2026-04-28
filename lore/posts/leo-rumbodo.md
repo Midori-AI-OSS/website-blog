@@ -6,7 +6,7 @@ cover_image: /lore/leo-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
 game: real-moments
-story_order: 8
+story_order: 10
 episode_label: "Rumbodo"
 ---
 

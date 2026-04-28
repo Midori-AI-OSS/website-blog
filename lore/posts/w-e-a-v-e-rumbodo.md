@@ -6,7 +6,7 @@ cover_image: /lore/w-e-a-v-e-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
 game: real-moments
-story_order: 10
+story_order: 12
 episode_label: "Rumbodo"
 ---
 
@@ -454,4 +454,3 @@ __Bolt status: Echo driving, Riley present, stable.__
 __Cross-convoy link intact at reduced clarity.__
 
 We held file under Officer Hicks and stayed in motion toward the fight while I kept the split-load from tearing at the seams. My last clean output before the approach degraded was __Triage stack ho—ld; conv—oy mo////ving und—er lead li—ghts; link integri...ty dec...re__.
-

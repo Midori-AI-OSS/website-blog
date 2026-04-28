@@ -6,7 +6,7 @@ cover_image: /lore/echo-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
 game: real-moments
-story_order: 7
+story_order: 9
 episode_label: "Rumbodo"
 ---
 

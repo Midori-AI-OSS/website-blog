@@ -6,7 +6,7 @@ cover_image: /lore/leo-memoria-crystalli.png
 author: Luna Midori
 date: 2026-04-06
 game: real-moments
-story_order: 3
+story_order: 5
 episode_label: "Memoria Crystalli"
 ---
 
@@ -352,5 +352,4 @@ Luna and I were born close and never learned how to be separate. That's just tru
 That's the contract I never signed.
 
 I keep it anyway.
-
 

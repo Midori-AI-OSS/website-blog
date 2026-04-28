@@ -6,7 +6,7 @@ cover_image: /lore/w-e-a-v-e-memoria-crystalli.png
 author: Luna Midori
 date: 2026-04-06
 game: real-moments
-story_order: 5
+story_order: 7
 episode_label: "Memoria Crystalli"
 ---
 
@@ -416,5 +416,4 @@ I logged the incident for future reference.
 Recovery was still in progress.
 
 I maintained watch.
-
 
