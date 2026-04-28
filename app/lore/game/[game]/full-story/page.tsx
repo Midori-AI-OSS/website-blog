@@ -402,6 +402,15 @@ export default async function LoreGameFullStoryPage({
             return (
               <Box key={post.filename} component="section" sx={{ minWidth: 0 }}>
                 <Box sx={proseSx}>
+                  {post.metadata.cover_image ? (
+                    <Box sx={{ mb: 3 }}>
+                      <AmbientCoverArt
+                        coverImageUrl={transformPostImageUrl(post.metadata.cover_image)}
+                        alt={post.metadata.title}
+                      />
+                    </Box>
+                  ) : null}
+
                   <Typography
                     component="h2"
                     sx={{

@@ -224,9 +224,15 @@ export function deriveLoreCharacters(posts: ParsedPost[], gameSlug: string): str
   );
 }
 
+export function getPostCharacterTags(post: ParsedPost, gameSlug: string): string[] {
+  const normalizedGame = gameSlug.trim().toLowerCase()
+  return normalizeTags(post).filter((tag) => tag !== LORE_ROOT_TAG && tag !== normalizedGame)
+}
+
 export function getLoreStoryNeighbors(
   posts: ParsedPost[],
-  currentPost: ParsedPost
+  currentPost: ParsedPost,
+  characterTags?: string[]
 ): LorePostNeighbors {
   const currentGame = normalizeSlug(currentPost.metadata.game);
   if (!currentGame) {
@@ -236,12 +242,19 @@ export function getLoreStoryNeighbors(
     };
   }
 
-  const gamePosts = sortLorePosts(
-    posts.filter((post) => normalizeSlug(post.metadata.game) === currentGame),
+  const characterFilter = characterTags ?? getPostCharacterTags(currentPost, currentGame)
+  const hasCharacterFilter = characterFilter.length > 0
+
+  const candidates = sortLorePosts(
+    posts.filter((post) => {
+      if (normalizeSlug(post.metadata.game) !== currentGame) return false
+      if (!hasCharacterFilter) return true
+      return characterFilter.some((tag) => hasTag(post, tag))
+    }),
     'story_order_asc'
   );
 
-  const currentIndex = gamePosts.findIndex((post) => post.filename === currentPost.filename);
+  const currentIndex = candidates.findIndex((post) => post.filename === currentPost.filename);
   if (currentIndex < 0) {
     return {
       previous: null,
@@ -249,8 +262,8 @@ export function getLoreStoryNeighbors(
     };
   }
 
-  const previousPost = currentIndex > 0 ? gamePosts[currentIndex - 1] : null;
-  const nextPost = currentIndex < gamePosts.length - 1 ? gamePosts[currentIndex + 1] : null;
+  const previousPost = currentIndex > 0 ? candidates[currentIndex - 1] : null;
+  const nextPost = currentIndex < candidates.length - 1 ? candidates[currentIndex + 1] : null;
 
   return {
     previous: previousPost

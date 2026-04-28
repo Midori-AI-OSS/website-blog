@@ -189,7 +189,7 @@ full_story_pov: luna
 
     const neighbors = getLoreStoryNeighbors(allPosts, second);
     expect(neighbors.previous?.slug).toBe('first-lore');
-    expect(neighbors.next?.slug).toBe('side-pov');
+    expect(neighbors.next?.slug).toBe('future-lore');
   });
 
   test('getLorePovPosts returns ordered posts for a specific POV tag', async () => {
