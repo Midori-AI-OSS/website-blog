@@ -115,6 +115,7 @@ game: real-moments
 story_order: 42
 episode_label: Episode 7
 full_story_pov: riley
+full_story_tooltip: Read Riley's complete canon thread.
 ---
 
 Content`;
@@ -125,6 +126,7 @@ Content`;
       expect(result.metadata.story_order).toBe(42);
       expect(result.metadata.episode_label).toBe('Episode 7');
       expect(result.metadata.full_story_pov).toBe('riley');
+      expect(result.metadata.full_story_tooltip).toBe("Read Riley's complete canon thread.");
     });
 
     test('rejects invalid story_order metadata format', () => {

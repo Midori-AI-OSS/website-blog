@@ -34,6 +34,7 @@ export interface LoreGameIndex {
   summary: string;
   coverImage?: string;
   fullStoryPov: string;
+  fullStoryTooltip?: string;
 }
 
 export interface LoreGameGroup {
@@ -412,6 +413,7 @@ export async function loadLoreGameIndexes(gamesDir: string = GAMES_DIR): Promise
           summary,
           coverImage: parsed.metadata.cover_image?.trim(),
           fullStoryPov,
+          fullStoryTooltip: parsed.metadata.full_story_tooltip?.trim() || undefined,
         } satisfies LoreGameIndex;
       })
     );

@@ -19,6 +19,7 @@ export interface PostMetadata {
   story_order?: number;
   episode_label?: string;
   full_story_pov?: string;
+  full_story_tooltip?: string;
 }
 
 /**
@@ -115,6 +116,12 @@ function validateMetadata(data: any): boolean {
     console.warn('Invalid full_story_pov format: expected string');
     return false;
   }
+
+  // Full story tooltip must be a string if present
+  if (data.full_story_tooltip !== undefined && typeof data.full_story_tooltip !== 'string') {
+    console.warn('Invalid full_story_tooltip format: expected string');
+    return false;
+  }
   
   return true;
 }
@@ -184,6 +191,10 @@ function sanitizeMetadata(data: any): Partial<PostMetadata> {
   if (typeof data.full_story_pov === 'string') {
     sanitized.full_story_pov = data.full_story_pov.trim().toLowerCase();
   }
+
+  if (typeof data.full_story_tooltip === 'string') {
+    sanitized.full_story_tooltip = data.full_story_tooltip.trim();
+  }
   
   return sanitized;
 }
@@ -241,6 +252,7 @@ export function parsePost(filename: string, fileContent: string): ParsedPost {
       story_order: sanitizedData.story_order,
       episode_label: sanitizedData.episode_label,
       full_story_pov: sanitizedData.full_story_pov,
+      full_story_tooltip: sanitizedData.full_story_tooltip,
     };
     
     // Return structured post data
@@ -301,6 +313,7 @@ export function extractMetadata(filename: string, fileContent: string): PostMeta
       story_order: sanitizedData.story_order,
       episode_label: sanitizedData.episode_label,
       full_story_pov: sanitizedData.full_story_pov,
+      full_story_tooltip: sanitizedData.full_story_tooltip,
     };
   } catch (error) {
     console.error(`Error extracting metadata from ${filename}:`, error);

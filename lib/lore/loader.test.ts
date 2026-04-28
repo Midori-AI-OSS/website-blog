@@ -110,6 +110,7 @@ title: Real Moments
 summary: Shared campaign event threads told through multiple POVs.
 cover_image: /lore/riley-rumbodo.png
 full_story_pov: riley
+full_story_tooltip: Read Riley's full thread for this arc.
 ---
 `);
 
@@ -157,6 +158,7 @@ full_story_pov: luna
     expect(realMoments?.title).toBe('Real Moments');
     expect(realMoments?.fullStoryPov).toBe('riley');
     expect(realMoments?.summary).toContain('multiple POVs');
+    expect(realMoments?.fullStoryTooltip).toBe("Read Riley's full thread for this arc.");
   });
 
   test('loadLoreGameGroups groups posts and derives character filters', async () => {
