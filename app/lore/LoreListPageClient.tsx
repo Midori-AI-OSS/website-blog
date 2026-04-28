@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   Box,
   Button,
-  Card,
   Chip,
   Divider,
   FormControl,
@@ -16,6 +15,7 @@ import {
   Typography,
 } from '@mui/joy';
 
+import { AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { BlogCard } from '@/components/blog/BlogCard';
 import type { ParsedPost } from '@/lib/blog/parser';
 import { transformPostImageUrl } from '@/lib/content/imageUrl';
@@ -190,15 +190,11 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
         const povLabel = toSentenceCase(group.game.fullStoryPov.replace(/-/g, ' '));
 
         return (
-          <Card
+          <Box
             key={group.game.slug}
-            variant="outlined"
             sx={{
               p: { xs: 1.25, sm: 2.25 },
-              borderRadius: 0,
-              borderColor: 'rgba(255,255,255,0.14)',
               bgcolor: 'rgba(10, 12, 18, 0.72)',
-              overflow: 'hidden',
             }}
           >
             <Stack spacing={1.75} sx={{ minWidth: 0 }}>
@@ -304,10 +300,6 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                         width: { xs: '100%', sm: 'auto' },
                         whiteSpace: 'nowrap',
                         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                        '&:hover': {
-                          transform: 'translateY(-1px)',
-                          boxShadow: 'md',
-                        },
                         '&:focus-visible': {
                           outline: '2px solid',
                           outlineColor: 'primary.500',
@@ -322,63 +314,25 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
               </Stack>
 
               <Box sx={{ width: '100%', minWidth: 0 }}>
-                <Card
-                  variant="plain"
-                  sx={{
-                    p: 0,
-                    bgcolor: 'rgba(6,8,14,0.92)',
-                    borderRadius: 0,
-                    border: '1px solid',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    overflow: 'hidden',
-                    height: { xs: 185, sm: 228, md: 262 },
-                    position: 'relative',
-                    '--Card-padding': '0px',
-                  }}
-                >
-                  {cover ? (
-                    <>
-                      <Box
-                        component="img"
-                        src={cover}
-                        alt={`${group.game.title} cover`}
-                        sx={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: 'center center',
-                          display: 'block',
-                        }}
-                      />
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          zIndex: 1,
-                          boxShadow: 'inset 0 0 56px 20px rgba(0,0,0,0.62)',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                    </>
-                  ) : (
-                    <Box
-                      sx={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: 'rgba(30,34,50,0.78)',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      <Typography level="body-sm">No cover art</Typography>
-                    </Box>
-                  )}
-                </Card>
+                {cover ? (
+                  <AmbientCoverArt
+                    coverImageUrl={cover}
+                    alt={`${group.game.title} cover`}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      minHeight: { xs: '220px', sm: '300px' },
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'rgba(30,34,50,0.4)',
+                      color: 'text.secondary',
+                    }}
+                  >
+                    <Typography level="body-sm">No cover art</Typography>
+                  </Box>
+                )}
               </Box>
             </Stack>
 
@@ -420,7 +374,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                 })
               )}
             </Stack>
-          </Card>
+          </Box>
         );
       })}
     </Stack>

@@ -40,6 +40,7 @@ import {
 } from '@/lib/content/publish';
 import { transformPostImageUrl, toLoreImageApiUrl } from '@/lib/content/imageUrl';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
+import { AmbientCoverArt, AMBIENT_PULSE_KEYFRAMES } from '@/components/blog/AmbientCoverArt';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
@@ -240,7 +241,7 @@ export function PostView({
   scheduledPublishDate,
 }: PostViewProps) {
   const { setPostCoverUrl } = useDynamicBackdrop();
-  const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
+  const [, setCoverIsLandscape] = useState<boolean | null>(null);
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
 
   const dateString = useMemo(() => getPostDateString(post), [post.filename, post.metadata.date]);
@@ -265,10 +266,6 @@ export function PostView({
     [ttsPrimaryColor]
   );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
-
-  useEffect(() => {
-    setCoverIsLandscape(null);
-  }, [transformedCoverImageUrl]);
 
   useEffect(() => {
     setPostCoverUrl(transformedCoverImageUrl);
@@ -311,11 +308,7 @@ export function PostView({
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' }
         },
-        '@keyframes ambient-pulse': {
-          '0%': { transform: 'scale(1.1)', opacity: 0.8 },
-          '50%': { transform: 'scale(1.14)', opacity: 0.6 },
-          '100%': { transform: 'scale(1.1)', opacity: 0.8 },
-        }
+        ...AMBIENT_PULSE_KEYFRAMES,
       }}
     >
       {/* Back Button */}
@@ -419,205 +412,117 @@ export function PostView({
 
           {/* Cover Image - Ambient Mode */}
           {transformedCoverImageUrl && (
-              <Card
-                variant="plain"
-                sx={{
-                  p: 0,
-                  mb: 4,
-                  overflow: 'hidden',
-                  borderRadius: 0,
-                  border: 'none', // Remove outline
-                  bgcolor: 'black',
-                  position: 'relative',
-                  minHeight: { xs: '220px', sm: '300px' },
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                // Explicitly remove any hover effects
-                '--Card-padding': '0px',
-                '&:hover, &:focus-within': {
-                  bgcolor: 'black',
-                  borderColor: 'transparent',
-                  boxShadow: 'none',
-                  outline: 'none',
-                },
-              }}
-            >
-              {/* Vignette / Feather Overlay */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 10,
-                  boxShadow: 'inset 0 0 60px 30px #000', // Heavy feathering
-                  pointerEvents: 'none',
-                }}
-              />
-              {/* Background Layer */}
-              <Box
-                component="img"
-                src={transformedCoverImageUrl}
-                alt=""
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  filter: isScheduledPreview ? 'blur(34px) brightness(0.45)' : 'blur(20px) brightness(0.6)',
-                  transform: 'scale(1.1)',
-                  zIndex: 0,
-                  opacity: 0.8,
-                  animation: 'ambient-pulse 10s ease-in-out infinite',
-                }}
-              />
-
-              {/* Foreground Image */}
-              <Box
-                component="img"
-                src={transformedCoverImageUrl}
+            <Box sx={{ mb: 4 }}>
+              <AmbientCoverArt
+                coverImageUrl={transformedCoverImageUrl}
                 alt={post.metadata.title}
-                loading="lazy"
-                onLoad={(e) => {
-                  const img = e.currentTarget;
-                  if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-                    setCoverIsLandscape(img.naturalWidth > img.naturalHeight);
-                  }
-                }}
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  objectFit: 'contain',
-                  maxWidth: {
-                    xs: coverIsLandscape === true ? '84%' : '72%',
-                    sm: coverIsLandscape === true ? '60%' : '35%',
-                  },
-                  height: 'auto',
-                  maxHeight: { xs: '22%', sm: '15%' },
-                  width: 'auto',
-                  display: 'block',
-                  filter: isScheduledPreview ? 'blur(18px) saturate(0.72) brightness(0.7)' : 'none',
-                  transform: isScheduledPreview ? 'scale(1.08)' : 'none',
-                }}
-              />
-
-              {hasLoreStoryNavigation && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 12,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    px: { xs: 1, sm: 1.5 },
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <Box sx={{ pointerEvents: 'auto' }}>
-                    {previousStory ? (
-                      <Tooltip
-                        arrow
-                        variant="soft"
-                        title={buildTooltipText('Past story', previousStory)}
-                        enterTouchDelay={0}
-                        placement="right"
-                      >
-                        <IconButton
+                isScheduledPreview={isScheduledPreview}
+                onAspectRatioChange={(val) => setCoverIsLandscape(val)}
+              >
+                {hasLoreStoryNavigation && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      px: { xs: 1, sm: 1.5 },
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <Box sx={{ pointerEvents: 'auto' }}>
+                      {previousStory ? (
+                        <Tooltip
+                          arrow
                           variant="soft"
-                          color="neutral"
-                          onClick={() => {
-                            if (onNavigateStory) {
-                              onNavigateStory(previousStory.href);
-                            } else {
-                              window.location.assign(previousStory.href);
-                            }
-                          }}
-                          aria-label="Go back to past story"
-                          sx={{
-                            minWidth: 44,
-                            minHeight: 44,
-                            borderRadius: 0,
-                            bgcolor: 'rgba(10, 12, 20, 0.75)',
-                            backdropFilter: 'blur(6px)',
-                            border: '1px solid',
-                            borderColor: 'rgba(255,255,255,0.24)',
-                            transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
-                            '&:hover': {
-                              transform: 'translateY(-1px)',
-                              boxShadow: 'md',
-                              borderColor: 'rgba(138, 180, 255, 0.8)',
-                            },
-                            '&:focus-visible': {
-                              outline: '2px solid',
-                              outlineColor: 'primary.400',
-                              outlineOffset: '2px',
-                            },
-                          }}
+                          title={buildTooltipText('Past story', previousStory)}
+                          enterTouchDelay={0}
+                          placement="right"
                         >
-                          <ChevronLeft size={20} />
-                        </IconButton>
-                      </Tooltip>
-                    ) : (
-                      <Box sx={{ width: 44, height: 44 }} />
-                    )}
-                  </Box>
+                          <IconButton
+                            variant="soft"
+                            color="neutral"
+                            onClick={() => {
+                              if (onNavigateStory) {
+                                onNavigateStory(previousStory.href);
+                              } else {
+                                window.location.assign(previousStory.href);
+                              }
+                            }}
+                            aria-label="Go back to past story"
+                            sx={{
+                              minWidth: 44,
+                              minHeight: 44,
+                              borderRadius: 0,
+                              bgcolor: 'rgba(10, 12, 20, 0.75)',
+                              backdropFilter: 'blur(6px)',
+                              border: '1px solid',
+                              borderColor: 'rgba(255,255,255,0.24)',
+                              transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                              '&:focus-visible': {
+                                outline: '2px solid',
+                                outlineColor: 'primary.400',
+                                outlineOffset: '2px',
+                              },
+                            }}
+                          >
+                            <ChevronLeft size={20} />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        <Box sx={{ width: 44, height: 44 }} />
+                      )}
+                    </Box>
 
-                  <Box sx={{ pointerEvents: 'auto' }}>
-                    {nextStory ? (
-                      <Tooltip
-                        arrow
-                        variant="soft"
-                        title={buildTooltipText('Next story', nextStory)}
-                        enterTouchDelay={0}
-                        placement="left"
-                      >
-                        <IconButton
+                    <Box sx={{ pointerEvents: 'auto' }}>
+                      {nextStory ? (
+                        <Tooltip
+                          arrow
                           variant="soft"
-                          color="neutral"
-                          onClick={() => {
-                            if (onNavigateStory) {
-                              onNavigateStory(nextStory.href);
-                            } else {
-                              window.location.assign(nextStory.href);
-                            }
-                          }}
-                          aria-label="Go to next story"
-                          sx={{
-                            minWidth: 44,
-                            minHeight: 44,
-                            borderRadius: 0,
-                            bgcolor: 'rgba(10, 12, 20, 0.75)',
-                            backdropFilter: 'blur(6px)',
-                            border: '1px solid',
-                            borderColor: 'rgba(255,255,255,0.24)',
-                            transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
-                            '&:hover': {
-                              transform: 'translateY(-1px)',
-                              boxShadow: 'md',
-                              borderColor: 'rgba(138, 180, 255, 0.8)',
-                            },
-                            '&:focus-visible': {
-                              outline: '2px solid',
-                              outlineColor: 'primary.400',
-                              outlineOffset: '2px',
-                            },
-                          }}
+                          title={buildTooltipText('Next story', nextStory)}
+                          enterTouchDelay={0}
+                          placement="left"
                         >
-                          <ChevronRight size={20} />
-                        </IconButton>
-                      </Tooltip>
-                    ) : (
-                      <Box sx={{ width: 44, height: 44 }} />
-                    )}
+                          <IconButton
+                            variant="soft"
+                            color="neutral"
+                            onClick={() => {
+                              if (onNavigateStory) {
+                                onNavigateStory(nextStory.href);
+                              } else {
+                                window.location.assign(nextStory.href);
+                              }
+                            }}
+                            aria-label="Go to next story"
+                            sx={{
+                              minWidth: 44,
+                              minHeight: 44,
+                              borderRadius: 0,
+                              bgcolor: 'rgba(10, 12, 20, 0.75)',
+                              backdropFilter: 'blur(6px)',
+                              border: '1px solid',
+                              borderColor: 'rgba(255,255,255,0.24)',
+                              transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                              '&:focus-visible': {
+                                outline: '2px solid',
+                                outlineColor: 'primary.400',
+                                outlineOffset: '2px',
+                              },
+                            }}
+                          >
+                            <ChevronRight size={20} />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        <Box sx={{ width: 44, height: 44 }} />
+                      )}
+                    </Box>
                   </Box>
-                </Box>
-              )}
-            </Card>
+                )}
+              </AmbientCoverArt>
+            </Box>
           )}
 
           {!isScheduledPreview && (
@@ -878,10 +783,6 @@ export function PostView({
                 textTransform: 'none',
                 fontWeight: 700,
                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                '&:hover': {
-                  transform: 'translateY(-1px)',
-                  boxShadow: 'md',
-                },
                 '&:focus-visible': {
                   outline: '2px solid',
                   outlineColor: 'primary.500',
