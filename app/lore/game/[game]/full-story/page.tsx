@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { Box, Button } from '@mui/joy'
 import { ArrowLeft } from 'lucide-react'
 
@@ -35,7 +36,7 @@ export default async function LoreGameFullStoryPage({
       }}
     >
       <Button
-        component="a"
+        component={Link}
         href="/lore"
         variant="plain"
         color="neutral"

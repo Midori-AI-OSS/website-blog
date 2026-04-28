@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -287,7 +288,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                     enterTouchDelay={0}
                   >
                     <Button
-                      component="a"
+                      component={Link}
                       href={group.fullStoryHref}
                       variant="solid"
                       color="primary"
