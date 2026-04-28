@@ -5,6 +5,8 @@ tags: [lore, "yet-to-be-named"]
 cover_image: /lore/echostanding.png
 author: Luna Midori
 date: 2026-03-29
+game: yet-to-be-named
+story_order: 2
 ---
 
 The inn is loud when this starts and then it gets louder.

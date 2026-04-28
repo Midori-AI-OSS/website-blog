@@ -7,7 +7,7 @@
 import { notFound } from 'next/navigation';
 
 import { getPublishState } from '@/lib/content/publish';
-import { getLorePostBySlug, loadAllLorePosts } from '@/lib/lore/loader';
+import { getLorePostBySlug, getLoreStoryNeighbors, loadAllLorePosts } from '@/lib/lore/loader';
 
 import { LorePostPageClient } from './LorePostPageClient';
 
@@ -30,10 +30,13 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
   }
 
   const publishState = getPublishState(post.metadata.date);
+  const neighbors = getLoreStoryNeighbors(allPosts, post);
 
   return (
     <LorePostPageClient
       post={post}
+      previousStory={neighbors.previous}
+      nextStory={neighbors.next}
       isScheduledPreview={publishState.isScheduled}
       scheduledPublishDate={publishState.publishDate ?? undefined}
     />

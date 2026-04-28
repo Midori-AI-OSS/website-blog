@@ -5,6 +5,9 @@ tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-rumbodo.png
 author: Luna Midori
 date: 2026-04-22
+game: real-moments
+story_order: 9
+episode_label: "Rumbodo"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a

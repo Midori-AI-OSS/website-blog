@@ -5,6 +5,8 @@ tags: [lore, "celestial-covenant"]
 cover_image: /lore/rite.png
 author: Luna Midori
 date: 2026-01-22
+game: celestial-covenant
+story_order: 1
 ---
 
 **Dear Leo,**

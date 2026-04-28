@@ -5,6 +5,8 @@ tags: [lore, "automata-dreams"]
 cover_image: /lore/l-u-n-a-box.png
 author: Luna Midori
 date: 2026-02-02
+game: automata-dreams
+story_order: 1
 ---
 
 # Raiders of the Lost Spark — Story So Far (as logged by L.U.N.A.)

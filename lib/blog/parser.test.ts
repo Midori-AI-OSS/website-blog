@@ -108,6 +108,39 @@ Content`;
       expect(result.metadata.tags).toEqual(['valid', 'another']);
     });
 
+    test('parses lore game metadata fields', () => {
+      const input = `---
+title: Lore Chapter
+game: real-moments
+story_order: 42
+episode_label: Episode 7
+full_story_pov: riley
+---
+
+Content`;
+
+      const result = parsePost('lore-chapter.md', input);
+
+      expect(result.metadata.game).toBe('real-moments');
+      expect(result.metadata.story_order).toBe(42);
+      expect(result.metadata.episode_label).toBe('Episode 7');
+      expect(result.metadata.full_story_pov).toBe('riley');
+    });
+
+    test('rejects invalid story_order metadata format', () => {
+      const input = `---
+title: Invalid Story Order
+story_order: "first"
+---
+
+Content`;
+
+      const result = parsePost('invalid-story-order.md', input);
+
+      expect(result.metadata.story_order).toBeUndefined();
+      expect(result.metadata.title).toBe('Invalid Story Order');
+    });
+
     test('handles posts with +++ delimiter', () => {
       const input = `+++
 title: Test Post

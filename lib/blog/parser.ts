@@ -15,6 +15,10 @@ export interface PostMetadata {
   cover_image?: string;
   date?: string;
   author?: string;
+  game?: string;
+  story_order?: number;
+  episode_label?: string;
+  full_story_pov?: string;
 }
 
 /**
@@ -84,6 +88,33 @@ function validateMetadata(data: any): boolean {
     console.warn('Invalid summary format: expected string');
     return false;
   }
+
+  // Game must be a string if present
+  if (data.game !== undefined && typeof data.game !== 'string') {
+    console.warn('Invalid game format: expected string');
+    return false;
+  }
+
+  // Story order must be a finite number if present
+  if (
+    data.story_order !== undefined &&
+    (typeof data.story_order !== 'number' || !Number.isFinite(data.story_order))
+  ) {
+    console.warn('Invalid story_order format: expected number');
+    return false;
+  }
+
+  // Episode label must be a string if present
+  if (data.episode_label !== undefined && typeof data.episode_label !== 'string') {
+    console.warn('Invalid episode_label format: expected string');
+    return false;
+  }
+
+  // Full story POV must be a string if present
+  if (data.full_story_pov !== undefined && typeof data.full_story_pov !== 'string') {
+    console.warn('Invalid full_story_pov format: expected string');
+    return false;
+  }
   
   return true;
 }
@@ -136,6 +167,22 @@ function sanitizeMetadata(data: any): Partial<PostMetadata> {
   
   if (typeof data.author === 'string') {
     sanitized.author = data.author.trim();
+  }
+
+  if (typeof data.game === 'string') {
+    sanitized.game = data.game.trim().toLowerCase();
+  }
+
+  if (typeof data.story_order === 'number' && Number.isFinite(data.story_order)) {
+    sanitized.story_order = data.story_order;
+  }
+
+  if (typeof data.episode_label === 'string') {
+    sanitized.episode_label = data.episode_label.trim();
+  }
+
+  if (typeof data.full_story_pov === 'string') {
+    sanitized.full_story_pov = data.full_story_pov.trim().toLowerCase();
   }
   
   return sanitized;
@@ -190,6 +237,10 @@ export function parsePost(filename: string, fileContent: string): ParsedPost {
       cover_image: sanitizedData.cover_image,
       date: sanitizedData.date,
       author: sanitizedData.author,
+      game: sanitizedData.game,
+      story_order: sanitizedData.story_order,
+      episode_label: sanitizedData.episode_label,
+      full_story_pov: sanitizedData.full_story_pov,
     };
     
     // Return structured post data
@@ -246,6 +297,10 @@ export function extractMetadata(filename: string, fileContent: string): PostMeta
       cover_image: sanitizedData.cover_image,
       date: sanitizedData.date,
       author: sanitizedData.author,
+      game: sanitizedData.game,
+      story_order: sanitizedData.story_order,
+      episode_label: sanitizedData.episode_label,
+      full_story_pov: sanitizedData.full_story_pov,
     };
   } catch (error) {
     console.error(`Error extracting metadata from ${filename}:`, error);

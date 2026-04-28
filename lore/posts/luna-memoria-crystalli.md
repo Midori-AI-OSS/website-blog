@@ -5,6 +5,9 @@ tags: [lore, "real-moments", "luna"]
 cover_image: /lore/luna-memoria-crystalli.png
 author: Luna Midori
 date: 2026-04-06
+game: real-moments
+story_order: 4
+episode_label: "Memoria Crystalli"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a

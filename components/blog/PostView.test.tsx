@@ -50,6 +50,29 @@ describe('PostView', () => {
     expect(html).not.toContain('This should stay hidden before publish day.');
   });
 
+  test('renders lore navigation affordances when next/previous stories are provided', () => {
+    const html = renderToStaticMarkup(
+      <PostView
+        post={mockPost}
+        onClose={() => {}}
+        postType="lore"
+        previousStory={{
+          href: '/lore/older',
+          title: 'Past Chapter',
+          summary: 'A prior moment.',
+        }}
+        nextStory={{
+          href: '/lore/newer',
+          title: 'Next Chapter',
+          summary: 'A future moment.',
+        }}
+      />
+    );
+
+    expect(html).toContain('Go back to past story');
+    expect(html).toContain('Go to next story');
+  });
+
   test('styles balanced dialogue in prose', () => {
     const html = renderPostContent('She said "Hello there." and waved.');
 

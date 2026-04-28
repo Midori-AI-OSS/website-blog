@@ -5,6 +5,8 @@ tags: [lore, "thursday-nights"]
 cover_image: /lore/ladylight2.png
 author: Luna Midori
 date: 2026-03-29
+game: thursday-nights
+story_order: 1
 ---
 
 The Wondrous Goblet sits on its own floating disc over Rochester, which is exactly the sort of theatrical nonsense this city likes. Nothing here is allowed to be merely useful. Even the tavern has to hover.

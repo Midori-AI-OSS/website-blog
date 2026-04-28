@@ -5,6 +5,8 @@ tags: [lore, "yet-to-be-named"]
 cover_image: /lore/echo.png
 author: Luna Midori
 date: 2026-02-04
+game: yet-to-be-named
+story_order: 1
 ---
 
 ## Before you read

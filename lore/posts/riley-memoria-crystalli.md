@@ -5,6 +5,9 @@ tags: [lore, "real-moments", "riley"]
 cover_image: /lore/riley-memoria-crystalli.png
 author: Luna Midori
 date: 2026-04-06
+game: real-moments
+story_order: 1
+episode_label: "Memoria Crystalli"
 ---
 
 > **Disclaimer:** This file is fictional roleplay writing created for a

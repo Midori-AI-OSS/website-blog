@@ -7,9 +7,12 @@ import CardContent from '@mui/joy/CardContent';
 import Typography from '@mui/joy/Typography';
 import Chip from '@mui/joy/Chip';
 import Stack from '@mui/joy/Stack';
+import Button from '@mui/joy/Button';
+import Tooltip from '@mui/joy/Tooltip';
 import { Calendar, User, ArrowRight, Tag } from 'lucide-react';
 import Link from 'next/link';
 import type { ParsedPost } from '../../lib/blog/parser';
+import { transformPostImageUrl } from '@/lib/content/imageUrl';
 import {
   DEFAULT_ART_PALETTE,
   extractPaletteFromImage,
@@ -24,24 +27,12 @@ export type BlogCardProps = {
   href?: string;
   variant?: 'plain' | 'outlined' | 'soft' | 'solid';
   color?: 'primary' | 'neutral' | 'danger' | 'success' | 'warning';
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  secondaryCtaOnClick?: () => void;
+  secondaryCtaTooltip?: string;
+  secondaryCtaAriaLabel?: string;
 };
-
-function transformImageUrl(url: string): string {
-  if (url.startsWith('/blog/')) {
-    return url.replace('/blog/', '/api/blog-images/');
-  }
-  if (url.startsWith('/lore/')) {
-    const withoutLeadingSlashes = url.replace(/^\/+/, '');
-    const withoutLorePrefix = withoutLeadingSlashes.slice('lore/'.length);
-    const normalized = withoutLorePrefix.replace(/^\/+/, '').replace(/\/+$/, '').trim();
-    if (!normalized) return url;
-
-    const segments = normalized.split('/').filter(Boolean);
-    const encoded = segments.map((s) => encodeURIComponent(s)).join('/');
-    return `/api/lore-images/${encoded}`;
-  }
-  return url;
-}
 
 function toRgba(hex: string, alpha: number): string {
   const [r, g, b] = hexToRgb(hex);
@@ -49,10 +40,21 @@ function toRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined', color = 'neutral' }: BlogCardProps) => {
+export const BlogCard = React.memo(({
+  post,
+  onClick,
+  href,
+  variant = 'outlined',
+  color = 'neutral',
+  secondaryCtaLabel,
+  secondaryCtaHref,
+  secondaryCtaOnClick,
+  secondaryCtaTooltip,
+  secondaryCtaAriaLabel,
+}: BlogCardProps) => {
   const { metadata, filename } = post;
   const decorativeImageUrl = typeof metadata.cover_image === 'string' && metadata.cover_image.length > 0
-    ? transformImageUrl(metadata.cover_image)
+    ? transformPostImageUrl(metadata.cover_image)
     : null;
   const [palette, setPalette] = React.useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
 
@@ -110,6 +112,75 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
     }
   };
 
+  const hasSecondaryCta = Boolean(secondaryCtaLabel && (secondaryCtaHref || secondaryCtaOnClick));
+
+  const ctaSx = {
+    minHeight: 44,
+    px: 1.75,
+    mt: 1.5,
+    borderRadius: 0,
+    textTransform: 'none',
+    fontWeight: 700,
+    letterSpacing: '0.01em',
+    alignSelf: 'flex-start',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease',
+    '&:hover': {
+      transform: 'translateY(-1px)',
+      boxShadow: 'sm',
+    },
+    '&:focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'primary.500',
+      outlineOffset: '2px',
+    },
+  } as const;
+
+  const ctaButton = !hasSecondaryCta
+    ? null
+    : secondaryCtaHref ? (
+      <Button
+        size="sm"
+        variant="soft"
+        color="primary"
+        component={Link}
+        href={secondaryCtaHref}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (secondaryCtaOnClick) secondaryCtaOnClick();
+        }}
+        aria-label={secondaryCtaAriaLabel ?? secondaryCtaLabel}
+        sx={ctaSx}
+      >
+        {secondaryCtaLabel}
+      </Button>
+    ) : (
+      <Button
+        size="sm"
+        variant="soft"
+        color="primary"
+        onClick={(event) => {
+          event.stopPropagation();
+          if (secondaryCtaOnClick) secondaryCtaOnClick();
+        }}
+        aria-label={secondaryCtaAriaLabel ?? secondaryCtaLabel}
+        sx={ctaSx}
+      >
+        {secondaryCtaLabel}
+      </Button>
+    );
+
+  const secondaryCta = ctaButton && secondaryCtaTooltip ? (
+    <Tooltip
+      arrow
+      placement="top"
+      variant="soft"
+      title={secondaryCtaTooltip}
+      enterTouchDelay={0}
+    >
+      {ctaButton}
+    </Tooltip>
+  ) : ctaButton;
+
   // When href is provided, wrap the entire card in a Link
   const cardContent = (
     <Card
@@ -131,9 +202,9 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
         p: 2,
         overflow: 'hidden',
         '&:hover': {
-          boxShadow: 'md',
+          boxShadow: 'lg',
           borderColor: tintStyles?.hoverBorderColor ?? 'primary.500',
-          transform: 'translateY(-1px)',
+          transform: 'translateY(-2px)',
         },
         '&:focus-visible': {
           outline: '2px solid',
@@ -217,6 +288,8 @@ export const BlogCard = React.memo(({ post, onClick, href, variant = 'outlined',
                 {metadata.summary}
               </Typography>
             </Stack>
+
+            {secondaryCta}
           </Box>
 
           <Box sx={{ color: 'text.tertiary', display: { xs: 'none', sm: 'block' } }}>

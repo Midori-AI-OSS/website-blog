@@ -5,6 +5,8 @@ tags: [lore, "celestial-covenant"]
 cover_image: /lore/rite.png
 author: Luna Midori
 date: 2026-02-12
+game: celestial-covenant
+story_order: 3
 ---
 
 My name is Luna Midori, and if this wet thread of a letter reached your hands, then I need you to see me clearly before you believe anything else: I am five foot four and built in straight, practical lines, pale with cool skin and freckles over my nose, long deep-green hair fading mossy at the tips and half escaping a black hood no matter how carefully I pin it, gold eyes that look steadier than I feel, a faint silver-gold halo above my crown that brightens when prayer or panic forces power through me, and the Twin Veils orb floating at my right shoulder like a second pulse that never sleeps; I wear a simple black dress and heavy boots for bad stone, my quarterstaff rides my back, rapier hangs left, dagger right, and I hold myself like a quiet wall because if fear starts screaming, I go still, precise, and useful.

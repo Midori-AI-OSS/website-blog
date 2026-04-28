@@ -19,12 +19,12 @@ import {
   Box,
   Typography,
   Button,
+  IconButton,
   Chip,
-  AspectRatio,
   Card,
-  CardOverflow,
   Stack,
   Divider,
+  Tooltip,
 } from '@mui/joy';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
@@ -32,12 +32,13 @@ import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
-import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   extractIsoDateFromBlogFilename,
   formatLongDate,
   normalizeIsoDateString,
 } from '@/lib/content/publish';
+import { transformPostImageUrl, toLoreImageApiUrl } from '@/lib/content/imageUrl';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
@@ -56,6 +57,20 @@ export interface PostViewProps {
   backButtonAriaLabel?: string;
   /** Post type for TTS and contextual behavior */
   postType?: 'blog' | 'lore';
+  /** Previous lore story link (older timeline entry) */
+  previousStory?: {
+    href: string;
+    title: string;
+    summary?: string;
+  } | null;
+  /** Next lore story link (newer timeline entry) */
+  nextStory?: {
+    href: string;
+    title: string;
+    summary?: string;
+  } | null;
+  /** Lore story navigation callback */
+  onNavigateStory?: (href: string) => void;
   /** Whether to render a scheduled teaser instead of the full post */
   isScheduledPreview?: boolean;
   /** The scheduled publish date to show in teaser mode */
@@ -69,58 +84,11 @@ function getPostDateString(post: ParsedPost): string | undefined {
   return extractIsoDateFromBlogFilename(post.filename) ?? normalizeIsoDateString(post.metadata.date) ?? undefined;
 }
 
-/**
- * Transform static blog image URLs to API route URLs
- * Converts /blog/image.png to /api/blog-images/image.png for dynamic serving
- */
-function transformImageUrl(url: string): string {
-  // If URL starts with /blog/, transform it to use API route
-  if (url.startsWith('/blog/')) {
-    return url.replace('/blog/', '/api/blog-images/');
-  }
-  // Lore images should use the API route so they can be served dynamically in production.
-  if (url.startsWith('/lore/')) {
-    const withoutLeadingSlashes = url.replace(/^\/+/, '');
-    const withoutLorePrefix = withoutLeadingSlashes.slice('lore/'.length);
-    const normalized = withoutLorePrefix.replace(/^\/+/, '').replace(/\/+$/, '').trim();
-    if (!normalized) return url;
-
-    const segments = normalized.split('/').filter(Boolean);
-    const encoded = segments.map((s) => encodeURIComponent(s)).join('/');
-    return `/api/lore-images/${encoded}`;
-  }
-  // Otherwise return as-is (for external URLs or other paths)
-  return url;
-}
-
 const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
 
-function toLoreImageApiUrl(tokenValue: string, postFilename: string): string | null {
-  const raw = tokenValue.trim();
-  if (!raw) return null;
-
-  // Enforce explicit lore-rooted paths only:
-  // - {{image: /lore/folder/file.png}}
-  // - {{image: /lore/file.png}}
-  const lower = raw.toLowerCase();
-  const hasLorePrefix = lower.startsWith('/lore/') || lower === '/lore';
-  if (!hasLorePrefix) return null;
-
-  const withoutLeadingSlashes = raw.replace(/^\/+/, '');
-  const withoutLorePrefix = withoutLeadingSlashes.slice('lore/'.length);
-  const normalized = withoutLorePrefix.replace(/^\/+/, '').replace(/\/+$/, '').trim();
-  if (!normalized) return null;
-
-  const segments = normalized.split('/').filter(Boolean);
-  if (segments.length === 0) return null;
-
-  const encoded = segments.map((s) => encodeURIComponent(s)).join('/');
-  return `/api/lore-images/${encoded}`;
-}
-
-function replaceLoreImageTokens(markdown: string, postFilename: string): string {
+function replaceLoreImageTokens(markdown: string): string {
   return markdown.replace(/\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi, (fullMatch, tokenValue: string) => {
-    const url = toLoreImageApiUrl(tokenValue, postFilename);
+    const url = toLoreImageApiUrl(tokenValue);
     if (!url) return fullMatch;
 
     const raw = tokenValue.trim();
@@ -147,6 +115,17 @@ function lightenHexColor(hex: string, ratio: number): string {
 
   const mix = (channel: number) => Math.round(channel + (255 - channel) * clampRatio);
   return `rgb(${mix(red)}, ${mix(green)}, ${mix(blue)})`;
+}
+
+function buildTooltipText(
+  prefix: string,
+  story: { title: string; summary?: string } | null | undefined
+): string {
+  if (!story) return prefix;
+  const summary = (story.summary ?? '').trim();
+  if (!summary) return `${prefix}: ${story.title}`;
+  const snippet = summary.length > 110 ? `${summary.slice(0, 109).trimEnd()}…` : summary;
+  return `${prefix}: ${story.title} - ${snippet}`;
 }
 
 const markdownComponents: Components = {
@@ -254,6 +233,9 @@ export function PostView({
   backButtonLabel = 'Back to posts',
   backButtonAriaLabel = 'Back to blog list',
   postType = 'blog',
+  previousStory = null,
+  nextStory = null,
+  onNavigateStory,
   isScheduledPreview = false,
   scheduledPublishDate,
 }: PostViewProps) {
@@ -271,17 +253,18 @@ export function PostView({
     [scheduledPublishDate, dateString, formattedDate]
   );
   const markdownContent = useMemo(
-    () => replaceLoreImageTokens(post.content, post.filename),
-    [post.content, post.filename]
+    () => replaceLoreImageTokens(post.content),
+    [post.content]
   );
   const transformedCoverImageUrl = useMemo(
-    () => (post.metadata.cover_image ? transformImageUrl(post.metadata.cover_image) : null),
+    () => (post.metadata.cover_image ? transformPostImageUrl(post.metadata.cover_image) : null),
     [post.metadata.cover_image]
   );
   const dialogueColor = useMemo(
     () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)'),
     [ttsPrimaryColor]
   );
+  const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
 
   useEffect(() => {
     setCoverIsLandscape(null);
@@ -521,6 +504,119 @@ export function PostView({
                   transform: isScheduledPreview ? 'scale(1.08)' : 'none',
                 }}
               />
+
+              {hasLoreStoryNavigation && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    px: { xs: 1, sm: 1.5 },
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <Box sx={{ pointerEvents: 'auto' }}>
+                    {previousStory ? (
+                      <Tooltip
+                        arrow
+                        variant="soft"
+                        title={buildTooltipText('Past story', previousStory)}
+                        enterTouchDelay={0}
+                        placement="right"
+                      >
+                        <IconButton
+                          variant="soft"
+                          color="neutral"
+                          onClick={() => {
+                            if (onNavigateStory) {
+                              onNavigateStory(previousStory.href);
+                            } else {
+                              window.location.assign(previousStory.href);
+                            }
+                          }}
+                          aria-label="Go back to past story"
+                          sx={{
+                            minWidth: 44,
+                            minHeight: 44,
+                            borderRadius: 0,
+                            bgcolor: 'rgba(10, 12, 20, 0.75)',
+                            backdropFilter: 'blur(6px)',
+                            border: '1px solid',
+                            borderColor: 'rgba(255,255,255,0.24)',
+                            transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                            '&:hover': {
+                              transform: 'translateY(-1px)',
+                              boxShadow: 'md',
+                              borderColor: 'rgba(138, 180, 255, 0.8)',
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid',
+                              outlineColor: 'primary.400',
+                              outlineOffset: '2px',
+                            },
+                          }}
+                        >
+                          <ChevronLeft size={20} />
+                        </IconButton>
+                      </Tooltip>
+                    ) : (
+                      <Box sx={{ width: 44, height: 44 }} />
+                    )}
+                  </Box>
+
+                  <Box sx={{ pointerEvents: 'auto' }}>
+                    {nextStory ? (
+                      <Tooltip
+                        arrow
+                        variant="soft"
+                        title={buildTooltipText('Next story', nextStory)}
+                        enterTouchDelay={0}
+                        placement="left"
+                      >
+                        <IconButton
+                          variant="soft"
+                          color="neutral"
+                          onClick={() => {
+                            if (onNavigateStory) {
+                              onNavigateStory(nextStory.href);
+                            } else {
+                              window.location.assign(nextStory.href);
+                            }
+                          }}
+                          aria-label="Go to next story"
+                          sx={{
+                            minWidth: 44,
+                            minHeight: 44,
+                            borderRadius: 0,
+                            bgcolor: 'rgba(10, 12, 20, 0.75)',
+                            backdropFilter: 'blur(6px)',
+                            border: '1px solid',
+                            borderColor: 'rgba(255,255,255,0.24)',
+                            transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                            '&:hover': {
+                              transform: 'translateY(-1px)',
+                              boxShadow: 'md',
+                              borderColor: 'rgba(138, 180, 255, 0.8)',
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid',
+                              outlineColor: 'primary.400',
+                              outlineOffset: '2px',
+                            },
+                          }}
+                        >
+                          <ChevronRight size={20} />
+                        </IconButton>
+                      </Tooltip>
+                    ) : (
+                      <Box sx={{ width: 44, height: 44 }} />
+                    )}
+                  </Box>
+                </Box>
+              )}
             </Card>
           )}
 
@@ -756,6 +852,48 @@ export function PostView({
           </Box>
         )}
       </Box>
+
+      {postType === 'lore' && nextStory && (
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-start' } }}>
+          <Tooltip
+            arrow
+            variant="soft"
+            title={buildTooltipText('Next story', nextStory)}
+            enterTouchDelay={0}
+          >
+            <Button
+              variant="solid"
+              color="primary"
+              onClick={() => {
+                if (onNavigateStory) {
+                  onNavigateStory(nextStory.href);
+                } else {
+                  window.location.assign(nextStory.href);
+                }
+              }}
+              sx={{
+                minHeight: 44,
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 0,
+                textTransform: 'none',
+                fontWeight: 700,
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: 'md',
+                },
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: 'primary.500',
+                  outlineOffset: '2px',
+                },
+              }}
+            >
+              Go to next story
+            </Button>
+          </Tooltip>
+        </Box>
+      )}
 
       {/* Footer - Back to top */}
       <Box
