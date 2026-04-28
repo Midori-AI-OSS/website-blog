@@ -31,12 +31,14 @@ import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
 import {
   extractIsoDateFromBlogFilename,
   formatLongDate,
   normalizeIsoDateString,
 } from '@/lib/content/publish';
+import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
@@ -130,6 +132,21 @@ function replaceLoreImageTokens(markdown: string, postFilename: string): string 
 
     return `\n\n![${alt}](${url} \"${LORE_IMAGE_TOKEN_TITLE}\")\n\n`;
   });
+}
+
+function lightenHexColor(hex: string, ratio: number): string {
+  const normalized = hex.trim().replace(/^#/, '');
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return hex;
+  }
+
+  const clampRatio = Math.max(0, Math.min(1, ratio));
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+
+  const mix = (channel: number) => Math.round(channel + (255 - channel) * clampRatio);
+  return `rgb(${mix(red)}, ${mix(green)}, ${mix(blue)})`;
 }
 
 const markdownComponents: Components = {
@@ -240,7 +257,9 @@ export function PostView({
   isScheduledPreview = false,
   scheduledPublishDate,
 }: PostViewProps) {
+  const { setPostCoverUrl } = useDynamicBackdrop();
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
+  const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
 
   const dateString = useMemo(() => getPostDateString(post), [post.filename, post.metadata.date]);
   const formattedDate = useMemo(
@@ -255,10 +274,25 @@ export function PostView({
     () => replaceLoreImageTokens(post.content, post.filename),
     [post.content, post.filename]
   );
+  const transformedCoverImageUrl = useMemo(
+    () => (post.metadata.cover_image ? transformImageUrl(post.metadata.cover_image) : null),
+    [post.metadata.cover_image]
+  );
+  const dialogueColor = useMemo(
+    () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)'),
+    [ttsPrimaryColor]
+  );
 
   useEffect(() => {
     setCoverIsLandscape(null);
-  }, [post.metadata.cover_image]);
+  }, [transformedCoverImageUrl]);
+
+  useEffect(() => {
+    setPostCoverUrl(transformedCoverImageUrl);
+    return () => {
+      setPostCoverUrl(null);
+    };
+  }, [setPostCoverUrl, transformedCoverImageUrl]);
 
   /**
    * Handle Escape key to close the view
@@ -401,7 +435,7 @@ export function PostView({
           </Stack>
 
           {/* Cover Image - Ambient Mode */}
-          {post.metadata.cover_image && (
+          {transformedCoverImageUrl && (
               <Card
                 variant="plain"
                 sx={{
@@ -442,7 +476,7 @@ export function PostView({
               {/* Background Layer */}
               <Box
                 component="img"
-                src={transformImageUrl(post.metadata.cover_image)}
+                src={transformedCoverImageUrl}
                 alt=""
                 sx={{
                   position: 'absolute',
@@ -462,7 +496,7 @@ export function PostView({
               {/* Foreground Image */}
               <Box
                 component="img"
-                src={transformImageUrl(post.metadata.cover_image)}
+                src={transformedCoverImageUrl}
                 alt={post.metadata.title}
                 loading="lazy"
                 onLoad={(e) => {
@@ -496,11 +530,8 @@ export function PostView({
                 slug={post.filename.replace(/\.md$/, '')}
                 type={postType}
                 text={post.content}
-                coverImageUrl={
-                  post.metadata.cover_image
-                    ? transformImageUrl(post.metadata.cover_image)
-                    : undefined
-                }
+                onPrimaryColorChange={setTtsPrimaryColor}
+                coverImageUrl={transformedCoverImageUrl ?? undefined}
               />
             </Box>
           )}
@@ -673,6 +704,9 @@ export function PostView({
                   borderBottomStyle: 'solid',
                 },
               },
+              '& [data-dialogue="true"]': {
+                color: dialogueColor,
+              },
               '& img': {
                 maxWidth: '100%',
                 height: 'auto',
@@ -714,7 +748,7 @@ export function PostView({
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeSanitize, rehypeHighlight]}
+              rehypePlugins={[rehypeSanitize, rehypeHighlight, rehypeDialogueQuotes]}
               components={markdownComponents}
             >
               {markdownContent}

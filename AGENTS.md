@@ -15,3 +15,7 @@
 - Keep body text readable on phones (target `16px` base text for paragraph content).
 - Ensure visible focus states for keyboard users.
 - For UI-impacting work, store validation evidence in `/tmp/agents-artifacts/` with viewport results and any exceptions.
+
+## Markdown Content Rules
+- In `blog/posts/*.md` and `lore/posts/*.md`, curly double quotes are banned.
+- Use straight double quotes (`"`) instead of `“` and `”`.

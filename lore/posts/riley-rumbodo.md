@@ -1167,7 +1167,7 @@ We pulled out of the Subway lot together on Hicks's move order, before the red-a
 
 Officer Hicks in the cruiser ahead. Leo and Luna in the Malibu. Echo driving me in the Bolt. W.E.A.V.E. spanning all three vehicles at once.
 
-My first inventory lands in one hard line: “cane angled, sword secured, gun loaded, breathing tighter than she wants”.
+My first inventory lands in one hard line: "cane angled, sword secured, gun loaded, breathing tighter than she wants".
 
 The sky had already given us one clean wrong pulse with no weather source. The stronger warning was still the air — wrong, like a place already in use before visual contact.
 

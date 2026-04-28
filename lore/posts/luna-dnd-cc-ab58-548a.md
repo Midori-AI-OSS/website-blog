@@ -7,7 +7,7 @@ author: Luna Midori
 date: 2026-01-23
 ---
 
-## Luna’s Diary — “The Day the Water Tried to Keep Me”  
+## Luna’s Diary — "The Day the Water Tried to Keep Me"  
 *(from our crossing into the Shadowfell through tonight)*
 
 I didn’t want to come here.
@@ -18,7 +18,7 @@ But we *did*.
 
 And I hate that part of me is still proud that we did it anyway. Like bravery is supposed to taste noble instead of bitter.
 
-I keep thinking about the “normal” pieces. The stupid little normal pieces that should not matter, but do.
+I keep thinking about the "normal" pieces. The stupid little normal pieces that should not matter, but do.
 
 Warm air inside the hut.  
 Ink on my fingers.  
@@ -29,7 +29,7 @@ Even the way Waterdeep smells compared to this place—bread and salt and smoke 
 
 I remember those things like you hold a candle in a storm.
 
-Because this place would rather I forget what “normal” even means.
+Because this place would rather I forget what "normal" even means.
 
 ---
 
@@ -42,7 +42,7 @@ Like the world grabbed my stomach and twisted.
 
 Like being pulled through a memory that wasn’t mine, and coming out the other side with my lungs full of panic.
 
-Maybe that’s the point. Maybe you don’t “arrive” here. Maybe you just… *fail to remain somewhere else.*
+Maybe that’s the point. Maybe you don’t "arrive" here. Maybe you just… *fail to remain somewhere else.*
 
 And then the next thing I knew—
 
@@ -69,25 +69,25 @@ I hate that I needed that. I hate how much I needed that.
 
 I got onto the disk and almost passed out just from breathing air again, like my body couldn’t decide if it was allowed to live.
 
-I started drying my clothes with Prestidigitation because I needed something normal to do with my hands. Something small. Something *mine*. Something that wasn’t “panic.”
+I started drying my clothes with Prestidigitation because I needed something normal to do with my hands. Something small. Something *mine*. Something that wasn’t "panic."
 
 That’s when I heard about the dwarf.
 
 Boris Bunk.
 
-I hadn’t even met him yet and I already felt… wrong. Not “evil,” not exactly. Just *odd*. Like a tone your ear doesn’t like.
+I hadn’t even met him yet and I already felt… wrong. Not "evil," not exactly. Just *odd*. Like a tone your ear doesn’t like.
 
 And then—almost immediately—he was gone from the story as fast as he arrived, like this plane itself shrugged him off.
 
 That’s how it goes here, I guess.
-People become “was.”
+People become "was."
 
 ---
 
-### “You’re the reason”
+### "You’re the reason"
 Sebastian made a comment that I was the reason we got pulled under.
 
-And I told him “fuck you.”
+And I told him "fuck you."
 
 But—important detail—I meant it the way you mean it when you’re trying not to cry. The way you mean it when you need your friend to stop talking like the world is a courtroom.
 
@@ -106,15 +106,15 @@ And I am tired of pretending that doesn’t hurt.
 ### The rune pillars and the bridge that only listens to violence (and mercy)
 There were rune pillars rising out of the river like broken teeth. Carved symbols, sick-looking magic. The kind that makes your eyes itch even when you’re pretending you’re fine.
 
-The bridge advanced when we interacted with them the “right” way.
+The bridge advanced when we interacted with them the "right" way.
 
-And of course the “right” way is stupid.
+And of course the "right" way is stupid.
 
 Some needed to be attacked.  
 Some needed to be healed.
 
 Like the Shadowfell itself is a lesson written by someone smug:
-> *“See? Even cruelty is a key. Even kindness is a weapon. Isn’t that clever?”*
+> *"See? Even cruelty is a key. Even kindness is a weapon. Isn’t that clever?"*
 
 Boris attacked one. The bridge advanced.
 
@@ -138,15 +138,15 @@ I miss him so much it makes my throat hurt.
 ### Wisper returns (and immediately insults me)
 I called Wisper back.
 
-He looked at me and said “Fuck you” in Celestial.
+He looked at me and said "Fuck you" in Celestial.
 
-And I said, “Love you too.”
+And I said, "Love you too."
 
 Because what else do you do when your little piece of home comes back rude and alive?
 
 I pet him like I was trying to remember what warmth is.
 
-Then I realized: flying things “die” here. Or they don’t last. Or something about the air hates wings.
+Then I realized: flying things "die" here. Or they don’t last. Or something about the air hates wings.
 
 So later, I summoned a black cat instead.
 
@@ -173,7 +173,7 @@ Just… blank.
 
 That’s what scared me most.
 
-Because “nothing” in a place like this is never neutral.  
+Because "nothing" in a place like this is never neutral.  
 It’s the pause before something decides to breathe again.
 
 ---
@@ -254,7 +254,7 @@ I refuse.
 ### Leo (and the silence that isn’t failure)
 I sent Sending to Leo.
 
-I know it worked. It didn’t fail. No backlash, no static, no “your message cannot be delivered.”
+I know it worked. It didn’t fail. No backlash, no static, no "your message cannot be delivered."
 
 So he got it.
 
@@ -288,7 +288,7 @@ It was a prayer. A real one. Not performance. Not ritual for show.
 
 The kind of prayer you say when you’re too tired to be clever.
 
-And with it came a piece of “normal.”
+And with it came a piece of "normal."
 A piece of me that still believes peace is possible.
 
 For a moment, it grounded me.
@@ -298,7 +298,7 @@ And then the fear came back:
 If I can give away memory—
 If I can lose minutes, lose hours, lose *truth*—
 
-How many of my “certainties” are just stories I keep telling myself because the alternative is unbearable?
+How many of my "certainties" are just stories I keep telling myself because the alternative is unbearable?
 
 I’ve always been told I’m gifted.
 A human girl with magic.
@@ -311,7 +311,7 @@ And if it’s a lie, then what am I?
 
 ---
 
-### The halo conversation (and me being “just human”)
+### The halo conversation (and me being "just human")
 At the inn we talked, and somehow we ended up back at the halo again.
 
 Zel said something about me being like him. Or him being like me.
@@ -320,7 +320,7 @@ And I said: I’m just a human girl.
 
 Because I need that to be true.
 
-Sebastian—sweet idiot—said something about aasimar halos and how Zel might be “a quarter aasimar.”
+Sebastian—sweet idiot—said something about aasimar halos and how Zel might be "a quarter aasimar."
 
 He said it gently. Like he was trying to help me not be scared.
 
@@ -340,13 +340,13 @@ Because it’s proof that the mask is thinner than I want.
 
 And I’m not ready to be something that isn’t human.
 
-Not in a world that already treats “different” like a target.
+Not in a world that already treats "different" like a target.
 
 {{image: /lore/luna-dnd-cc-ab58-548a/study-moment.png}}
 
 ---
 
-### The “wizard tower” that looked like a shop
+### The "wizard tower" that looked like a shop
 We went looking around and found what looked like a shop.
 
 A normal storefront, normal enough that my brain relaxed for half a heartbeat.
@@ -398,7 +398,7 @@ I want Leo safe.
 
 I want my memories to stop being something I can lose like loose coin.
 
-I want to be “just human” again.
+I want to be "just human" again.
 
 And I don’t know which of those wants is the most impossible.
 

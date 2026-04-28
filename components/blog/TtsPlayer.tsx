@@ -3,6 +3,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, IconButton, Stack, Typography } from '@mui/joy';
 import { Headphones, Pause, Play, Square } from 'lucide-react';
+import {
+  DEFAULT_ART_PALETTE,
+  extractPaletteFromImage,
+  type ExtractedPalette,
+} from '@/lib/theme/artPalette';
 
 type TtsState = 'not_generated' | 'generating' | 'ready';
 type PlaybackState = 'stopped' | 'playing' | 'paused';
@@ -17,12 +22,7 @@ interface TtsPlayerProps {
   type: 'blog' | 'lore';
   text: string;
   coverImageUrl?: string;
-}
-
-interface ExtractedColors {
-  primary: string;
-  secondary: string;
-  tertiary: string;
+  onPrimaryColorChange?: (color: string) => void;
 }
 
 interface TtsStatusPayload {
@@ -63,182 +63,6 @@ function parseStatusPayload(raw: unknown): TtsStatusPayload | null {
   };
 }
 
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '');
-  return [
-    parseInt(h.substring(0, 2), 16),
-    parseInt(h.substring(2, 4), 16),
-    parseInt(h.substring(4, 6), 16),
-  ];
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  return (
-    '#' +
-    [r, g, b]
-      .map((c) =>
-        Math.max(0, Math.min(255, Math.round(c)))
-          .toString(16)
-          .padStart(2, '0')
-      )
-      .join('')
-  );
-}
-
-function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
-  const rn = r / 255;
-  const gn = g / 255;
-  const bn = b / 255;
-  const max = Math.max(rn, gn, bn);
-  const min = Math.min(rn, gn, bn);
-  const l = (max + min) / 2;
-  let h = 0;
-  let s = 0;
-
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
-    else if (max === gn) h = ((bn - rn) / d + 2) / 6;
-    else h = ((rn - gn) / d + 4) / 6;
-  }
-
-  return [h, s, l];
-}
-
-function hslToRgb(h: number, s: number, l: number): [number, number, number] {
-  if (s === 0) {
-    const v = Math.round(l * 255);
-    return [v, v, v];
-  }
-
-  const hue2rgb = (p: number, q: number, t: number) => {
-    if (t < 0) t += 1;
-    if (t > 1) t -= 1;
-    if (t < 1 / 6) return p + (q - p) * 6 * t;
-    if (t < 1 / 2) return q;
-    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-    return p;
-  };
-
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-  return [
-    Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
-    Math.round(hue2rgb(p, q, h) * 255),
-    Math.round(hue2rgb(p, q, h - 1 / 3) * 255),
-  ];
-}
-
-function ensureMinLuminance(hex: string, minL = 0.55, maxS = 0.65): string {
-  const [r, g, b] = hexToRgb(hex);
-  let [h, s, l] = rgbToHsl(r, g, b);
-  if (l < minL) l = minL;
-  if (s > maxS) s = maxS;
-  const [rr, gg, bb] = hslToRgb(h, s, l);
-  return rgbToHex(rr, gg, bb);
-}
-
-function colorDistance(
-  a: [number, number, number],
-  b: [number, number, number]
-): number {
-  return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
-}
-
-function extractDominantColors(imageUrl: string): Promise<ExtractedColors> {
-  return new Promise((resolve) => {
-    const fallback: ExtractedColors = {
-      primary: ensureMinLuminance('#8b5cf6'),
-      secondary: ensureMinLuminance('#a78bfa'),
-      tertiary: ensureMinLuminance('#7c3aed'),
-    };
-
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(fallback);
-          return;
-        }
-
-        const maxDim = 64;
-        const scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
-        canvas.width = Math.max(1, Math.round(img.width * scale));
-        canvas.height = Math.max(1, Math.round(img.height * scale));
-
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const pixels = imageData.data;
-
-        const quantize = (v: number) => Math.round(v / 32) * 32;
-        const colorMap = new Map<
-          string,
-          { count: number; r: number; g: number; b: number }
-        >();
-
-        for (let i = 0; i < pixels.length; i += 4) {
-          const r = quantize(pixels[i] ?? 0);
-          const g = quantize(pixels[i + 1] ?? 0);
-          const b = quantize(pixels[i + 2] ?? 0);
-          const a = pixels[i + 3] ?? 0;
-          if (a < 128) continue;
-          if (r > 230 && g > 230 && b > 230) continue;
-          if (r < 50 && g < 50 && b < 50) continue;
-
-          const key = `${r},${g},${b}`;
-          const existing = colorMap.get(key);
-          if (existing) {
-            existing.count++;
-          } else {
-            colorMap.set(key, { count: 1, r, g, b });
-          }
-        }
-
-        const sorted = Array.from(colorMap.values()).sort((a, b) => b.count - a.count);
-        if (sorted.length === 0) {
-          resolve(fallback);
-          return;
-        }
-
-        const picked: typeof sorted = [sorted[0]!];
-        const minDist = 3000;
-
-        for (let i = 1; i < sorted.length && picked.length < 3; i++) {
-          const candidate = sorted[i]!;
-          const tooClose = picked.some(
-            (p) =>
-              colorDistance([p.r, p.g, p.b], [candidate.r, candidate.g, candidate.b]) <
-              minDist
-          );
-          if (!tooClose) picked.push(candidate);
-        }
-
-        while (picked.length < 3) {
-          picked.push(picked[picked.length - 1]!);
-        }
-
-        resolve({
-          primary: ensureMinLuminance(rgbToHex(picked[0]!.r, picked[0]!.g, picked[0]!.b)),
-          secondary: ensureMinLuminance(
-            rgbToHex(picked[1]!.r, picked[1]!.g, picked[1]!.b)
-          ),
-          tertiary: ensureMinLuminance(rgbToHex(picked[2]!.r, picked[2]!.g, picked[2]!.b)),
-        });
-      } catch {
-        resolve(fallback);
-      }
-    };
-
-    img.onerror = () => resolve(fallback);
-    img.src = imageUrl;
-  });
-}
-
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
   const m = Math.floor(seconds / 60);
@@ -268,7 +92,7 @@ function getTimelineState(audio: HTMLAudioElement) {
   };
 }
 
-export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
+export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChange }: TtsPlayerProps) {
   const [state, setState] = useState<TtsState>('not_generated');
   const [playback, setPlayback] = useState<PlaybackState>('stopped');
   const [progress, setProgress] = useState(0);
@@ -276,12 +100,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [isGenerationActive, setIsGenerationActive] = useState(false);
   const [canSeek, setCanSeek] = useState(false);
-  const [colors, setColors] = useState<ExtractedColors>({
-    primary: ensureMinLuminance('#8b5cf6'),
-    secondary: ensureMinLuminance('#a78bfa'),
-    tertiary: ensureMinLuminance('#7c3aed'),
-  });
-  const [colorsLoaded, setColorsLoaded] = useState(false);
+  const [colors, setColors] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -310,13 +129,37 @@ export function TtsPlayer({ slug, type, text, coverImageUrl }: TtsPlayerProps) {
   }, [playback]);
 
   useEffect(() => {
-    if (coverImageUrl && !colorsLoaded) {
-      extractDominantColors(coverImageUrl).then((c) => {
-        setColors(c);
-        setColorsLoaded(true);
-      });
+    let active = true;
+    const imageUrl = coverImageUrl?.trim();
+
+    if (!imageUrl) {
+      setColors(DEFAULT_ART_PALETTE);
+      return () => {
+        active = false;
+      };
     }
-  }, [coverImageUrl, colorsLoaded]);
+
+    const syncPalette = async () => {
+      const extracted = await extractPaletteFromImage(imageUrl, {
+        fallback: DEFAULT_ART_PALETTE,
+      });
+      if (!active) {
+        return;
+      }
+
+      setColors(extracted);
+    };
+
+    void syncPalette();
+
+    return () => {
+      active = false;
+    };
+  }, [coverImageUrl]);
+
+  useEffect(() => {
+    onPrimaryColorChange?.(colors.primary);
+  }, [colors.primary, onPrimaryColorChange]);
 
   const stopPolling = useCallback(() => {
     if (pollingRef.current) {

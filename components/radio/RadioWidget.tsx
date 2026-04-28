@@ -30,6 +30,7 @@ import {
   saveRadioQuality,
   saveRadioVolume,
 } from '@/lib/radio/state';
+import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 
 const PLACEHOLDER_IMAGE = '/blog/placeholder.png';
 const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000, 30000] as const;
@@ -115,6 +116,7 @@ function toErrorMessage(error: unknown): string {
 }
 
 export default function RadioWidget() {
+  const { setRadioState } = useDynamicBackdrop();
   const desktopEligible = useDesktopEligibility();
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const retryTimerRef = React.useRef<number | null>(null);
@@ -670,6 +672,17 @@ export default function RadioWidget() {
       active = false;
     };
   }, [preferredServerArtUrl, fallbackImage, imageInventory]);
+
+  React.useEffect(() => {
+    setRadioState({
+      playing: playbackDesired,
+      artUrl: preferredServerArtUrl,
+    });
+
+    return () => {
+      setRadioState({ playing: false, artUrl: null });
+    };
+  }, [playbackDesired, preferredServerArtUrl, setRadioState]);
 
   const expanded = stickyOpen || hovered || closeLingerActive;
 
