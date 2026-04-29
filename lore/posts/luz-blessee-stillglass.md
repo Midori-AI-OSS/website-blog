@@ -108,6 +108,10 @@ And that, somehow, was enough to get them moving.
 
 ---
 
+{{image: /lore/real-moments/party-stillglass.png}}
+
+---
+
 Inside, Stillglass House kept its promise. Beauty sat low in the room and made space for bodies instead of correcting them. Old wood floors were gentled by runners. Brass tags held small lucid glints. Velvet pads cupped certain pieces like palms that knew better than to clutch. Lamps with frosted shades sifted the light until it lost the part that punished people for being made of nerves. The shelves stood wide apart. The chairs did not trap the walkways. Even the empty air seemed arranged by somebody who understood that distance could be a form of welcome.
 
 A welcome desk waited at the front without claiming command over the room. Behind it stood a woman in house black with a brass tag reading **Floor Guide**. She took them in the Stillglass way: not by sorting faces into easy labels, but by reading posture, spacing, breath, and the tiny negotiations people made with unfamiliar ground. Riley saw the moment the Guide registered four embodied guests and one bismuth-particle intelligence. No flinch. No overcareful theater. W.E.A.V.E. entered the count as naturally as a cane, a service animal, or an extra heartbeat.
