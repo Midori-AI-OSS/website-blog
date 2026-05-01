@@ -1,7 +1,7 @@
 ---
 title: "Stillglass: Luz Blessee, One Action, One Confirmation"
 summary: "After the bar incident, Riley, Echo, Luna, Leo, and W.E.A.V.E. arrive at Stillglass House for controlled crystal intake and room-by-room testing."
-tags: [lore, "real-moments", "riley", "luz-blessee", "prequel"]
+tags: [lore, "real-moments", "riley"]
 cover_image: /lore/luz-blessee-stillglass.png
 author: Luna Midori
 date: 2026-04-29

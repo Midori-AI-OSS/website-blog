@@ -1,7 +1,7 @@
 ---
 title: "Luz Blessee, Don’t Drink the Clear Ice"
 summary: "A bar night turns into a contamination incident as false ice triggers cross-response between Luna and Leo and drops Luna unconscious."
-tags: [lore, "real-moments", "riley", "luz-blessee", "prequel"]
+tags: [lore, "real-moments", "riley"]
 cover_image: /lore/luz-blessee-bar.png
 author: Luna Midori
 date: 2026-04-29
