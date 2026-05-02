@@ -139,6 +139,14 @@ describe('PostView', () => {
     expect(html).not.toContain('&lt;/thinking&gt;');
   });
 
+  test('renders thinking without the old trailing dot effect', () => {
+    const html = renderPostContent('<thinking>No dot please.</thinking>');
+
+    expect(countThinkingNodes(html)).toBe(1);
+    expect(html).not.toContain('thinking-dot-pulse');
+    expect(html).not.toContain('[data-thinking]::after');
+  });
+
   test('keeps markdown formatting inside thinking tags', () => {
     const html = renderPostContent('<thinking>**bold** [link](https://example.com)</thinking>');
 

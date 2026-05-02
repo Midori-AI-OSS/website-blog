@@ -138,6 +138,20 @@ function lightenHexColor(hex: string, ratio: number): string {
   return `rgb(${mix(red)}, ${mix(green)}, ${mix(blue)})`;
 }
 
+function hexToRgba(hex: string | null, alpha: number, fallback: string): string {
+  const normalized = hex?.trim().replace(/^#/, '') ?? '';
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return fallback;
+  }
+
+  const clampAlpha = Math.max(0, Math.min(1, alpha));
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${clampAlpha})`;
+}
+
 function buildTooltipText(
   prefix: string,
   story: { title: string; summary?: string } | null | undefined
@@ -287,6 +301,30 @@ export function PostView({
     () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)'),
     [ttsPrimaryColor]
   );
+  const thinkingColor = useMemo(
+    () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.2) : '#bae6fd'),
+    [ttsPrimaryColor]
+  );
+  const thinkingGlowColor = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.55, 'rgba(125, 211, 252, 0.55)'),
+    [ttsPrimaryColor]
+  );
+  const thinkingBorderColor = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.68, 'rgba(125, 211, 252, 0.65)'),
+    [ttsPrimaryColor]
+  );
+  const thinkingSoftBorderColor = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.24, 'rgba(125, 211, 252, 0.22)'),
+    [ttsPrimaryColor]
+  );
+  const thinkingStrongBackground = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.16, 'rgba(14, 116, 144, 0.16)'),
+    [ttsPrimaryColor]
+  );
+  const thinkingSoftBackground = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.07, 'rgba(59, 130, 246, 0.08)'),
+    [ttsPrimaryColor]
+  );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
 
   useEffect(() => {
@@ -334,23 +372,11 @@ export function PostView({
         '@keyframes thinking-pulse': {
           '0%, 100%': {
             opacity: 0.76,
-            textShadow: '0 0 0 rgba(125, 211, 252, 0)',
+            textShadow: '0 0 0 transparent',
           },
           '50%': {
             opacity: 1,
-            textShadow: '0 0 18px rgba(125, 211, 252, 0.55)',
-          },
-        },
-        '@keyframes thinking-dot-pulse': {
-          '0%, 100%': {
-            transform: 'scale(0.72)',
-            opacity: 0.38,
-            boxShadow: '0 0 0 rgba(125, 211, 252, 0)',
-          },
-          '50%': {
-            transform: 'scale(1)',
-            opacity: 1,
-            boxShadow: '0 0 16px rgba(125, 211, 252, 0.85)',
+            textShadow: '0 0 18px var(--PostView-thinking-glow)',
           },
         },
         ...AMBIENT_PULSE_KEYFRAMES,
@@ -756,22 +782,11 @@ export function PostView({
                 color: dialogueColor,
               },
               '& [data-thinking]': {
+                '--PostView-thinking-glow': thinkingGlowColor,
                 position: 'relative',
-                color: '#bae6fd',
+                color: thinkingColor,
                 fontStyle: 'italic',
                 animation: 'thinking-pulse 2.6s ease-in-out infinite',
-                '&::after': {
-                  content: '""',
-                  display: 'inline-block',
-                  width: '0.42em',
-                  height: '0.42em',
-                  ml: 0.75,
-                  mb: '0.12em',
-                  borderRadius: '999px',
-                  backgroundColor: '#7dd3fc',
-                  verticalAlign: 'middle',
-                  animation: 'thinking-dot-pulse 1.7s ease-in-out infinite',
-                },
               },
               '& [data-thinking="inline"]': {
                 textWrap: 'pretty',
@@ -780,17 +795,20 @@ export function PostView({
                 display: 'block',
                 my: 4,
                 p: { xs: 2, sm: 2.5 },
-                border: '1px solid rgba(125, 211, 252, 0.22)',
-                borderLeft: '4px solid rgba(125, 211, 252, 0.65)',
+                border: `1px solid ${thinkingSoftBorderColor}`,
+                borderLeft: `4px solid ${thinkingBorderColor}`,
                 background:
-                  'linear-gradient(135deg, rgba(14, 116, 144, 0.16), rgba(59, 130, 246, 0.08) 45%, rgba(255, 255, 255, 0.035))',
-                boxShadow: 'inset 0 0 28px rgba(125, 211, 252, 0.08)',
-                '& p:last-child': {
-                  mb: 0,
+                  `linear-gradient(135deg, ${thinkingStrongBackground}, ${thinkingSoftBackground} 45%, rgba(255, 255, 255, 0.035))`,
+                boxShadow: `inset 0 0 28px ${thinkingSoftBackground}, 0 0 24px ${thinkingSoftBackground}`,
+                '& p': {
+                  my: 0,
+                },
+                '& p + p': {
+                  mt: 2,
                 },
               },
               '@media (prefers-reduced-motion: reduce)': {
-                '& [data-thinking], & [data-thinking]::after': {
+                '& [data-thinking]': {
                   animation: 'none',
                 },
               },
