@@ -29,9 +29,10 @@ import {
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
+import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import { ArrowLeft, Calendar, User, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   extractIsoDateFromBlogFilename,
@@ -91,6 +92,21 @@ function getPostDateString(post: ParsedPost): string | undefined {
 
 const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
 
+const markdownSanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    span: [
+      ...(defaultSchema.attributes?.span ?? []),
+      ['data-thinking', 'inline', 'block'],
+    ],
+    div: [
+      ...(defaultSchema.attributes?.div ?? []),
+      ['data-thinking', 'inline', 'block'],
+    ],
+  },
+};
+
 function replaceLoreImageTokens(markdown: string): string {
   return markdown.replace(/\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi, (fullMatch, tokenValue: string) => {
     const url = toLoreImageApiUrl(tokenValue);
@@ -120,6 +136,20 @@ function lightenHexColor(hex: string, ratio: number): string {
 
   const mix = (channel: number) => Math.round(channel + (255 - channel) * clampRatio);
   return `rgb(${mix(red)}, ${mix(green)}, ${mix(blue)})`;
+}
+
+function hexToRgba(hex: string | null, alpha: number, fallback: string): string {
+  const normalized = hex?.trim().replace(/^#/, '') ?? '';
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return fallback;
+  }
+
+  const clampAlpha = Math.max(0, Math.min(1, alpha));
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${clampAlpha})`;
 }
 
 function buildTooltipText(
@@ -271,6 +301,34 @@ export function PostView({
     () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)'),
     [ttsPrimaryColor]
   );
+  const thinkingColor = useMemo(
+    () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.2) : '#bae6fd'),
+    [ttsPrimaryColor]
+  );
+  const thinkingGlowColor = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.55, 'rgba(125, 211, 252, 0.55)'),
+    [ttsPrimaryColor]
+  );
+  const thinkingMutedColor = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.62, 'rgba(186, 230, 253, 0.62)'),
+    [ttsPrimaryColor]
+  );
+  const thinkingBorderColor = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.68, 'rgba(125, 211, 252, 0.65)'),
+    [ttsPrimaryColor]
+  );
+  const thinkingSoftBorderColor = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.24, 'rgba(125, 211, 252, 0.22)'),
+    [ttsPrimaryColor]
+  );
+  const thinkingStrongBackground = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.16, 'rgba(14, 116, 144, 0.16)'),
+    [ttsPrimaryColor]
+  );
+  const thinkingSoftBackground = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.07, 'rgba(59, 130, 246, 0.08)'),
+    [ttsPrimaryColor]
+  );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
 
   useEffect(() => {
@@ -314,6 +372,18 @@ export function PostView({
         '@keyframes shimmer': {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' }
+        },
+        '@keyframes thinking-pulse': {
+          '0%, 100%': {
+            opacity: 0.92,
+            backgroundPosition: '160% 50%',
+            textShadow: '0 0 0 transparent',
+          },
+          '50%': {
+            opacity: 1,
+            backgroundPosition: '20% 50%',
+            textShadow: '0 0 18px var(--PostView-thinking-glow)',
+          },
         },
         ...AMBIENT_PULSE_KEYFRAMES,
       }}
@@ -717,6 +787,50 @@ export function PostView({
               '& [data-dialogue="true"]': {
                 color: dialogueColor,
               },
+              '& [data-thinking]': {
+                '--PostView-thinking-color': thinkingColor,
+                '--PostView-thinking-glow': thinkingGlowColor,
+                '--PostView-thinking-muted': thinkingMutedColor,
+                position: 'relative',
+                fontStyle: 'italic',
+              },
+              '& [data-thinking], & [data-thinking] p, & [data-thinking] li, & [data-thinking] span, & [data-thinking] strong, & [data-thinking] em, & [data-thinking] a': {
+                color: 'var(--PostView-thinking-color)',
+                background:
+                  'linear-gradient(90deg, var(--PostView-thinking-muted) 0%, var(--PostView-thinking-color) 32%, rgba(255,255,255,0.96) 48%, var(--PostView-thinking-color) 64%, var(--PostView-thinking-muted) 100%)',
+                backgroundSize: '260% 100%',
+                backgroundPosition: '160% 50%',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                animation: 'thinking-pulse 18s ease-in-out infinite',
+              },
+              '& [data-thinking="inline"]': {
+                textWrap: 'pretty',
+              },
+              '& [data-thinking="block"]': {
+                display: 'block',
+                my: 4,
+                p: { xs: 2, sm: 2.5 },
+                border: `1px solid ${thinkingSoftBorderColor}`,
+                borderLeft: `4px solid ${thinkingBorderColor}`,
+                background:
+                  `linear-gradient(135deg, ${thinkingStrongBackground}, ${thinkingSoftBackground} 45%, rgba(255, 255, 255, 0.035))`,
+                boxShadow: `inset 0 0 28px ${thinkingSoftBackground}, 0 0 24px ${thinkingSoftBackground}`,
+                '& p': {
+                  my: 0,
+                },
+                '& p + p': {
+                  mt: 2,
+                },
+              },
+              '@media (prefers-reduced-motion: reduce)': {
+                '& [data-thinking], & [data-thinking] p, & [data-thinking] li, & [data-thinking] span, & [data-thinking] strong, & [data-thinking] em, & [data-thinking] a': {
+                  animation: 'none',
+                  background: 'none',
+                  WebkitTextFillColor: 'currentColor',
+                },
+              },
               '& img': {
                 maxWidth: '100%',
                 height: 'auto',
@@ -757,8 +871,8 @@ export function PostView({
             }}
           >
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeSanitize, rehypeHighlight, rehypeDialogueQuotes]}
+              remarkPlugins={[remarkGfm, remarkThinkingTags]}
+              rehypePlugins={[[rehypeSanitize, markdownSanitizeSchema], rehypeHighlight, rehypeDialogueQuotes]}
               components={markdownComponents}
             >
               {markdownContent}

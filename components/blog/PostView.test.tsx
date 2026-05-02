@@ -34,6 +34,10 @@ function countDialogueSpans(html: string): number {
   return (html.match(/<span data-dialogue="true"/g) ?? []).length;
 }
 
+function countThinkingNodes(html: string): number {
+  return (html.match(/<(?:span|div) data-thinking=/g) ?? []).length;
+}
+
 describe('PostView', () => {
   test('scheduled preview hides markdown content and shows teaser copy', () => {
     const html = renderToStaticMarkup(
@@ -123,5 +127,48 @@ describe('PostView', () => {
     const html = renderPostContent('Use `a—b` as the token.');
 
     expect(html).toContain('<code>a—b</code>');
+  });
+
+  test('renders inline thinking tags as styled content without showing tags', () => {
+    const html = renderPostContent('Before <thinking>fuck</thinking> after.');
+
+    expect(countThinkingNodes(html)).toBe(1);
+    expect(html).toContain('data-thinking="inline"');
+    expect(html).toContain('fuck');
+    expect(html).not.toContain('&lt;thinking&gt;');
+    expect(html).not.toContain('&lt;/thinking&gt;');
+  });
+
+  test('renders thinking without the old trailing dot effect', () => {
+    const html = renderPostContent('<thinking>No dot please.</thinking>');
+
+    expect(countThinkingNodes(html)).toBe(1);
+    expect(html).not.toContain('thinking-dot-pulse');
+    expect(html).not.toContain('[data-thinking]::after');
+  });
+
+  test('keeps markdown formatting inside thinking tags', () => {
+    const html = renderPostContent('<thinking>**bold** [link](https://example.com)</thinking>');
+
+    expect(countThinkingNodes(html)).toBe(1);
+    expect(html).toContain('<strong>bold</strong>');
+    expect(html).toContain('<a href="https://example.com">link</a>');
+  });
+
+  test('renders multi-paragraph thinking tags as a block', () => {
+    const html = renderPostContent('<thinking>\n\nFirst thought.\n\nSecond thought.\n\n</thinking>');
+
+    expect(countThinkingNodes(html)).toBe(1);
+    expect(html).toContain('data-thinking="block"');
+    expect(html).toContain('<p>First thought.</p>');
+    expect(html).toContain('<p>Second thought.</p>');
+  });
+
+  test('drops mismatched thinking tags while keeping readable text', () => {
+    const html = renderPostContent('<thinking>Still readable.');
+
+    expect(countThinkingNodes(html)).toBe(0);
+    expect(html).toContain('Still readable.');
+    expect(html).not.toContain('&lt;thinking&gt;');
   });
 });
