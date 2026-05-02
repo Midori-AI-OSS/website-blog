@@ -375,7 +375,7 @@ export function PostView({
         },
         '@keyframes thinking-pulse': {
           '0%, 100%': {
-            opacity: 0.76,
+            opacity: 0.92,
             backgroundPosition: '160% 50%',
             textShadow: '0 0 0 transparent',
           },
@@ -803,7 +803,7 @@ export function PostView({
                 WebkitBackgroundClip: 'text',
                 backgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                animation: 'thinking-pulse 9s ease-in-out infinite',
+                animation: 'thinking-pulse 18s ease-in-out infinite',
               },
               '& [data-thinking="inline"]': {
                 textWrap: 'pretty',
