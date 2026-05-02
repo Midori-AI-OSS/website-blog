@@ -29,9 +29,10 @@ import {
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
+import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import { ArrowLeft, Calendar, User, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   extractIsoDateFromBlogFilename,
@@ -90,6 +91,21 @@ function getPostDateString(post: ParsedPost): string | undefined {
 }
 
 const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
+
+const markdownSanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    span: [
+      ...(defaultSchema.attributes?.span ?? []),
+      ['data-thinking', 'inline', 'block'],
+    ],
+    div: [
+      ...(defaultSchema.attributes?.div ?? []),
+      ['data-thinking', 'inline', 'block'],
+    ],
+  },
+};
 
 function replaceLoreImageTokens(markdown: string): string {
   return markdown.replace(/\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi, (fullMatch, tokenValue: string) => {
@@ -314,6 +330,28 @@ export function PostView({
         '@keyframes shimmer': {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' }
+        },
+        '@keyframes thinking-pulse': {
+          '0%, 100%': {
+            opacity: 0.76,
+            textShadow: '0 0 0 rgba(125, 211, 252, 0)',
+          },
+          '50%': {
+            opacity: 1,
+            textShadow: '0 0 18px rgba(125, 211, 252, 0.55)',
+          },
+        },
+        '@keyframes thinking-dot-pulse': {
+          '0%, 100%': {
+            transform: 'scale(0.72)',
+            opacity: 0.38,
+            boxShadow: '0 0 0 rgba(125, 211, 252, 0)',
+          },
+          '50%': {
+            transform: 'scale(1)',
+            opacity: 1,
+            boxShadow: '0 0 16px rgba(125, 211, 252, 0.85)',
+          },
         },
         ...AMBIENT_PULSE_KEYFRAMES,
       }}
@@ -717,6 +755,45 @@ export function PostView({
               '& [data-dialogue="true"]': {
                 color: dialogueColor,
               },
+              '& [data-thinking]': {
+                position: 'relative',
+                color: '#bae6fd',
+                fontStyle: 'italic',
+                animation: 'thinking-pulse 2.6s ease-in-out infinite',
+                '&::after': {
+                  content: '""',
+                  display: 'inline-block',
+                  width: '0.42em',
+                  height: '0.42em',
+                  ml: 0.75,
+                  mb: '0.12em',
+                  borderRadius: '999px',
+                  backgroundColor: '#7dd3fc',
+                  verticalAlign: 'middle',
+                  animation: 'thinking-dot-pulse 1.7s ease-in-out infinite',
+                },
+              },
+              '& [data-thinking="inline"]': {
+                textWrap: 'pretty',
+              },
+              '& [data-thinking="block"]': {
+                display: 'block',
+                my: 4,
+                p: { xs: 2, sm: 2.5 },
+                border: '1px solid rgba(125, 211, 252, 0.22)',
+                borderLeft: '4px solid rgba(125, 211, 252, 0.65)',
+                background:
+                  'linear-gradient(135deg, rgba(14, 116, 144, 0.16), rgba(59, 130, 246, 0.08) 45%, rgba(255, 255, 255, 0.035))',
+                boxShadow: 'inset 0 0 28px rgba(125, 211, 252, 0.08)',
+                '& p:last-child': {
+                  mb: 0,
+                },
+              },
+              '@media (prefers-reduced-motion: reduce)': {
+                '& [data-thinking], & [data-thinking]::after': {
+                  animation: 'none',
+                },
+              },
               '& img': {
                 maxWidth: '100%',
                 height: 'auto',
@@ -757,8 +834,8 @@ export function PostView({
             }}
           >
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeSanitize, rehypeHighlight, rehypeDialogueQuotes]}
+              remarkPlugins={[remarkGfm, remarkThinkingTags]}
+              rehypePlugins={[[rehypeSanitize, markdownSanitizeSchema], rehypeHighlight, rehypeDialogueQuotes]}
               components={markdownComponents}
             >
               {markdownContent}
