@@ -309,6 +309,10 @@ export function PostView({
     () => hexToRgba(ttsPrimaryColor, 0.55, 'rgba(125, 211, 252, 0.55)'),
     [ttsPrimaryColor]
   );
+  const thinkingMutedColor = useMemo(
+    () => hexToRgba(ttsPrimaryColor, 0.62, 'rgba(186, 230, 253, 0.62)'),
+    [ttsPrimaryColor]
+  );
   const thinkingBorderColor = useMemo(
     () => hexToRgba(ttsPrimaryColor, 0.68, 'rgba(125, 211, 252, 0.65)'),
     [ttsPrimaryColor]
@@ -372,10 +376,12 @@ export function PostView({
         '@keyframes thinking-pulse': {
           '0%, 100%': {
             opacity: 0.76,
+            backgroundPosition: '160% 50%',
             textShadow: '0 0 0 transparent',
           },
           '50%': {
             opacity: 1,
+            backgroundPosition: '20% 50%',
             textShadow: '0 0 18px var(--PostView-thinking-glow)',
           },
         },
@@ -782,11 +788,22 @@ export function PostView({
                 color: dialogueColor,
               },
               '& [data-thinking]': {
+                '--PostView-thinking-color': thinkingColor,
                 '--PostView-thinking-glow': thinkingGlowColor,
+                '--PostView-thinking-muted': thinkingMutedColor,
                 position: 'relative',
-                color: thinkingColor,
                 fontStyle: 'italic',
-                animation: 'thinking-pulse 2.6s ease-in-out infinite',
+              },
+              '& [data-thinking], & [data-thinking] p, & [data-thinking] li, & [data-thinking] span, & [data-thinking] strong, & [data-thinking] em, & [data-thinking] a': {
+                color: 'var(--PostView-thinking-color)',
+                background:
+                  'linear-gradient(90deg, var(--PostView-thinking-muted) 0%, var(--PostView-thinking-color) 32%, rgba(255,255,255,0.96) 48%, var(--PostView-thinking-color) 64%, var(--PostView-thinking-muted) 100%)',
+                backgroundSize: '260% 100%',
+                backgroundPosition: '160% 50%',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                animation: 'thinking-pulse 9s ease-in-out infinite',
               },
               '& [data-thinking="inline"]': {
                 textWrap: 'pretty',
@@ -808,8 +825,10 @@ export function PostView({
                 },
               },
               '@media (prefers-reduced-motion: reduce)': {
-                '& [data-thinking]': {
+                '& [data-thinking], & [data-thinking] p, & [data-thinking] li, & [data-thinking] span, & [data-thinking] strong, & [data-thinking] em, & [data-thinking] a': {
                   animation: 'none',
+                  background: 'none',
+                  WebkitTextFillColor: 'currentColor',
                 },
               },
               '& img': {
