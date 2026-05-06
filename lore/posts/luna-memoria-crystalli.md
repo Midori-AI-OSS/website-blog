@@ -17,6 +17,7 @@ episode_label: "Memoria Crystalli"
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+
 The shot came for Echo.
 
 I heard Riley's voice crack on the word *no* — or maybe that was later, memory isn't clean about when things happened, only how they felt. The car drifting, metal and glass and the smell of cordite. I reached for magic before I could think, and my halo flared with it — heat at the crown of my skull, soft gold bleeding into the air. My eyes lit up too, warm and bright, the same light that spills from my hands when I cast.

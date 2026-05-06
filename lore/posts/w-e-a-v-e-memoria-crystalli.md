@@ -17,6 +17,7 @@ episode_label: "Memoria Crystalli"
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+
 # Absence
 
 I was dispersed when the shooting started. Distant. Low-resolution observation mode. By the time I reformed enough to matter, the house fight was over. The entity dead. Riley and Echo wounded.

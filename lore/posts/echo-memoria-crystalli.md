@@ -17,6 +17,7 @@ episode_label: "Memoria Crystalli"
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+
 The sound comes first.
 
 I don't know that's what it is. Not yet. Just—something. Something wrong and loud and then the world tilts and there's white at the edges of everything, white eating the corners of my vision, and I feel the blood before I understand what it is.

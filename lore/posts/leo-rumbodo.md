@@ -18,7 +18,6 @@ episode_label: "Rumbodo"
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
 
-
 She was already sitting when I came back into the room.
 
 Lady Light. White hair with black sparkles. Only the left side of her face moved. The right side didn't. Right hand doing all the work.

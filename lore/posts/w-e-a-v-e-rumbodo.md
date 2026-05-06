@@ -17,6 +17,7 @@ episode_label: "Rumbodo"
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+
 ## Reduced Visibility
 
 One week after the ER, I was dust.

@@ -17,6 +17,7 @@ episode_label: "Memoria Crystalli"
 > read as asserting that any described actions, conversations, relationships,
 > or incidents happened in real life. It is presented as collaborative
 > roleplay fiction only.
+
 The shot came for her head.
 
 I saw the shot before I had words for it. Something was coming straight for Echo's head, and my hands were already turning the wheel hard to break the line.
