@@ -18,6 +18,7 @@ export interface AmbientCoverArtProps {
   minHeight?: { xs?: string | number; sm?: string | number }
   children?: ReactNode
   onAspectRatioChange?: (isLandscape: boolean) => void
+  onImageError?: (url: string) => void
 }
 
 export function AmbientCoverArt({
@@ -27,6 +28,7 @@ export function AmbientCoverArt({
   minHeight,
   children,
   onAspectRatioChange,
+  onImageError,
 }: AmbientCoverArtProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null)
 
@@ -77,6 +79,7 @@ export function AmbientCoverArt({
         component="img"
         src={coverImageUrl}
         alt=""
+        onError={() => onImageError?.(coverImageUrl)}
         sx={{
           position: 'absolute',
           top: 0,
@@ -97,6 +100,7 @@ export function AmbientCoverArt({
         src={coverImageUrl}
         alt={alt}
         loading="lazy"
+        onError={() => onImageError?.(coverImageUrl)}
         onLoad={(event) => {
           const img = event.currentTarget
           if (img.naturalWidth > 0 && img.naturalHeight > 0) {

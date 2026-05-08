@@ -2,6 +2,9 @@
  * Shared image URL transforms for blog/lore content.
  */
 
+export const POST_COVER_PLACEHOLDER_IMAGE = '/blog/placeholder.png';
+export const POST_COVER_PLACEHOLDER_IMAGE_URL = '/api/blog-images/placeholder.png';
+
 export function transformPostImageUrl(url: string): string {
   if (url.startsWith('/blog/')) {
     return url.replace('/blog/', '/api/blog-images/');
@@ -19,6 +22,11 @@ export function transformPostImageUrl(url: string): string {
   }
 
   return url;
+}
+
+export function resolvePostCoverImageUrl(url: string | null | undefined): string {
+  const trimmed = typeof url === 'string' ? url.trim() : '';
+  return trimmed ? transformPostImageUrl(trimmed) : POST_COVER_PLACEHOLDER_IMAGE_URL;
 }
 
 export function toLoreImageApiUrl(rawPath: string): string | null {
