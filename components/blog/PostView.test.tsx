@@ -39,6 +39,23 @@ function countThinkingNodes(html: string): number {
 }
 
 describe('PostView', () => {
+  test('renders the placeholder cover when cover metadata is missing', () => {
+    const html = renderToStaticMarkup(
+      <PostView
+        post={{
+          ...mockPost,
+          metadata: {
+            ...mockPost.metadata,
+            cover_image: undefined,
+          },
+        }}
+        onClose={() => {}}
+      />
+    );
+
+    expect(html).toContain('/api/blog-images/placeholder.png');
+  });
+
   test('scheduled preview hides markdown content and shows teaser copy', () => {
     const html = renderToStaticMarkup(
       <PostView

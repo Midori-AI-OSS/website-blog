@@ -12,7 +12,10 @@ import Tooltip from '@mui/joy/Tooltip';
 import { Calendar, User, ArrowRight, Tag } from 'lucide-react';
 import Link from 'next/link';
 import type { ParsedPost } from '../../lib/blog/parser';
-import { transformPostImageUrl } from '@/lib/content/imageUrl';
+import {
+  POST_COVER_PLACEHOLDER_IMAGE_URL,
+  resolvePostCoverImageUrl,
+} from '@/lib/content/imageUrl';
 import {
   DEFAULT_ART_PALETTE,
   extractPaletteFromImage,
@@ -53,14 +56,39 @@ export const BlogCard = React.memo(({
   secondaryCtaAriaLabel,
 }: BlogCardProps) => {
   const { metadata, filename } = post;
-  const decorativeImageUrl = typeof metadata.cover_image === 'string' && metadata.cover_image.length > 0
-    ? transformPostImageUrl(metadata.cover_image)
-    : null;
+  const resolvedDecorativeImageUrl = React.useMemo(
+    () => resolvePostCoverImageUrl(metadata.cover_image),
+    [metadata.cover_image]
+  );
+  const [decorativeImageUrl, setDecorativeImageUrl] = React.useState(resolvedDecorativeImageUrl);
   const [palette, setPalette] = React.useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
 
   // Extract date from filename if not in metadata (YYYY-MM-DD format)
   const dateFromFilename = filename.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
   const displayDate = metadata.date || dateFromFilename || new Date().toISOString().split('T')[0];
+
+  React.useEffect(() => {
+    setDecorativeImageUrl(resolvedDecorativeImageUrl);
+  }, [resolvedDecorativeImageUrl]);
+
+  React.useEffect(() => {
+    if (decorativeImageUrl === POST_COVER_PLACEHOLDER_IMAGE_URL) {
+      return;
+    }
+
+    let active = true;
+    const image = new Image();
+    image.onerror = () => {
+      if (active) {
+        setDecorativeImageUrl(POST_COVER_PLACEHOLDER_IMAGE_URL);
+      }
+    };
+    image.src = decorativeImageUrl;
+
+    return () => {
+      active = false;
+    };
+  }, [decorativeImageUrl]);
 
   React.useEffect(() => {
     if (!decorativeImageUrl) {

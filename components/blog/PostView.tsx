@@ -39,7 +39,11 @@ import {
   formatLongDate,
   normalizeIsoDateString,
 } from '@/lib/content/publish';
-import { transformPostImageUrl, toLoreImageApiUrl } from '@/lib/content/imageUrl';
+import {
+  POST_COVER_PLACEHOLDER_IMAGE_URL,
+  resolvePostCoverImageUrl,
+  toLoreImageApiUrl,
+} from '@/lib/content/imageUrl';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import { AmbientCoverArt, AMBIENT_PULSE_KEYFRAMES } from '@/components/blog/AmbientCoverArt';
 import type { ParsedPost } from '../../lib/blog/parser';
@@ -294,9 +298,10 @@ export function PostView({
     [post.content]
   );
   const transformedCoverImageUrl = useMemo(
-    () => (post.metadata.cover_image ? transformPostImageUrl(post.metadata.cover_image) : null),
+    () => resolvePostCoverImageUrl(post.metadata.cover_image),
     [post.metadata.cover_image]
   );
+  const [effectiveCoverImageUrl, setEffectiveCoverImageUrl] = useState(transformedCoverImageUrl);
   const dialogueColor = useMemo(
     () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)'),
     [ttsPrimaryColor]
@@ -332,12 +337,16 @@ export function PostView({
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
 
   useEffect(() => {
+    setEffectiveCoverImageUrl(transformedCoverImageUrl);
+  }, [transformedCoverImageUrl]);
+
+  useEffect(() => {
     if (disableDynamicBackdrop) return;
-    setPostCoverUrl(transformedCoverImageUrl);
+    setPostCoverUrl(effectiveCoverImageUrl);
     return () => {
       setPostCoverUrl(null);
     };
-  }, [setPostCoverUrl, transformedCoverImageUrl, disableDynamicBackdrop]);
+  }, [setPostCoverUrl, effectiveCoverImageUrl, disableDynamicBackdrop]);
 
   /**
    * Handle Escape key to close the view
@@ -490,13 +499,18 @@ export function PostView({
           </Stack>
 
           {/* Cover Image - Ambient Mode */}
-          {transformedCoverImageUrl && (
+          {effectiveCoverImageUrl && (
             <Box sx={{ mb: 4 }}>
               <AmbientCoverArt
-                coverImageUrl={transformedCoverImageUrl}
+                coverImageUrl={effectiveCoverImageUrl}
                 alt={post.metadata.title}
                 isScheduledPreview={isScheduledPreview}
                 onAspectRatioChange={(val) => setCoverIsLandscape(val)}
+                onImageError={(url) => {
+                  if (url !== POST_COVER_PLACEHOLDER_IMAGE_URL) {
+                    setEffectiveCoverImageUrl(POST_COVER_PLACEHOLDER_IMAGE_URL);
+                  }
+                }}
               >
                 {hasLoreStoryNavigation && (
                   <Box
@@ -611,7 +625,7 @@ export function PostView({
                 type={postType}
                 text={post.content}
                 onPrimaryColorChange={setTtsPrimaryColor}
-                coverImageUrl={transformedCoverImageUrl ?? undefined}
+                coverImageUrl={effectiveCoverImageUrl}
               />
             </Box>
           )}
