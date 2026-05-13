@@ -24,7 +24,7 @@ Hicks had already stopped. Luna's staff hit the footwell as she braced. In the m
 
 One figure in the road.
 
-Lady Light. White hair. Black sparkles. The wrong side of her face still — that was Cotard's, unchanged since the house. But now there was blood on her, fresh damage layered over the pre-existing stillness. Her left arm — the one that had always been dead weight — hung heavier than before.
+Lady Light. White hair. Black sparkles. The wrong side of her face still — same damage, unchanged since the house. But now there was blood on her, fresh damage layered over the pre-existing stillness. Her left arm — the one that had always been dead weight — hung heavier than before.
 
 She limped forward.
 
