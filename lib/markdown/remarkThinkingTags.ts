@@ -44,6 +44,21 @@ function createThinkingNode(variant: 'inline' | 'block', children: Content[]): T
   };
 }
 
+function isOnlyContentInParent(
+  parent: Parent,
+  openingIndex: number,
+  closingIndex: number
+): boolean {
+  for (let i = 0; i < parent.children.length; i++) {
+    if (i >= openingIndex && i <= closingIndex) continue;
+    const child = parent.children[i] as Content | undefined;
+    if (!child) continue;
+    if (child.type === 'text' && (child as any).value?.trim() !== '') return false;
+    if (child.type !== 'text') return false;
+  }
+  return true;
+}
+
 function findClosingTag(children: Content[], startIndex: number): number {
   for (let index = startIndex + 1; index < children.length; index += 1) {
     const child = children[index];
@@ -80,7 +95,9 @@ function transformParent(parent: Parent | Root): void {
       }
 
       const innerChildren = (parent.children as Content[]).slice(index + 1, closingIndex);
-      transformedChildren.push(createThinkingNode(parentIsParagraph ? 'inline' : 'block', innerChildren));
+      const isStandalone = parentIsParagraph && isOnlyContentInParent(parent, index, closingIndex);
+      const variant = !parentIsParagraph || isStandalone ? 'block' : 'inline';
+      transformedChildren.push(createThinkingNode(variant, innerChildren));
       index = closingIndex;
       continue;
     }

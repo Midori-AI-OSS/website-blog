@@ -327,11 +327,11 @@ export function PostView({
     [ttsPrimaryColor]
   );
   const thinkingStrongBackground = useMemo(
-    () => hexToRgba(ttsPrimaryColor, 0.16, 'rgba(14, 116, 144, 0.16)'),
+    () => hexToRgba(ttsPrimaryColor, 0.5, 'rgba(14, 116, 144, 0.35)'),
     [ttsPrimaryColor]
   );
   const thinkingSoftBackground = useMemo(
-    () => hexToRgba(ttsPrimaryColor, 0.07, 'rgba(59, 130, 246, 0.08)'),
+    () => hexToRgba(ttsPrimaryColor, 0.25, 'rgba(59, 130, 246, 0.2)'),
     [ttsPrimaryColor]
   );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
@@ -393,6 +393,19 @@ export function PostView({
             backgroundPosition: '20% 50%',
             textShadow: '0 0 18px var(--PostView-thinking-glow)',
           },
+        },
+        '@keyframes thinking-float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-3px)' },
+        },
+        '@keyframes glitch-flicker': {
+          '0%, 100%': { opacity: 1 },
+          '3%': { opacity: 0.7, transform: 'translateX(1px)' },
+          '6%': { opacity: 1, transform: 'translateX(-1px)' },
+          '9%': { opacity: 0.85, transform: 'translateX(0)' },
+          '92%': { opacity: 1 },
+          '95%': { opacity: 0.75, transform: 'translateX(-0.5px)' },
+          '98%': { opacity: 1, transform: 'translateX(0.5px)' },
         },
         ...AMBIENT_PULSE_KEYFRAMES,
       }}
@@ -786,6 +799,42 @@ export function PostView({
                   background: 'transparent',
                 }
               },
+              '& pre:has(code.language-layerone)': {
+                backgroundColor: '#0d0618 !important',
+                border: '1px solid',
+                borderColor: 'rgba(0, 255, 200, 0.25)',
+                position: 'relative',
+                overflow: 'hidden',
+                my: 4,
+                p: 2,
+                borderRadius: 0,
+                textAlign: 'center',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 200, 0.04) 2px, rgba(0, 255, 200, 0.04) 4px)',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                },
+                '& code.language-layerone': {
+                  backgroundColor: 'transparent !important',
+                  color: '#7fffe0',
+                  fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                  p: 0,
+                  border: 'none',
+                  background: 'none !important',
+                  textAlign: 'center',
+                  textShadow: '1px 0 rgba(255, 0, 180, 0.4), -1px 0 rgba(0, 200, 255, 0.4)',
+                  animation: 'glitch-flicker 6s steps(1) infinite',
+                },
+                '& .hljs': {
+                  background: 'transparent',
+                },
+              },
               '& a': {
                 color: 'primary.400',
                 textDecoration: 'none',
@@ -807,8 +856,6 @@ export function PostView({
                 '--PostView-thinking-muted': thinkingMutedColor,
                 position: 'relative',
                 fontStyle: 'italic',
-              },
-              '& [data-thinking], & [data-thinking] p, & [data-thinking] li, & [data-thinking] span, & [data-thinking] strong, & [data-thinking] em, & [data-thinking] a': {
                 color: 'var(--PostView-thinking-color)',
                 background:
                   'linear-gradient(90deg, var(--PostView-thinking-muted) 0%, var(--PostView-thinking-color) 32%, rgba(255,255,255,0.96) 48%, var(--PostView-thinking-color) 64%, var(--PostView-thinking-muted) 100%)',
@@ -823,26 +870,42 @@ export function PostView({
                 textWrap: 'pretty',
               },
               '& [data-thinking="block"]': {
-                display: 'block',
-                my: 4,
-                p: { xs: 2, sm: 2.5 },
-                border: `1px solid ${thinkingSoftBorderColor}`,
-                borderLeft: `4px solid ${thinkingBorderColor}`,
-                background:
-                  `linear-gradient(135deg, ${thinkingStrongBackground}, ${thinkingSoftBackground} 45%, rgba(255, 255, 255, 0.035))`,
-                boxShadow: `inset 0 0 28px ${thinkingSoftBackground}, 0 0 24px ${thinkingSoftBackground}`,
-                '& p': {
-                  my: 0,
-                },
-                '& p + p': {
-                  mt: 2,
-                },
+                textAlign: 'center',
+                borderLeft: '4px solid',
+                borderColor: 'primary.500',
+                px: { xs: 3, sm: 4 },
+                py: 2,
+                my: 6,
+                fontStyle: 'italic',
+                backgroundColor: 'rgba(139, 92, 246, 0.05)',
+                backgroundImage: `linear-gradient(90deg, var(--PostView-thinking-muted) 0%, var(--PostView-thinking-color) 32%, rgba(255,255,255,0.96) 48%, var(--PostView-thinking-color) 64%, var(--PostView-thinking-muted) 100%), none`,
+                backgroundSize: '260% 100%, auto',
+                backgroundPosition: '160% 50%, 0 0',
+                backgroundClip: 'text, border-box',
+                WebkitTextFillColor: 'transparent',
+                color: 'text.primary',
+                boxShadow: `inset 0 0 28px rgba(139, 92, 246, 0.08), 0 0 32px ${thinkingGlowColor}`,
+                animation: 'thinking-float 6s ease-in-out infinite',
+                '& p': { my: 0 },
+                '& p + p': { mt: 2 },
               },
               '@media (prefers-reduced-motion: reduce)': {
-                '& [data-thinking], & [data-thinking] p, & [data-thinking] li, & [data-thinking] span, & [data-thinking] strong, & [data-thinking] em, & [data-thinking] a': {
+                '& [data-thinking]': {
                   animation: 'none',
                   background: 'none',
                   WebkitTextFillColor: 'currentColor',
+                },
+                '& [data-thinking="block"]': {
+                  animation: 'none',
+                  backgroundImage: 'none',
+                  backgroundClip: 'border-box',
+                  WebkitTextFillColor: 'currentColor',
+                  bgcolor: 'rgba(139, 92, 246, 0.05)',
+                },
+                '& pre code.language-layerone': {
+                  animation: 'none',
+                  textShadow: 'none',
+                  color: '#7fffe0',
                 },
               },
               '& img': {
