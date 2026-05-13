@@ -15,6 +15,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { keyframes } from '@emotion/react';
 import {
   Box,
   Typography,
@@ -48,6 +49,39 @@ import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import { AmbientCoverArt, AMBIENT_PULSE_KEYFRAMES } from '@/components/blog/AmbientCoverArt';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
+
+const shimmerKeyframes = keyframes({
+  '0%': { backgroundPosition: '-1000px 0' },
+  '100%': { backgroundPosition: '1000px 0' },
+});
+
+const thinkingPulseKeyframes = keyframes({
+  '0%, 100%': {
+    opacity: 0.92,
+    backgroundPosition: '160% 50%',
+    textShadow: '0 0 0 transparent',
+  },
+  '50%': {
+    opacity: 1,
+    backgroundPosition: '20% 50%',
+    textShadow: '0 0 18px var(--PostView-thinking-glow)',
+  },
+});
+
+const thinkingFloatKeyframes = keyframes({
+  '0%, 100%': { transform: 'translateY(0)' },
+  '50%': { transform: 'translateY(-3px)' },
+});
+
+const glitchFlickerKeyframes = keyframes({
+  '0%, 100%': { opacity: 1 },
+  '3%': { opacity: 0.7, transform: 'translateX(1px)' },
+  '6%': { opacity: 1, transform: 'translateX(-1px)' },
+  '9%': { opacity: 0.85, transform: 'translateX(0)' },
+  '92%': { opacity: 1 },
+  '95%': { opacity: 0.75, transform: 'translateX(-0.5px)' },
+  '98%': { opacity: 1, transform: 'translateX(0.5px)' },
+});
 
 /**
  * Props for PostView component
@@ -661,35 +695,6 @@ export function PostView({
         ) : (
           <Box
             sx={{
-              '@keyframes shimmer': {
-                '0%': { backgroundPosition: '-1000px 0' },
-                '100%': { backgroundPosition: '1000px 0' }
-              },
-              '@keyframes thinking-pulse': {
-                '0%, 100%': {
-                  opacity: 0.92,
-                  backgroundPosition: '160% 50%',
-                  textShadow: '0 0 0 transparent',
-                },
-                '50%': {
-                  opacity: 1,
-                  backgroundPosition: '20% 50%',
-                  textShadow: '0 0 18px var(--PostView-thinking-glow)',
-                },
-              },
-              '@keyframes thinking-float': {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-3px)' },
-              },
-              '@keyframes glitch-flicker': {
-                '0%, 100%': { opacity: 1 },
-                '3%': { opacity: 0.7, transform: 'translateX(1px)' },
-                '6%': { opacity: 1, transform: 'translateX(-1px)' },
-                '9%': { opacity: 0.85, transform: 'translateX(0)' },
-                '92%': { opacity: 1 },
-                '95%': { opacity: 0.75, transform: 'translateX(-0.5px)' },
-                '98%': { opacity: 1, transform: 'translateX(0.5px)' },
-              },
               // Typography settings for readability
               fontSize: { xs: '1rem', sm: '1.125rem' }, // 16px on phones, 18px up
               lineHeight: 1.8,
@@ -772,7 +777,7 @@ export function PostView({
                 // Shimmer Effect
                 background: 'linear-gradient(to right, rgba(20, 83, 45, 0.6) 0%, rgba(74, 222, 128, 0.25) 50%, rgba(20, 83, 45, 0.6) 100%)',
                 backgroundSize: '1000px 100%',
-                animation: 'shimmer 6s linear infinite',
+                animation: `${shimmerKeyframes} 6s linear infinite`,
                 '&:nth-of-type(2n)': { animationDuration: '4s' },
                 '&:nth-of-type(3n)': { animationDuration: '8s' },
                 '&:nth-of-type(5n)': { animationDuration: '5s' },
@@ -829,7 +834,7 @@ export function PostView({
                   background: 'none !important',
                   textAlign: 'center',
                   textShadow: '1px 0 rgba(255, 0, 180, 0.4), -1px 0 rgba(0, 200, 255, 0.4)',
-                  animation: 'glitch-flicker 6s steps(1) infinite',
+                  animation: `${glitchFlickerKeyframes} 6s steps(1) infinite`,
                 },
                 '& .hljs': {
                   background: 'transparent',
@@ -864,7 +869,7 @@ export function PostView({
                 WebkitBackgroundClip: 'text',
                 backgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                animation: 'thinking-pulse 18s ease-in-out infinite',
+                animation: `${thinkingPulseKeyframes} 18s ease-in-out infinite`,
               },
               '& [data-thinking="inline"]': {
                 textWrap: 'pretty',
@@ -885,7 +890,7 @@ export function PostView({
                 WebkitTextFillColor: 'transparent',
                 color: 'text.primary',
                 boxShadow: `inset 0 0 28px rgba(139, 92, 246, 0.08), 0 0 32px ${thinkingGlowColor}`,
-                animation: 'thinking-float 6s ease-in-out infinite',
+                animation: `${thinkingPulseKeyframes} 18s ease-in-out infinite, ${thinkingFloatKeyframes} 6s ease-in-out infinite`,
                 '& p': { my: 0 },
                 '& p + p': { mt: 2 },
               },
@@ -918,7 +923,7 @@ export function PostView({
                 borderColor: 'rgba(255,255,255,0.1)',
                 background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)',
                 backgroundSize: '1000px 100%',
-                animation: 'shimmer 15s linear infinite',
+                animation: `${shimmerKeyframes} 15s linear infinite`,
               },
               '& hr': {
                 border: 'none',
