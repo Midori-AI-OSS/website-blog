@@ -14,7 +14,7 @@
  * - Follows MUI Joy patterns from Big-AGI
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { keyframes } from '@emotion/react';
 import {
   Box,
@@ -317,6 +317,7 @@ export function PostView({
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const dateString = useMemo(() => getPostDateString(post), [post.filename, post.metadata.date]);
   const formattedDate = useMemo(
@@ -402,6 +403,17 @@ export function PostView({
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [post.filename]);
+
+  useLayoutEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+    root.querySelectorAll<HTMLElement>('[data-thinking]').forEach(el => {
+      el.style.animationDelay = `${-Math.random() * 30}s`;
+    });
+    root.querySelectorAll<HTMLElement>('code.language-layerone').forEach(el => {
+      el.style.animationDelay = `${-Math.random() * 10}s`;
+    });
+  }, [markdownContent]);
 
   return (
     <Box
@@ -694,6 +706,7 @@ export function PostView({
           </Card>
         ) : (
           <Box
+            ref={contentRef}
             sx={{
               // Typography settings for readability
               fontSize: { xs: '1rem', sm: '1.125rem' }, // 16px on phones, 18px up
