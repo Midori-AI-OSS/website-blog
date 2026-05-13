@@ -307,7 +307,7 @@ export function PostView({
     [ttsPrimaryColor]
   );
   const thinkingColor = useMemo(
-    () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.2) : '#bae6fd'),
+    () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.45) : '#bae6fd'),
     [ttsPrimaryColor]
   );
   const thinkingGlowColor = useMemo(
@@ -378,35 +378,6 @@ export function PostView({
         mx: 'auto',
         px: { xs: 0, sm: 4 },
         py: { xs: 2.5, sm: 6 },
-        '@keyframes shimmer': {
-          '0%': { backgroundPosition: '-1000px 0' },
-          '100%': { backgroundPosition: '1000px 0' }
-        },
-        '@keyframes thinking-pulse': {
-          '0%, 100%': {
-            opacity: 0.92,
-            backgroundPosition: '160% 50%',
-            textShadow: '0 0 0 transparent',
-          },
-          '50%': {
-            opacity: 1,
-            backgroundPosition: '20% 50%',
-            textShadow: '0 0 18px var(--PostView-thinking-glow)',
-          },
-        },
-        '@keyframes thinking-float': {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-3px)' },
-        },
-        '@keyframes glitch-flicker': {
-          '0%, 100%': { opacity: 1 },
-          '3%': { opacity: 0.7, transform: 'translateX(1px)' },
-          '6%': { opacity: 1, transform: 'translateX(-1px)' },
-          '9%': { opacity: 0.85, transform: 'translateX(0)' },
-          '92%': { opacity: 1 },
-          '95%': { opacity: 0.75, transform: 'translateX(-0.5px)' },
-          '98%': { opacity: 1, transform: 'translateX(0.5px)' },
-        },
         ...AMBIENT_PULSE_KEYFRAMES,
       }}
     >
@@ -690,6 +661,35 @@ export function PostView({
         ) : (
           <Box
             sx={{
+              '@keyframes shimmer': {
+                '0%': { backgroundPosition: '-1000px 0' },
+                '100%': { backgroundPosition: '1000px 0' }
+              },
+              '@keyframes thinking-pulse': {
+                '0%, 100%': {
+                  opacity: 0.92,
+                  backgroundPosition: '160% 50%',
+                  textShadow: '0 0 0 transparent',
+                },
+                '50%': {
+                  opacity: 1,
+                  backgroundPosition: '20% 50%',
+                  textShadow: '0 0 18px var(--PostView-thinking-glow)',
+                },
+              },
+              '@keyframes thinking-float': {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-3px)' },
+              },
+              '@keyframes glitch-flicker': {
+                '0%, 100%': { opacity: 1 },
+                '3%': { opacity: 0.7, transform: 'translateX(1px)' },
+                '6%': { opacity: 1, transform: 'translateX(-1px)' },
+                '9%': { opacity: 0.85, transform: 'translateX(0)' },
+                '92%': { opacity: 1 },
+                '95%': { opacity: 0.75, transform: 'translateX(-0.5px)' },
+                '98%': { opacity: 1, transform: 'translateX(0.5px)' },
+              },
               // Typography settings for readability
               fontSize: { xs: '1rem', sm: '1.125rem' }, // 16px on phones, 18px up
               lineHeight: 1.8,
