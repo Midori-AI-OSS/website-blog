@@ -9,11 +9,12 @@ interface Subscriber {
 }
 
 const UPSTREAM_BASE = 'https://radio.midori-ai.xyz';
-const BACKOFF_DELAYS_MS = [1000, 2000, 4000, 8000] as const;
-const MAX_BACKOFF_MS = 8000;
+const ESTIMATED_BITRATE_BPS: Record<string, number> = { low: 96000, medium: 160000, high: 320000 };
+const MIN_RECONNECT_DELAY_MS = 60_000;
+const MAX_RECONNECT_DELAY_MS = 600_000;
 const IDLE_CLEANUP_MS = 30_000;
 const WATCHDOG_INTERVAL_MS = 15_000;
-const WATCHDOG_STALL_MS = 30_000;
+const WATCHDOG_STALL_MS = 45_000;
 const RECONNECT_SUPPRESS_AFTER_STOP_MS = 1500;
 
 class RadioBroadcaster {
@@ -39,6 +40,7 @@ class RadioBroadcaster {
   private active = false;
   private lastByteTime = 0;
   private suppressReconnectUntil = 0;
+  private totalBytesLastBurst = 0;
 
   private constructor(
     private channel: string,
@@ -90,6 +92,7 @@ class RadioBroadcaster {
     this.clearWatchdog();
     this.clearIdleTimer();
     this.suppressReconnectUntil = Date.now() + RECONNECT_SUPPRESS_AFTER_STOP_MS;
+    this.totalBytesLastBurst = 0;
 
     for (const sub of this.subscribers) {
       sub.close();
@@ -121,6 +124,7 @@ class RadioBroadcaster {
     this.reconnectAttempt = 0;
     this.reconnectGeneration++;
     this.lastByteTime = Date.now();
+    this.totalBytesLastBurst = 0;
     this.connectUpstream(this.reconnectGeneration);
   }
 
@@ -171,7 +175,8 @@ class RadioBroadcaster {
 
     this.clearReconnectTimer();
 
-    const delay = this.getBackoffDelay();
+    const delay = this.getReconnectDelay();
+    console.log(`[radio] RECONNECT gen=${generation} attempt=${this.reconnectAttempt} delay=${(delay / 1000).toFixed(0)}s subs=${this.subscribers.size} lastBurst=${(this.totalBytesLastBurst / 1024).toFixed(0)}KB`);
     this.reconnectTimer = setTimeout(() => {
       if (generation !== this.reconnectGeneration) return;
       if (!this.active) return;
@@ -181,9 +186,15 @@ class RadioBroadcaster {
     }, delay);
   }
 
-  private getBackoffDelay(): number {
-    const index = Math.min(this.reconnectAttempt, BACKOFF_DELAYS_MS.length - 1);
-    return BACKOFF_DELAYS_MS[index] ?? MAX_BACKOFF_MS;
+  private getReconnectDelay(): number {
+    if (this.totalBytesLastBurst > 0) {
+      const bitrate = ESTIMATED_BITRATE_BPS[this.quality] ?? 160000;
+      const playbackMs = (this.totalBytesLastBurst * 8 / bitrate) * 1000;
+      return Math.max(MIN_RECONNECT_DELAY_MS, Math.min(MAX_RECONNECT_DELAY_MS, Math.round(playbackMs)));
+    }
+    const shortDelays = [2000, 4000, 8000, 16000];
+    const index = Math.min(this.reconnectAttempt, shortDelays.length - 1);
+    return shortDelays[index] ?? 16000;
   }
 
   private async connectUpstream(generation: number) {
@@ -194,6 +205,8 @@ class RadioBroadcaster {
     this.clearWatchdog();
 
     const url = `${UPSTREAM_BASE}/radio/v1/stream?channel=${encodeURIComponent(this.channel)}&q=${encodeURIComponent(this.quality)}`;
+    const connId = generation;
+    console.log(`[radio] CONNECT #${connId} attempt=${this.reconnectAttempt} subs=${this.subscribers.size} url=${url}`);
 
     try {
       const controller = new AbortController();
@@ -210,6 +223,8 @@ class RadioBroadcaster {
       if (generation !== this.reconnectGeneration) return;
 
       if (!response.ok || !response.body) {
+        console.log(`[radio] CONNECT #${connId} failed: HTTP ${response.status} hasBody=${response.body !== null}`);
+        this.totalBytesLastBurst = 0;
         this.scheduleReconnect(generation);
         return;
       }
@@ -218,10 +233,13 @@ class RadioBroadcaster {
       this.startWatchdog(generation);
 
       const reader = response.body.getReader();
+      let totalBytes = 0;
+      let firstBytesHex: string | null = null;
 
       while (true) {
         if (generation !== this.reconnectGeneration) {
           reader.cancel().catch(() => {});
+          console.log(`[radio] CONNECT #${connId} aborted (gen changed) after ${(totalBytes / 1024).toFixed(1)}KB`);
           return;
         }
 
@@ -229,21 +247,34 @@ class RadioBroadcaster {
         try {
           result = await reader.read() as { done: boolean; value?: Uint8Array };
         } catch {
+          this.totalBytesLastBurst = 0;
+          console.log(`[radio] CONNECT #${connId} reader error after ${(totalBytes / 1024).toFixed(1)}KB`);
           this.scheduleReconnect(generation);
           return;
         }
 
         if (result.done) {
+          this.totalBytesLastBurst = totalBytes;
+          console.log(`[radio] CONNECT #${connId} DONE clean EOF after ${(totalBytes / 1024).toFixed(1)}KB firstBytes=${firstBytesHex}`);
           this.scheduleReconnect(generation);
           return;
         }
 
         if (result.value && result.value.byteLength > 0) {
+          if (firstBytesHex === null) {
+            const previewLen = Math.min(result.value.byteLength, 64);
+            firstBytesHex = Array.from(result.value.slice(0, previewLen))
+              .map((b) => b.toString(16).padStart(2, '0'))
+              .join('');
+          }
+          totalBytes += result.value.byteLength;
           this.lastByteTime = Date.now();
           this.broadcast(result.value);
         }
       }
     } catch (error) {
+      this.totalBytesLastBurst = 0;
+      console.log(`[radio] CONNECT #${connId} exception: ${error instanceof Error ? error.message : String(error)}`);
       if (error instanceof DOMException && error.name === 'AbortError') {
         return;
       }
@@ -265,6 +296,7 @@ class RadioBroadcaster {
       if (stallDuration >= WATCHDOG_STALL_MS) {
         this.clearWatchdog();
         this.abortUpstream();
+        this.totalBytesLastBurst = 0;
         this.scheduleReconnect(generation);
       }
     }, WATCHDOG_INTERVAL_MS);
