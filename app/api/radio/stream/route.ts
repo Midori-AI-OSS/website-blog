@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { normalizeChannel, normalizeQuality } from '@/lib/radio/contract';
+import { type NextRequest, NextResponse } from 'next/server';
 import { RadioBroadcaster } from '@/lib/radio/broadcaster';
+import { normalizeChannel, normalizeQuality } from '@/lib/radio/contract';
 
 export const runtime = 'nodejs';
 

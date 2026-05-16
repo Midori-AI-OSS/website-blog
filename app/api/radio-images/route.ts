@@ -105,7 +105,7 @@ export async function GET() {
         generated_at: new Date().toISOString(),
         error: message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

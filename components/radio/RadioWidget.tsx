@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import ButtonGroup from '@mui/joy/ButtonGroup';
@@ -10,6 +9,8 @@ import Stack from '@mui/joy/Stack';
 import Tooltip from '@mui/joy/Tooltip';
 import Typography from '@mui/joy/Typography';
 import { Music, Pin, PinOff, Play, Square } from 'lucide-react';
+import * as React from 'react';
+import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import {
   buildStreamUrl,
   fetchArt,
@@ -30,7 +31,6 @@ import {
   saveRadioQuality,
   saveRadioVolume,
 } from '@/lib/radio/state';
-import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 
 const PLACEHOLDER_IMAGE = '/blog/placeholder.png';
 const HOVER_CLOSE_LINGER_MS = 3000;
@@ -88,7 +88,9 @@ function useDesktopEligibility(minWidth: number = 1024): boolean {
     window.addEventListener('resize', update);
 
     return () => {
-      cleanup.forEach((fn) => fn());
+      cleanup.forEach((fn) => {
+        fn();
+      });
       window.removeEventListener('resize', update);
     };
   }, [minWidth]);
@@ -129,15 +131,15 @@ export default function RadioWidget() {
   const [channel, setChannel] = React.useState('all');
   const [playbackDesired, setPlaybackDesired] = React.useState(false);
   const [streamState, setStreamState] = React.useState<StreamState>('idle');
-  const [statusText, setStatusText] = React.useState('Idle');
-  const [lastError, setLastError] = React.useState<string | null>(null);
+  const [_statusText, setStatusText] = React.useState('Idle');
+  const [_lastError, setLastError] = React.useState<string | null>(null);
 
   const [channels, setChannels] = React.useState<ChannelEntry[]>([]);
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [imageInventory, setImageInventory] = React.useState<RadioImageInventory | null>(null);
   const [backdropUrl, setBackdropUrl] = React.useState(PLACEHOLDER_IMAGE);
-  const [backdropSource, setBackdropSource] = React.useState<BackdropSource>('placeholder');
+  const [_backdropSource, setBackdropSource] = React.useState<BackdropSource>('placeholder');
 
   React.useEffect(() => {
     qualityRef.current = quality;
@@ -320,7 +322,7 @@ export default function RadioWidget() {
       audioRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [startPlayback, volume]);
 
   React.useEffect(() => {
     return () => {
@@ -466,7 +468,7 @@ export default function RadioWidget() {
 
     stopPlayback();
     startPlayback();
-  }, [channel, refreshMetadata, hydrated, stopPlayback, startPlayback]);
+  }, [refreshMetadata, hydrated, stopPlayback, startPlayback]);
 
   const fallbackIdentity = `${currentTrack?.title ?? 'unknown'}::${currentTrack?.track_id ?? 'unknown'}`;
   const fallbackImage = React.useMemo(() => {
@@ -554,9 +556,7 @@ export default function RadioWidget() {
         transformOrigin: 'bottom right',
         transition:
           'width 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.24s ease, background-color 0.24s ease',
-        boxShadow: expanded
-          ? '0 24px 64px rgba(0, 0, 0, 0.5)'
-          : '0 12px 32px rgba(0, 0, 0, 0.35)',
+        boxShadow: expanded ? '0 24px 64px rgba(0, 0, 0, 0.5)' : '0 12px 32px rgba(0, 0, 0, 0.35)',
         backgroundColor: expanded ? 'rgba(8, 8, 14, 0.52)' : 'rgba(8, 8, 14, 0.74)',
         backdropFilter: expanded ? 'blur(24px)' : 'blur(34px)',
       }}
@@ -595,7 +595,12 @@ export default function RadioWidget() {
             height: '100%',
           }}
         >
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ minHeight: 42 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ minHeight: 42 }}
+          >
             <Typography level="title-sm">Midori AI Radio</Typography>
             <Button
               size="sm"
@@ -672,7 +677,10 @@ export default function RadioWidget() {
               variant="soft"
               arrow
             >
-              <Typography level="body-xs" sx={{ color: 'text.tertiary', cursor: 'help', width: 'fit-content' }}>
+              <Typography
+                level="body-xs"
+                sx={{ color: 'text.tertiary', cursor: 'help', width: 'fit-content' }}
+              >
                 Quality
               </Typography>
             </Tooltip>

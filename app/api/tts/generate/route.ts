@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,14 +17,14 @@ export async function POST(request: NextRequest) {
     if (!text || !slug || !type) {
       return NextResponse.json(
         { error: 'Missing required fields: text, slug, type' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!['blog', 'lore'].includes(type)) {
       return NextResponse.json(
         { error: 'Invalid type, must be "blog" or "lore"' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,11 +46,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown upstream error';
+    const message = error instanceof Error ? error.message : 'Unknown upstream error';
     return NextResponse.json(
       { error: 'TTS service unavailable', detail: message },
-      { status: 502 }
+      { status: 502 },
     );
   }
 }

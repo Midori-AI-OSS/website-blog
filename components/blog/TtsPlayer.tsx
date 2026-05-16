@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, IconButton, Stack, Typography } from '@mui/joy';
 import { Headphones, Pause, Play, Square } from 'lucide-react';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   DEFAULT_ART_PALETTE,
-  extractPaletteFromImage,
   type ExtractedPalette,
+  extractPaletteFromImage,
 } from '@/lib/theme/artPalette';
 
 type TtsState = 'not_generated' | 'generating' | 'ready';
@@ -42,18 +43,13 @@ function parseStatusPayload(raw: unknown): TtsStatusPayload | null {
 
   const parsedGenerated = Number(value.generated_chunks ?? 0);
   const parsedTotal = Number(value.total_chunks ?? 0);
-  const totalChunks =
-    Number.isFinite(parsedTotal) && parsedTotal > 0 ? Math.floor(parsedTotal) : 0;
+  const totalChunks = Number.isFinite(parsedTotal) && parsedTotal > 0 ? Math.floor(parsedTotal) : 0;
   const generatedChunks =
-    Number.isFinite(parsedGenerated) && parsedGenerated > 0
-      ? Math.floor(parsedGenerated)
-      : 0;
+    Number.isFinite(parsedGenerated) && parsedGenerated > 0 ? Math.floor(parsedGenerated) : 0;
   const boundedGenerated =
     totalChunks > 0 ? Math.min(generatedChunks, totalChunks) : generatedChunks;
   const playable =
-    status === 'ready'
-      ? true
-      : Boolean(value.playable ?? boundedGenerated >= MIN_PLAYABLE_CHUNKS);
+    status === 'ready' ? true : Boolean(value.playable ?? boundedGenerated >= MIN_PLAYABLE_CHUNKS);
 
   return {
     status,
@@ -86,13 +82,17 @@ function getTimelineState(audio: HTMLAudioElement) {
     duration: safeDuration,
     currentTime: safeCurrentTime,
     progress:
-      safeDuration > 0
-        ? Math.min(100, Math.max(0, (safeCurrentTime / safeDuration) * 100))
-        : 0,
+      safeDuration > 0 ? Math.min(100, Math.max(0, (safeCurrentTime / safeDuration) * 100)) : 0,
   };
 }
 
-export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChange }: TtsPlayerProps) {
+export function TtsPlayer({
+  slug,
+  type,
+  text,
+  coverImageUrl,
+  onPrimaryColorChange,
+}: TtsPlayerProps) {
   const [state, setState] = useState<TtsState>('not_generated');
   const [playback, setPlayback] = useState<PlaybackState>('stopped');
   const [progress, setProgress] = useState(0);
@@ -204,9 +204,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
 
     const activeIndex = currentChunkIndexRef.current;
     const baseOffset =
-      activeIndex !== null
-        ? sumKnownChunkDurations(activeIndex)
-        : streamingOffsetRef.current;
+      activeIndex !== null ? sumKnownChunkDurations(activeIndex) : streamingOffsetRef.current;
 
     const chunkDuration = getSafeDuration(audio.duration);
     const chunkCurrent = getSafeCurrentTime(audio.currentTime, chunkDuration);
@@ -214,9 +212,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
     const generatedDuration = sumKnownChunkDurations(generatedChunksRef.current);
     const totalDuration = Math.max(totalCurrent, generatedDuration);
     const nextProgress =
-      totalDuration > 0
-        ? Math.min(100, Math.max(0, (totalCurrent / totalDuration) * 100))
-        : 0;
+      totalDuration > 0 ? Math.min(100, Math.max(0, (totalCurrent / totalDuration) * 100)) : 0;
 
     setDuration(totalDuration);
     setCurrentTime(totalCurrent);
@@ -261,7 +257,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
         setPlayback('stopped');
       }
     },
-    [clearChunkRetry, revokeCurrentChunkUrl, sharedAudioUrl]
+    [clearChunkRetry, revokeCurrentChunkUrl, sharedAudioUrl],
   );
 
   const tryStartChunkPlayback = useCallback(
@@ -343,7 +339,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
       sharedChunkBaseUrl,
       sumKnownChunkDurations,
       syncTimelineFromAudio,
-    ]
+    ],
   );
 
   const beginStreamingPlayback = useCallback(async () => {
@@ -420,11 +416,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
           setState('ready');
         }
 
-        if (
-          canStartPlayback &&
-          generationRequestedRef.current &&
-          !streamingActiveRef.current
-        ) {
+        if (canStartPlayback && generationRequestedRef.current && !streamingActiveRef.current) {
           await beginStreamingPlayback();
         }
         return 'generating';
@@ -435,7 +427,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
       }
       return 'not_generated';
     },
-    [beginStreamingPlayback, loadReadyAudio, prepareStreamingControls, stopPolling]
+    [beginStreamingPlayback, loadReadyAudio, prepareStreamingControls, stopPolling],
   );
 
   const checkStatus = useCallback(
@@ -443,7 +435,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
       try {
         const response = await fetch(
           `/api/tts/status?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}`,
-          { cache: 'no-store' }
+          { cache: 'no-store' },
         );
         if (!response.ok) return null;
         const raw = await response.json();
@@ -454,7 +446,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
         return null;
       }
     },
-    [applyStatus, slug, type]
+    [applyStatus, slug, type],
   );
 
   const startPolling = useCallback(() => {
@@ -703,7 +695,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
   const gradientBg = useMemo(
     () =>
       `linear-gradient(to right, ${colors.tertiary}, ${colors.secondary}, ${colors.primary}, ${colors.secondary}, ${colors.tertiary})`,
-    [colors]
+    [colors],
   );
 
   const isVisible = (target: TtsState) => state === target;
@@ -917,7 +909,7 @@ export function TtsPlayer({ slug, type, text, coverImageUrl, onPrimaryColorChang
             cursor: canSeek ? 'pointer' : 'default',
           }}
           onClick={(e) => {
-            if (!canSeek || !audioRef.current || !audioRef.current.duration) return;
+            if (!canSeek || !audioRef.current?.duration) return;
             const rect = e.currentTarget.getBoundingClientRect();
             const ratio = (e.clientX - rect.left) / rect.width;
             audioRef.current.currentTime = ratio * audioRef.current.duration;

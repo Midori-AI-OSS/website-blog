@@ -1,12 +1,11 @@
 /**
  * BlogCard Usage Example
- * 
+ *
  * Demonstrates how to use the BlogCard component with sample data
  */
 
-import React from 'react';
-import { BlogCard } from './BlogCard';
 import type { ParsedPost } from '../../lib/blog/parser';
+import { BlogCard } from './BlogCard';
 
 /**
  * Example blog posts for testing
@@ -57,25 +56,25 @@ export function BlogCardExample() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
       <h1>Blog Posts</h1>
-      
+
       {/* Example 1: Card with href (recommended for proper linking) */}
-      <BlogCard 
-        post={examplePosts[0]!} 
+      <BlogCard
+        post={examplePosts[0]!}
         href="/blog/2026-01-17"
         onClick={() => handlePostClick(examplePosts[0]!)}
       />
 
       {/* Example 2: Card with variant and href */}
-      <BlogCard 
-        post={examplePosts[1]!} 
+      <BlogCard
+        post={examplePosts[1]!}
         href="/blog/2026-01-15"
         onClick={() => handlePostClick(examplePosts[1]!)}
         variant="outlined"
       />
 
       {/* Example 3: Card with onClick only (legacy mode) */}
-      <BlogCard 
-        post={examplePosts[2]!} 
+      <BlogCard
+        post={examplePosts[2]!}
         onClick={() => handlePostClick(examplePosts[2]!)}
         color="primary"
         variant="soft"
@@ -101,7 +100,7 @@ export function BlogCardList() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
       {examplePosts.map((post) => (
-        <BlogCard 
+        <BlogCard
           key={post.filename}
           post={post}
           href={getPostHref(post)}

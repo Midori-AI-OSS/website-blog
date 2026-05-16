@@ -16,7 +16,7 @@
 
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 const LORE_IMAGES_DIR = join(process.cwd(), 'public/lore');
 const CACHE_TTL = 60000; // 1 minute in milliseconds
@@ -59,8 +59,8 @@ function getContentType(filename: string): string {
  * Example: /api/lore-images/luna-dnd/map.png
  */
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> },
 ) {
   try {
     // Next.js 15+: params is now a Promise
@@ -118,4 +118,3 @@ export async function GET(
     return new NextResponse('Internal server error', { status: 500 });
   }
 }
-

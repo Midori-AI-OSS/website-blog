@@ -16,6 +16,11 @@
 - Ensure visible focus states for keyboard users.
 - For UI-impacting work, store validation evidence in `/tmp/agents-artifacts/` with viewport results and any exceptions.
 
+## Linting & Formatting
+- After making code changes, run `bun lint` (or `bunx biome check .`) to check for lint and formatting issues.
+- Fix any issues before committing. Use `bunx biome check --write .` to auto-fix most violations.
+- If lint issues remain in a PR, report them clearly in the PR description with file paths and rule names.
+
 ## Markdown Content Rules
 - In `blog/posts/*.md` and `lore/posts/*.md`, curly double quotes are banned.
 - Use straight double quotes (`"`) instead of `“` and `”`.

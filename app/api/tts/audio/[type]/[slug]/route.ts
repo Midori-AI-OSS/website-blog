@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -7,16 +7,13 @@ const TTS_BASE = 'http://127.0.0.1:8888';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ type: string; slug: string }> }
+  { params }: { params: Promise<{ type: string; slug: string }> },
 ) {
   try {
     const { type, slug } = await params;
 
     if (!['blog', 'lore'].includes(type)) {
-      return NextResponse.json(
-        { error: 'Invalid type' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
 
     const upstreamHeaders = new Headers();
@@ -30,21 +27,15 @@ export async function GET(
       {
         cache: 'no-store',
         headers: upstreamHeaders,
-      }
+      },
     );
 
     if (upstream.status === 404) {
-      return NextResponse.json(
-        { error: 'Audio not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Audio not found' }, { status: 404 });
     }
 
     if (!upstream.ok) {
-      return NextResponse.json(
-        { error: 'Upstream error' },
-        { status: upstream.status }
-      );
+      return NextResponse.json({ error: 'Upstream error' }, { status: upstream.status });
     }
 
     const responseHeaders = new Headers(upstream.headers);
@@ -56,11 +47,10 @@ export async function GET(
       headers: responseHeaders,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown upstream error';
+    const message = error instanceof Error ? error.message : 'Unknown upstream error';
     return NextResponse.json(
       { error: 'TTS service unavailable', detail: message },
-      { status: 502 }
+      { status: 502 },
     );
   }
 }

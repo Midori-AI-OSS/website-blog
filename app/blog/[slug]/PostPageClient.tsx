@@ -21,12 +21,12 @@ export function PostPageClient({
   scheduledPublishDate,
 }: PostPageClientProps) {
   const router = useRouter();
-  
+
   const handleClose = () => {
     // Navigate back to the blog list
     router.push('/blog');
   };
-  
+
   return (
     <PostView
       post={post}

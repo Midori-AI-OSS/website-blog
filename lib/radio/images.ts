@@ -19,7 +19,7 @@ export function createDeterministicHash(input: string): number {
 export function pickDeterministicImage(
   images: readonly string[],
   identityKey: string,
-  placeholder: string
+  placeholder: string,
 ): string {
   if (images.length === 0) {
     return placeholder;
@@ -30,10 +30,7 @@ export function pickDeterministicImage(
   return images[index] ?? placeholder;
 }
 
-export function appendTrackCacheKey(
-  url: string,
-  trackId: string | null | undefined
-): string {
+export function appendTrackCacheKey(url: string, trackId: string | null | undefined): string {
   const normalizedTrackId = trackId?.trim();
   if (!normalizedTrackId) {
     return url;
@@ -51,9 +48,7 @@ export function appendTrackCacheKey(
   params.set('midoriai_track', normalizedTrackId);
 
   const nextQuery = params.toString();
-  return nextQuery.length > 0
-    ? `${pathPart}?${nextQuery}${hashPart}`
-    : `${pathPart}${hashPart}`;
+  return nextQuery.length > 0 ? `${pathPart}?${nextQuery}${hashPart}` : `${pathPart}${hashPart}`;
 }
 
 export async function preloadImage(url: string, timeoutMs: number = 7000): Promise<boolean> {

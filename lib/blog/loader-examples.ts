@@ -1,13 +1,13 @@
 /**
  * Example usage of the Post Loader in Next.js
- * 
+ *
  * This file demonstrates how to use the loader in different scenarios:
  * - SSG (Static Site Generation) at build time
  * - SSR (Server-Side Rendering) with caching
  * - API Routes
  */
 
-import { loadAllPosts, loadAllPostsCached, paginatePosts, getPostBySlug } from './loader';
+import { getPostBySlug, loadAllPosts, loadAllPostsCached, paginatePosts } from './loader';
 
 // ============================================================================
 // EXAMPLE 1: SSG - Generate static pages at build time (Recommended)
@@ -19,7 +19,7 @@ import { loadAllPosts, loadAllPostsCached, paginatePosts, getPostBySlug } from '
  */
 export async function generateStaticParams() {
   const posts = await loadAllPosts();
-  
+
   return posts.map((post) => ({
     slug: post.filename.replace('.md', ''),
   }));
@@ -32,11 +32,11 @@ export async function generateStaticParams() {
 export async function getPostData(slug: string) {
   const posts = await loadAllPosts();
   const post = getPostBySlug(posts, slug);
-  
+
   if (!post) {
     return null;
   }
-  
+
   return post;
 }
 
@@ -47,7 +47,7 @@ export async function getPostData(slug: string) {
 export async function getBlogPageData(page: number = 0) {
   const posts = await loadAllPosts();
   const paginated = paginatePosts(posts, page, 10);
-  
+
   return {
     posts: paginated.posts,
     hasMore: paginated.hasMore,
@@ -68,7 +68,7 @@ export async function getBlogPageData(page: number = 0) {
 export async function getRecentPostsSSR() {
   // Use cached version for SSR to improve performance
   const posts = await loadAllPostsCached();
-  
+
   return posts.slice(0, 5);
 }
 
@@ -85,11 +85,11 @@ export async function GET_Posts_API(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '0', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
-    
+
     // Use cached version for API
     const posts = await loadAllPostsCached();
     const result = paginatePosts(posts, page, pageSize);
-    
+
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: {
@@ -111,20 +111,20 @@ export async function GET_Posts_API(request: Request) {
  * File: app/api/posts/[slug]/route.ts (Next.js 13+ App Router)
  */
 export async function GET_Post_By_Slug_API(
-  request: Request,
-  { params }: { params: { slug: string } }
+  _request: Request,
+  { params }: { params: { slug: string } },
 ) {
   try {
     const posts = await loadAllPostsCached();
     const post = getPostBySlug(posts, params.slug);
-    
+
     if (!post) {
       return new Response(JSON.stringify({ error: 'Post not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    
+
     return new Response(JSON.stringify(post), {
       status: 200,
       headers: {
@@ -252,15 +252,15 @@ export default async function PostPage({
 export function getPostsByDateRange(
   posts: Array<{ filename: string }>,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ) {
   return posts.filter((post) => {
     const match = post.filename.match(/^(\d{4})-(\d{2})-(\d{2})\.md$/);
-    if (!match || !match[1] || !match[2] || !match[3]) return false;
-    
+    if (!match?.[1] || !match[2] || !match[3]) return false;
+
     const [, year, month, day] = match;
     const postDate = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
-    
+
     return postDate >= startDate && postDate <= endDate;
   });
 }
@@ -270,14 +270,14 @@ export function getPostsByDateRange(
  */
 export function searchPosts(
   posts: Array<{ metadata: { title: string }; content: string }>,
-  keyword: string
+  keyword: string,
 ) {
   const lowerKeyword = keyword.toLowerCase();
-  
+
   return posts.filter((post) => {
     const inTitle = post.metadata.title.toLowerCase().includes(lowerKeyword);
     const inContent = post.content.toLowerCase().includes(lowerKeyword);
-    
+
     return inTitle || inContent;
   });
 }

@@ -13,7 +13,9 @@ describe('imageUrl', () => {
   });
 
   test('transforms lore cover paths through the lore image API', () => {
-    expect(transformPostImageUrl('/lore/story cover.png')).toBe('/api/lore-images/story%20cover.png');
+    expect(transformPostImageUrl('/lore/story cover.png')).toBe(
+      '/api/lore-images/story%20cover.png',
+    );
   });
 
   test('uses the blog placeholder when a cover is missing', () => {
@@ -27,7 +29,9 @@ describe('imageUrl', () => {
 
   test('keeps explicit cover paths and external URLs intact after normalization', () => {
     expect(resolvePostCoverImageUrl('/lore/echo.png')).toBe('/api/lore-images/echo.png');
-    expect(resolvePostCoverImageUrl('https://example.com/cover.png')).toBe('https://example.com/cover.png');
+    expect(resolvePostCoverImageUrl('https://example.com/cover.png')).toBe(
+      'https://example.com/cover.png',
+    );
     expect(POST_COVER_PLACEHOLDER_IMAGE).toBe('/blog/placeholder.png');
     expect(POST_COVER_PLACEHOLDER_IMAGE_URL).toBe('/api/blog-images/placeholder.png');
   });

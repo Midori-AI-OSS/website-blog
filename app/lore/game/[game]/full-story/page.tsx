@@ -1,27 +1,27 @@
-import { notFound } from 'next/navigation'
-import { Box } from '@mui/joy'
+import { Box } from '@mui/joy';
+import { notFound } from 'next/navigation';
 
-import { loadLoreGameGroups, getLorePovPosts, sortLorePosts } from '@/lib/lore/loader'
-import { FullStoryClient } from './FullStoryClient'
-import { LoreBackButton } from './LoreBackButton'
+import { getLorePovPosts, loadLoreGameGroups, sortLorePosts } from '@/lib/lore/loader';
+import { FullStoryClient } from './FullStoryClient';
+import { LoreBackButton } from './LoreBackButton';
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
 export default async function LoreGameFullStoryPage({
   params,
 }: {
-  params: Promise<{ game: string }>
+  params: Promise<{ game: string }>;
 }) {
-  const { game } = await params
-  const gameGroups = await loadLoreGameGroups()
-  const group = gameGroups.find((candidate) => candidate.game.slug === game)
+  const { game } = await params;
+  const gameGroups = await loadLoreGameGroups();
+  const group = gameGroups.find((candidate) => candidate.game.slug === game);
 
   if (!group) {
-    notFound()
+    notFound();
   }
 
-  const povPosts = getLorePovPosts(group.posts, group.game.slug, group.game.fullStoryPov)
-  const storyPosts = povPosts.length > 0 ? povPosts : sortLorePosts(group.posts, 'story_order_asc')
+  const povPosts = getLorePovPosts(group.posts, group.game.slug, group.game.fullStoryPov);
+  const storyPosts = povPosts.length > 0 ? povPosts : sortLorePosts(group.posts, 'story_order_asc');
 
   return (
     <Box
@@ -38,5 +38,5 @@ export default async function LoreGameFullStoryPage({
 
       <FullStoryClient posts={storyPosts} />
     </Box>
-  )
+  );
 }

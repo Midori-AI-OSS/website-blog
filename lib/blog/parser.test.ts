@@ -2,8 +2,8 @@
  * Unit tests for markdown parser utility
  */
 
-import { describe, test, expect } from 'bun:test';
-import { parsePost, parsePosts, extractMetadata } from './parser';
+import { describe, expect, test } from 'bun:test';
+import { extractMetadata, parsePost, parsePosts } from './parser';
 
 describe('Markdown Parser', () => {
   describe('parsePost', () => {
@@ -22,7 +22,7 @@ author: Test Author
 This is test content.`;
 
       const result = parsePost('2026-01-17.md', input);
-      
+
       expect(result.metadata.title).toBe('Test Post');
       expect(result.metadata.summary).toBe('Test summary');
       expect(result.metadata.tags).toEqual(['test', 'parser']);
@@ -36,7 +36,7 @@ This is test content.`;
     test('handles post without metadata', () => {
       const input = '# Just Content\n\nNo front matter here.';
       const result = parsePost('2026-01-17.md', input);
-      
+
       expect(result.metadata.title).toBe('Post from 2026-01-17');
       expect(result.metadata.tags).toEqual([]);
       expect(result.content).toContain('# Just Content');
@@ -49,7 +49,7 @@ This is test content.`;
 # Content`;
 
       const result = parsePost('2026-01-17.md', input);
-      
+
       expect(result.metadata.title).toBe('Post from 2026-01-17');
       expect(result.metadata.tags).toEqual([]);
       expect(result.content).toBe('# Content');
@@ -58,7 +58,7 @@ This is test content.`;
     test('extracts title from filename without date', () => {
       const input = '# Content';
       const result = parsePost('my-blog-post.md', input);
-      
+
       expect(result.metadata.title).toBe('My Blog Post');
     });
 
@@ -72,7 +72,7 @@ cover_image: 12345
 Content`;
 
       const result = parsePost('test.md', input);
-      
+
       // Should still have valid title
       expect(result.metadata.title).toBe('Valid Title');
       // Invalid fields should be filtered out or defaulted
@@ -89,7 +89,7 @@ tags: ["  tag1  ", "  tag2  "]
 Content`;
 
       const result = parsePost('test.md', input);
-      
+
       expect(result.metadata.title).toBe('Spaces Around');
       expect(result.metadata.summary).toBe('Test');
       expect(result.metadata.tags).toEqual(['tag1', 'tag2']);
@@ -104,7 +104,7 @@ tags: ["valid", "", "  ", "another"]
 Content`;
 
       const result = parsePost('test.md', input);
-      
+
       expect(result.metadata.tags).toEqual(['valid', 'another']);
     });
 
@@ -152,7 +152,7 @@ summary: Using plus delimiter
 Content`;
 
       const result = parsePost('test.md', input);
-      
+
       expect(result.metadata.title).toBe('Test Post');
       expect(result.metadata.summary).toBe('Using plus delimiter');
       expect(result.content).toBe('Content');
@@ -160,7 +160,7 @@ Content`;
 
     test('returns safe defaults on error', () => {
       const result = parsePost('error.md', null as any);
-      
+
       expect(result.metadata.title).toBeTruthy();
       expect(result.content).toBe('');
       expect(result.filename).toBe('error.md');
@@ -173,7 +173,7 @@ title: Empty Post
 `;
 
       const result = parsePost('empty.md', input);
-      
+
       expect(result.metadata.title).toBe('Empty Post');
       expect(result.content).toBe('');
     });
@@ -188,7 +188,7 @@ title: Test
 [link](url)`;
 
       const result = parsePost('test.md', input);
-      
+
       // Content should remain as markdown, not HTML
       expect(result.content).toContain('**bold**');
       expect(result.content).toContain('*italic*');
@@ -203,16 +203,16 @@ title: Test
       const posts = [
         {
           filename: '2026-01-17.md',
-          content: '---\ntitle: Post 1\n---\nContent 1'
+          content: '---\ntitle: Post 1\n---\nContent 1',
         },
         {
           filename: '2026-01-18.md',
-          content: '---\ntitle: Post 2\n---\nContent 2'
-        }
+          content: '---\ntitle: Post 2\n---\nContent 2',
+        },
       ];
 
       const results = parsePosts(posts);
-      
+
       expect(results).toHaveLength(2);
       expect(results[0]).toBeDefined();
       expect(results[0]?.metadata.title).toBe('Post 1');
@@ -237,7 +237,7 @@ tags: [meta, data]
 # Long content that we don't need to process`;
 
       const metadata = extractMetadata('test.md', input);
-      
+
       expect(metadata.title).toBe('Metadata Only');
       expect(metadata.summary).toBe('Just the metadata');
       expect(metadata.tags).toEqual(['meta', 'data']);
@@ -245,7 +245,7 @@ tags: [meta, data]
 
     test('returns defaults on error', () => {
       const metadata = extractMetadata('error.md', null as any);
-      
+
       expect(metadata.title).toBeTruthy();
       expect(metadata.tags).toEqual([]);
     });
@@ -261,7 +261,7 @@ title: Security Test
 <img src=x onerror="alert('xss')">`;
 
       const result = parsePost('security.md', input);
-      
+
       // Parser should preserve raw markdown (sanitization happens at render time)
       expect(result.content).toContain('<script>');
       expect(result.content).toContain('<img');
@@ -277,7 +277,7 @@ summary: "<img src=x onerror='alert(1)'>"
 Content`;
 
       const result = parsePost('test.md', input);
-      
+
       // Metadata should be strings but not execute
       expect(result.metadata.title).toBeTruthy();
       expect(result.metadata.summary).toBeTruthy();
@@ -294,7 +294,7 @@ title: Large Post
 ${largeContent}`;
 
       const result = parsePost('large.md', input);
-      
+
       expect(result.metadata.title).toBe('Large Post');
       expect(result.content.length).toBeGreaterThan(90000);
     });
@@ -309,7 +309,7 @@ tags: [中文, 日本語, emoji-🎉]
 Content with émojis 😀 and àccénts`;
 
       const result = parsePost('unicode.md', input);
-      
+
       expect(result.metadata.title).toBe('你好世界 🌍');
       expect(result.metadata.summary).toBe('テスト');
       expect(result.metadata.tags).toContain('中文');
@@ -319,7 +319,7 @@ Content with émojis 😀 and àccénts`;
     test('handles Windows line endings', () => {
       const input = `---\r\ntitle: Windows Test\r\n---\r\n\r\nContent with CRLF`;
       const result = parsePost('windows.md', input);
-      
+
       expect(result.metadata.title).toBe('Windows Test');
       expect(result.content).toContain('Content');
     });

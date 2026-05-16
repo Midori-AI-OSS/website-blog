@@ -1,12 +1,12 @@
 /**
  * BlogList Component Test/Demo
- * 
+ *
  * Quick verification that the component renders and functions correctly.
  * This is a simple test file, not a comprehensive test suite.
  */
 
-import { BlogList } from './BlogList';
 import type { ParsedPost } from '../../lib/blog/parser';
+import { BlogList } from './BlogList';
 
 // Mock test data
 const mockPosts: ParsedPost[] = Array.from({ length: 25 }, (_, i) => ({
@@ -28,7 +28,7 @@ const mockPosts: ParsedPost[] = Array.from({ length: 25 }, (_, i) => ({
  */
 export function TestStaticMode() {
   const initialPosts = mockPosts.slice(0, 10);
-  
+
   const handlePostClick = (post: ParsedPost) => {
     console.log('Post clicked:', post.filename);
   };
@@ -37,12 +37,8 @@ export function TestStaticMode() {
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       <h1>BlogList Test - Static Mode</h1>
       <p>Initial: 10 posts, Total: 25 posts, Expected: Load more on scroll</p>
-      
-      <BlogList
-        initialPosts={initialPosts}
-        allPosts={mockPosts}
-        onPostClick={handlePostClick}
-      />
+
+      <BlogList initialPosts={initialPosts} allPosts={mockPosts} onPostClick={handlePostClick} />
     </div>
   );
 }
@@ -59,12 +55,8 @@ export function TestEmptyState() {
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       <h1>BlogList Test - Empty State</h1>
       <p>Expected: "No blog posts yet" message</p>
-      
-      <BlogList
-        initialPosts={[]}
-        allPosts={[]}
-        onPostClick={handlePostClick}
-      />
+
+      <BlogList initialPosts={[]} allPosts={[]} onPostClick={handlePostClick} />
     </div>
   );
 }
@@ -74,7 +66,7 @@ export function TestEmptyState() {
  */
 export function TestFewPosts() {
   const fewPosts = mockPosts.slice(0, 5);
-  
+
   const handlePostClick = (post: ParsedPost) => {
     console.log('Post clicked:', post.filename);
   };
@@ -83,12 +75,8 @@ export function TestFewPosts() {
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       <h1>BlogList Test - Few Posts (5)</h1>
       <p>Expected: 5 posts shown, no "load more" indicator</p>
-      
-      <BlogList
-        initialPosts={fewPosts}
-        allPosts={fewPosts}
-        onPostClick={handlePostClick}
-      />
+
+      <BlogList initialPosts={fewPosts} allPosts={fewPosts} onPostClick={handlePostClick} />
     </div>
   );
 }
@@ -98,7 +86,7 @@ export function TestFewPosts() {
  */
 export function TestExactlyOnePage() {
   const exactlyTen = mockPosts.slice(0, 10);
-  
+
   const handlePostClick = (post: ParsedPost) => {
     console.log('Post clicked:', post.filename);
   };
@@ -107,12 +95,8 @@ export function TestExactlyOnePage() {
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       <h1>BlogList Test - Exactly One Page (10)</h1>
       <p>Expected: 10 posts shown, "No more posts" message</p>
-      
-      <BlogList
-        initialPosts={exactlyTen}
-        allPosts={exactlyTen}
-        onPostClick={handlePostClick}
-      />
+
+      <BlogList initialPosts={exactlyTen} allPosts={exactlyTen} onPostClick={handlePostClick} />
     </div>
   );
 }
@@ -122,7 +106,7 @@ export function TestExactlyOnePage() {
  */
 export function TestCustomPageSize() {
   const initial = mockPosts.slice(0, 5);
-  
+
   const handlePostClick = (post: ParsedPost) => {
     console.log('Post clicked:', post.filename);
   };
@@ -132,7 +116,7 @@ export function TestCustomPageSize() {
       <h1>BlogList Test - Custom Page Size (5)</h1>
       <p>Initial: 5 posts, Total: 25 posts, Page Size: 5</p>
       <p>Expected: Load 5 posts at a time on scroll</p>
-      
+
       <BlogList
         initialPosts={initial}
         allPosts={mockPosts}
@@ -149,7 +133,7 @@ export function TestCustomPageSize() {
  */
 export function TestClientSideMode() {
   const initial = mockPosts.slice(0, 10);
-  
+
   const handlePostClick = (post: ParsedPost) => {
     console.log('Post clicked:', post.filename);
   };
@@ -158,8 +142,10 @@ export function TestClientSideMode() {
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       <h1>BlogList Test - Client-Side Mode</h1>
       <p>Expected: Fetch from /api/posts?page=N on scroll</p>
-      <p><strong>Note:</strong> Requires API endpoint to be implemented</p>
-      
+      <p>
+        <strong>Note:</strong> Requires API endpoint to be implemented
+      </p>
+
       <BlogList
         initialPosts={initial}
         // No allPosts - will use API

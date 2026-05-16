@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { Button } from '@mui/joy';
 import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export function LoreBackButton() {
   return (

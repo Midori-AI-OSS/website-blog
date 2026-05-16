@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import React, { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { Window } from 'happy-dom';
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 
 import RadioWidget from './RadioWidget';
 
@@ -62,9 +62,7 @@ class MockAudio {
   addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
     const listeners = this.listeners.get(type) ?? new Set<(event: Event) => void>();
     const normalized =
-      typeof listener === 'function'
-        ? listener
-        : (event: Event) => listener.handleEvent(event);
+      typeof listener === 'function' ? listener : (event: Event) => listener.handleEvent(event);
     listeners.add(normalized);
     this.listeners.set(type, listeners);
   }
@@ -76,7 +74,10 @@ class MockAudio {
     }
 
     for (const current of listeners) {
-      if (current === listener || (typeof listener !== 'function' && current === listener.handleEvent)) {
+      if (
+        current === listener ||
+        (typeof listener !== 'function' && current === listener.handleEvent)
+      ) {
         listeners.delete(current);
       }
     }
@@ -130,7 +131,8 @@ function installDom() {
     Image: MockImage,
     Audio: MockAudio,
     getComputedStyle: testWindow.getComputedStyle.bind(testWindow),
-    requestAnimationFrame: (cb: FrameRequestCallback) => originalSetTimeout(() => cb(Date.now()), 0),
+    requestAnimationFrame: (cb: FrameRequestCallback) =>
+      originalSetTimeout(() => cb(Date.now()), 0),
     cancelAnimationFrame: (id: number) => originalClearTimeout(id),
     IS_REACT_ACT_ENVIRONMENT: true,
   };
@@ -142,9 +144,7 @@ function installDom() {
 
   const matchMedia = ((query: string) => ({
     matches:
-      query === '(hover: hover)' ||
-      query === '(pointer: fine)' ||
-      query === '(min-width: 1024px)',
+      query === '(hover: hover)' || query === '(pointer: fine)' || query === '(min-width: 1024px)',
     media: query,
     onchange: null,
     addListener: () => {},
@@ -165,7 +165,8 @@ function installTimers() {
   nextTimerId = 1;
 
   const setIntervalMock = ((handler: TimerHandler, delay?: number) => {
-    const id = nextTimerId += 1;
+    nextTimerId += 1;
+    const id = nextTimerId;
     if (typeof handler === 'function') {
       intervalEntries.set(id, {
         delay: delay ?? 0,
@@ -184,7 +185,8 @@ function installTimers() {
       return originalSetTimeout(handler, delay);
     }
 
-    const id = nextTimerId += 1;
+    nextTimerId += 1;
+    const id = nextTimerId;
     if (typeof handler === 'function') {
       timeoutEntries.set(id, {
         delay: delay ?? 0,
@@ -358,7 +360,7 @@ async function runInterval(delay: number) {
   });
 }
 
-async function runTimeout(delay: number) {
+async function _runTimeout(delay: number) {
   const match = [...timeoutEntries.entries()].find(([, entry]) => entry.delay === delay);
   if (!match) {
     throw new Error(`Expected timeout with delay ${delay}`);
@@ -403,14 +405,13 @@ describe('RadioWidget', () => {
 
     await waitForCondition(
       () => lastAudio !== null && lastAudio.playCalls === 1,
-      'Expected initial playback to start'
+      'Expected initial playback to start',
     );
 
     const src = lastAudio?.src ?? '';
-    expect(src).toContain('/api/radio/stream');
+    expect(src).toContain('https://radio.midori-ai.xyz/radio/v1/stream');
     expect(src).toContain('channel=all');
     expect(src).toContain('q=medium');
-    expect(src).toContain('ts=');
   });
 
   test('stops playback and clears source on stop', async () => {
@@ -419,7 +420,7 @@ describe('RadioWidget', () => {
 
     await waitForCondition(
       () => lastAudio !== null && lastAudio.playCalls === 1,
-      'Expected playback to start'
+      'Expected playback to start',
     );
 
     const playButton = getPrimaryButton();
@@ -429,7 +430,7 @@ describe('RadioWidget', () => {
 
     await waitForCondition(
       () => lastAudio !== null && lastAudio.paused === true,
-      'Expected playback to stop'
+      'Expected playback to stop',
     );
 
     expect(lastAudio?.src).toBe('');
@@ -441,10 +442,10 @@ describe('RadioWidget', () => {
 
     await waitForCondition(
       () => lastAudio !== null && lastAudio.playCalls === 1,
-      'Expected initial playback to start'
+      'Expected initial playback to start',
     );
 
-    const initialPlayCalls = lastAudio!.playCalls;
+    const initialPlayCalls = lastAudio?.playCalls;
 
     currentTrackId = 'track-2';
     await runInterval(10000);
@@ -453,28 +454,31 @@ describe('RadioWidget', () => {
       await flushEffects();
     });
 
-    expect(lastAudio!.playCalls).toBe(initialPlayCalls);
+    expect(lastAudio?.playCalls).toBe(initialPlayCalls);
   });
 
-  test('transitions to error state when audio element errors', async () => {
+  test('auto-reconnects when audio element errors', async () => {
     await renderWidget();
     await clickPrimaryButton();
 
     await waitForCondition(
       () => lastAudio !== null && lastAudio.playCalls === 1,
-      'Expected initial playback to start'
+      'Expected initial playback to start',
     );
 
-    const playCallsBefore = lastAudio!.playCalls;
+    const playCallsBefore = lastAudio?.playCalls;
 
     await act(async () => {
-      lastAudio!.emit('error');
+      lastAudio?.emit('error');
       await flushEffects();
     });
 
-    expect(lastAudio!.playCalls).toBe(playCallsBefore);
+    // Should not immediately start new playback (500ms delay)
+    expect(lastAudio?.playCalls).toBe(playCallsBefore);
 
-    const storedError = testWindow.localStorage.getItem('midoriai.radio.last_error');
-    expect(storedError).toContain('Stream ended');
+    // After 500ms delay, should reconnect
+    await _runTimeout(500);
+
+    expect(lastAudio?.playCalls).toBe(playCallsBefore ? playCallsBefore + 1 : undefined);
   });
 });

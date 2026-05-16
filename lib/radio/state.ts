@@ -1,5 +1,5 @@
-import { normalizeChannel, normalizeQuality } from './contract';
 import type { QualityName } from './contract';
+import { normalizeChannel, normalizeQuality } from './contract';
 
 export const MIDORIAI_RADIO_OPEN_KEY = 'midoriai.radio.open';
 export const MIDORIAI_RADIO_VOLUME_KEY = 'midoriai.radio.volume';

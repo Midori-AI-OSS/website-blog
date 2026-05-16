@@ -2,7 +2,7 @@
 
 /**
  * BlogList Component
- * 
+ *
  * A component that displays blog cards in a vertical stack with lazy loading.
  * Features:
  * - Vertical stack layout (single column)
@@ -14,10 +14,10 @@
  * - Works with both SSG (static) and CSR (client-side) data loading
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Box, Typography, CircularProgress, Stack } from '@mui/joy';
-import { BlogCard } from './BlogCard';
+import { Box, CircularProgress, Stack, Typography } from '@mui/joy';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ParsedPost } from '../../lib/blog/parser';
+import { BlogCard } from './BlogCard';
 
 export interface BlogListProps {
   initialPosts: ParsedPost[];
@@ -32,7 +32,7 @@ export function BlogList({
   allPosts,
   onPostClick,
   getPostHref,
-  pageSize = 10
+  pageSize = 10,
 }: BlogListProps) {
   const [posts, setPosts] = useState<ParsedPost[]>(initialPosts);
   const [page, setPage] = useState(1);
@@ -50,26 +50,6 @@ export function BlogList({
       setHasMore(initialPosts.length >= pageSize);
     }
   }, [initialPosts.length, allPosts, pageSize]);
-
-  useEffect(() => {
-    if (!loadMoreRef.current || !hasMore || loading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0] && entries[0].isIntersecting && !loading && hasMore) {
-          loadMorePosts();
-        }
-      },
-      {
-        threshold: 0.1,
-        rootMargin: '100px'
-      }
-    );
-
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [hasMore, loading, page]);
-
   const loadMorePosts = useCallback(async () => {
     if (loading || !hasMore) return;
 
@@ -84,14 +64,12 @@ export function BlogList({
         if (newPosts.length === 0) {
           setHasMore(false);
         } else {
-          setPosts(prev => {
-            const existingFilenames = new Set(prev.map(p => p.filename));
-            const uniqueNewPosts = newPosts.filter(
-              p => !existingFilenames.has(p.filename)
-            );
+          setPosts((prev) => {
+            const existingFilenames = new Set(prev.map((p) => p.filename));
+            const uniqueNewPosts = newPosts.filter((p) => !existingFilenames.has(p.filename));
             return [...prev, ...uniqueNewPosts];
           });
-          setPage(prev => prev + 1);
+          setPage((prev) => prev + 1);
 
           const nextStart = (page + 1) * pageSize;
           setHasMore(nextStart < allPosts.length);
@@ -112,14 +90,14 @@ export function BlogList({
         if (data.posts.length === 0) {
           setHasMore(false);
         } else {
-          setPosts(prev => {
-            const existingFilenames = new Set(prev.map(p => p.filename));
+          setPosts((prev) => {
+            const existingFilenames = new Set(prev.map((p) => p.filename));
             const uniqueNewPosts = data.posts.filter(
-              (p: ParsedPost) => !existingFilenames.has(p.filename)
+              (p: ParsedPost) => !existingFilenames.has(p.filename),
             );
             return [...prev, ...uniqueNewPosts];
           });
-          setPage(prev => prev + 1);
+          setPage((prev) => prev + 1);
           setHasMore(data.hasMore ?? data.posts.length >= pageSize);
         }
       }
@@ -137,6 +115,25 @@ export function BlogList({
   }, [loadMorePosts]);
 
   useEffect(() => {
+    if (!loadMoreRef.current || !hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !loading && hasMore) {
+          loadMorePosts();
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '100px',
+      },
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadMorePosts]);
+
+  useEffect(() => {
     if (posts.length > previousPostsLengthRef.current && !loading) {
       previousPostsLengthRef.current = posts.length;
     }
@@ -145,8 +142,12 @@ export function BlogList({
   if (posts.length === 0 && !loading) {
     return (
       <Box sx={{ textAlign: 'center', py: 12, px: 2 }} role="status" aria-live="polite">
-        <Typography level="h3" sx={{ color: 'text.secondary', mb: 1 }}>No blog posts yet</Typography>
-        <Typography level="body-md" sx={{ color: 'text.tertiary' }}>Check back soon for new content!</Typography>
+        <Typography level="h3" sx={{ color: 'text.secondary', mb: 1 }}>
+          No blog posts yet
+        </Typography>
+        <Typography level="body-md" sx={{ color: 'text.tertiary' }}>
+          Check back soon for new content!
+        </Typography>
       </Box>
     );
   }
@@ -166,7 +167,8 @@ export function BlogList({
         aria-atomic="true"
       >
         {loading && !error && `Loading more posts`}
-        {!loading && posts.length > previousPostsLengthRef.current &&
+        {!loading &&
+          posts.length > previousPostsLengthRef.current &&
           `Loaded ${posts.length - previousPostsLengthRef.current} new posts`}
         {error && `Error: ${error}`}
       </Box>
@@ -188,23 +190,31 @@ export function BlogList({
           {loading ? (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="center">
               <CircularProgress size="sm" variant="soft" aria-label="Loading more posts" />
-              <Typography level="body-md" sx={{ color: 'text.secondary' }}>Loading more posts...</Typography>
+              <Typography level="body-md" sx={{ color: 'text.secondary' }}>
+                Loading more posts...
+              </Typography>
             </Stack>
           ) : (
-            <Typography level="body-sm" sx={{ color: 'text.tertiary', fontStyle: 'italic' }}>Scroll for more</Typography>
+            <Typography level="body-sm" sx={{ color: 'text.tertiary', fontStyle: 'italic' }}>
+              Scroll for more
+            </Typography>
           )}
         </Box>
       )}
 
       {!hasMore && posts.length > 0 && !loading && !error && (
         <Box sx={{ textAlign: 'center', py: 4, borderTop: 1, borderColor: 'divider' }}>
-          <Typography level="body-sm" sx={{ color: 'text.tertiary', fontStyle: 'italic' }}>No more posts</Typography>
+          <Typography level="body-sm" sx={{ color: 'text.tertiary', fontStyle: 'italic' }}>
+            No more posts
+          </Typography>
         </Box>
       )}
 
       {error && (
         <Box sx={{ textAlign: 'center', py: 4, px: 2 }} role="alert" aria-live="assertive">
-          <Typography level="body-md" sx={{ color: 'danger.500', mb: 2 }}>{error}</Typography>
+          <Typography level="body-md" sx={{ color: 'danger.500', mb: 2 }}>
+            {error}
+          </Typography>
           <Box
             component="button"
             onClick={handleRetry}

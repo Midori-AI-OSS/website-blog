@@ -47,7 +47,7 @@ function createThinkingNode(variant: 'inline' | 'block', children: Content[]): T
 function isOnlyContentInParent(
   parent: Parent,
   openingIndex: number,
-  closingIndex: number
+  closingIndex: number,
 ): boolean {
   for (let i = 0; i < parent.children.length; i++) {
     if (i >= openingIndex && i <= closingIndex) continue;

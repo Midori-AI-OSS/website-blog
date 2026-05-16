@@ -2,18 +2,18 @@
  * Tests for Blog Post Loader
  */
 
-import { test, expect, describe, beforeAll, afterAll } from 'bun:test';
-import { mkdir, writeFile, rm, mkdtemp } from 'node:fs/promises';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  loadAllPosts,
-  paginatePosts,
+  clearCache,
+  getAllTags,
   getPostBySlug,
   getPostsByTag,
-  getAllTags,
   getRecentPosts,
-  clearCache,
+  loadAllPosts,
+  paginatePosts,
 } from './loader';
 
 let testRootDir = '';
@@ -40,40 +40,55 @@ describe('Post Loader', () => {
     await mkdir(testPostsDir, { recursive: true });
 
     // Create valid test posts
-    await createTestPost('2026-01-17.md', `---
+    await createTestPost(
+      '2026-01-17.md',
+      `---
 title: First Post
 summary: This is the first post
 tags: [test, first]
 ---
 
-# First Post Content`);
+# First Post Content`,
+    );
 
-    await createTestPost('2026-01-16.md', `---
+    await createTestPost(
+      '2026-01-16.md',
+      `---
 title: Second Post
 tags: [test]
 ---
 
-# Second Post Content`);
+# Second Post Content`,
+    );
 
-    await createTestPost('2026-01-15.md', `---
+    await createTestPost(
+      '2026-01-15.md',
+      `---
 title: Third Post
 tags: [another]
 ---
 
-# Third Post Content`);
+# Third Post Content`,
+    );
 
-    await createTestPost('2099-12-31.md', `---
+    await createTestPost(
+      '2099-12-31.md',
+      `---
 title: Future Post
 tags: [future]
 ---
 
-# Future Post Content`);
+# Future Post Content`,
+    );
 
     // Create a post with invalid filename (should be ignored)
-    await createTestPost('invalid-name.md', `---
+    await createTestPost(
+      'invalid-name.md',
+      `---
 title: Invalid
 ---
-Content`);
+Content`,
+    );
   });
 
   afterAll(async () => {
@@ -214,7 +229,7 @@ Content`);
   test('loadAllPosts hides scheduled posts by default', async () => {
     const posts = await loadAllPosts(testPostsDir, { now: '2026-01-17T18:00:00Z' });
 
-    expect(posts.map(post => post.filename)).toEqual([
+    expect(posts.map((post) => post.filename)).toEqual([
       '2026-01-17.md',
       '2026-01-16.md',
       '2026-01-15.md',
@@ -228,7 +243,7 @@ Content`);
     });
 
     expect(posts[0]?.filename).toBe('2099-12-31.md');
-    expect(posts.some(post => post.filename === '2099-12-31.md')).toBe(true);
+    expect(posts.some((post) => post.filename === '2099-12-31.md')).toBe(true);
   });
 
   test('loadAllPosts handles empty directory', async () => {
@@ -244,11 +259,11 @@ Content`);
 
   test('filename validation prevents path traversal', async () => {
     // Create a file with path traversal attempt
-    const maliciousFilename = '../../etc/passwd.md';
-    
+    const _maliciousFilename = '../../etc/passwd.md';
+
     // loadAllPosts should ignore it (not match YYYY-MM-DD.md pattern)
     const posts = await loadAllPosts(testPostsDir);
-    const malicious = posts.find(p => p.filename.includes('..'));
+    const malicious = posts.find((p) => p.filename.includes('..'));
     expect(malicious).toBeUndefined();
   });
 });

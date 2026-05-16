@@ -1,11 +1,3 @@
-import {
-  isRadioEnvelope,
-  MIDORIAI_RADIO_API_VERSION,
-  MIDORIAI_RADIO_BASE_URL,
-  normalizeChannel,
-  normalizeQuality,
-  toAbsoluteRadioUrl,
-} from './contract';
 import type {
   ArtPayload,
   ChannelsPayload,
@@ -14,6 +6,14 @@ import type {
   QualityName,
   RadioEnvelope,
   TracksPayload,
+} from './contract';
+import {
+  isRadioEnvelope,
+  MIDORIAI_RADIO_API_VERSION,
+  MIDORIAI_RADIO_BASE_URL,
+  normalizeChannel,
+  normalizeQuality,
+  toAbsoluteRadioUrl,
 } from './contract';
 
 const JSON_HEADERS = {
@@ -55,7 +55,7 @@ function parseEnvelope<TData>(payload: unknown, requestPath: string): RadioEnvel
     throw new RadioApiError(
       `Invalid radio response envelope from ${requestPath}`,
       'RADIO_INVALID_ENVELOPE',
-      502
+      502,
     );
   }
 
@@ -64,7 +64,7 @@ function parseEnvelope<TData>(payload: unknown, requestPath: string): RadioEnvel
       `Unsupported radio API version: ${payload.version}`,
       'RADIO_UNSUPPORTED_VERSION',
       502,
-      payload.now
+      payload.now,
     );
   }
 
@@ -74,7 +74,7 @@ function parseEnvelope<TData>(payload: unknown, requestPath: string): RadioEnvel
 async function requestRadioEnvelope<TData>(
   path: string,
   init: RequestInit = {},
-  baseUrl: string = MIDORIAI_RADIO_BASE_URL
+  baseUrl: string = MIDORIAI_RADIO_BASE_URL,
 ): Promise<RadioEnvelope<TData>> {
   let response: Response;
 
@@ -101,23 +101,19 @@ async function requestRadioEnvelope<TData>(
         envelope.error.message,
         envelope.error.code,
         response.status,
-        envelope.now
+        envelope.now,
       );
     }
 
     throw new RadioApiError(
       `Radio request failed: ${response.status}`,
       'RADIO_HTTP_ERROR',
-      response.status
+      response.status,
     );
   }
 
   if (!envelope) {
-    throw new RadioApiError(
-      `Empty radio response from ${path}`,
-      'RADIO_EMPTY_RESPONSE',
-      502
-    );
+    throw new RadioApiError(`Empty radio response from ${path}`, 'RADIO_EMPTY_RESPONSE', 502);
   }
 
   if (!envelope.ok) {
@@ -132,7 +128,7 @@ async function requestRadioEnvelope<TData>(
 async function requestRadioData<TData>(
   path: string,
   init: RequestInit = {},
-  baseUrl: string = MIDORIAI_RADIO_BASE_URL
+  baseUrl: string = MIDORIAI_RADIO_BASE_URL,
 ): Promise<TData> {
   const envelope = await requestRadioEnvelope<TData>(path, init, baseUrl);
 
@@ -141,7 +137,7 @@ async function requestRadioData<TData>(
       `Radio response did not include data for ${path}`,
       'RADIO_NULL_DATA',
       502,
-      envelope.now
+      envelope.now,
     );
   }
 
@@ -156,7 +152,7 @@ function buildChannelQueryPath(path: string, channel: string | null | undefined)
 
 export function buildArtImageUrl(
   channel: string | null | undefined,
-  baseUrl: string = MIDORIAI_RADIO_BASE_URL
+  baseUrl: string = MIDORIAI_RADIO_BASE_URL,
 ): string {
   return `${baseUrl}${buildChannelQueryPath('/radio/v1/art/image', channel)}`;
 }
@@ -170,7 +166,10 @@ export function buildStreamUrl(options: {
 }): string {
   const normalizedChannel = normalizeChannel(options.channel);
   const normalizedQuality = normalizeQuality(options.quality);
-  const url = new URL(options.path ?? '/radio/v1/stream', options.baseUrl ?? MIDORIAI_RADIO_BASE_URL);
+  const url = new URL(
+    options.path ?? '/radio/v1/stream',
+    options.baseUrl ?? MIDORIAI_RADIO_BASE_URL,
+  );
   url.searchParams.set('channel', normalizedChannel);
   url.searchParams.set('q', normalizedQuality);
 
@@ -181,28 +180,36 @@ export function buildStreamUrl(options: {
   return url.toString();
 }
 
-export async function fetchHealth(baseUrl: string = MIDORIAI_RADIO_BASE_URL): Promise<HealthPayload> {
+export async function fetchHealth(
+  baseUrl: string = MIDORIAI_RADIO_BASE_URL,
+): Promise<HealthPayload> {
   return requestRadioData<HealthPayload>('/health', {}, baseUrl);
 }
 
-export async function fetchChannels(
-  baseUrl: string = ''
-): Promise<ChannelsPayload> {
+export async function fetchChannels(baseUrl: string = ''): Promise<ChannelsPayload> {
   return requestRadioData<ChannelsPayload>('/api/radio/channels', {}, baseUrl);
 }
 
 export async function fetchCurrent(
   channel: string | null | undefined,
-  baseUrl: string = ''
+  baseUrl: string = '',
 ): Promise<CurrentPayload> {
-  return requestRadioData<CurrentPayload>(buildChannelQueryPath('/api/radio/current', channel), {}, baseUrl);
+  return requestRadioData<CurrentPayload>(
+    buildChannelQueryPath('/api/radio/current', channel),
+    {},
+    baseUrl,
+  );
 }
 
 export async function fetchArt(
   channel: string | null | undefined,
-  baseUrl: string = ''
+  baseUrl: string = '',
 ): Promise<ArtPayload> {
-  const art = await requestRadioData<ArtPayload>(buildChannelQueryPath('/api/radio/art', channel), {}, baseUrl);
+  const art = await requestRadioData<ArtPayload>(
+    buildChannelQueryPath('/api/radio/art', channel),
+    {},
+    baseUrl,
+  );
   return {
     ...art,
     art_url: toAbsoluteRadioUrl(art.art_url, MIDORIAI_RADIO_BASE_URL),
@@ -211,7 +218,11 @@ export async function fetchArt(
 
 export async function fetchTracks(
   channel: string | null | undefined,
-  baseUrl: string = MIDORIAI_RADIO_BASE_URL
+  baseUrl: string = MIDORIAI_RADIO_BASE_URL,
 ): Promise<TracksPayload> {
-  return requestRadioData<TracksPayload>(buildChannelQueryPath('/radio/v1/tracks', channel), {}, baseUrl);
+  return requestRadioData<TracksPayload>(
+    buildChannelQueryPath('/radio/v1/tracks', channel),
+    {},
+    baseUrl,
+  );
 }

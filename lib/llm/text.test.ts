@@ -88,11 +88,15 @@ describe('LLM text formatters', () => {
 
     expect(normalized.plainText).toContain('Heading');
     expect(normalized.plainText).toContain('guide (/lore/example)');
-    expect(normalized.plainText).toContain('Image (Lore image): /api/lore-images/the-story-luna-midori/01-veiled-crossing-first-shift.png');
+    expect(normalized.plainText).toContain(
+      'Image (Lore image): /api/lore-images/the-story-luna-midori/01-veiled-crossing-first-shift.png',
+    );
     expect(normalized.plainText).toContain('Image (Cover): /api/blog-images/placeholder.png');
     expect(normalized.plainText).toContain('inline and bold text');
 
-    expect(normalized.imageUrls).toContain('/api/lore-images/the-story-luna-midori/01-veiled-crossing-first-shift.png');
+    expect(normalized.imageUrls).toContain(
+      '/api/lore-images/the-story-luna-midori/01-veiled-crossing-first-shift.png',
+    );
     expect(normalized.imageUrls).toContain('/api/blog-images/placeholder.png');
   });
 
@@ -132,11 +136,7 @@ describe('LLM text formatters', () => {
       author: 'Luna Midori',
       coverImage: '/lore/echo.png',
       date: '2026-04-20',
-      content: [
-        'Text paragraph.',
-        '',
-        '{{image: /lore/echo/echo1.png}}',
-      ].join('\n'),
+      content: ['Text paragraph.', '', '{{image: /lore/echo/echo1.png}}'].join('\n'),
     });
 
     const text = renderLlmPostText('lore', post);

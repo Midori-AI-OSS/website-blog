@@ -30,16 +30,24 @@ export function LorePostPageClient({
       backButtonLabel="Back to lore"
       backButtonAriaLabel="Back to lore list"
       postType="lore"
-      previousStory={previousStory ? {
-        href: `/lore/${previousStory.slug}`,
-        title: previousStory.post.metadata.title,
-        summary: previousStory.post.metadata.summary,
-      } : null}
-      nextStory={nextStory ? {
-        href: `/lore/${nextStory.slug}`,
-        title: nextStory.post.metadata.title,
-        summary: nextStory.post.metadata.summary,
-      } : null}
+      previousStory={
+        previousStory
+          ? {
+              href: `/lore/${previousStory.slug}`,
+              title: previousStory.post.metadata.title,
+              summary: previousStory.post.metadata.summary,
+            }
+          : null
+      }
+      nextStory={
+        nextStory
+          ? {
+              href: `/lore/${nextStory.slug}`,
+              title: nextStory.post.metadata.title,
+              summary: nextStory.post.metadata.summary,
+            }
+          : null
+      }
       onNavigateStory={(href) => router.push(href)}
       isScheduledPreview={isScheduledPreview}
       scheduledPublishDate={scheduledPublishDate}

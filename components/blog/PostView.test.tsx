@@ -26,7 +26,7 @@ function renderPostContent(content: string): string {
         rawMarkdown: content,
       }}
       onClose={() => {}}
-    />
+    />,
   );
 }
 
@@ -50,7 +50,7 @@ describe('PostView', () => {
           },
         }}
         onClose={() => {}}
-      />
+      />,
     );
 
     expect(html).toContain('/api/blog-images/placeholder.png');
@@ -63,7 +63,7 @@ describe('PostView', () => {
         onClose={() => {}}
         isScheduledPreview
         scheduledPublishDate="2099-12-31"
-      />
+      />,
     );
 
     expect(html).toContain('Scheduled for December 31, 2099');
@@ -87,7 +87,7 @@ describe('PostView', () => {
           title: 'Next Chapter',
           summary: 'A future moment.',
         }}
-      />
+      />,
     );
 
     expect(html).toContain('Go back to past story');
@@ -173,7 +173,9 @@ describe('PostView', () => {
   });
 
   test('renders multi-paragraph thinking tags as a block', () => {
-    const html = renderPostContent('<thinking>\n\nFirst thought.\n\nSecond thought.\n\n</thinking>');
+    const html = renderPostContent(
+      '<thinking>\n\nFirst thought.\n\nSecond thought.\n\n</thinking>',
+    );
 
     expect(countThinkingNodes(html)).toBe(1);
     expect(html).toContain('data-thinking="block"');

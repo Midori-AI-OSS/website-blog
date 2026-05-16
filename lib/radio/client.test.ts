@@ -8,7 +8,7 @@ describe('buildStreamUrl', () => {
       buildStreamUrl({
         channel: '  ALL ',
         quality: 'HIGH',
-      })
+      }),
     );
 
     expect(url.pathname).toBe('/radio/v1/stream');
@@ -24,7 +24,7 @@ describe('buildStreamUrl', () => {
         baseUrl: 'http://localhost:3000',
         path: '/api/radio/stream',
         cacheBust: true,
-      })
+      }),
     );
 
     expect(url.origin).toBe('http://localhost:3000');
@@ -40,14 +40,14 @@ describe('buildStreamUrl', () => {
         channel: 'all',
         quality: 'medium',
         cacheBust: true,
-      })
+      }),
     );
     const second = new URL(
       buildStreamUrl({
         channel: 'all',
         quality: 'medium',
         cacheBust: true,
-      })
+      }),
     );
 
     expect(first.searchParams.get('ts')).toBeTruthy();

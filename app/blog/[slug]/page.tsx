@@ -1,13 +1,17 @@
 /**
  * Individual Blog Post Page
- * 
+ *
  * Server component that displays a single blog post.
  * Uses Next.js App Router with dynamic routes and static generation.
  */
 
-import { loadAllPosts, getPostBySlug } from '@/lib/blog/loader';
-import { extractIsoDateFromBlogFilename, formatLongDate, getPublishState } from '@/lib/content/publish';
 import { notFound } from 'next/navigation';
+import { getPostBySlug, loadAllPosts } from '@/lib/blog/loader';
+import {
+  extractIsoDateFromBlogFilename,
+  formatLongDate,
+  getPublishState,
+} from '@/lib/content/publish';
 import { PostPageClient } from './PostPageClient';
 
 export const dynamic = 'force-dynamic';
@@ -17,8 +21,8 @@ export const dynamic = 'force-dynamic';
  */
 export async function generateStaticParams() {
   const posts = await loadAllPosts(undefined, { includeScheduled: true });
-  return posts.map(post => ({
-    slug: post.filename.replace('.md', '')
+  return posts.map((post) => ({
+    slug: post.filename.replace('.md', ''),
   }));
 }
 
@@ -49,11 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 /**
  * Individual post page component
  */
-export default async function PostPage({
-  params
-}: {
-  params: Promise<{ slug: string }>
-}) {
+export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   // Await params as per Next.js 15 requirements
   const { slug } = await params;
 

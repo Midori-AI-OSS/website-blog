@@ -46,7 +46,7 @@ function darkenHex(hex: string, amount: number): string {
 }
 
 export function toDarkMediumBackdropPalette(
-  palette: ExtractedPalette = DEFAULT_ART_PALETTE
+  palette: ExtractedPalette = DEFAULT_ART_PALETTE,
 ): ExtractedPalette {
   return {
     primary: darkenHex(palette.primary, 0.68),

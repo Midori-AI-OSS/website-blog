@@ -1,5 +1,5 @@
-import { normalizeChannel, normalizeQuality } from './contract';
 import type { QualityName } from './contract';
+import { normalizeChannel, normalizeQuality } from './contract';
 
 type BroadcasterKey = `${string}:${string}`;
 
@@ -22,10 +22,10 @@ class RadioBroadcaster {
 
   static getInstance(channel: string, quality: QualityName): RadioBroadcaster {
     const key: BroadcasterKey = `${normalizeChannel(channel)}:${normalizeQuality(quality)}`;
-    let instance = this.instances.get(key);
+    let instance = RadioBroadcaster.instances.get(key);
     if (!instance) {
       instance = new RadioBroadcaster(normalizeChannel(channel), normalizeQuality(quality));
-      this.instances.set(key, instance);
+      RadioBroadcaster.instances.set(key, instance);
     }
     return instance;
   }
@@ -176,7 +176,9 @@ class RadioBroadcaster {
     this.clearReconnectTimer();
 
     const delay = this.getReconnectDelay();
-    console.log(`[radio] RECONNECT gen=${generation} attempt=${this.reconnectAttempt} delay=${(delay / 1000).toFixed(0)}s subs=${this.subscribers.size} lastBurst=${(this.totalBytesLastBurst / 1024).toFixed(0)}KB`);
+    console.log(
+      `[radio] RECONNECT gen=${generation} attempt=${this.reconnectAttempt} delay=${(delay / 1000).toFixed(0)}s subs=${this.subscribers.size} lastBurst=${(this.totalBytesLastBurst / 1024).toFixed(0)}KB`,
+    );
     this.reconnectTimer = setTimeout(() => {
       if (generation !== this.reconnectGeneration) return;
       if (!this.active) return;
@@ -189,8 +191,11 @@ class RadioBroadcaster {
   private getReconnectDelay(): number {
     if (this.totalBytesLastBurst > 0) {
       const bitrate = ESTIMATED_BITRATE_BPS[this.quality] ?? 160000;
-      const playbackMs = (this.totalBytesLastBurst * 8 / bitrate) * 1000;
-      return Math.max(MIN_RECONNECT_DELAY_MS, Math.min(MAX_RECONNECT_DELAY_MS, Math.round(playbackMs)));
+      const playbackMs = ((this.totalBytesLastBurst * 8) / bitrate) * 1000;
+      return Math.max(
+        MIN_RECONNECT_DELAY_MS,
+        Math.min(MAX_RECONNECT_DELAY_MS, Math.round(playbackMs)),
+      );
     }
     const shortDelays = [2000, 4000, 8000, 16000];
     const index = Math.min(this.reconnectAttempt, shortDelays.length - 1);
@@ -206,7 +211,9 @@ class RadioBroadcaster {
 
     const url = `${UPSTREAM_BASE}/radio/v1/stream?channel=${encodeURIComponent(this.channel)}&q=${encodeURIComponent(this.quality)}`;
     const connId = generation;
-    console.log(`[radio] CONNECT #${connId} attempt=${this.reconnectAttempt} subs=${this.subscribers.size} url=${url}`);
+    console.log(
+      `[radio] CONNECT #${connId} attempt=${this.reconnectAttempt} subs=${this.subscribers.size} url=${url}`,
+    );
 
     try {
       const controller = new AbortController();
@@ -223,7 +230,9 @@ class RadioBroadcaster {
       if (generation !== this.reconnectGeneration) return;
 
       if (!response.ok || !response.body) {
-        console.log(`[radio] CONNECT #${connId} failed: HTTP ${response.status} hasBody=${response.body !== null}`);
+        console.log(
+          `[radio] CONNECT #${connId} failed: HTTP ${response.status} hasBody=${response.body !== null}`,
+        );
         this.totalBytesLastBurst = 0;
         this.scheduleReconnect(generation);
         return;
@@ -239,23 +248,29 @@ class RadioBroadcaster {
       while (true) {
         if (generation !== this.reconnectGeneration) {
           reader.cancel().catch(() => {});
-          console.log(`[radio] CONNECT #${connId} aborted (gen changed) after ${(totalBytes / 1024).toFixed(1)}KB`);
+          console.log(
+            `[radio] CONNECT #${connId} aborted (gen changed) after ${(totalBytes / 1024).toFixed(1)}KB`,
+          );
           return;
         }
 
         let result: { done: boolean; value?: Uint8Array };
         try {
-          result = await reader.read() as { done: boolean; value?: Uint8Array };
+          result = (await reader.read()) as { done: boolean; value?: Uint8Array };
         } catch {
           this.totalBytesLastBurst = 0;
-          console.log(`[radio] CONNECT #${connId} reader error after ${(totalBytes / 1024).toFixed(1)}KB`);
+          console.log(
+            `[radio] CONNECT #${connId} reader error after ${(totalBytes / 1024).toFixed(1)}KB`,
+          );
           this.scheduleReconnect(generation);
           return;
         }
 
         if (result.done) {
           this.totalBytesLastBurst = totalBytes;
-          console.log(`[radio] CONNECT #${connId} DONE clean EOF after ${(totalBytes / 1024).toFixed(1)}KB firstBytes=${firstBytesHex}`);
+          console.log(
+            `[radio] CONNECT #${connId} DONE clean EOF after ${(totalBytes / 1024).toFixed(1)}KB firstBytes=${firstBytesHex}`,
+          );
           this.scheduleReconnect(generation);
           return;
         }
@@ -274,7 +289,9 @@ class RadioBroadcaster {
       }
     } catch (error) {
       this.totalBytesLastBurst = 0;
-      console.log(`[radio] CONNECT #${connId} exception: ${error instanceof Error ? error.message : String(error)}`);
+      console.log(
+        `[radio] CONNECT #${connId} exception: ${error instanceof Error ? error.message : String(error)}`,
+      );
       if (error instanceof DOMException && error.name === 'AbortError') {
         return;
       }

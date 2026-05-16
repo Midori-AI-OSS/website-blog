@@ -8,9 +8,11 @@
     "build": "next build",
     "start": "next start",
     "test": "echo 'Tests require Bun runtime. Install Bun (https://bun.sh) and run: bun test' && exit 1",
-    "test:bun": "bun test"
+    "test:bun": "bun test",
+    "lint": "biome check ."
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
     "@types/bun": "latest",
     "@types/node": "^25.0.9",
     "@types/react": "^19.2.8",
