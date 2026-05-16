@@ -237,9 +237,6 @@ export default function RadioWidget() {
     const streamUrl = buildStreamUrl({
       channel: channelRef.current,
       quality: qualityRef.current,
-      baseUrl: window.location.origin,
-      path: '/api/radio/stream',
-      cacheBust: true,
     });
 
     setStreamState('connecting');
@@ -298,16 +295,19 @@ export default function RadioWidget() {
       if (!playbackDesiredRef.current) {
         return;
       }
-      setStreamState('error');
-      setStatusText('Stream ended. Press play to retry.');
-      setLastError('Stream ended');
-      saveRadioLastError('Stream ended');
+      setStreamState('buffering');
+      setStatusText('Reconnecting…');
+      setTimeout(() => {
+        if (playbackDesiredRef.current) {
+          startPlayback();
+        }
+      }, 500);
     };
 
     audio.addEventListener('playing', handlePlaying);
     audio.addEventListener('waiting', handleWaiting);
-    audio.addEventListener('error', handleStreamEnd);
     audio.addEventListener('ended', handleStreamEnd);
+    audio.addEventListener('error', handleStreamEnd);
 
     return () => {
       audio.pause();
