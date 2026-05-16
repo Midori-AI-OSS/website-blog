@@ -6,7 +6,7 @@
 import { readdir, readFile, realpath, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { parsePost, type ParsedPost } from '@/lib/blog/parser';
+import { type ParsedPost, parsePost } from '@/lib/blog/parser';
 import { getPublishState } from '@/lib/content/publish';
 
 const POSTS_DIR = join(process.cwd(), 'lore/posts');
@@ -43,11 +43,7 @@ export interface LoreGameGroup {
   characters: string[];
 }
 
-export type LorePostSortMode =
-  | 'story_order_desc'
-  | 'story_order_asc'
-  | 'date_desc'
-  | 'date_asc';
+export type LorePostSortMode = 'story_order_desc' | 'story_order_asc' | 'date_desc' | 'date_asc';
 
 export interface LorePostNeighbor {
   post: ParsedPost;
@@ -144,12 +140,10 @@ function compareByStoryOrderDesc(a: ParsedPost, b: ParsedPost): number {
 }
 
 function normalizeTags(post: ParsedPost): string[] {
-  return (post.metadata.tags ?? [])
-    .map((tag) => tag.trim().toLowerCase())
-    .filter(Boolean);
+  return (post.metadata.tags ?? []).map((tag) => tag.trim().toLowerCase()).filter(Boolean);
 }
 
-function getGameTagFromPost(post: ParsedPost): string | null {
+function _getGameTagFromPost(post: ParsedPost): string | null {
   return normalizeSlug(post.metadata.game);
 }
 
@@ -168,7 +162,9 @@ function ensureRequiredLoreMetadata(parsed: ParsedPost): boolean {
 
   const storyOrder = getStoryOrderValue(parsed);
   if (storyOrder === null) {
-    console.error(`Lore post ${parsed.filename} is missing required numeric "story_order" frontmatter.`);
+    console.error(
+      `Lore post ${parsed.filename} is missing required numeric "story_order" frontmatter.`,
+    );
     return false;
   }
 
@@ -194,7 +190,6 @@ export function sortLorePosts(posts: ParsedPost[], mode: LorePostSortMode): Pars
     case 'date_asc':
       sorted.sort(compareByDisplayDateAsc);
       break;
-    case 'date_desc':
     default:
       sorted.sort(compareByDisplayDateDesc);
       break;
@@ -220,19 +215,19 @@ export function deriveLoreCharacters(posts: ParsedPost[], gameSlug: string): str
   }
 
   return Array.from(characters.values()).sort((a, b) =>
-    a.toLowerCase().localeCompare(b.toLowerCase())
+    a.toLowerCase().localeCompare(b.toLowerCase()),
   );
 }
 
 export function getPostCharacterTags(post: ParsedPost, gameSlug: string): string[] {
-  const normalizedGame = gameSlug.trim().toLowerCase()
-  return normalizeTags(post).filter((tag) => tag !== LORE_ROOT_TAG && tag !== normalizedGame)
+  const normalizedGame = gameSlug.trim().toLowerCase();
+  return normalizeTags(post).filter((tag) => tag !== LORE_ROOT_TAG && tag !== normalizedGame);
 }
 
 export function getLoreStoryNeighbors(
   posts: ParsedPost[],
   currentPost: ParsedPost,
-  characterTags?: string[]
+  characterTags?: string[],
 ): LorePostNeighbors {
   const currentGame = normalizeSlug(currentPost.metadata.game);
   if (!currentGame) {
@@ -242,16 +237,16 @@ export function getLoreStoryNeighbors(
     };
   }
 
-  const characterFilter = characterTags ?? getPostCharacterTags(currentPost, currentGame)
-  const hasCharacterFilter = characterFilter.length > 0
+  const characterFilter = characterTags ?? getPostCharacterTags(currentPost, currentGame);
+  const hasCharacterFilter = characterFilter.length > 0;
 
   const candidates = sortLorePosts(
     posts.filter((post) => {
-      if (normalizeSlug(post.metadata.game) !== currentGame) return false
-      if (!hasCharacterFilter) return true
-      return characterFilter.some((tag) => hasTag(post, tag))
+      if (normalizeSlug(post.metadata.game) !== currentGame) return false;
+      if (!hasCharacterFilter) return true;
+      return characterFilter.some((tag) => hasTag(post, tag));
     }),
-    'story_order_asc'
+    'story_order_asc',
   );
 
   const currentIndex = candidates.findIndex((post) => post.filename === currentPost.filename);
@@ -290,7 +285,7 @@ export function getLorePovPosts(posts: ParsedPost[], gameSlug: string, pov: stri
   const sameGame = posts.filter((post) => normalizeSlug(post.metadata.game) === normalizedGame);
   return sortLorePosts(
     sameGame.filter((post) => hasTag(post, normalizedPov)),
-    'story_order_asc'
+    'story_order_asc',
   );
 }
 
@@ -302,7 +297,7 @@ export function getLorePostsForGame(posts: ParsedPost[], gameSlug: string): Pars
 
 export async function loadAllLorePosts(
   options: LoadAllLorePostsOptions = {},
-  postsDir: string = POSTS_DIR
+  postsDir: string = POSTS_DIR,
 ): Promise<ParsedPost[]> {
   try {
     const files = await readdir(postsDir);
@@ -348,16 +343,16 @@ export async function loadAllLorePosts(
           console.error(`Error loading ${filename}:`, errorMessage);
           return null;
         }
-      })
+      }),
     );
 
     const parsedPosts = posts.filter(
       (
-        post
+        post,
       ): post is {
         parsed: ParsedPost;
         explicitPublishDate: string | undefined;
-      } => post !== null
+      } => post !== null,
     );
 
     parsedPosts.sort((a, b) => compareByDisplayDateDesc(a.parsed, b.parsed));
@@ -428,7 +423,7 @@ export async function loadLoreGameIndexes(gamesDir: string = GAMES_DIR): Promise
           fullStoryPov,
           fullStoryTooltip: parsed.metadata.full_story_tooltip?.trim() || undefined,
         } satisfies LoreGameIndex;
-      })
+      }),
     );
 
     const validIndexes: LoreGameIndex[] = [];
@@ -449,7 +444,7 @@ export async function loadLoreGameIndexes(gamesDir: string = GAMES_DIR): Promise
 export async function loadLoreGameGroups(
   options: LoadAllLorePostsOptions = {},
   postsDir: string = POSTS_DIR,
-  gamesDir: string = GAMES_DIR
+  gamesDir: string = GAMES_DIR,
 ): Promise<LoreGameGroup[]> {
   const [allPosts, gameIndexes] = await Promise.all([
     loadAllLorePosts(options, postsDir),
@@ -480,7 +475,7 @@ export async function loadLoreGameGroups(
 export function paginateLorePosts(
   allPosts: ParsedPost[],
   page: number,
-  pageSize: number = DEFAULT_PAGE_SIZE
+  pageSize: number = DEFAULT_PAGE_SIZE,
 ): PaginatedLorePosts {
   const safePage = Math.max(0, page);
   const safePageSize = Math.max(1, Math.min(100, pageSize));

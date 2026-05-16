@@ -109,7 +109,10 @@ export function isRadioEnvelope<TData = unknown>(value: unknown): value is Radio
   );
 }
 
-export function toAbsoluteRadioUrl(rawUrl: string, baseUrl: string = MIDORIAI_RADIO_BASE_URL): string {
+export function toAbsoluteRadioUrl(
+  rawUrl: string,
+  baseUrl: string = MIDORIAI_RADIO_BASE_URL,
+): string {
   if (/^https?:\/\//i.test(rawUrl)) {
     return rawUrl;
   }

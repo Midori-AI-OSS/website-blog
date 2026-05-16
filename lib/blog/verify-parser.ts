@@ -4,7 +4,7 @@
  * Or: npx tsx lib/blog/verify-parser.ts
  */
 
-import { parsePost, extractMetadata } from './parser.js';
+import { extractMetadata, parsePost } from './parser.js';
 
 console.log('🧪 Testing Markdown Parser...\n');
 
@@ -26,7 +26,7 @@ console.log('✓ Title:', result1.metadata.title);
 console.log('✓ Summary:', result1.metadata.summary);
 console.log('✓ Tags:', result1.metadata.tags);
 console.log('✓ Cover:', result1.metadata.cover_image);
-console.log('✓ Content preview:', result1.content.substring(0, 50) + '...');
+console.log('✓ Content preview:', `${result1.content.substring(0, 50)}...`);
 console.log();
 
 // Test 2: No metadata

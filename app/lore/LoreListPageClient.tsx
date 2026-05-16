@@ -1,8 +1,5 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Box,
   Button,
@@ -15,6 +12,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/joy';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 
 import { AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { BlogCard } from '@/components/blog/BlogCard';
@@ -48,7 +48,11 @@ function parseDateUtcMs(value: string | undefined): number | null {
 
   const ms = Date.UTC(year, month - 1, day);
   const candidate = new Date(ms);
-  if (candidate.getUTCFullYear() !== year || candidate.getUTCMonth() !== month - 1 || candidate.getUTCDate() !== day) {
+  if (
+    candidate.getUTCFullYear() !== year ||
+    candidate.getUTCMonth() !== month - 1 ||
+    candidate.getUTCDate() !== day
+  ) {
     return null;
   }
   return ms;
@@ -91,7 +95,6 @@ function sortPosts(posts: ParsedPost[], mode: SortMode): ParsedPost[] {
     case 'date_asc':
       sorted.sort((a, b) => compareByDateDesc(b, a));
       return sorted;
-    case 'date_desc':
     default:
       sorted.sort(compareByDateDesc);
       return sorted;
@@ -127,7 +130,9 @@ function getGameCoverImage(gameCoverImage: string | undefined, posts: ParsedPost
     return transformPostImageUrl(gameCoverImage.trim());
   }
 
-  const firstPostCover = posts.find((post) => typeof post.metadata.cover_image === 'string' && post.metadata.cover_image.trim())?.metadata.cover_image;
+  const firstPostCover = posts.find(
+    (post) => typeof post.metadata.cover_image === 'string' && post.metadata.cover_image.trim(),
+  )?.metadata.cover_image;
   if (!firstPostCover) return null;
   return transformPostImageUrl(firstPostCover);
 }
@@ -205,8 +210,15 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                 alignItems={{ xs: 'stretch', xl: 'flex-start' }}
               >
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-                    <Typography level="h2" sx={{ fontSize: { xs: '1.5rem', sm: '1.85rem' }, lineHeight: 1.1 }}>
+                  <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={1}
+                    alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  >
+                    <Typography
+                      level="h2"
+                      sx={{ fontSize: { xs: '1.5rem', sm: '1.85rem' }, lineHeight: 1.1 }}
+                    >
                       {group.game.title}
                     </Typography>
                     <Chip size="sm" variant="soft" color="primary" sx={{ borderRadius: 0 }}>
@@ -214,7 +226,15 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                     </Chip>
                   </Stack>
 
-                  <Typography level="body-md" sx={{ mt: 1, color: 'text.secondary', fontSize: { xs: '1rem', sm: '1.03rem' }, lineHeight: 1.6 }}>
+                  <Typography
+                    level="body-md"
+                    sx={{
+                      mt: 1,
+                      color: 'text.secondary',
+                      fontSize: { xs: '1rem', sm: '1.03rem' },
+                      lineHeight: 1.6,
+                    }}
+                  >
                     {group.game.summary}
                   </Typography>
                 </Box>
@@ -230,7 +250,10 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                     flexShrink: 0,
                   }}
                 >
-                  <FormControl size="sm" sx={{ minWidth: { xs: '100%', sm: 250 }, flex: { sm: '0 0 250px' } }}>
+                  <FormControl
+                    size="sm"
+                    sx={{ minWidth: { xs: '100%', sm: 250 }, flex: { sm: '0 0 250px' } }}
+                  >
                     <Select
                       value={group.sortMode}
                       onChange={(_event, value) => {
@@ -255,7 +278,10 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                     </Select>
                   </FormControl>
 
-                  <FormControl size="sm" sx={{ minWidth: { xs: '100%', sm: 220 }, flex: { sm: '0 0 220px' } }}>
+                  <FormControl
+                    size="sm"
+                    sx={{ minWidth: { xs: '100%', sm: 220 }, flex: { sm: '0 0 220px' } }}
+                  >
                     <Select
                       value={group.selectedCharacter || ''}
                       onChange={(_event, value) => {

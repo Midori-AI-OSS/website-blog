@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { normalizeChannel } from '@/lib/radio/contract';
 
 export const runtime = 'nodejs';
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate',
         },
-      }
+      },
     );
   }
 }

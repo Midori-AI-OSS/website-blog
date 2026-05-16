@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import React, { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { Window } from 'happy-dom';
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 
 import RadioWidget from './RadioWidget';
 
@@ -62,9 +62,7 @@ class MockAudio {
   addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
     const listeners = this.listeners.get(type) ?? new Set<(event: Event) => void>();
     const normalized =
-      typeof listener === 'function'
-        ? listener
-        : (event: Event) => listener.handleEvent(event);
+      typeof listener === 'function' ? listener : (event: Event) => listener.handleEvent(event);
     listeners.add(normalized);
     this.listeners.set(type, listeners);
   }
@@ -76,13 +74,16 @@ class MockAudio {
     }
 
     for (const current of listeners) {
-      if (current === listener || (typeof listener !== 'function' && current === listener.handleEvent)) {
+      if (
+        current === listener ||
+        (typeof listener !== 'function' && current === listener.handleEvent)
+      ) {
         listeners.delete(current);
       }
     }
   }
 
-  private emit(type: string) {
+  emit(type: string) {
     const event = new Event(type);
     const listeners = this.listeners.get(type);
     if (!listeners) {
@@ -130,7 +131,8 @@ function installDom() {
     Image: MockImage,
     Audio: MockAudio,
     getComputedStyle: testWindow.getComputedStyle.bind(testWindow),
-    requestAnimationFrame: (cb: FrameRequestCallback) => originalSetTimeout(() => cb(Date.now()), 0),
+    requestAnimationFrame: (cb: FrameRequestCallback) =>
+      originalSetTimeout(() => cb(Date.now()), 0),
     cancelAnimationFrame: (id: number) => originalClearTimeout(id),
     IS_REACT_ACT_ENVIRONMENT: true,
   };
@@ -142,9 +144,7 @@ function installDom() {
 
   const matchMedia = ((query: string) => ({
     matches:
-      query === '(hover: hover)' ||
-      query === '(pointer: fine)' ||
-      query === '(min-width: 1024px)',
+      query === '(hover: hover)' || query === '(pointer: fine)' || query === '(min-width: 1024px)',
     media: query,
     onchange: null,
     addListener: () => {},
@@ -165,7 +165,8 @@ function installTimers() {
   nextTimerId = 1;
 
   const setIntervalMock = ((handler: TimerHandler, delay?: number) => {
-    const id = nextTimerId += 1;
+    nextTimerId += 1;
+    const id = nextTimerId;
     if (typeof handler === 'function') {
       intervalEntries.set(id, {
         delay: delay ?? 0,
@@ -184,7 +185,8 @@ function installTimers() {
       return originalSetTimeout(handler, delay);
     }
 
-    const id = nextTimerId += 1;
+    nextTimerId += 1;
+    const id = nextTimerId;
     if (typeof handler === 'function') {
       timeoutEntries.set(id, {
         delay: delay ?? 0,
@@ -358,7 +360,7 @@ async function runInterval(delay: number) {
   });
 }
 
-async function runTimeout(delay: number) {
+async function _runTimeout(delay: number) {
   const match = [...timeoutEntries.entries()].find(([, entry]) => entry.delay === delay);
   if (!match) {
     throw new Error(`Expected timeout with delay ${delay}`);
@@ -397,51 +399,86 @@ afterEach(async () => {
 });
 
 describe('RadioWidget', () => {
-  test('reconnects with a fresh stream URL when the track changes', async () => {
+  test('starts playback with a stream URL on play', async () => {
     await renderWidget();
     await clickPrimaryButton();
 
     await waitForCondition(
       () => lastAudio !== null && lastAudio.playCalls === 1,
-      'Expected initial playback to start'
+      'Expected initial playback to start',
     );
 
-    const firstSrc = lastAudio?.src ?? '';
-    expect(firstSrc).toContain('/api/radio/stream');
-    expect(firstSrc).toContain('channel=all');
-    expect(firstSrc).toContain('q=medium');
-    expect(firstSrc).toContain('ts=');
-
-    currentTrackId = 'track-2';
-    await runInterval(5000);
-
-    await waitForCondition(
-      () => lastAudio !== null && lastAudio.playCalls === 2,
-      'Expected playback to reconnect for the new track'
-    );
-
-    expect(lastAudio?.src).not.toBe(firstSrc);
-    expect(lastAudio?.src).toContain('ts=');
+    const src = lastAudio?.src ?? '';
+    expect(src).toContain('https://radio.midori-ai.xyz/radio/v1/stream');
+    expect(src).toContain('channel=all');
+    expect(src).toContain('q=medium');
   });
 
-  test('rotates the live session when the max session timer expires', async () => {
+  test('stops playback and clears source on stop', async () => {
     await renderWidget();
     await clickPrimaryButton();
 
     await waitForCondition(
       () => lastAudio !== null && lastAudio.playCalls === 1,
-      'Expected initial playback to start'
+      'Expected playback to start',
     );
 
-    const firstSrc = lastAudio?.src ?? '';
+    const playButton = getPrimaryButton();
+    expect(playButton).not.toBeNull();
 
-    await runTimeout(2 * 60 * 60 * 1000);
+    await clickPrimaryButton();
 
     await waitForCondition(
-      () => lastAudio !== null && lastAudio.playCalls === 2,
-      'Expected playback to reconnect after the session timer'
+      () => lastAudio !== null && lastAudio.paused === true,
+      'Expected playback to stop',
     );
 
-    expect(lastAudio?.src).not.toBe(firstSrc);
+    expect(lastAudio?.src).toBe('');
+  });
+
+  test('does NOT reconnect on track change (server handles streaming)', async () => {
+    await renderWidget();
+    await clickPrimaryButton();
+
+    await waitForCondition(
+      () => lastAudio !== null && lastAudio.playCalls === 1,
+      'Expected initial playback to start',
+    );
+
+    const initialPlayCalls = lastAudio?.playCalls;
+
+    currentTrackId = 'track-2';
+    await runInterval(10000);
+
+    await act(async () => {
+      await flushEffects();
+    });
+
+    expect(lastAudio?.playCalls).toBe(initialPlayCalls);
+  });
+
+  test('auto-reconnects when audio element errors', async () => {
+    await renderWidget();
+    await clickPrimaryButton();
+
+    await waitForCondition(
+      () => lastAudio !== null && lastAudio.playCalls === 1,
+      'Expected initial playback to start',
+    );
+
+    const playCallsBefore = lastAudio?.playCalls;
+
+    await act(async () => {
+      lastAudio?.emit('error');
+      await flushEffects();
+    });
+
+    // Should not immediately start new playback (500ms delay)
+    expect(lastAudio?.playCalls).toBe(playCallsBefore);
+
+    // After 500ms delay, should reconnect
+    await _runTimeout(500);
+
+    expect(lastAudio?.playCalls).toBe(playCallsBefore ? playCallsBefore + 1 : undefined);
   });
 });

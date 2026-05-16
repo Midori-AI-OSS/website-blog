@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import ButtonGroup from '@mui/joy/ButtonGroup';
@@ -10,6 +9,8 @@ import Stack from '@mui/joy/Stack';
 import Tooltip from '@mui/joy/Tooltip';
 import Typography from '@mui/joy/Typography';
 import { Music, Pin, PinOff, Play, Square } from 'lucide-react';
+import * as React from 'react';
+import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import {
   buildStreamUrl,
   fetchArt,
@@ -30,23 +31,15 @@ import {
   saveRadioQuality,
   saveRadioVolume,
 } from '@/lib/radio/state';
-import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 
 const PLACEHOLDER_IMAGE = '/blog/placeholder.png';
-const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000, 30000] as const;
 const HOVER_CLOSE_LINGER_MS = 3000;
-const MAX_STREAM_SESSION_MS = 2 * 60 * 60 * 1000;
 const COLLAPSED_SIZE_PX = 56;
 const EXPANDED_WIDTH_PX = 380;
 const EXPANDED_HEIGHT_PX = 336;
 
-type StreamState = 'idle' | 'connecting' | 'playing' | 'retrying' | 'error';
+type StreamState = 'idle' | 'connecting' | 'playing' | 'buffering' | 'error';
 type BackdropSource = 'placeholder' | 'server' | 'fallback';
-
-function getRetryDelayMs(attempt: number): number {
-  const index = Math.min(attempt, RETRY_DELAYS_MS.length - 1);
-  return RETRY_DELAYS_MS[index] ?? 30000;
-}
 
 function addMediaListener(query: MediaQueryList, listener: () => void): () => void {
   if (typeof query.addEventListener === 'function') {
@@ -95,7 +88,9 @@ function useDesktopEligibility(minWidth: number = 1024): boolean {
     window.addEventListener('resize', update);
 
     return () => {
-      cleanup.forEach((fn) => fn());
+      cleanup.forEach((fn) => {
+        fn();
+      });
       window.removeEventListener('resize', update);
     };
   }, [minWidth]);
@@ -119,19 +114,12 @@ export default function RadioWidget() {
   const { setRadioState } = useDynamicBackdrop();
   const desktopEligible = useDesktopEligibility();
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
-  const retryTimerRef = React.useRef<number | null>(null);
-  const sessionRefreshTimerRef = React.useRef<number | null>(null);
   const closeLingerTimerRef = React.useRef<number | null>(null);
-  const reconnectInFlightRef = React.useRef(false);
-  const retryAttemptRef = React.useRef(0);
-  const reconnectRef = React.useRef<() => Promise<void>>(async () => undefined);
   const playbackDesiredRef = React.useRef(false);
   const qualityRef = React.useRef<QualityName>('medium');
   const channelRef = React.useRef('all');
   const metadataRequestRef = React.useRef(0);
   const initializedChannelRef = React.useRef(false);
-  const currentTrackIdRef = React.useRef<string | null>(null);
-  const observedTrackIdRef = React.useRef<string | null>(null);
 
   const [hydrated, setHydrated] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
@@ -143,15 +131,15 @@ export default function RadioWidget() {
   const [channel, setChannel] = React.useState('all');
   const [playbackDesired, setPlaybackDesired] = React.useState(false);
   const [streamState, setStreamState] = React.useState<StreamState>('idle');
-  const [statusText, setStatusText] = React.useState('Idle');
-  const [lastError, setLastError] = React.useState<string | null>(null);
+  const [_statusText, setStatusText] = React.useState('Idle');
+  const [_lastError, setLastError] = React.useState<string | null>(null);
 
   const [channels, setChannels] = React.useState<ChannelEntry[]>([]);
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [imageInventory, setImageInventory] = React.useState<RadioImageInventory | null>(null);
   const [backdropUrl, setBackdropUrl] = React.useState(PLACEHOLDER_IMAGE);
-  const [backdropSource, setBackdropSource] = React.useState<BackdropSource>('placeholder');
+  const [_backdropSource, setBackdropSource] = React.useState<BackdropSource>('placeholder');
 
   React.useEffect(() => {
     qualityRef.current = quality;
@@ -164,11 +152,6 @@ export default function RadioWidget() {
   React.useEffect(() => {
     playbackDesiredRef.current = playbackDesired;
   }, [playbackDesired]);
-
-  React.useEffect(() => {
-    const normalizedTrackId = currentTrack?.track_id?.trim();
-    currentTrackIdRef.current = normalizedTrackId && normalizedTrackId.length > 0 ? normalizedTrackId : null;
-  }, [currentTrack?.track_id]);
 
   React.useEffect(() => {
     const restored = loadRadioState();
@@ -184,7 +167,6 @@ export default function RadioWidget() {
     if (!hydrated) {
       return;
     }
-
     saveRadioOpen(stickyOpen);
   }, [stickyOpen, hydrated]);
 
@@ -192,7 +174,6 @@ export default function RadioWidget() {
     if (!hydrated) {
       return;
     }
-
     saveRadioQuality(quality);
   }, [quality, hydrated]);
 
@@ -200,7 +181,6 @@ export default function RadioWidget() {
     if (!hydrated) {
       return;
     }
-
     saveRadioChannel(channel);
   }, [channel, hydrated]);
 
@@ -213,23 +193,8 @@ export default function RadioWidget() {
     if (!hydrated) {
       return;
     }
-
     saveRadioVolume(clamped);
   }, [volume, hydrated]);
-
-  const clearRetryTimer = React.useCallback(() => {
-    if (retryTimerRef.current !== null) {
-      window.clearTimeout(retryTimerRef.current);
-      retryTimerRef.current = null;
-    }
-  }, []);
-
-  const clearSessionRefreshTimer = React.useCallback(() => {
-    if (sessionRefreshTimerRef.current !== null) {
-      window.clearTimeout(sessionRefreshTimerRef.current);
-      sessionRefreshTimerRef.current = null;
-    }
-  }, []);
 
   const clearCloseLingerTimer = React.useCallback(() => {
     if (closeLingerTimerRef.current !== null) {
@@ -262,115 +227,40 @@ export default function RadioWidget() {
     startCloseLinger();
   }, [startCloseLinger]);
 
-  const scheduleRetry = React.useCallback((reason: string) => {
-    if (!playbackDesiredRef.current) {
-      return;
-    }
-
-    if (retryTimerRef.current !== null) {
-      return;
-    }
-
-    const delayMs = getRetryDelayMs(retryAttemptRef.current);
-    setStreamState('retrying');
-    setStatusText(`${reason} Retrying in ${Math.ceil(delayMs / 1000)}s.`);
-    setLastError(reason);
-    saveRadioLastError(reason);
-
-    retryTimerRef.current = window.setTimeout(() => {
-      retryTimerRef.current = null;
-      retryAttemptRef.current += 1;
-      void reconnectRef.current();
-    }, delayMs);
-  }, []);
-
-  const reconnectStream = React.useCallback(async () => {
-    if (!playbackDesiredRef.current) {
-      return;
-    }
-
-    if (reconnectInFlightRef.current) {
-      return;
-    }
-
+  const startPlayback = React.useCallback(() => {
     const audio = audioRef.current;
     if (audio === null) {
       return;
     }
 
-    reconnectInFlightRef.current = true;
-    clearSessionRefreshTimer();
-    const attempt = retryAttemptRef.current;
-    setStreamState(attempt === 0 ? 'connecting' : 'retrying');
-    setStatusText(attempt === 0 ? 'Connecting…' : 'Reconnecting…');
+    setPlaybackDesired(true);
+    playbackDesiredRef.current = true;
 
-    try {
-      const streamUrl = buildStreamUrl({
-        channel: channelRef.current,
-        quality: qualityRef.current,
-        baseUrl: window.location.origin,
-        path: '/api/radio/stream',
-        cacheBust: true,
-      });
+    const streamUrl = buildStreamUrl({
+      channel: channelRef.current,
+      quality: qualityRef.current,
+    });
 
-      audio.pause();
-      audio.src = streamUrl;
-      audio.load();
-      await audio.play();
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'NotAllowedError') {
+    setStreamState('connecting');
+    setStatusText('Connecting…');
+
+    audio.src = streamUrl;
+    audio.load();
+    audio.play().catch((error: DOMException) => {
+      if (error.name === 'NotAllowedError') {
         setStreamState('error');
         setStatusText('Playback blocked by browser. Press play to retry.');
         setPlaybackDesired(false);
         playbackDesiredRef.current = false;
-        reconnectInFlightRef.current = false;
-        return;
+        setLastError('Autoplay blocked by browser');
+        saveRadioLastError('Autoplay blocked by browser');
       }
-
-      scheduleRetry(toErrorMessage(error));
-    } finally {
-      reconnectInFlightRef.current = false;
-    }
-  }, [clearSessionRefreshTimer, scheduleRetry]);
-
-  React.useEffect(() => {
-    reconnectRef.current = reconnectStream;
-  }, [reconnectStream]);
-
-  const refreshLiveSession = React.useCallback(
-    (statusMessage: string) => {
-      if (!playbackDesiredRef.current) {
-        return;
-      }
-
-      clearRetryTimer();
-      clearSessionRefreshTimer();
-      retryAttemptRef.current = 0;
-      setStatusText(statusMessage);
-      void reconnectRef.current();
-    },
-    [clearRetryTimer, clearSessionRefreshTimer]
-  );
-
-  const scheduleSessionRefresh = React.useCallback(() => {
-    if (!playbackDesiredRef.current) {
-      return;
-    }
-
-    clearSessionRefreshTimer();
-    sessionRefreshTimerRef.current = window.setTimeout(() => {
-      sessionRefreshTimerRef.current = null;
-      refreshLiveSession('Refreshing live session…');
-    }, MAX_STREAM_SESSION_MS);
-  }, [clearSessionRefreshTimer, refreshLiveSession]);
+    });
+  }, []);
 
   const stopPlayback = React.useCallback(() => {
     setPlaybackDesired(false);
     playbackDesiredRef.current = false;
-    retryAttemptRef.current = 0;
-    clearRetryTimer();
-    clearSessionRefreshTimer();
-    observedTrackIdRef.current = currentTrackIdRef.current;
 
     const audio = audioRef.current;
     if (audio !== null) {
@@ -378,21 +268,10 @@ export default function RadioWidget() {
       audio.removeAttribute('src');
       audio.load();
     }
-    reconnectInFlightRef.current = false;
 
     setStreamState('idle');
     setStatusText('Stopped');
-  }, [clearRetryTimer, clearSessionRefreshTimer]);
-
-  const startPlayback = React.useCallback(() => {
-    setPlaybackDesired(true);
-    playbackDesiredRef.current = true;
-    retryAttemptRef.current = 0;
-    clearRetryTimer();
-    clearSessionRefreshTimer();
-    observedTrackIdRef.current = currentTrackIdRef.current;
-    void reconnectRef.current();
-  }, [clearRetryTimer, clearSessionRefreshTimer]);
+  }, []);
 
   React.useEffect(() => {
     const audio = new Audio();
@@ -401,59 +280,55 @@ export default function RadioWidget() {
     audioRef.current = audio;
 
     const handlePlaying = () => {
-      clearRetryTimer();
-      clearSessionRefreshTimer();
-      retryAttemptRef.current = 0;
-      observedTrackIdRef.current = currentTrackIdRef.current;
       setStreamState('playing');
       setStatusText('Live');
       setLastError(null);
       clearRadioLastError();
-      scheduleSessionRefresh();
     };
 
-    const handlePause = () => {
-      if (!playbackDesiredRef.current) {
-        setStreamState('idle');
+    const handleWaiting = () => {
+      if (playbackDesiredRef.current) {
+        setStreamState('buffering');
+        setStatusText('Buffering…');
       }
     };
 
-    const handleError = () => {
+    const handleStreamEnd = () => {
       if (!playbackDesiredRef.current) {
         return;
       }
-
-      clearSessionRefreshTimer();
-      scheduleRetry('Stream interrupted.');
+      setStreamState('buffering');
+      setStatusText('Reconnecting…');
+      setTimeout(() => {
+        if (playbackDesiredRef.current) {
+          startPlayback();
+        }
+      }, 500);
     };
 
     audio.addEventListener('playing', handlePlaying);
-    audio.addEventListener('pause', handlePause);
-    audio.addEventListener('error', handleError);
-    audio.addEventListener('stalled', handleError);
-    audio.addEventListener('ended', handleError);
+    audio.addEventListener('waiting', handleWaiting);
+    audio.addEventListener('ended', handleStreamEnd);
+    audio.addEventListener('error', handleStreamEnd);
 
     return () => {
-      clearRetryTimer();
-      clearSessionRefreshTimer();
       audio.pause();
       audio.removeAttribute('src');
       audio.load();
       audio.removeEventListener('playing', handlePlaying);
-      audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('error', handleError);
-      audio.removeEventListener('stalled', handleError);
-      audio.removeEventListener('ended', handleError);
+      audio.removeEventListener('waiting', handleWaiting);
+      audio.removeEventListener('error', handleStreamEnd);
+      audio.removeEventListener('ended', handleStreamEnd);
       audioRef.current = null;
     };
-  }, [clearRetryTimer, clearSessionRefreshTimer, scheduleRetry, scheduleSessionRefresh]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startPlayback, volume]);
 
   React.useEffect(() => {
     return () => {
       clearCloseLingerTimer();
-      clearSessionRefreshTimer();
     };
-  }, [clearCloseLingerTimer, clearSessionRefreshTimer]);
+  }, [clearCloseLingerTimer]);
 
   React.useEffect(() => {
     if (stickyOpen) {
@@ -565,7 +440,7 @@ export default function RadioWidget() {
 
     void refreshMetadata();
 
-    const intervalMs = playbackDesired ? 5000 : 20_000;
+    const intervalMs = playbackDesired ? 10_000 : 20_000;
     const intervalId = window.setInterval(() => {
       void refreshMetadata();
     }, intervalMs);
@@ -591,36 +466,9 @@ export default function RadioWidget() {
       return;
     }
 
-    clearRetryTimer();
-    retryAttemptRef.current = 0;
-    observedTrackIdRef.current = null;
-    refreshLiveSession('Switching channel…');
-  }, [channel, refreshMetadata, clearRetryTimer, hydrated, refreshLiveSession]);
-
-  React.useEffect(() => {
-    const trackId = currentTrackIdRef.current;
-
-    if (!playbackDesired) {
-      observedTrackIdRef.current = trackId;
-      return;
-    }
-
-    if (trackId === null) {
-      return;
-    }
-
-    if (observedTrackIdRef.current === null) {
-      observedTrackIdRef.current = trackId;
-      return;
-    }
-
-    if (observedTrackIdRef.current === trackId) {
-      return;
-    }
-
-    observedTrackIdRef.current = trackId;
-    refreshLiveSession('Refreshing stream for the next track…');
-  }, [currentTrack?.track_id, playbackDesired, refreshLiveSession]);
+    stopPlayback();
+    startPlayback();
+  }, [refreshMetadata, hydrated, stopPlayback, startPlayback]);
 
   const fallbackIdentity = `${currentTrack?.title ?? 'unknown'}::${currentTrack?.track_id ?? 'unknown'}`;
   const fallbackImage = React.useMemo(() => {
@@ -708,9 +556,7 @@ export default function RadioWidget() {
         transformOrigin: 'bottom right',
         transition:
           'width 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.24s ease, background-color 0.24s ease',
-        boxShadow: expanded
-          ? '0 24px 64px rgba(0, 0, 0, 0.5)'
-          : '0 12px 32px rgba(0, 0, 0, 0.35)',
+        boxShadow: expanded ? '0 24px 64px rgba(0, 0, 0, 0.5)' : '0 12px 32px rgba(0, 0, 0, 0.35)',
         backgroundColor: expanded ? 'rgba(8, 8, 14, 0.52)' : 'rgba(8, 8, 14, 0.74)',
         backdropFilter: expanded ? 'blur(24px)' : 'blur(34px)',
       }}
@@ -749,7 +595,12 @@ export default function RadioWidget() {
             height: '100%',
           }}
         >
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ minHeight: 42 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ minHeight: 42 }}
+          >
             <Typography level="title-sm">Midori AI Radio</Typography>
             <Button
               size="sm"
@@ -826,7 +677,10 @@ export default function RadioWidget() {
               variant="soft"
               arrow
             >
-              <Typography level="body-xs" sx={{ color: 'text.tertiary', cursor: 'help', width: 'fit-content' }}>
+              <Typography
+                level="body-xs"
+                sx={{ color: 'text.tertiary', cursor: 'help', width: 'fit-content' }}
+              >
                 Quality
               </Typography>
             </Tooltip>

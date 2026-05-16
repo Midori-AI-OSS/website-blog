@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 
 export async function generateStaticParams() {
   const posts = await loadAllLorePosts({ includeScheduled: true });
-  return posts.map(post => ({
+  return posts.map((post) => ({
     slug: post.filename.replace('.md', ''),
   }));
 }

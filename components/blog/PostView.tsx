@@ -2,7 +2,7 @@
 
 /**
  * PostView Component
- * 
+ *
  * Full post view component for displaying complete blog post content.
  * Features:
  * - Displays post title, date, author, tags, and cover image
@@ -14,39 +14,29 @@
  * - Follows MUI Joy patterns from Big-AGI
  */
 
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { keyframes } from '@emotion/react';
-import {
-  Box,
-  Typography,
-  Button,
-  IconButton,
-  Chip,
-  Card,
-  Stack,
-  Divider,
-  Tooltip,
-} from '@mui/joy';
-import ReactMarkdown from 'react-markdown';
+import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
+import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Tag, User } from 'lucide-react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Components } from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
-import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
-import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
-import { ArrowLeft, Calendar, User, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
-import {
-  extractIsoDateFromBlogFilename,
-  formatLongDate,
-  normalizeIsoDateString,
-} from '@/lib/content/publish';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import remarkGfm from 'remark-gfm';
+import { AMBIENT_PULSE_KEYFRAMES, AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
+import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import {
   POST_COVER_PLACEHOLDER_IMAGE_URL,
   resolvePostCoverImageUrl,
   toLoreImageApiUrl,
 } from '@/lib/content/imageUrl';
-import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
-import { AmbientCoverArt, AMBIENT_PULSE_KEYFRAMES } from '@/components/blog/AmbientCoverArt';
+import {
+  extractIsoDateFromBlogFilename,
+  formatLongDate,
+  normalizeIsoDateString,
+} from '@/lib/content/publish';
+import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
+import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
@@ -125,7 +115,11 @@ export interface PostViewProps {
  * Get the stable YYYY-MM-DD string for display and teaser logic.
  */
 function getPostDateString(post: ParsedPost): string | undefined {
-  return extractIsoDateFromBlogFilename(post.filename) ?? normalizeIsoDateString(post.metadata.date) ?? undefined;
+  return (
+    extractIsoDateFromBlogFilename(post.filename) ??
+    normalizeIsoDateString(post.metadata.date) ??
+    undefined
+  );
 }
 
 const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
@@ -134,31 +128,29 @@ const markdownSanitizeSchema = {
   ...defaultSchema,
   attributes: {
     ...defaultSchema.attributes,
-    span: [
-      ...(defaultSchema.attributes?.span ?? []),
-      ['data-thinking', 'inline', 'block'],
-    ],
-    div: [
-      ...(defaultSchema.attributes?.div ?? []),
-      ['data-thinking', 'inline', 'block'],
-    ],
+    span: [...(defaultSchema.attributes?.span ?? []), ['data-thinking', 'inline', 'block']],
+    div: [...(defaultSchema.attributes?.div ?? []), ['data-thinking', 'inline', 'block']],
   },
 };
 
 function replaceLoreImageTokens(markdown: string): string {
-  return markdown.replace(/\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi, (fullMatch, tokenValue: string) => {
-    const url = toLoreImageApiUrl(tokenValue);
-    if (!url) return fullMatch;
+  return markdown.replace(
+    /\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi,
+    (fullMatch, tokenValue: string) => {
+      const url = toLoreImageApiUrl(tokenValue);
+      if (!url) return fullMatch;
 
-    const raw = tokenValue.trim();
-    const basename = raw.split('/').filter(Boolean).pop() ?? 'image';
-    const alt = basename
-      .replace(/\.[a-z0-9]+$/i, '')
-      .replace(/[_-]+/g, ' ')
-      .trim() || 'Lore image';
+      const raw = tokenValue.trim();
+      const basename = raw.split('/').filter(Boolean).pop() ?? 'image';
+      const alt =
+        basename
+          .replace(/\.[a-z0-9]+$/i, '')
+          .replace(/[_-]+/g, ' ')
+          .trim() || 'Lore image';
 
-    return `\n\n![${alt}](${url} \"${LORE_IMAGE_TOKEN_TITLE}\")\n\n`;
-  });
+      return `\n\n![${alt}](${url} "${LORE_IMAGE_TOKEN_TITLE}")\n\n`;
+    },
+  );
 }
 
 function lightenHexColor(hex: string, ratio: number): string {
@@ -192,7 +184,7 @@ function hexToRgba(hex: string | null, alpha: number, fallback: string): string 
 
 function buildTooltipText(
   prefix: string,
-  story: { title: string; summary?: string } | null | undefined
+  story: { title: string; summary?: string } | null | undefined,
 ): string {
   if (!story) return prefix;
   const summary = (story.summary ?? '').trim();
@@ -290,13 +282,15 @@ const markdownComponents: Components = {
       );
     }
 
+    // biome-ignore lint/a11y/useAltText: alt set via imgProps spread
+    // biome-ignore lint/performance/noImgElement: markdown renderer, next/image not applicable here
     return <img {...imgProps} />;
   },
 };
 
 /**
  * PostView Component
- * 
+ *
  * Displays a full blog post with all content and metadata.
  * Content is rendered via react-markdown with sanitization for XSS protection.
  */
@@ -319,55 +313,53 @@ export function PostView({
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const dateString = useMemo(() => getPostDateString(post), [post.filename, post.metadata.date]);
-  const formattedDate = useMemo(
-    () => formatLongDate(dateString) ?? 'Unknown date',
-    [dateString]
+  const dateString = useMemo(
+    () => getPostDateString(post),
+    [post.filename, post.metadata.date, post],
   );
+  const formattedDate = useMemo(() => formatLongDate(dateString) ?? 'Unknown date', [dateString]);
   const scheduledPublishLabel = useMemo(
     () => formatLongDate(scheduledPublishDate ?? dateString) ?? formattedDate,
-    [scheduledPublishDate, dateString, formattedDate]
+    [scheduledPublishDate, dateString, formattedDate],
   );
-  const markdownContent = useMemo(
-    () => replaceLoreImageTokens(post.content),
-    [post.content]
-  );
+  const markdownContent = useMemo(() => replaceLoreImageTokens(post.content), [post.content]);
   const transformedCoverImageUrl = useMemo(
     () => resolvePostCoverImageUrl(post.metadata.cover_image),
-    [post.metadata.cover_image]
+    [post.metadata.cover_image],
   );
   const [effectiveCoverImageUrl, setEffectiveCoverImageUrl] = useState(transformedCoverImageUrl);
   const dialogueColor = useMemo(
-    () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)'),
-    [ttsPrimaryColor]
+    () =>
+      ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)',
+    [ttsPrimaryColor],
   );
   const thinkingColor = useMemo(
     () => (ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.45) : '#bae6fd'),
-    [ttsPrimaryColor]
+    [ttsPrimaryColor],
   );
   const thinkingGlowColor = useMemo(
     () => hexToRgba(ttsPrimaryColor, 0.55, 'rgba(125, 211, 252, 0.55)'),
-    [ttsPrimaryColor]
+    [ttsPrimaryColor],
   );
   const thinkingMutedColor = useMemo(
     () => hexToRgba(ttsPrimaryColor, 0.62, 'rgba(186, 230, 253, 0.62)'),
-    [ttsPrimaryColor]
+    [ttsPrimaryColor],
   );
-  const thinkingBorderColor = useMemo(
+  const _thinkingBorderColor = useMemo(
     () => hexToRgba(ttsPrimaryColor, 0.68, 'rgba(125, 211, 252, 0.65)'),
-    [ttsPrimaryColor]
+    [ttsPrimaryColor],
   );
-  const thinkingSoftBorderColor = useMemo(
+  const _thinkingSoftBorderColor = useMemo(
     () => hexToRgba(ttsPrimaryColor, 0.24, 'rgba(125, 211, 252, 0.22)'),
-    [ttsPrimaryColor]
+    [ttsPrimaryColor],
   );
-  const thinkingStrongBackground = useMemo(
+  const _thinkingStrongBackground = useMemo(
     () => hexToRgba(ttsPrimaryColor, 0.5, 'rgba(14, 116, 144, 0.35)'),
-    [ttsPrimaryColor]
+    [ttsPrimaryColor],
   );
-  const thinkingSoftBackground = useMemo(
+  const _thinkingSoftBackground = useMemo(
     () => hexToRgba(ttsPrimaryColor, 0.25, 'rgba(59, 130, 246, 0.2)'),
-    [ttsPrimaryColor]
+    [ttsPrimaryColor],
   );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
 
@@ -402,18 +394,18 @@ export function PostView({
    */
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [post.filename]);
+  }, []);
 
   useLayoutEffect(() => {
     const root = contentRef.current;
     if (!root) return;
-    root.querySelectorAll<HTMLElement>('[data-thinking]').forEach(el => {
+    root.querySelectorAll<HTMLElement>('[data-thinking]').forEach((el) => {
       el.style.animationDelay = `${-Math.random() * 30}s`;
     });
-    root.querySelectorAll<HTMLElement>('code.language-layerone').forEach(el => {
+    root.querySelectorAll<HTMLElement>('code.language-layerone').forEach((el) => {
       el.style.animationDelay = `${-Math.random() * 10}s`;
     });
-  }, [markdownContent]);
+  }, []);
 
   return (
     <Box
@@ -521,9 +513,7 @@ export function PostView({
             {post.metadata.author && (
               <Stack direction="row" spacing={1} alignItems="center">
                 <User size={16} color="var(--joy-palette-primary-400)" />
-                <Typography>
-                  {post.metadata.author}
-                </Typography>
+                <Typography>{post.metadata.author}</Typography>
               </Stack>
             )}
           </Stack>
@@ -583,7 +573,8 @@ export function PostView({
                               backdropFilter: 'blur(6px)',
                               border: '1px solid',
                               borderColor: 'rgba(255,255,255,0.24)',
-                              transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                              transition:
+                                'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
                               '&:focus-visible': {
                                 outline: '2px solid',
                                 outlineColor: 'primary.400',
@@ -627,7 +618,8 @@ export function PostView({
                               backdropFilter: 'blur(6px)',
                               border: '1px solid',
                               borderColor: 'rgba(255,255,255,0.24)',
-                              transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                              transition:
+                                'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
                               '&:focus-visible': {
                                 outline: '2px solid',
                                 outlineColor: 'primary.400',
@@ -697,11 +689,19 @@ export function PostView({
             <Typography level="title-lg" sx={{ mb: 1 }}>
               Scheduled for {scheduledPublishLabel}
             </Typography>
-            <Typography level="body-md" sx={{ color: 'text.secondary', fontSize: { xs: '1rem', sm: '1.05rem' } }}>
-              This post is already queued in the site, but it stays hidden until that date begins in Portland time.
+            <Typography
+              level="body-md"
+              sx={{ color: 'text.secondary', fontSize: { xs: '1rem', sm: '1.05rem' } }}
+            >
+              This post is already queued in the site, but it stays hidden until that date begins in
+              Portland time.
             </Typography>
-            <Typography level="body-sm" sx={{ mt: 1.5, color: 'text.tertiary', fontSize: '0.98rem' }}>
-              The full post content and listen-along player will unlock automatically when the publish date arrives.
+            <Typography
+              level="body-sm"
+              sx={{ mt: 1.5, color: 'text.tertiary', fontSize: '0.98rem' }}
+            >
+              The full post content and listen-along player will unlock automatically when the
+              publish date arrives.
             </Typography>
           </Card>
         ) : (
@@ -762,8 +762,8 @@ export function PostView({
                   pl: 1,
                   '&::marker': {
                     color: 'primary.400', // Purple bullets
-                  }
-                }
+                  },
+                },
               },
               '& blockquote': {
                 borderLeft: '4px solid',
@@ -788,7 +788,8 @@ export function PostView({
                 borderColor: 'rgba(74, 222, 128, 0.2)',
 
                 // Shimmer Effect
-                background: 'linear-gradient(to right, rgba(20, 83, 45, 0.6) 0%, rgba(74, 222, 128, 0.25) 50%, rgba(20, 83, 45, 0.6) 100%)',
+                background:
+                  'linear-gradient(to right, rgba(20, 83, 45, 0.6) 0%, rgba(74, 222, 128, 0.25) 50%, rgba(20, 83, 45, 0.6) 100%)',
                 backgroundSize: '1000px 100%',
                 animation: `${shimmerKeyframes} 6s linear infinite`,
                 '&:nth-of-type(2n)': { animationDuration: '4s' },
@@ -815,7 +816,7 @@ export function PostView({
                 },
                 '& .hljs': {
                   background: 'transparent',
-                }
+                },
               },
               '& pre:has(code.language-layerone)': {
                 backgroundColor: '#0d0618 !important',
@@ -834,7 +835,8 @@ export function PostView({
                   left: 0,
                   width: '100%',
                   height: '100%',
-                  background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 200, 0.04) 2px, rgba(0, 255, 200, 0.04) 4px)',
+                  background:
+                    'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 200, 0.04) 2px, rgba(0, 255, 200, 0.04) 4px)',
                   pointerEvents: 'none',
                   zIndex: 1,
                 },
@@ -934,7 +936,8 @@ export function PostView({
                 display: 'block',
                 border: '1px solid',
                 borderColor: 'rgba(255,255,255,0.1)',
-                background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)',
+                background:
+                  'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)',
                 backgroundSize: '1000px 100%',
                 animation: `${shimmerKeyframes} 15s linear infinite`,
               },
@@ -967,7 +970,11 @@ export function PostView({
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm, remarkThinkingTags]}
-              rehypePlugins={[[rehypeSanitize, markdownSanitizeSchema], rehypeHighlight, rehypeDialogueQuotes]}
+              rehypePlugins={[
+                [rehypeSanitize, markdownSanitizeSchema],
+                rehypeHighlight,
+                rehypeDialogueQuotes,
+              ]}
               components={markdownComponents}
             >
               {markdownContent}

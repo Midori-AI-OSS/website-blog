@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import React, { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { Window } from 'happy-dom';
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 
 import { TtsPlayer } from './TtsPlayer';
 
@@ -64,9 +64,7 @@ class MockAudio {
   addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
     const listeners = this.listeners.get(type) ?? new Set<(event: Event) => void>();
     const normalized =
-      typeof listener === 'function'
-        ? listener
-        : (event: Event) => listener.handleEvent(event);
+      typeof listener === 'function' ? listener : (event: Event) => listener.handleEvent(event);
     listeners.add(normalized);
     this.listeners.set(type, listeners);
   }
@@ -169,9 +167,7 @@ function wavResponse() {
   });
 }
 
-function setFetchMock(
-  handler: (url: string, init?: RequestInit) => Promise<Response> | Response
-) {
+function setFetchMock(handler: (url: string, init?: RequestInit) => Promise<Response> | Response) {
   originalGlobals.set('fetch', globalThis.fetch);
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) =>
     handler(String(input), init)) as typeof fetch;
@@ -191,10 +187,7 @@ async function renderPlayer() {
   });
 }
 
-async function waitForElement<T>(
-  getter: () => T | null,
-  failureMessage: string
-): Promise<T> {
+async function waitForElement<T>(getter: () => T | null, failureMessage: string): Promise<T> {
   const deadline = Date.now() + 1200;
 
   while (Date.now() < deadline) {
@@ -209,10 +202,7 @@ async function waitForElement<T>(
   throw new Error(`${failureMessage}\n${container.innerHTML}`);
 }
 
-async function waitForCondition(
-  predicate: () => boolean,
-  failureMessage: string
-): Promise<void> {
+async function waitForCondition(predicate: () => boolean, failureMessage: string): Promise<void> {
   const deadline = Date.now() + 1200;
 
   while (Date.now() < deadline) {
@@ -231,7 +221,7 @@ function getVisibleGeneratingBar() {
     getAllElements(container).find(
       (element) =>
         element.getAttribute('role') === 'progressbar' &&
-        element.getAttribute('aria-hidden') === 'false'
+        element.getAttribute('aria-hidden') === 'false',
     ) ?? null
   );
 }
@@ -242,22 +232,21 @@ function getVisibleListenButton() {
       (element) =>
         element.getAttribute('role') === 'button' &&
         element.getAttribute('aria-label') === 'Generate audio for this post' &&
-        element.getAttribute('aria-hidden') === 'false'
+        element.getAttribute('aria-hidden') === 'false',
     ) ?? null
   );
 }
 
 function getVisibleReadyButton(label: 'Play' | 'Pause') {
   const activeContainer = getAllElements(container).find(
-    (element) => element.getAttribute('aria-hidden') === 'false'
+    (element) => element.getAttribute('aria-hidden') === 'false',
   );
   if (!activeContainer) return null;
 
   return (
     getAllElements(activeContainer).find(
       (element) =>
-        element.tagName.toLowerCase() === 'button' &&
-        element.getAttribute('aria-label') === label
+        element.tagName.toLowerCase() === 'button' && element.getAttribute('aria-label') === label,
     ) ?? null
   );
 }
@@ -353,13 +342,15 @@ describe('TtsPlayer', () => {
 
     await renderPlayer();
 
-    expect(await waitForElement(getVisibleGeneratingBar, 'Expected visible generating bar')).not
-      .toBeNull();
+    expect(
+      await waitForElement(getVisibleGeneratingBar, 'Expected visible generating bar'),
+    ).not.toBeNull();
 
     intervalCallback?.();
 
-    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected visible Play button'))
-      .not.toBeNull();
+    expect(
+      await waitForElement(() => getVisibleReadyButton('Play'), 'Expected visible Play button'),
+    ).not.toBeNull();
     expect(lastAudio?.src.endsWith('/api/tts/audio/blog/shared-post')).toBe(true);
     expect(lastAudio?.playCalls).toBe(0);
     expect(clearIntervalCalls).toBeGreaterThan(0);
@@ -378,7 +369,7 @@ describe('TtsPlayer', () => {
             total_chunks: 12,
             playable: true,
           }),
-          202
+          202,
         );
       }
 
@@ -401,8 +392,9 @@ describe('TtsPlayer', () => {
       await flushEffects();
     });
 
-    expect(await waitForElement(() => getVisibleReadyButton('Pause'), 'Expected Pause button')).not
-      .toBeNull();
+    expect(
+      await waitForElement(() => getVisibleReadyButton('Pause'), 'Expected Pause button'),
+    ).not.toBeNull();
     expect(lastAudio?.src.startsWith('blob:mock-')).toBe(true);
     expect(lastAudio?.playCalls).toBeGreaterThan(0);
     expect(container.textContent ?? '').toContain('Generating...');
@@ -416,7 +408,7 @@ describe('TtsPlayer', () => {
             generated_chunks: 12,
             total_chunks: 420,
             playable: true,
-          })
+          }),
         );
       }
 
@@ -429,8 +421,9 @@ describe('TtsPlayer', () => {
 
     await renderPlayer();
 
-    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected Play button')).not
-      .toBeNull();
+    expect(
+      await waitForElement(() => getVisibleReadyButton('Play'), 'Expected Play button'),
+    ).not.toBeNull();
     expect(getVisibleGeneratingBar()).toBeNull();
 
     const playButton = getVisibleReadyButton('Play');
@@ -443,8 +436,9 @@ describe('TtsPlayer', () => {
       await flushEffects();
     });
 
-    expect(await waitForElement(() => getVisibleReadyButton('Pause'), 'Expected Pause button')).not
-      .toBeNull();
+    expect(
+      await waitForElement(() => getVisibleReadyButton('Pause'), 'Expected Pause button'),
+    ).not.toBeNull();
     expect(lastAudio?.src.startsWith('blob:mock-')).toBe(true);
     expect(lastAudio?.playCalls).toBeGreaterThan(0);
   });
@@ -483,8 +477,9 @@ describe('TtsPlayer', () => {
 
     intervalCallback?.();
 
-    expect(await waitForElement(getVisibleGeneratingBar, 'Expected generating bar to remain visible'))
-      .not.toBeNull();
+    expect(
+      await waitForElement(getVisibleGeneratingBar, 'Expected generating bar to remain visible'),
+    ).not.toBeNull();
     expect(getVisibleReadyButton('Play')).toBeNull();
 
     await act(async () => {
@@ -495,8 +490,8 @@ describe('TtsPlayer', () => {
             total_chunks: 10,
             playable: false,
           }),
-          202
-        )
+          202,
+        ),
       );
       await flushEffects();
     });
@@ -505,15 +500,18 @@ describe('TtsPlayer', () => {
   test('does not autoplay when audio is already ready for another viewer', async () => {
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {
-        return jsonResponse(payload('ready', { generated_chunks: 6, total_chunks: 6, playable: true }));
+        return jsonResponse(
+          payload('ready', { generated_chunks: 6, total_chunks: 6, playable: true }),
+        );
       }
       throw new Error(`Unexpected fetch: ${url}`);
     });
 
     await renderPlayer();
 
-    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected Play button')).not
-      .toBeNull();
+    expect(
+      await waitForElement(() => getVisibleReadyButton('Play'), 'Expected Play button'),
+    ).not.toBeNull();
     expect(getVisibleReadyButton('Pause')).toBeNull();
     expect(lastAudio?.playCalls).toBe(0);
   });
@@ -521,15 +519,18 @@ describe('TtsPlayer', () => {
   test('renders safe time labels when audio metadata is non-finite', async () => {
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {
-        return jsonResponse(payload('ready', { generated_chunks: 6, total_chunks: 6, playable: true }));
+        return jsonResponse(
+          payload('ready', { generated_chunks: 6, total_chunks: 6, playable: true }),
+        );
       }
       throw new Error(`Unexpected fetch: ${url}`);
     });
 
     await renderPlayer();
 
-    expect(await waitForElement(() => getVisibleReadyButton('Play'), 'Expected ready controls')).not
-      .toBeNull();
+    expect(
+      await waitForElement(() => getVisibleReadyButton('Play'), 'Expected ready controls'),
+    ).not.toBeNull();
 
     if (!lastAudio) {
       throw new Error('Expected audio instance');
@@ -545,7 +546,7 @@ describe('TtsPlayer', () => {
 
     await waitForCondition(
       () => (container.textContent ?? '').includes('0:00 / 0:00'),
-      'Expected safe fallback timeline text'
+      'Expected safe fallback timeline text',
     );
     expect(container.textContent ?? '').not.toContain('Infinity');
     expect(container.textContent ?? '').not.toContain('NaN');

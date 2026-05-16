@@ -70,10 +70,7 @@ export function extractIsoDateFromBlogFilename(filename: string): string | null 
   return normalizeIsoDateString(match?.[1] ?? null);
 }
 
-export function getDateStringInTimeZone(
-  timeZone: string,
-  now?: Date | string
-): string {
+export function getDateStringInTimeZone(timeZone: string, now?: Date | string): string {
   const resolvedNow = resolveNow(now);
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone,
@@ -100,7 +97,7 @@ export function getPortlandToday(now?: Date | string): string {
 
 export function getPublishState(
   publishDate: string | undefined | null,
-  now?: Date | string
+  now?: Date | string,
 ): PublishState {
   const normalizedPublishDate = normalizeIsoDateString(publishDate);
   const todayInPortland = getPortlandToday(now);

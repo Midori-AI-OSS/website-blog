@@ -16,10 +16,7 @@ function textResponse(body: string, status: number = 200): NextResponse {
   });
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const posts = await loadAllLorePosts();
   const post = getLorePostBySlug(posts, slug);

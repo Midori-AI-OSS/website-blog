@@ -1,17 +1,14 @@
 'use client';
 
-import * as React from 'react';
 import Box from '@mui/joy/Box';
+import * as React from 'react';
 
 import {
   DEFAULT_ART_PALETTE,
-  extractPaletteFromImage,
   type ExtractedPalette,
+  extractPaletteFromImage,
 } from '@/lib/theme/artPalette';
-import {
-  resolveBackdropSource,
-  toDarkMediumBackdropPalette,
-} from '@/lib/theme/dynamicBackdrop';
+import { resolveBackdropSource, toDarkMediumBackdropPalette } from '@/lib/theme/dynamicBackdrop';
 
 const PLACEHOLDER_IMAGE_URL = '/blog/placeholder.png';
 const DESKTOP_MIN_WIDTH = 1280;
@@ -92,11 +89,10 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
     artUrl: null,
   });
   const [palette, setPalette] = React.useState<ExtractedPalette>(() =>
-    toDarkMediumBackdropPalette(DEFAULT_ART_PALETTE)
+    toDarkMediumBackdropPalette(DEFAULT_ART_PALETTE),
   );
-  const [placeholderPalette, setPlaceholderPalette] = React.useState<ExtractedPalette>(
-    DEFAULT_ART_PALETTE
-  );
+  const [placeholderPalette, setPlaceholderPalette] =
+    React.useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
 
   const isDesktop = useMinWidth(DESKTOP_MIN_WIDTH);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -109,7 +105,7 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
         postCoverUrl,
         placeholderUrl: PLACEHOLDER_IMAGE_URL,
       }),
-    [radioState.playing, radioState.artUrl, postCoverUrl]
+    [radioState.playing, radioState.artUrl, postCoverUrl],
   );
 
   React.useEffect(() => {
@@ -161,11 +157,13 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
       setPostCoverUrl,
       setRadioState,
     }),
-    []
+    [],
   );
 
   const animated = isDesktop && !prefersReducedMotion;
-  const blobAnimation = animated ? 'dynamic-backdrop-drift 180s ease-in-out infinite alternate' : 'none';
+  const blobAnimation = animated
+    ? 'dynamic-backdrop-drift 180s ease-in-out infinite alternate'
+    : 'none';
 
   return (
     <DynamicBackdropContext.Provider value={contextValue}>
@@ -198,7 +196,8 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
             sx={{
               position: 'absolute',
               inset: '-20%',
-              background: 'radial-gradient(circle at center, rgba(255,255,255,0.02), transparent 60%)',
+              background:
+                'radial-gradient(circle at center, rgba(255,255,255,0.02), transparent 60%)',
             }}
           />
 

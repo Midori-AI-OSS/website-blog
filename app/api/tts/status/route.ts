@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,18 +13,17 @@ export async function GET(request: NextRequest) {
     if (!slug || !type) {
       return NextResponse.json(
         { error: 'Missing required query params: slug, type' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const upstream = await fetch(
       `${TTS_BASE}/status?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}`,
-      { cache: 'no-store' }
+      { cache: 'no-store' },
     );
 
     const body = await upstream.text();
-    const contentType =
-      upstream.headers.get('content-type') ?? 'application/json';
+    const contentType = upstream.headers.get('content-type') ?? 'application/json';
 
     return new NextResponse(body, {
       status: upstream.status,
@@ -34,8 +33,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown upstream error';
+    const message = error instanceof Error ? error.message : 'Unknown upstream error';
     return NextResponse.json(
       {
         status: 'not_generated',
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
         error: 'TTS service unavailable',
         detail: message,
       },
-      { status: 502 }
+      { status: 502 },
     );
   }
 }

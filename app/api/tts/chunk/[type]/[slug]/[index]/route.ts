@@ -7,7 +7,7 @@ const TTS_BASE = 'http://127.0.0.1:8888';
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ type: string; slug: string; index: string }> }
+  { params }: { params: Promise<{ type: string; slug: string; index: string }> },
 ) {
   try {
     const { type, slug, index } = await params;
@@ -20,13 +20,13 @@ export async function GET(
     if (!Number.isInteger(parsedIndex) || parsedIndex < 0) {
       return NextResponse.json(
         { error: 'Invalid chunk index, expected non-negative integer' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const upstream = await fetch(
       `${TTS_BASE}/chunk/${encodeURIComponent(type)}/${encodeURIComponent(slug)}/${parsedIndex}`,
-      { cache: 'no-store' }
+      { cache: 'no-store' },
     );
 
     if (!upstream.ok) {
@@ -34,7 +34,7 @@ export async function GET(
       const message = detail || 'Chunk unavailable';
       return NextResponse.json(
         { error: 'Chunk unavailable', detail: message },
-        { status: upstream.status }
+        { status: upstream.status },
       );
     }
 
@@ -42,7 +42,7 @@ export async function GET(
     responseHeaders.set('Cache-Control', 'no-store');
     responseHeaders.set(
       'Content-Disposition',
-      `inline; filename="${slug}-${String(parsedIndex).padStart(4, '0')}.wav"`
+      `inline; filename="${slug}-${String(parsedIndex).padStart(4, '0')}.wav"`,
     );
 
     return new NextResponse(upstream.body, {
@@ -50,11 +50,10 @@ export async function GET(
       headers: responseHeaders,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown upstream error';
+    const message = error instanceof Error ? error.message : 'Unknown upstream error';
     return NextResponse.json(
       { error: 'TTS service unavailable', detail: message },
-      { status: 502 }
+      { status: 502 },
     );
   }
 }

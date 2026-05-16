@@ -1,11 +1,11 @@
 'use client';
 
-import * as React from 'react';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Sheet from '@mui/joy/Sheet';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
+import * as React from 'react';
 
 export type TagFilterBarProps = {
   allTags: string[];
@@ -97,7 +97,7 @@ export const TagFilterBar = React.memo(({ allTags, selectedTags, onChange }: Tag
         borderColor: 'rgba(255,255,255,0.12)',
         bgcolor: 'background.level1',
       }}
-      >
+    >
       <Stack spacing={1}>
         <Box
           sx={{

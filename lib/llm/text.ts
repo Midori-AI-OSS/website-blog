@@ -1,6 +1,6 @@
 import type { ParsedPost } from '@/lib/blog/parser';
-import { extractIsoDateFromBlogFilename, normalizeIsoDateString } from '@/lib/content/publish';
 import { toLoreImageApiUrl, transformPostImageUrl } from '@/lib/content/imageUrl';
+import { extractIsoDateFromBlogFilename, normalizeIsoDateString } from '@/lib/content/publish';
 
 export type LlmPostType = 'blog' | 'lore';
 
@@ -97,12 +97,15 @@ function convertMarkdownToPlainText(markdown: string): string {
 }
 
 export function normalizeMarkdownForLlm(markdown: string): NormalizedMarkdown {
-  const expandedTokens = markdown.replace(LORE_IMAGE_TOKEN_PATTERN, (_fullMatch, tokenValue: string) => {
-    const loreUrl = toLoreImageApiUrl(tokenValue);
-    const imageUrl = loreUrl ?? toContentImageUrl(tokenValue);
-    if (!imageUrl) return '';
-    return `\n\n![Lore image](${imageUrl})\n\n`;
-  });
+  const expandedTokens = markdown.replace(
+    LORE_IMAGE_TOKEN_PATTERN,
+    (_fullMatch, tokenValue: string) => {
+      const loreUrl = toLoreImageApiUrl(tokenValue);
+      const imageUrl = loreUrl ?? toContentImageUrl(tokenValue);
+      if (!imageUrl) return '';
+      return `\n\n![Lore image](${imageUrl})\n\n`;
+    },
+  );
 
   const imageUrls: string[] = [];
   const markdownWithImageLines = expandedTokens.replace(
@@ -116,12 +119,12 @@ export function normalizeMarkdownForLlm(markdown: string): NormalizedMarkdown {
       const cleanedAlt = typeof altText === 'string' ? altText.trim() : '';
       const imageLabel = cleanedAlt ? `Image (${cleanedAlt})` : 'Image';
       return `\n\n${imageLabel}: ${imageUrl}\n\n`;
-    }
+    },
   );
 
   const markdownWithLinkText = markdownWithImageLines.replace(
     MARKDOWN_LINK_PATTERN,
-    (_fullMatch, label: string, rawUrl: string) => `${label.trim()} (${rawUrl.trim()})`
+    (_fullMatch, label: string, rawUrl: string) => `${label.trim()} (${rawUrl.trim()})`,
   );
 
   const plainText = convertMarkdownToPlainText(markdownWithLinkText);
@@ -155,7 +158,10 @@ function renderEntryLine(entry: LlmPostEntry): string {
   return `- ${entry.title} | site: ${entry.canonicalPath} | llm: ${entry.llmPath} | source: ${entry.sourcePath}${summarySuffix}`;
 }
 
-export function renderLlmIndexText(blogEntries: LlmPostEntry[], loreEntries: LlmPostEntry[]): string {
+export function renderLlmIndexText(
+  blogEntries: LlmPostEntry[],
+  loreEntries: LlmPostEntry[],
+): string {
   const lines: string[] = [
     'Midori AI LLM Text Index',
     '',

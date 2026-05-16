@@ -1,14 +1,14 @@
 /**
  * BlogList Component Example
- * 
+ *
  * Demonstrates different usage patterns for the BlogList component:
  * 1. Static/SSG mode with all posts pre-loaded
  * 2. Client-side mode with API fetching
  * 3. Handling edge cases (empty, few posts, exactly one page)
  */
 
-import { BlogList } from './BlogList';
 import type { ParsedPost } from '../../lib/blog/parser';
+import { BlogList } from './BlogList';
 
 // Example 1: Static/SSG Mode
 // All posts are loaded at build time, pagination happens client-side
@@ -84,13 +84,7 @@ export function EmptyBlogListExample() {
     console.log('Navigate to:', post.filename);
   };
 
-  return (
-    <BlogList
-      initialPosts={[]}
-      allPosts={[]}
-      onPostClick={handlePostClick}
-    />
-  );
+  return <BlogList initialPosts={[]} allPosts={[]} onPostClick={handlePostClick} />;
 }
 
 // Example 4: Few Posts (less than one page)
@@ -123,13 +117,7 @@ export function FewPostsExample() {
     console.log('Navigate to:', post.filename);
   };
 
-  return (
-    <BlogList
-      initialPosts={fewPosts}
-      allPosts={fewPosts}
-      onPostClick={handlePostClick}
-    />
-  );
+  return <BlogList initialPosts={fewPosts} allPosts={fewPosts} onPostClick={handlePostClick} />;
 }
 
 // Example 5: Exactly One Page
@@ -185,16 +173,16 @@ export function CustomPageSizeExample() {
  * GET /api/posts?page=0&pageSize=10
  */
 export async function exampleApiHandler(req: any, res: any) {
-  const page = parseInt(req.query.page || '0');
-  const pageSize = parseInt(req.query.pageSize || '10');
-  
+  const page = parseInt(req.query.page || '0', 10);
+  const pageSize = parseInt(req.query.pageSize || '10', 10);
+
   // Fetch posts from database, CMS, or file system
   const allPosts: ParsedPost[] = []; // Your posts here
-  
+
   const start = page * pageSize;
   const posts = allPosts.slice(start, start + pageSize);
   const hasMore = start + posts.length < allPosts.length;
-  
+
   res.status(200).json({
     posts,
     hasMore,

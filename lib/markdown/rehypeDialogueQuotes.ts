@@ -23,9 +23,7 @@ function isText(node: Content): node is Text {
 }
 
 function normalizeText(value: string): string {
-  return value
-    .replace(CURLY_DOUBLE_QUOTES, QUOTE_CHAR)
-    .replace(EM_DASH, HYPHEN_CHAR);
+  return value.replace(CURLY_DOUBLE_QUOTES, QUOTE_CHAR).replace(EM_DASH, HYPHEN_CHAR);
 }
 
 function createText(value: string): Text {

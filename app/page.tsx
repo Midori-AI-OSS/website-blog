@@ -1,7 +1,7 @@
-import { loadAllPosts, getRecentPosts } from '@/lib/blog/loader';
-import { loadAllLorePosts } from '@/lib/lore/loader';
 import HomePageClient from '@/components/HomePageClient';
+import { getRecentPosts, loadAllPosts } from '@/lib/blog/loader';
 import type { ParsedPost } from '@/lib/blog/parser';
+import { loadAllLorePosts } from '@/lib/lore/loader';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +28,5 @@ export default async function HomePage() {
   const allLorePosts = await loadAllLorePosts();
   const recentLorePosts = allLorePosts.slice(0, 3).map(stripLoreTagFromPost);
 
-  return (
-    <HomePageClient recentPosts={recentPosts} recentLorePosts={recentLorePosts} />
-  );
+  return <HomePageClient recentPosts={recentPosts} recentLorePosts={recentLorePosts} />;
 }

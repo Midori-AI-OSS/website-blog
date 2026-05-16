@@ -42,7 +42,9 @@ describe('Lore Loader', () => {
     await mkdir(testPostsDir, { recursive: true });
     await mkdir(testGamesDir, { recursive: true });
 
-    await createLorePost('first-lore.md', `---
+    await createLorePost(
+      'first-lore.md',
+      `---
 title: First Lore
 date: 2026-01-15
 tags: [lore, real-moments, riley]
@@ -50,9 +52,12 @@ game: real-moments
 story_order: 1
 ---
 
-# First Lore`);
+# First Lore`,
+    );
 
-    await createLorePost('second-lore.md', `---
+    await createLorePost(
+      'second-lore.md',
+      `---
 title: Second Lore
 date: 2026-01-16
 tags: [lore, real-moments, riley]
@@ -60,9 +65,12 @@ game: real-moments
 story_order: 2
 ---
 
-# Second Lore`);
+# Second Lore`,
+    );
 
-    await createLorePost('future-lore.md', `---
+    await createLorePost(
+      'future-lore.md',
+      `---
 title: Future Lore
 date: 2099-12-31
 tags: [lore, real-moments, riley]
@@ -70,9 +78,12 @@ game: real-moments
 story_order: 3
 ---
 
-# Future Lore`);
+# Future Lore`,
+    );
 
-    await createLorePost('side-pov.md', `---
+    await createLorePost(
+      'side-pov.md',
+      `---
 title: Echo Side POV
 date: 2026-01-18
 tags: [lore, real-moments, echo]
@@ -80,9 +91,12 @@ game: real-moments
 story_order: 2.5
 ---
 
-# Echo Side POV`);
+# Echo Side POV`,
+    );
 
-    await createLorePost('arc-post.md', `---
+    await createLorePost(
+      'arc-post.md',
+      `---
 title: Arc Post
 date: 2026-01-17
 tags: [lore, celestial-covenant, luna]
@@ -90,37 +104,50 @@ game: celestial-covenant
 story_order: 10
 ---
 
-# Arc Post`);
+# Arc Post`,
+    );
 
-    await createLorePost('missing-required.md', `---
+    await createLorePost(
+      'missing-required.md',
+      `---
 title: Missing Required
 tags: [lore]
 ---
 
-# Missing Required`);
+# Missing Required`,
+    );
 
-    await createLorePost('invalid file!.md', `---
+    await createLorePost(
+      'invalid file!.md',
+      `---
 title: Invalid Lore
 ---
 
-# Invalid`);
+# Invalid`,
+    );
 
-    await createGameIndex('real-moments', `---
+    await createGameIndex(
+      'real-moments',
+      `---
 title: Real Moments
 summary: Shared campaign event threads told through multiple POVs.
 cover_image: /lore/riley-rumbodo.png
 full_story_pov: riley
 full_story_tooltip: Read Riley's full thread for this arc.
 ---
-`);
+`,
+    );
 
-    await createGameIndex('celestial-covenant', `---
+    await createGameIndex(
+      'celestial-covenant',
+      `---
 title: Celestial Covenant
 summary: Luna's DnD campaign arc.
 cover_image: /lore/rite.png
 full_story_pov: luna
 ---
-`);
+`,
+    );
   });
 
   afterAll(async () => {
@@ -144,7 +171,7 @@ full_story_pov: luna
         includeScheduled: true,
         now: '2026-01-16T18:00:00Z',
       },
-      testPostsDir
+      testPostsDir,
     );
 
     expect(posts[0]?.filename).toBe('future-lore.md');
@@ -165,7 +192,7 @@ full_story_pov: luna
     const groups = await loadLoreGameGroups(
       { includeScheduled: false, now: '2026-01-16T18:00:00Z' },
       testPostsDir,
-      testGamesDir
+      testGamesDir,
     );
 
     const realMoments = groups.find((group) => group.game.slug === 'real-moments');
@@ -181,7 +208,7 @@ full_story_pov: luna
   test('getLoreStoryNeighbors resolves older/newer neighbors by story order', async () => {
     const allPosts = await loadAllLorePosts(
       { includeScheduled: true, now: '2026-01-16T18:00:00Z' },
-      testPostsDir
+      testPostsDir,
     );
     const second = getLorePostBySlug(allPosts, 'second-lore');
     expect(second).toBeDefined();
@@ -195,7 +222,7 @@ full_story_pov: luna
   test('getLorePovPosts returns ordered posts for a specific POV tag', async () => {
     const allPosts = await loadAllLorePosts(
       { includeScheduled: true, now: '2026-01-16T18:00:00Z' },
-      testPostsDir
+      testPostsDir,
     );
 
     const rileyPosts = getLorePovPosts(allPosts, 'real-moments', 'riley');

@@ -1,16 +1,16 @@
 /**
  * PostView Component Example
- * 
+ *
  * Demonstrates usage of the PostView component with sample data.
  * This example shows how to integrate PostView in a blog page.
  */
 
-import React, { useState } from 'react';
-import { CssVarsProvider } from '@mui/joy/styles';
 import { Box } from '@mui/joy';
-import { PostView } from './PostView';
-import { BlogList } from './BlogList';
+import { CssVarsProvider } from '@mui/joy/styles';
+import { useState } from 'react';
 import type { ParsedPost } from '../../lib/blog/parser';
+import { BlogList } from './BlogList';
+import { PostView } from './PostView';
 
 /**
  * Example post data
@@ -19,7 +19,8 @@ const examplePost: ParsedPost = {
   filename: '2025-01-17.md',
   metadata: {
     title: 'Getting Started with SvelteKit Blog Template',
-    summary: 'Learn how to set up and use this modern blog template built with Next.js, MUI Joy, and TypeScript.',
+    summary:
+      'Learn how to set up and use this modern blog template built with Next.js, MUI Joy, and TypeScript.',
     tags: ['nextjs', 'typescript', 'blog', 'tutorial'],
     cover_image: 'https://via.placeholder.com/1200x600/667eea/ffffff?text=Blog+Cover',
     author: 'Midori AI Team',
@@ -108,10 +109,7 @@ export function PostViewExample() {
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.body' }}>
         {selectedPost ? (
           // Show full post view
-          <PostView
-            post={selectedPost}
-            onClose={() => setSelectedPost(null)}
-          />
+          <PostView post={selectedPost} onClose={() => setSelectedPost(null)} />
         ) : (
           // Show blog list
           <Box sx={{ maxWidth: 1200, mx: 'auto', p: 4 }}>

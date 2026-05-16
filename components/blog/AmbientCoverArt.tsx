@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import { useEffect, useState, type ReactNode } from 'react'
-import { Box, Card } from '@mui/joy'
+import { Box, Card } from '@mui/joy';
+import { type ReactNode, useEffect, useState } from 'react';
 
 export const AMBIENT_PULSE_KEYFRAMES = {
   '@keyframes ambient-pulse': {
@@ -9,16 +9,16 @@ export const AMBIENT_PULSE_KEYFRAMES = {
     '50%': { transform: 'scale(1.14)', opacity: 0.6 },
     '100%': { transform: 'scale(1.1)', opacity: 0.8 },
   },
-}
+};
 
 export interface AmbientCoverArtProps {
-  coverImageUrl: string
-  alt: string
-  isScheduledPreview?: boolean
-  minHeight?: { xs?: string | number; sm?: string | number }
-  children?: ReactNode
-  onAspectRatioChange?: (isLandscape: boolean) => void
-  onImageError?: (url: string) => void
+  coverImageUrl: string;
+  alt: string;
+  isScheduledPreview?: boolean;
+  minHeight?: { xs?: string | number; sm?: string | number };
+  children?: ReactNode;
+  onAspectRatioChange?: (isLandscape: boolean) => void;
+  onImageError?: (url: string) => void;
 }
 
 export function AmbientCoverArt({
@@ -30,11 +30,11 @@ export function AmbientCoverArt({
   onAspectRatioChange,
   onImageError,
 }: AmbientCoverArtProps) {
-  const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null)
+  const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setCoverIsLandscape(null)
-  }, [coverImageUrl])
+    setCoverIsLandscape(null);
+  }, []);
 
   return (
     <Card
@@ -102,11 +102,11 @@ export function AmbientCoverArt({
         loading="lazy"
         onError={() => onImageError?.(coverImageUrl)}
         onLoad={(event) => {
-          const img = event.currentTarget
+          const img = event.currentTarget;
           if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-            const isLandscape = img.naturalWidth > img.naturalHeight
-            setCoverIsLandscape(isLandscape)
-            onAspectRatioChange?.(isLandscape)
+            const isLandscape = img.naturalWidth > img.naturalHeight;
+            setCoverIsLandscape(isLandscape);
+            onAspectRatioChange?.(isLandscape);
           }
         }}
         sx={{
@@ -128,5 +128,5 @@ export function AmbientCoverArt({
 
       {children}
     </Card>
-  )
+  );
 }

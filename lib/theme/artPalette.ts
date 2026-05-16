@@ -20,7 +20,7 @@ export function rgbToHex(r: number, g: number, b: number): string {
       .map((channel) =>
         Math.max(0, Math.min(255, Math.round(channel)))
           .toString(16)
-          .padStart(2, '0')
+          .padStart(2, '0'),
       )
       .join('')
   );
@@ -101,7 +101,7 @@ function quantizeChannel(value: number): number {
 
 export function extractPaletteFromImage(
   imageUrl: string,
-  options: { fallback?: ExtractedPalette } = {}
+  options: { fallback?: ExtractedPalette } = {},
 ): Promise<ExtractedPalette> {
   const fallback = options.fallback ?? DEFAULT_ART_PALETTE;
 
@@ -176,7 +176,7 @@ export function extractPaletteFromImage(
           const isTooClose = picked.some(
             (entry) =>
               colorDistance([entry.r, entry.g, entry.b], [candidate.r, candidate.g, candidate.b]) <
-              minDistance
+              minDistance,
           );
 
           if (!isTooClose) {
@@ -189,9 +189,9 @@ export function extractPaletteFromImage(
         }
 
         resolve({
-          primary: ensureMinLuminance(rgbToHex(picked[0]!.r, picked[0]!.g, picked[0]!.b)),
-          secondary: ensureMinLuminance(rgbToHex(picked[1]!.r, picked[1]!.g, picked[1]!.b)),
-          tertiary: ensureMinLuminance(rgbToHex(picked[2]!.r, picked[2]!.g, picked[2]!.b)),
+          primary: ensureMinLuminance(rgbToHex(picked[0]?.r, picked[0]?.g, picked[0]?.b)),
+          secondary: ensureMinLuminance(rgbToHex(picked[1]?.r, picked[1]?.g, picked[1]?.b)),
+          tertiary: ensureMinLuminance(rgbToHex(picked[2]?.r, picked[2]?.g, picked[2]?.b)),
         });
       } catch {
         resolve(fallback);
