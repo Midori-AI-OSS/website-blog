@@ -56,11 +56,7 @@ class RadioBroadcaster {
     const stream = new ReadableStream<Uint8Array>({
       start: (controller) => {
         sub.write = (chunk) => {
-          try {
-            controller.enqueue(chunk);
-          } catch {
-            this.subscribers.delete(sub);
-          }
+          controller.enqueue(chunk);
         };
         sub.close = () => {
           try {
@@ -181,7 +177,7 @@ class RadioBroadcaster {
       if (!this.active) return;
       if (Date.now() < this.suppressReconnectUntil) return;
       this.reconnectAttempt++;
-      this.connectUpstream(generation);
+      this.connectUpstream(generation).catch(() => {});
     }, delay);
   }
 
@@ -225,7 +221,7 @@ class RadioBroadcaster {
 
       while (true) {
         if (generation !== this.reconnectGeneration) {
-          try { reader.cancel(); } catch { /* ignore */ }
+          reader.cancel().catch(() => {});
           return;
         }
 
