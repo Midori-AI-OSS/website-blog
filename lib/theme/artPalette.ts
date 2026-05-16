@@ -188,10 +188,21 @@ export function extractPaletteFromImage(
           picked.push(picked[picked.length - 1]!);
         }
 
+        const primaryColor = picked[0];
+        const secondaryColor = picked[1];
+        const tertiaryColor = picked[2];
+
+        if (!primaryColor || !secondaryColor || !tertiaryColor) {
+          resolve(fallback);
+          return;
+        }
+
         resolve({
-          primary: ensureMinLuminance(rgbToHex(picked[0]?.r, picked[0]?.g, picked[0]?.b)),
-          secondary: ensureMinLuminance(rgbToHex(picked[1]?.r, picked[1]?.g, picked[1]?.b)),
-          tertiary: ensureMinLuminance(rgbToHex(picked[2]?.r, picked[2]?.g, picked[2]?.b)),
+          primary: ensureMinLuminance(rgbToHex(primaryColor.r, primaryColor.g, primaryColor.b)),
+          secondary: ensureMinLuminance(
+            rgbToHex(secondaryColor.r, secondaryColor.g, secondaryColor.b),
+          ),
+          tertiary: ensureMinLuminance(rgbToHex(tertiaryColor.r, tertiaryColor.g, tertiaryColor.b)),
         });
       } catch {
         resolve(fallback);
