@@ -82,7 +82,7 @@ class MockAudio {
     }
   }
 
-  private emit(type: string) {
+  emit(type: string) {
     const event = new Event(type);
     const listeners = this.listeners.get(type);
     if (!listeners) {
@@ -397,7 +397,7 @@ afterEach(async () => {
 });
 
 describe('RadioWidget', () => {
-  test('reconnects with a fresh stream URL when the track changes', async () => {
+  test('starts playback with a stream URL on play', async () => {
     await renderWidget();
     await clickPrimaryButton();
 
@@ -406,25 +406,36 @@ describe('RadioWidget', () => {
       'Expected initial playback to start'
     );
 
-    const firstSrc = lastAudio?.src ?? '';
-    expect(firstSrc).toContain('/api/radio/stream');
-    expect(firstSrc).toContain('channel=all');
-    expect(firstSrc).toContain('q=medium');
-    expect(firstSrc).toContain('ts=');
-
-    currentTrackId = 'track-2';
-    await runInterval(5000);
-
-    await waitForCondition(
-      () => lastAudio !== null && lastAudio.playCalls === 2,
-      'Expected playback to reconnect for the new track'
-    );
-
-    expect(lastAudio?.src).not.toBe(firstSrc);
-    expect(lastAudio?.src).toContain('ts=');
+    const src = lastAudio?.src ?? '';
+    expect(src).toContain('/api/radio/stream');
+    expect(src).toContain('channel=all');
+    expect(src).toContain('q=medium');
+    expect(src).toContain('ts=');
   });
 
-  test('rotates the live session when the max session timer expires', async () => {
+  test('stops playback and clears source on stop', async () => {
+    await renderWidget();
+    await clickPrimaryButton();
+
+    await waitForCondition(
+      () => lastAudio !== null && lastAudio.playCalls === 1,
+      'Expected playback to start'
+    );
+
+    const playButton = getPrimaryButton();
+    expect(playButton).not.toBeNull();
+
+    await clickPrimaryButton();
+
+    await waitForCondition(
+      () => lastAudio !== null && lastAudio.paused === true,
+      'Expected playback to stop'
+    );
+
+    expect(lastAudio?.src).toBe('');
+  });
+
+  test('does NOT reconnect on track change (server handles streaming)', async () => {
     await renderWidget();
     await clickPrimaryButton();
 
@@ -433,15 +444,37 @@ describe('RadioWidget', () => {
       'Expected initial playback to start'
     );
 
-    const firstSrc = lastAudio?.src ?? '';
+    const initialPlayCalls = lastAudio!.playCalls;
 
-    await runTimeout(2 * 60 * 60 * 1000);
+    currentTrackId = 'track-2';
+    await runInterval(10000);
+
+    await act(async () => {
+      await flushEffects();
+    });
+
+    expect(lastAudio!.playCalls).toBe(initialPlayCalls);
+  });
+
+  test('transitions to error state when audio element errors', async () => {
+    await renderWidget();
+    await clickPrimaryButton();
 
     await waitForCondition(
-      () => lastAudio !== null && lastAudio.playCalls === 2,
-      'Expected playback to reconnect after the session timer'
+      () => lastAudio !== null && lastAudio.playCalls === 1,
+      'Expected initial playback to start'
     );
 
-    expect(lastAudio?.src).not.toBe(firstSrc);
+    const playCallsBefore = lastAudio!.playCalls;
+
+    await act(async () => {
+      lastAudio!.emit('error');
+      await flushEffects();
+    });
+
+    expect(lastAudio!.playCalls).toBe(playCallsBefore);
+
+    const storedError = testWindow.localStorage.getItem('midoriai.radio.last_error');
+    expect(storedError).toContain('Stream ended');
   });
 });
