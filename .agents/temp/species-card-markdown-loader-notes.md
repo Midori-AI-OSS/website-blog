@@ -118,5 +118,5 @@ Required data:
 
 - Use the `qrcode` package for real QR generation when implementation starts. Add it with `bun add qrcode`; add `@types/qrcode` only if TypeScript needs separate package types.
 - Do not include PNG export in the real system. That was prototype-only.
-- Species card token failures should render a visible placeholder/error card using the site placeholder or cover-art treatment with an approximately 15% red tint.
+- Species card token failures should render a visible placeholder/error card using the current post's cover art with an approximately 15% red tint.
 - Shared species profiles will be separate Markdown-backed records for reusable species guidance.
