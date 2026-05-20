@@ -1,4 +1,5 @@
 'use client';
+// Species healthcare card — inline 3D flip card rendered in lore posts
 
 import { Box, Stack, Typography } from '@mui/joy';
 import { useState } from 'react';
@@ -18,10 +19,9 @@ function SmallLabel({ children }: { children: React.ReactNode }) {
       sx={{
         color: '#64748b',
         fontSize: '0.6rem',
-        fontWeight: 900,
-        fontSynthesis: 'none',
-        letterSpacing: '0.12em',
-        lineHeight: 1.1,
+        fontWeight: 700,
+        letterSpacing: '0.08em',
+        lineHeight: 1.16,
         textTransform: 'uppercase',
       }}
     >
@@ -37,8 +37,8 @@ function CardFaceHeader() {
         sx={{
           color: '#047857',
           fontSize: { xs: '0.7rem', sm: '0.78rem' },
-          fontWeight: 800,
-          letterSpacing: '0.08em',
+          fontWeight: 700,
+          letterSpacing: '0.05em',
           textTransform: 'uppercase',
         }}
       >
@@ -48,8 +48,8 @@ function CardFaceHeader() {
         sx={{
           color: '#047857',
           fontSize: { xs: '0.7rem', sm: '0.78rem' },
-          fontWeight: 800,
-          letterSpacing: '0.08em',
+          fontWeight: 700,
+          letterSpacing: '0.05em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
         }}
@@ -75,7 +75,7 @@ function PersonPhoto({ photoUrl, initials }: { photoUrl?: string; initials: stri
           bgcolor: '#dbeafe',
           color: '#1e3a8a',
           fontSize: { xs: '1.8rem', sm: '2.6rem' },
-          fontWeight: 950,
+          fontWeight: 700,
         }}
       >
         {initials}
@@ -127,9 +127,8 @@ function CompactFieldRow({
           minWidth: 0,
           color: '#0f172a',
           fontSize: strong ? { xs: '0.72rem', sm: '0.8rem' } : { xs: '0.62rem', sm: '0.69rem' },
-          fontWeight: strong ? 900 : 750,
-          fontSynthesis: 'none',
-          lineHeight: 1.12,
+          fontWeight: strong ? 700 : 600,
+          lineHeight: 1.18,
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
@@ -186,7 +185,7 @@ function FrontCard({
           bottom: { xs: 6, sm: 10 },
           color: 'rgba(15, 23, 42, 0.045)',
           fontSize: { xs: '2.4rem', sm: '3.6rem' },
-          fontWeight: 950,
+          fontWeight: 700,
           lineHeight: 1,
         }}
       >
@@ -235,9 +234,8 @@ function FrontCard({
                       minWidth: 0,
                       color: '#064e3b',
                       fontSize: { xs: '0.66rem', sm: '0.74rem' },
-                      fontWeight: 950,
-                      fontSynthesis: 'none',
-                      lineHeight: 1.12,
+                      fontWeight: 700,
+                      lineHeight: 1.18,
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical',
@@ -263,8 +261,8 @@ function FrontCard({
                 pt: 0.55,
                 color: '#78350f',
                 fontSize: { xs: '0.58rem', sm: '0.63rem' },
-                fontWeight: 800,
-                lineHeight: 1.18,
+                fontWeight: 700,
+                lineHeight: 1.24,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
@@ -323,7 +321,7 @@ function BackCard({
           bottom: { xs: 6, sm: 10 },
           color: 'rgba(15, 23, 42, 0.045)',
           fontSize: { xs: '2.4rem', sm: '3.6rem' },
-          fontWeight: 950,
+          fontWeight: 700,
           lineHeight: 1,
         }}
       >
@@ -380,6 +378,7 @@ export function SpeciesCareCardInline({ record, photoUrl }: SpeciesCareCardInlin
         borderRadius: { xs: '24px', sm: '32px' },
         bgcolor: 'rgba(248,250,252,0.94)',
         color: '#0f172a',
+        fontFamily: 'var(--joy-fontFamily-body)',
         p: { xs: 1.25, sm: 2 },
         boxShadow: '0 24px 80px rgba(15,23,42,0.25)',
       }}
