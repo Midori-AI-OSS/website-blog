@@ -355,7 +355,7 @@ function BackCard({
             <CompactFieldRow label="Issued by" value={summary.issuedBy} />
             <CompactFieldRow label="Registry" value={summary.registeredWith} />
             <CompactFieldRow label="Lookup" value={summary.fallbackLookupCode} />
-            <CompactFieldRow label="Healthcare ID" value={summary.healthcareId} />
+            <CompactFieldRow label="DHS ID" value={summary.healthcareId} />
           </Stack>
           <SpeciesCareQr value={summary.webScanPath} size={320} plain />
         </Box>
