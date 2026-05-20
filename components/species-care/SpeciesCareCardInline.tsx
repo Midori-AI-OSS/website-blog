@@ -239,7 +239,7 @@ function FrontCard({
           sx={{
             mt: { xs: 0.6, sm: 0.9 },
             display: 'grid',
-            gridTemplateColumns: '96px minmax(0, 1fr)',
+            gridTemplateColumns: '384px minmax(0, 1fr)',
             gap: { xs: 0.8, sm: 1.1 },
             flex: 1,
             minHeight: 0,
@@ -397,7 +397,7 @@ function BackCard({
             <CompactFieldRow label="Issued by" value={summary.issuedBy} />
             <CompactFieldRow label="Registry" value={summary.registeredWith} />
           </Stack>
-          <SpeciesCareQr value={summary.webScanPath} size={100} />
+          <SpeciesCareQr value={summary.webScanPath} size={400} />
         </Box>
       </Box>
     </Box>
