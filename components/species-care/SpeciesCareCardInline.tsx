@@ -206,7 +206,7 @@ function FrontCard({
           sx={{
             mt: { xs: 0.6, sm: 0.9 },
             display: 'grid',
-            alignItems: 'start',
+            alignItems: 'center',
             gridTemplateColumns: '307px minmax(0, 1fr)',
             gap: { xs: 0.8, sm: 1.1 },
             flex: 1,
@@ -342,6 +342,7 @@ function BackCard({
           sx={{
             mt: { xs: 0.6, sm: 0.9 },
             display: 'grid',
+            alignItems: 'center',
             gridTemplateColumns: 'minmax(0, 1fr) auto',
             gap: { xs: 1, sm: 1.4 },
             flex: 1,
