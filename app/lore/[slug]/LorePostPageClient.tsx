@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PostView } from '@/components/blog/PostView';
 import type { ParsedPost } from '@/lib/blog/parser';
 import type { LorePostNeighbor } from '@/lib/lore/loader';
+import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
 
 interface LorePostPageClientProps {
   post: ParsedPost;
@@ -12,6 +13,7 @@ interface LorePostPageClientProps {
   nextStory?: LorePostNeighbor | null;
   isScheduledPreview?: boolean;
   scheduledPublishDate?: string;
+  speciesCareCards?: SpeciesCareCardEmbedMap;
 }
 
 export function LorePostPageClient({
@@ -20,6 +22,7 @@ export function LorePostPageClient({
   nextStory = null,
   isScheduledPreview = false,
   scheduledPublishDate,
+  speciesCareCards = {},
 }: LorePostPageClientProps) {
   const router = useRouter();
 
@@ -51,6 +54,7 @@ export function LorePostPageClient({
       onNavigateStory={(href) => router.push(href)}
       isScheduledPreview={isScheduledPreview}
       scheduledPublishDate={scheduledPublishDate}
+      speciesCareCards={speciesCareCards}
     />
   );
 }

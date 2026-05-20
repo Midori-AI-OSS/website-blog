@@ -206,6 +206,7 @@ function FrontCard({
           sx={{
             mt: { xs: 0.6, sm: 0.9 },
             display: 'grid',
+            alignItems: 'start',
             gridTemplateColumns: '307px minmax(0, 1fr)',
             gap: { xs: 0.8, sm: 1.1 },
             flex: 1,
@@ -352,8 +353,10 @@ function BackCard({
             <CompactFieldRow label="Advocate" value={summary.advocateContact} />
             <CompactFieldRow label="Issued by" value={summary.issuedBy} />
             <CompactFieldRow label="Registry" value={summary.registeredWith} />
+            <CompactFieldRow label="Lookup" value={summary.fallbackLookupCode} />
+            <CompactFieldRow label="Healthcare ID" value={summary.healthcareId} />
           </Stack>
-          <SpeciesCareQr value={summary.webScanPath} size={320} />
+          <SpeciesCareQr value={summary.webScanPath} size={320} plain />
         </Box>
       </Box>
     </Box>

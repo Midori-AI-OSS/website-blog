@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation';
 
 import { getPublishState } from '@/lib/content/publish';
 import { getLorePostBySlug, getLoreStoryNeighbors, loadAllLorePosts } from '@/lib/lore/loader';
+import { loadSpeciesCareCardsForMarkdown } from '@/lib/species-care/loader';
 
 import { LorePostPageClient } from './LorePostPageClient';
 
@@ -31,6 +32,9 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
 
   const publishState = getPublishState(post.metadata.date);
   const neighbors = getLoreStoryNeighbors(allPosts, post);
+  const speciesCareCards = publishState.isScheduled
+    ? {}
+    : await loadSpeciesCareCardsForMarkdown(post.content);
 
   return (
     <LorePostPageClient
@@ -39,6 +43,7 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
       nextStory={neighbors.next}
       isScheduledPreview={publishState.isScheduled}
       scheduledPublishDate={publishState.publishDate ?? undefined}
+      speciesCareCards={speciesCareCards}
     />
   );
 }

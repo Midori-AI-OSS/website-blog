@@ -25,6 +25,7 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import { AMBIENT_PULSE_KEYFRAMES, AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
+import { SpeciesCareCardEmbed } from '@/components/species-care/SpeciesCareCardEmbed';
 import {
   POST_COVER_PLACEHOLDER_IMAGE_URL,
   resolvePostCoverImageUrl,
@@ -37,6 +38,8 @@ import {
 } from '@/lib/content/publish';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
+import { splitMarkdownSpeciesCareTokens } from '@/lib/species-care/tokens';
+import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
@@ -109,6 +112,8 @@ export interface PostViewProps {
   hideBackButton?: boolean;
   /** Disable dynamic backdrop updates (e.g. multiple PostViews stacking) */
   disableDynamicBackdrop?: boolean;
+  /** Species care cards loaded for any {{speciescard: lore/<slug>}} tokens in this post */
+  speciesCareCards?: SpeciesCareCardEmbedMap;
 }
 
 /**
@@ -307,6 +312,7 @@ export function PostView({
   scheduledPublishDate,
   hideBackButton = false,
   disableDynamicBackdrop = false,
+  speciesCareCards = {},
 }: PostViewProps) {
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
@@ -323,6 +329,10 @@ export function PostView({
     [scheduledPublishDate, dateString, formattedDate],
   );
   const markdownContent = useMemo(() => replaceLoreImageTokens(post.content), [post.content]);
+  const markdownParts = useMemo(
+    () => splitMarkdownSpeciesCareTokens(markdownContent),
+    [markdownContent],
+  );
   const transformedCoverImageUrl = useMemo(
     () => resolvePostCoverImageUrl(post.metadata.cover_image),
     [post.metadata.cover_image],
@@ -968,17 +978,35 @@ export function PostView({
               },
             }}
           >
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm, remarkThinkingTags]}
-              rehypePlugins={[
-                [rehypeSanitize, markdownSanitizeSchema],
-                rehypeHighlight,
-                rehypeDialogueQuotes,
-              ]}
-              components={markdownComponents}
-            >
-              {markdownContent}
-            </ReactMarkdown>
+            {markdownParts.map((part) => {
+              if (part.type === 'species-card' && part.token) {
+                return (
+                  <SpeciesCareCardEmbed
+                    key={part.id}
+                    data={speciesCareCards[part.token.key]}
+                    tokenKey={part.token.key}
+                    coverImageUrl={effectiveCoverImageUrl}
+                  />
+                );
+              }
+
+              const content = part.content ?? '';
+              if (!content.trim()) return null;
+              return (
+                <ReactMarkdown
+                  key={part.id}
+                  remarkPlugins={[remarkGfm, remarkThinkingTags]}
+                  rehypePlugins={[
+                    [rehypeSanitize, markdownSanitizeSchema],
+                    rehypeHighlight,
+                    rehypeDialogueQuotes,
+                  ]}
+                  components={markdownComponents}
+                >
+                  {content}
+                </ReactMarkdown>
+              );
+            })}
           </Box>
         )}
       </Box>

@@ -1,0 +1,20 @@
+{
+  "slug": "echo-poindexter",
+  "title": "Echo Poindexter Species Card",
+  "currentVersion": "prov-v0.15",
+  "versions": [
+    {
+      "version": "prov-v0.15",
+      "profileVersion": "PROV v0.15",
+      "filename": "versions/prov-v0.15.md",
+      "title": "Echo Poindexter Species Card",
+      "preferredName": "Echo Poindexter",
+      "species": "Human (magic-touched)",
+      "inWorldUri": "rm-health://species-card/ar/farmington/poindexter/echo/1003/hum-mg-tch/echo-prov",
+      "sourcePath": "/tmp/dnd-notes/campaigns/real-moments/chars/echo/items/species-card.md",
+      "sourceHash": "5a577def94d9fb5e801b41d640d3fcc90cf558a0c0b4a7ef50df11004a57c4ee",
+      "importedAt": "2026-05-20T04:04:06.182Z"
+    }
+  ],
+  "updatedAt": "2026-05-20T04:04:06.182Z"
+}
