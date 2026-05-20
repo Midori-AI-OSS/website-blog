@@ -59,47 +59,6 @@ function CardFaceHeader() {
   );
 }
 
-function DemoTile({
-  label,
-  value,
-  strong = false,
-}: {
-  label: string;
-  value?: string;
-  strong?: boolean;
-}) {
-  if (!value) return null;
-  return (
-    <Box
-      sx={{
-        border: '1px solid rgba(148, 163, 184, 0.28)',
-        borderRadius: '11px',
-        bgcolor: 'rgba(255,255,255,0.7)',
-        px: { xs: 0.65, sm: 0.85 },
-        py: { xs: 0.5, sm: 0.6 },
-        boxShadow: '0 1px 0 rgba(255,255,255,0.88) inset',
-      }}
-    >
-      <SmallLabel>{label}</SmallLabel>
-      <Typography
-        sx={{
-          mt: 0.25,
-          color: '#0f172a',
-          fontSize: strong ? { xs: '0.72rem', sm: '0.8rem' } : { xs: '0.65rem', sm: '0.72rem' },
-          fontWeight: strong ? 900 : 750,
-          lineHeight: 1.1,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}
-      >
-        {value}
-      </Typography>
-    </Box>
-  );
-}
-
 function PersonPhoto({ photoUrl, initials }: { photoUrl?: string; initials: string }) {
   const [errored, setErrored] = useState(false);
 
@@ -140,7 +99,15 @@ function PersonPhoto({ photoUrl, initials }: { photoUrl?: string; initials: stri
   );
 }
 
-function CompactFieldRow({ label, value }: { label: string; value?: string }) {
+function CompactFieldRow({
+  label,
+  value,
+  strong = false,
+}: {
+  label: string;
+  value?: string;
+  strong?: boolean;
+}) {
   if (!value) return null;
   return (
     <Box
@@ -158,8 +125,8 @@ function CompactFieldRow({ label, value }: { label: string; value?: string }) {
         sx={{
           minWidth: 0,
           color: '#0f172a',
-          fontSize: { xs: '0.62rem', sm: '0.69rem' },
-          fontWeight: 750,
+          fontSize: strong ? { xs: '0.72rem', sm: '0.8rem' } : { xs: '0.62rem', sm: '0.69rem' },
+          fontWeight: strong ? 900 : 750,
           lineHeight: 1.12,
           display: '-webkit-box',
           WebkitLineClamp: 2,
@@ -239,7 +206,7 @@ function FrontCard({
           sx={{
             mt: { xs: 0.6, sm: 0.9 },
             display: 'grid',
-            gridTemplateColumns: '384px minmax(0, 1fr)',
+            gridTemplateColumns: '307px minmax(0, 1fr)',
             gap: { xs: 0.8, sm: 1.1 },
             flex: 1,
             minHeight: 0,
@@ -248,60 +215,49 @@ function FrontCard({
           <PersonPhoto photoUrl={photoUrl} initials={summary.initials} />
 
           <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <Box
-              sx={{
-                border: '1px solid #86efac',
-                borderRadius: '13px',
-                bgcolor: '#ecfdf5',
-                px: { xs: 0.7, sm: 0.9 },
-                py: { xs: 0.5, sm: 0.6 },
-                mb: { xs: 0.5, sm: 0.65 },
-              }}
-            >
-              <SmallLabel>Primary care flag</SmallLabel>
-              <Typography
-                sx={{
-                  mt: 0.2,
-                  color: '#064e3b',
-                  fontSize: { xs: '0.66rem', sm: '0.74rem' },
-                  fontWeight: 950,
-                  lineHeight: 1.12,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {summary.primaryCareFlag}
-              </Typography>
-            </Box>
+            <Stack gap={0} sx={{ minWidth: 0 }}>
+              {summary.primaryCareFlag && (
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '72px minmax(0, 1fr)',
+                    gap: 0.6,
+                    borderBottom: '1px solid rgba(203, 213, 225, 0.72)',
+                    py: 0.55,
+                  }}
+                >
+                  <SmallLabel>Primary care</SmallLabel>
+                  <Typography
+                    sx={{
+                      minWidth: 0,
+                      color: '#064e3b',
+                      fontSize: { xs: '0.66rem', sm: '0.74rem' },
+                      fontWeight: 950,
+                      lineHeight: 1.12,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {summary.primaryCareFlag}
+                  </Typography>
+                </Box>
+              )}
+              <CompactFieldRow label="Legal" value={summary.legalName} strong />
+              <CompactFieldRow label="Preferred" value={summary.preferredName} strong />
+              <CompactFieldRow label="Pronouns" value={summary.pronouns} />
+              <CompactFieldRow label="DOB / age" value={summary.dobAge} />
+              <CompactFieldRow label="Sex" value={summary.sex} />
+              <CompactFieldRow label="Gender" value={summary.gender} />
+            </Stack>
 
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: { xs: 0.5, sm: 0.6 },
-                flex: 1,
-                alignContent: 'start',
-              }}
-            >
-              <DemoTile label="Legal" value={summary.legalName} strong />
-              <DemoTile label="Preferred" value={summary.preferredName} strong />
-              <DemoTile label="Pronouns" value={summary.pronouns} />
-              <DemoTile label="DOB / age" value={summary.dobAge} />
-              <DemoTile label="Sex" value={summary.sex} />
-              <DemoTile label="Gender" value={summary.gender} />
-            </Box>
-
-            <Box
-              sx={{
-                mt: 'auto',
-                border: '1px solid #fde68a',
-                borderRadius: '11px',
-                bgcolor: '#fffbeb',
+                mt: 0.7,
+                borderTop: '1px solid rgba(203, 213, 225, 0.72)',
+                pt: 0.55,
                 color: '#78350f',
-                px: 0.8,
-                py: 0.45,
                 fontSize: { xs: '0.58rem', sm: '0.63rem' },
                 fontWeight: 800,
                 lineHeight: 1.18,
@@ -397,7 +353,7 @@ function BackCard({
             <CompactFieldRow label="Issued by" value={summary.issuedBy} />
             <CompactFieldRow label="Registry" value={summary.registeredWith} />
           </Stack>
-          <SpeciesCareQr value={summary.webScanPath} size={400} />
+          <SpeciesCareQr value={summary.webScanPath} size={320} />
         </Box>
       </Box>
     </Box>
