@@ -12,15 +12,18 @@ interface SpeciesCareCardInlineProps {
   photoUrl?: string;
 }
 
+const CARD_FONT_FAMILY = '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback)';
+
 function SmallLabel({ children }: { children: React.ReactNode }) {
   return (
     <Typography
+      component="span"
       level="body-xs"
       sx={{
         color: '#64748b',
-        fontSize: '0.6rem',
+        fontSize: '0.64rem',
         fontWeight: 700,
-        letterSpacing: '0.08em',
+        letterSpacing: '0.06em',
         lineHeight: 1.16,
         textTransform: 'uppercase',
       }}
@@ -34,22 +37,24 @@ function CardFaceHeader() {
   return (
     <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1.5}>
       <Typography
+        component="span"
         sx={{
           color: '#047857',
-          fontSize: { xs: '0.7rem', sm: '0.78rem' },
+          fontSize: { xs: '0.74rem', sm: '0.82rem' },
           fontWeight: 700,
-          letterSpacing: '0.05em',
+          letterSpacing: '0.04em',
           textTransform: 'uppercase',
         }}
       >
         Species Healthcare Card
       </Typography>
       <Typography
+        component="span"
         sx={{
           color: '#047857',
-          fontSize: { xs: '0.7rem', sm: '0.78rem' },
+          fontSize: { xs: '0.74rem', sm: '0.82rem' },
           fontWeight: 700,
-          letterSpacing: '0.05em',
+          letterSpacing: '0.04em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
         }}
@@ -114,7 +119,7 @@ function CompactFieldRow({
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: '72px minmax(0, 1fr)',
+        gridTemplateColumns: { xs: '78px minmax(0, 1fr)', sm: '84px minmax(0, 1fr)' },
         gap: 0.6,
         borderBottom: '1px solid rgba(203, 213, 225, 0.72)',
         py: 0.55,
@@ -123,10 +128,11 @@ function CompactFieldRow({
     >
       <SmallLabel>{label}</SmallLabel>
       <Typography
+        component="span"
         sx={{
           minWidth: 0,
           color: '#0f172a',
-          fontSize: strong ? { xs: '0.72rem', sm: '0.8rem' } : { xs: '0.62rem', sm: '0.69rem' },
+          fontSize: strong ? { xs: '0.76rem', sm: '0.84rem' } : { xs: '0.66rem', sm: '0.73rem' },
           fontWeight: strong ? 700 : 600,
           lineHeight: 1.18,
           display: '-webkit-box',
@@ -222,7 +228,7 @@ function FrontCard({
                 <Box
                   sx={{
                     display: 'grid',
-                    gridTemplateColumns: '72px minmax(0, 1fr)',
+                    gridTemplateColumns: { xs: '78px minmax(0, 1fr)', sm: '84px minmax(0, 1fr)' },
                     gap: 0.6,
                     borderBottom: '1px solid rgba(203, 213, 225, 0.72)',
                     py: 0.55,
@@ -230,10 +236,11 @@ function FrontCard({
                 >
                   <SmallLabel>Primary care</SmallLabel>
                   <Typography
+                    component="span"
                     sx={{
                       minWidth: 0,
                       color: '#064e3b',
-                      fontSize: { xs: '0.66rem', sm: '0.74rem' },
+                      fontSize: { xs: '0.7rem', sm: '0.78rem' },
                       fontWeight: 700,
                       lineHeight: 1.18,
                       display: '-webkit-box',
@@ -260,7 +267,7 @@ function FrontCard({
                 borderTop: '1px solid rgba(203, 213, 225, 0.72)',
                 pt: 0.55,
                 color: '#78350f',
-                fontSize: { xs: '0.58rem', sm: '0.63rem' },
+                fontSize: { xs: '0.62rem', sm: '0.68rem' },
                 fontWeight: 700,
                 lineHeight: 1.24,
                 display: '-webkit-box',
@@ -378,9 +385,19 @@ export function SpeciesCareCardInline({ record, photoUrl }: SpeciesCareCardInlin
         borderRadius: { xs: '24px', sm: '32px' },
         bgcolor: 'rgba(248,250,252,0.94)',
         color: '#0f172a',
-        fontFamily: 'var(--joy-fontFamily-body)',
+        '--joy-fontFamily-body': CARD_FONT_FAMILY,
+        fontFamily: CARD_FONT_FAMILY,
         p: { xs: 1.25, sm: 2 },
         boxShadow: '0 24px 80px rgba(15,23,42,0.25)',
+        '& p': {
+          m: 0,
+        },
+        '&& img': {
+          m: 0,
+          border: 0,
+          background: 'none',
+          animation: 'none',
+        },
       }}
     >
       <Box sx={{ mx: 'auto', width: '100%', perspective: '1400px' }}>
