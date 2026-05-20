@@ -1,7 +1,7 @@
 ---
 title: "W.E.A.V.E. System Log: Lux Maboroshi, Keep This Party Safe"
 summary: "W.E.A.V.E.'s system log of a convoy ambush, a near-fatal desync, and a reboot — learning what friend means while holding a shield together with seven failing particles."
-tags: [lore, "real-moments", "w-e-a-v-e"]
+tags: [lore, "real-moments", "weave"]
 cover_image: /lore/w-e-a-v-e-lux-maboroshi.png
 author: Luna Midori
 date: 2026-05-08

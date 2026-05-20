@@ -1,7 +1,7 @@
 ---
 title: "W.E.A.V.E. System Log: Sangre y Lux Residua, Scene Control and Case Secured"
 summary: "W.E.A.V.E. stabilizes Riley after the box dissolves, assists Echo, moves the cruiser, and seals the case into Riley's bag."
-tags: [lore, "real-moments", "w-e-a-v-e"]
+tags: [lore, "real-moments", "weave"]
 cover_image: /lore/w-e-a-v-e-post-proelium.png
 author: Luna Midori
 date: 2026-05-22
