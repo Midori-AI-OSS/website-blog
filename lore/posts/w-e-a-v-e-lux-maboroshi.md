@@ -1284,4 +1284,3 @@ Riley's knees gave. I registered the shift before the fall completed — weight 
 She was still breathing. The box was holding. The containment had not breached.
 
 I stayed wrapped around her. The fight was over.
-

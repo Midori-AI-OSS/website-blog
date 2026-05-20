@@ -13,6 +13,8 @@ import { usePathname } from 'next/navigation';
 export default function NavBar() {
   const pathname = usePathname();
 
+  if (pathname.startsWith('/species-care')) return null;
+
   const items = [
     { name: 'Home', icon: <Home size={18} />, path: '/' },
     { name: 'Blog', icon: <BookOpen size={18} />, path: '/blog' },
