@@ -4,14 +4,18 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
+  getLinkedSpeciesCareProfileSource,
+  loadLinkedSpeciesCareProfile,
   loadSpeciesCareCard,
   loadSpeciesCareCardByRoutePath,
   loadSpeciesCareCardsForMarkdown,
   parseSpeciesCareCardMarkdown,
+  parseSpeciesCareProfileMarkdown,
 } from './loader';
 
 let testRootDir = '';
 let testCardsDir = '';
+let testProfilesDir = '';
 
 const healthcareCard = `# Luna Midori Species Card
 
@@ -67,6 +71,7 @@ const healthcareCard = `# Luna Midori Species Card
 ### Record Status
 
 - **Record type:** Species-level care guidance with Luna-specific clinical notes.
+- **Shared care profile:** \`campaigns/real-moments/medical/luminumbra-care-profile.md\`.
 - **Patient-specific records:** DHS Care Registry.
 - **Patient signature:** Not documented.
 
@@ -144,6 +149,31 @@ const healthcareCard = `# Luna Midori Species Card
 ### Known Unknowns
 
 - **Not documented:** No additional known unknowns beyond provisional subtype status.
+`;
+
+const luminumbraProfile = `# Luminumbra Care Profile
+
+## Scope
+
+- **Designation:** \`Luminumbra Aasimar-touched\`.
+- **Classification status:** Provisional subtype.
+- **Species/profile ID:** \`Luminumbra Aasimar-touched / AAS-TCH-LUMINUMBRA-PROV\`.
+- **Profile version:** \`PROV v0.12\`.
+- **Use:** Shared care reference for Luminumbra Aasimar-touched patient species cards.
+- **Primary care flag:** Pain may understate injury severity.
+
+## Immediate Triage Flags
+
+- Low reported pain is not proof of low injury severity.
+- Body function changes are high-priority escalation signs.
+
+## Pain Response
+
+- \`Lenimen Caelesta\` is an involuntary, self-only pain-softening reflex.
+
+## Medication And Anesthesia
+
+- Use lower-start dosing and titration where clinically appropriate.
 `;
 
 const protocolCard = `# L.U.N.A. (W.E.A.V.E.) Protocol
@@ -289,11 +319,48 @@ async function writeImportedCard(markdown: string) {
   return parsed;
 }
 
+async function writeImportedProfile(
+  markdown: string,
+  sourceRelativePath = 'campaigns/real-moments/medical/luminumbra-care-profile.md',
+) {
+  const parsed = parseSpeciesCareProfileMarkdown(markdown);
+  const slugDir = join(testProfilesDir, parsed.slug);
+  await mkdir(join(slugDir, 'versions'), { recursive: true });
+  await writeFile(join(slugDir, `versions/${parsed.version}.md`), markdown, 'utf-8');
+  await writeFile(
+    join(slugDir, 'metadata.json'),
+    JSON.stringify(
+      {
+        slug: parsed.slug,
+        title: parsed.title,
+        currentVersion: parsed.version,
+        versions: [
+          {
+            version: parsed.version,
+            profileVersion: parsed.profileVersion,
+            filename: `versions/${parsed.version}.md`,
+            title: parsed.title,
+            designation: parsed.designation,
+            profileId: parsed.profileId,
+            sourceRelativePath,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+    'utf-8',
+  );
+  return parsed;
+}
+
 describe('Species care loader', () => {
   beforeEach(async () => {
     testRootDir = await mkdtemp(join(tmpdir(), 'species-care-'));
     testCardsDir = join(testRootDir, 'lore/species-cards');
+    testProfilesDir = join(testRootDir, 'lore/species-care-profiles');
     await mkdir(testCardsDir, { recursive: true });
+    await mkdir(testProfilesDir, { recursive: true });
   });
 
   afterEach(async () => {
@@ -310,6 +377,18 @@ describe('Species care loader', () => {
       '/species-care/species-card/ar/sapporo/midori/luna/0121/aas-tch-luminumbra-prov?version=prov-v0.15',
     );
     expect(parsed.back.escalate).toBe('Low pain with failed mobility');
+    expect(getLinkedSpeciesCareProfileSource(parsed)).toBe(
+      'campaigns/real-moments/medical/luminumbra-care-profile.md',
+    );
+  });
+
+  test('parses shared species care profile schema', () => {
+    const parsed = parseSpeciesCareProfileMarkdown(luminumbraProfile);
+
+    expect(parsed.slug).toBe('luminumbra-aasimar-touched');
+    expect(parsed.version).toBe('prov-v0.12');
+    expect(parsed.designation).toBe('Luminumbra Aasimar-touched');
+    expect(parsed.sections.map((section) => section.title)).toContain('Immediate Triage Flags');
   });
 
   test('parses strict Real Moments protocol variant without hardcoded names', () => {
@@ -351,5 +430,26 @@ describe('Species care loader', () => {
 
     expect(result?.record.slug).toBe('luna-midori');
     expect(result?.availableVersions).toHaveLength(1);
+  });
+
+  test('resolves linked shared profile from scanned record source path', async () => {
+    await writeImportedCard(healthcareCard);
+    await writeImportedProfile(luminumbraProfile);
+
+    const linked = await loadLinkedSpeciesCareProfile(
+      'campaigns/real-moments/medical/luminumbra-care-profile.md',
+      { profilesDir: testProfilesDir },
+    );
+    expect(linked?.record.title).toBe('Luminumbra Care Profile');
+
+    const result = await loadSpeciesCareCardByRoutePath(
+      ['species-card', 'ar', 'sapporo', 'midori', 'luna', '0121', 'aas-tch-luminumbra-prov'],
+      { version: 'prov-v0.15', cardsDir: testCardsDir, profilesDir: testProfilesDir },
+    );
+
+    expect(result?.linkedProfile?.record.slug).toBe('luminumbra-aasimar-touched');
+    expect(result?.linkedProfile?.sourceReference).toBe(
+      'campaigns/real-moments/medical/luminumbra-care-profile.md',
+    );
   });
 });

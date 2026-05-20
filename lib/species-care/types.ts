@@ -33,6 +33,46 @@ export interface SpeciesCareCardMetadata {
   updatedAt?: string;
 }
 
+export interface SpeciesCareProfileVersionMetadata {
+  version: string;
+  profileVersion: string;
+  filename: string;
+  title: string;
+  designation: string;
+  profileId?: string;
+  sourcePath?: string;
+  sourceRelativePath?: string;
+  sourceHash?: string;
+  importedAt?: string;
+}
+
+export interface SpeciesCareProfileMetadata {
+  slug: string;
+  title: string;
+  currentVersion: string;
+  versions: SpeciesCareProfileVersionMetadata[];
+  updatedAt?: string;
+}
+
+export interface SpeciesCareProfileRecord {
+  slug: string;
+  title: string;
+  version: string;
+  profileVersion: string;
+  designation: string;
+  profileId?: string;
+  metadata?: SpeciesCareProfileMetadata;
+  sourceFilename?: string;
+  scope: Record<string, string>;
+  sections: SpeciesCareScanSection[];
+}
+
+export interface SpeciesCareLinkedProfile {
+  record: SpeciesCareProfileRecord;
+  availableVersions: SpeciesCareProfileVersionMetadata[];
+  sourceReference: string;
+}
+
 export interface SpeciesCareCardSummary {
   slug: string;
   title: string;

@@ -1,30 +1,72 @@
 'use client';
 
 import { Box, Button, Option, Select, Stack, Typography } from '@mui/joy';
-import { ArrowLeft, BadgeCheck, HeartPulse, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, FileHeart, HeartPulse, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 import type {
   SpeciesCareCardRecord,
   SpeciesCareCardVersionMetadata,
   SpeciesCareField,
+  SpeciesCareLinkedProfile,
+  SpeciesCareProfileVersionMetadata,
   SpeciesCareScanSection,
 } from '@/lib/species-care/types';
 
 interface SpeciesCareScanViewProps {
   record: SpeciesCareCardRecord;
   availableVersions: SpeciesCareCardVersionMetadata[];
+  linkedProfile?: SpeciesCareLinkedProfile;
   photoUrl?: string;
+}
+
+const CARE_FONT_FAMILY = '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback)';
+const PANEL_BORDER = '1px solid #dbe3ea';
+const PANEL_RADIUS = '8px';
+const PANEL_SHADOW = '0 1px 3px rgba(15, 23, 42, 0.06)';
+const RECORD_STATUS_TITLE = 'Record Status';
+const PATIENT_SIGNATURE_LABEL = 'Patient signature';
+
+const panelSx = {
+  border: PANEL_BORDER,
+  borderRadius: PANEL_RADIUS,
+  bgcolor: '#fff',
+  boxShadow: PANEL_SHADOW,
+};
+
+function normalizeLabel(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function getSectionByTitle(
+  sections: SpeciesCareScanSection[],
+  title: string,
+): SpeciesCareScanSection | undefined {
+  return sections.find((section) => normalizeLabel(section.title) === normalizeLabel(title));
+}
+
+function getFieldByLabel(fields: SpeciesCareField[], label: string): SpeciesCareField | undefined {
+  return fields.find((field) => normalizeLabel(field.label) === normalizeLabel(label));
+}
+
+function getFinalRecordStatusField(section?: SpeciesCareScanSection): SpeciesCareField | undefined {
+  const finalField = section?.fields.at(-1);
+  if (!finalField || normalizeLabel(finalField.label) === normalizeLabel(PATIENT_SIGNATURE_LABEL)) {
+    return undefined;
+  }
+  return finalField;
 }
 
 function PortalLabel({ children }: { children: React.ReactNode }) {
   return (
     <Typography
       sx={{
-        color: '#64748b',
+        color: '#52647a',
         fontSize: '0.72rem',
         fontWeight: 950,
-        letterSpacing: '0.12em',
+        letterSpacing: '0.1em',
+        lineHeight: 1.25,
         textTransform: 'uppercase',
       }}
     >
@@ -38,14 +80,14 @@ function InfoTile({ label, value }: { label: string; value?: string }) {
   return (
     <Box
       sx={{
-        border: '1px solid #e2e8f0',
-        borderRadius: '20px',
-        bgcolor: '#f8fafc',
-        p: 1.5,
+        borderTop: '1px solid #e2e8f0',
+        pt: 1,
       }}
     >
       <PortalLabel>{label}</PortalLabel>
-      <Typography sx={{ mt: 0.5, color: '#0f172a', fontWeight: 800, lineHeight: 1.35 }}>
+      <Typography
+        sx={{ mt: 0.4, color: '#172033', fontSize: '0.95rem', fontWeight: 760, lineHeight: 1.45 }}
+      >
         {value}
       </Typography>
     </Box>
@@ -57,16 +99,17 @@ function FieldBlock({ field }: { field: SpeciesCareField }) {
     <Box>
       <Typography
         sx={{
-          color: '#1d4ed8',
-          fontSize: '0.76rem',
+          color: '#52647a',
+          fontSize: '0.72rem',
           fontWeight: 950,
-          letterSpacing: '0.08em',
+          letterSpacing: '0.1em',
+          lineHeight: 1.25,
           textTransform: 'uppercase',
         }}
       >
         {field.label}
       </Typography>
-      <Typography sx={{ mt: 0.35, color: '#334155', fontSize: '0.96rem', lineHeight: 1.55 }}>
+      <Typography sx={{ mt: 0.4, color: '#334155', fontSize: '0.96rem', lineHeight: 1.55 }}>
         {field.value}
       </Typography>
     </Box>
@@ -78,19 +121,19 @@ function ScanSectionCard({ section }: { section: SpeciesCareScanSection }) {
     <Box
       component="section"
       sx={{
-        border: '1px solid #e2e8f0',
-        borderRadius: '24px',
-        bgcolor: '#fff',
-        p: { xs: 2, sm: 2.5 },
-        boxShadow: '0 18px 50px rgba(15, 23, 42, 0.06)',
+        ...panelSx,
+        p: { xs: 1.5, sm: 2 },
       }}
     >
-      <Typography component="h2" sx={{ color: '#0f172a', fontSize: '1.03rem', fontWeight: 950 }}>
+      <Typography
+        component="h2"
+        sx={{ color: '#0f172a', fontSize: '1rem', fontWeight: 950, lineHeight: 1.25 }}
+      >
         {section.title}
       </Typography>
-      <Stack gap={1.65} sx={{ mt: 2 }}>
+      <Stack gap={1.25} sx={{ mt: 1.5 }}>
         {section.body.map((line) => (
-          <Typography key={line} sx={{ color: '#334155', lineHeight: 1.55 }}>
+          <Typography key={line} sx={{ color: '#334155', fontSize: '0.96rem', lineHeight: 1.55 }}>
             {line}
           </Typography>
         ))}
@@ -99,10 +142,17 @@ function ScanSectionCard({ section }: { section: SpeciesCareScanSection }) {
         ))}
         {section.subsections.map((subsection) => (
           <Box key={subsection.title} sx={{ borderLeft: '3px solid #bfdbfe', pl: 1.5, py: 0.5 }}>
-            <Typography sx={{ color: '#0f172a', fontWeight: 900 }}>{subsection.title}</Typography>
+            <Typography
+              sx={{ color: '#0f172a', fontSize: '0.96rem', fontWeight: 900, lineHeight: 1.35 }}
+            >
+              {subsection.title}
+            </Typography>
             <Stack gap={1} sx={{ mt: 1 }}>
               {subsection.body.map((line) => (
-                <Typography key={line} sx={{ color: '#334155', lineHeight: 1.5 }}>
+                <Typography
+                  key={line}
+                  sx={{ color: '#334155', fontSize: '0.96rem', lineHeight: 1.55 }}
+                >
                   {line}
                 </Typography>
               ))}
@@ -117,23 +167,112 @@ function ScanSectionCard({ section }: { section: SpeciesCareScanSection }) {
   );
 }
 
-function pickVersionLabel(version: SpeciesCareCardVersionMetadata): string {
+function pickVersionLabel(
+  version: SpeciesCareCardVersionMetadata | SpeciesCareProfileVersionMetadata,
+): string {
   return `${version.profileVersion} (${version.version})`;
+}
+
+function ClinicalViewSwitcher({
+  value,
+  onChange,
+}: {
+  value: 'patient' | 'protocol';
+  onChange: (value: 'patient' | 'protocol') => void;
+}) {
+  const options: Array<{ value: 'patient' | 'protocol'; label: string }> = [
+    { value: 'protocol', label: 'Species protocol' },
+    { value: 'patient', label: 'Patient record' },
+  ];
+
+  return (
+    <Box
+      role="tablist"
+      aria-label="Clinical record view"
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 0.5,
+        border: '1px solid #cbd5e1',
+        borderRadius: PANEL_RADIUS,
+        bgcolor: '#eef2f7',
+        p: 0.5,
+      }}
+    >
+      {options.map((option) => {
+        const selected = value === option.value;
+        return (
+          <Button
+            key={option.value}
+            role="tab"
+            aria-selected={selected}
+            variant={selected ? 'solid' : 'plain'}
+            onClick={() => onChange(option.value)}
+            sx={{
+              minHeight: 44,
+              px: { xs: 1, sm: 1.5 },
+              borderRadius: '6px',
+              bgcolor: selected ? '#0f172a' : 'transparent',
+              color: selected ? '#fff' : '#334155',
+              fontWeight: 900,
+              fontSize: { xs: '0.88rem', sm: '0.95rem' },
+              '&:hover': {
+                bgcolor: selected ? '#1e293b' : '#e2e8f0',
+              },
+              '&:focus-visible': {
+                outline: '2px solid #2563eb',
+                outlineOffset: '2px',
+              },
+            }}
+          >
+            {option.label}
+          </Button>
+        );
+      })}
+    </Box>
+  );
 }
 
 export function SpeciesCareScanView({
   record,
   availableVersions,
+  linkedProfile,
   photoUrl,
 }: SpeciesCareScanViewProps) {
   const summary = record.summary;
   const versions =
     availableVersions.length > 0 ? availableVersions : (record.metadata?.versions ?? []);
+  const [clinicalView, setClinicalView] = useState<'patient' | 'protocol'>('patient');
+  const profileVersions =
+    linkedProfile && linkedProfile.availableVersions.length > 0
+      ? linkedProfile.availableVersions
+      : (linkedProfile?.record.metadata?.versions ?? []);
+  const recordStatusSection = getSectionByTitle(record.scanSections, RECORD_STATUS_TITLE);
+  const patientSignature =
+    getFieldByLabel(recordStatusSection?.fields ?? [], PATIENT_SIGNATURE_LABEL)?.value ??
+    summary.patientSignature;
+  const finalRecordStatusField = getFinalRecordStatusField(recordStatusSection);
+  const patientRecordSections = record.scanSections.filter(
+    (section) => normalizeLabel(section.title) !== normalizeLabel(RECORD_STATUS_TITLE),
+  );
+  const activeSections =
+    clinicalView === 'protocol' && linkedProfile
+      ? linkedProfile.record.sections
+      : patientRecordSections;
+  const criticalNote = summary.primaryCareFlag || summary.criticalBanner;
+  const patientFirstName = summary.preferredName.split(' ')[0] ?? summary.preferredName;
 
   function handleVersionChange(_: unknown, value: string | null) {
     if (!value || value === record.version) return;
-    const target = new URL(summary.webScanPath, window.location.origin);
+    const target = new URL(window.location.href);
     target.searchParams.set('version', value);
+    window.location.assign(target.toString());
+  }
+
+  function handleProfileVersionChange(_: unknown, value: string | null) {
+    if (!value || !linkedProfile || value === linkedProfile.record.version) return;
+    const target = new URL(window.location.href);
+    target.searchParams.set('profileVersion', value);
     window.location.assign(target.toString());
   }
 
@@ -143,102 +282,99 @@ export function SpeciesCareScanView({
       sx={{
         minHeight: '100vh',
         color: '#0f172a',
-        bgcolor: '#f6f8fb',
-        background:
-          'radial-gradient(circle at 0% 0%, rgba(219,234,254,0.95), transparent 30%), radial-gradient(circle at 100% 0%, rgba(204,251,241,0.78), transparent 28%), linear-gradient(180deg, #ffffff 0%, #f6f8fb 42%, #eef3f8 100%)',
-        px: { xs: 1.5, sm: 3, lg: 4 },
-        py: { xs: 2, sm: 3, lg: 4 },
-        pb: { xs: 12, sm: 14 },
+        bgcolor: '#f4f6f8',
+        '--joy-fontFamily-body': CARE_FONT_FAMILY,
+        fontFamily: CARE_FONT_FAMILY,
+        px: { xs: 1.25, sm: 2, lg: 3 },
+        py: { xs: 1.5, sm: 2, lg: 2.5 },
+        pb: { xs: 8, sm: 10 },
       }}
     >
       <Box
         sx={{
           mx: 'auto',
-          maxWidth: { xs: '100%', sm: '100%', md: '90%', lg: '80%' },
+          maxWidth: '1440px',
         }}
       >
-        <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
-          <Button
-            component={Link}
-            href="/lore"
-            variant="plain"
-            startDecorator={<ArrowLeft size={18} />}
-            sx={{
-              minHeight: 44,
-              borderRadius: '14px',
-              color: '#334155',
-              bgcolor: 'rgba(255,255,255,0.55)',
-              '&:hover': {
-                color: '#1d4ed8',
-                bgcolor: '#eff6ff',
-              },
-              '&:active': {
-                color: '#1e40af',
-                bgcolor: '#dbeafe',
-              },
-              '&:focus-visible': {
-                outline: '2px solid #2563eb',
-                outlineOffset: '2px',
-              },
-            }}
-          >
-            Back to lore
-          </Button>
-          <Box
-            sx={{
-              display: { xs: 'none', sm: 'flex' },
-              alignItems: 'center',
-              gap: 1,
-              border: '1px solid #bfdbfe',
-              borderRadius: '999px',
-              bgcolor: 'rgba(255,255,255,0.72)',
-              px: 1.5,
-              py: 0.75,
-              color: '#1d4ed8',
-              fontWeight: 900,
-            }}
-          >
-            <BadgeCheck size={18} /> Emergency access view
-          </Box>
-        </Stack>
-
         <Box
           component="header"
           sx={{
-            mt: 2,
-            border: '1px solid rgba(191, 219, 254, 0.9)',
-            borderRadius: { xs: '28px', sm: '36px' },
-            bgcolor: 'rgba(255,255,255,0.78)',
-            backdropFilter: 'blur(24px)',
-            p: { xs: 2, sm: 3, lg: 4 },
-            boxShadow: '0 30px 90px rgba(37, 99, 235, 0.12)',
+            ...panelSx,
+            p: { xs: 1.25, sm: 1.5 },
           }}
         >
-          <Box sx={{ minWidth: 0 }}>
-            <Stack direction="row" alignItems="center" gap={1}>
-              <ShieldAlert size={20} color="#2563eb" />
-              <PortalLabel>DHS Care Registry</PortalLabel>
-            </Stack>
-            <Typography
-              component="h1"
-              sx={{
-                mt: 1.2,
-                color: '#0f172a',
-                fontSize: { xs: '1.7rem', sm: '2rem', lg: '2.2rem' },
-                fontWeight: 950,
-                letterSpacing: '-0.055em',
-                lineHeight: 0.98,
-              }}
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            justifyContent="space-between"
+            alignItems={{ xs: 'stretch', md: 'center' }}
+            gap={1.25}
+          >
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              gap={{ xs: 1, sm: 1.5 }}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+              sx={{ minWidth: 0 }}
             >
-              {summary.preferredName} Care Record
-            </Typography>
-            {versions.length > 0 && (
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                gap={1.5}
-                alignItems={{ sm: 'center' }}
-                sx={{ mt: 1.5 }}
+              <Button
+                component={Link}
+                href="/lore"
+                variant="plain"
+                startDecorator={<ArrowLeft size={18} />}
+                sx={{
+                  minHeight: 44,
+                  alignSelf: { xs: 'flex-start', sm: 'center' },
+                  borderRadius: '6px',
+                  color: '#334155',
+                  '&:hover': {
+                    color: '#0f172a',
+                    bgcolor: '#e2e8f0',
+                  },
+                  '&:focus-visible': {
+                    outline: '2px solid #2563eb',
+                    outlineOffset: '2px',
+                  },
+                }}
               >
+                Back
+              </Button>
+              <Box sx={{ minWidth: 0 }}>
+                <Stack direction="row" alignItems="center" gap={0.75}>
+                  <ShieldAlert size={18} color="#2563eb" />
+                  <PortalLabel>DHS Care Registry</PortalLabel>
+                  <Box sx={{ display: { xs: 'none', sm: 'inline-flex' }, color: '#64748b' }}>
+                    <BadgeCheck size={16} />
+                  </Box>
+                </Stack>
+                <Typography
+                  component="h1"
+                  sx={{
+                    mt: 0.35,
+                    color: '#0f172a',
+                    fontSize: { xs: '1.28rem', sm: '1.45rem', lg: '1.55rem' },
+                    fontWeight: 950,
+                    lineHeight: 1.08,
+                  }}
+                >
+                  {summary.preferredName} Care Record
+                </Typography>
+                {summary.qrCode && (
+                  <Typography
+                    sx={{
+                      mt: 0.35,
+                      color: '#64748b',
+                      fontSize: '0.78rem',
+                      fontWeight: 750,
+                      lineHeight: 1.25,
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
+                    {summary.qrCode}
+                  </Typography>
+                )}
+              </Box>
+            </Stack>
+            {versions.length > 0 && (
+              <Box sx={{ flex: '0 0 auto' }}>
                 <Select
                   value={record.version}
                   onChange={handleVersionChange}
@@ -256,12 +392,11 @@ export function SpeciesCareScanView({
                   }}
                   sx={{
                     minHeight: 44,
-                    minWidth: { xs: '100%', sm: 240 },
-                    borderRadius: '14px',
+                    minWidth: { xs: '100%', md: 250 },
+                    borderRadius: '6px',
                     bgcolor: '#fff',
                     color: '#0f172a',
-                    borderColor: '#bfdbfe',
-                    boxShadow: '0 8px 24px rgba(37, 99, 235, 0.08)',
+                    borderColor: '#cbd5e1',
                     '&:hover': {
                       bgcolor: '#f8fafc',
                       borderColor: '#60a5fa',
@@ -272,6 +407,9 @@ export function SpeciesCareScanView({
                     },
                     '& .MuiSelect-indicator': {
                       color: '#2563eb',
+                    },
+                    '& .MuiSelect-button': {
+                      minHeight: 44,
                     },
                   }}
                 >
@@ -297,30 +435,17 @@ export function SpeciesCareScanView({
                     </Option>
                   ))}
                 </Select>
-                {summary.qrCode && (
-                  <Typography
-                    sx={{
-                      color: '#64748b',
-                      fontSize: { xs: '0.68rem', sm: '0.74rem' },
-                      fontWeight: 700,
-                      lineHeight: 1.2,
-                      wordBreak: 'break-all',
-                    }}
-                  >
-                    {summary.qrCode}
-                  </Typography>
-                )}
-              </Stack>
+              </Box>
             )}
-          </Box>
+          </Stack>
         </Box>
 
         <Box
           sx={{
-            mt: 3,
+            mt: 2,
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '380px minmax(0, 1fr)' },
-            gap: 3,
+            gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: '320px minmax(0, 1fr)' },
+            gap: { xs: 1.5, lg: 2 },
             alignItems: 'start',
           }}
         >
@@ -328,16 +453,13 @@ export function SpeciesCareScanView({
             component="aside"
             gap={2}
             sx={{
-              border: '1px solid #e2e8f0',
-              borderRadius: '28px',
-              bgcolor: 'rgba(255,255,255,0.86)',
-              p: { xs: 2, sm: 2.5 },
-              boxShadow: '0 24px 70px rgba(15, 23, 42, 0.08)',
+              ...panelSx,
+              p: { xs: 1.5, sm: 1.75 },
               position: { lg: 'sticky' },
-              top: { lg: 24 },
+              top: { lg: 20 },
             }}
           >
-            <Stack direction="row" gap={1.5} alignItems="center">
+            <Stack direction="row" gap={1.25} alignItems="center">
               {photoUrl ? (
                 <Box
                   component="img"
@@ -350,9 +472,9 @@ export function SpeciesCareScanView({
                     if (fallback) fallback.style.display = 'grid';
                   }}
                   sx={{
-                    width: 68,
-                    height: 68,
-                    borderRadius: '22px',
+                    width: 60,
+                    height: 60,
+                    borderRadius: '8px',
                     objectFit: 'cover',
                     display: 'block',
                   }}
@@ -360,9 +482,9 @@ export function SpeciesCareScanView({
               ) : null}
               <Box
                 sx={{
-                  width: 68,
-                  height: 68,
-                  borderRadius: '22px',
+                  width: 60,
+                  height: 60,
+                  borderRadius: '8px',
                   display: photoUrl ? 'none' : 'grid',
                   placeItems: 'center',
                   bgcolor: '#dbeafe',
@@ -374,47 +496,151 @@ export function SpeciesCareScanView({
                 {summary.initials}
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ color: '#0f172a', fontSize: '1.25rem', fontWeight: 950 }}>
+                <Typography
+                  sx={{ color: '#0f172a', fontSize: '1.22rem', fontWeight: 950, lineHeight: 1.1 }}
+                >
+                  {patientFirstName}
+                </Typography>
+                <Typography
+                  sx={{ mt: 0.15, color: '#334155', fontSize: '0.95rem', fontWeight: 820 }}
+                >
                   {summary.preferredName}
                 </Typography>
-                <Typography sx={{ color: '#64748b', fontWeight: 750 }}>
+                <Typography sx={{ color: '#64748b', fontSize: '0.92rem', fontWeight: 750 }}>
                   {summary.pronouns ?? summary.profileVersion}
                 </Typography>
               </Box>
             </Stack>
 
+            {criticalNote && (
+              <Box
+                sx={{
+                  border: '1px solid #fecaca',
+                  borderLeft: '4px solid #dc2626',
+                  borderRadius: PANEL_RADIUS,
+                  bgcolor: '#fff7ed',
+                  p: 1.25,
+                }}
+              >
+                <Stack direction="row" gap={0.75} alignItems="center">
+                  <HeartPulse size={17} color="#b91c1c" />
+                  <Typography
+                    sx={{
+                      color: '#991b1b',
+                      fontSize: '0.75rem',
+                      fontWeight: 950,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Critical
+                  </Typography>
+                </Stack>
+                <Typography
+                  sx={{
+                    mt: 0.65,
+                    color: '#0f172a',
+                    fontSize: '0.96rem',
+                    fontWeight: 850,
+                    lineHeight: 1.38,
+                  }}
+                >
+                  {criticalNote}
+                </Typography>
+              </Box>
+            )}
+
             <InfoTile label="Species" value={summary.species} />
             <InfoTile label="Healthcare ID" value={summary.healthcareId} />
             <InfoTile label="Support / advocate" value={summary.advocateContact} />
             <InfoTile label="Emergency contact" value={summary.emergencyContact} />
+            <InfoTile label={PATIENT_SIGNATURE_LABEL} value={patientSignature} />
+            {finalRecordStatusField && (
+              <InfoTile label={finalRecordStatusField.label} value={finalRecordStatusField.value} />
+            )}
           </Stack>
 
-          <Stack gap={3} sx={{ minWidth: 0 }}>
-            <Box
-              sx={{
-                border: '1px solid #fecdd3',
-                borderRadius: '28px',
-                bgcolor: '#fff1f2',
-                p: { xs: 2, sm: 3 },
-                boxShadow: '0 24px 70px rgba(225, 29, 72, 0.08)',
-              }}
-            >
-              <Stack direction="row" gap={1} alignItems="center">
-                <HeartPulse size={20} color="#be123c" />
-                <PortalLabel>Critical banner</PortalLabel>
+          <Stack gap={1.5} sx={{ minWidth: 0 }}>
+            {linkedProfile && (
+              <Stack gap={1.25}>
+                <ClinicalViewSwitcher value={clinicalView} onChange={setClinicalView} />
+                {clinicalView === 'protocol' && (
+                  <Box
+                    sx={{
+                      ...panelSx,
+                      p: { xs: 1.5, sm: 2 },
+                    }}
+                  >
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      gap={1.5}
+                      alignItems={{ sm: 'center' }}
+                      justifyContent="space-between"
+                    >
+                      <Box sx={{ minWidth: 0 }}>
+                        <Stack direction="row" gap={1} alignItems="center">
+                          <FileHeart size={18} color="#1d4ed8" />
+                          <Typography
+                            component="h2"
+                            sx={{
+                              color: '#0f172a',
+                              fontSize: '1rem',
+                              fontWeight: 950,
+                              lineHeight: 1.25,
+                            }}
+                          >
+                            {linkedProfile.record.title}
+                          </Typography>
+                        </Stack>
+                        <Typography
+                          sx={{ mt: 0.3, color: '#64748b', fontSize: '0.88rem', fontWeight: 750 }}
+                        >
+                          {linkedProfile.record.designation} / {linkedProfile.record.profileVersion}
+                        </Typography>
+                      </Box>
+                      {profileVersions.length > 1 && (
+                        <Select
+                          value={linkedProfile.record.version}
+                          onChange={handleProfileVersionChange}
+                          slotProps={{
+                            listbox: {
+                              sx: {
+                                bgcolor: '#fff',
+                                color: '#0f172a',
+                                border: '1px solid #dbeafe',
+                                boxShadow: '0 24px 60px rgba(15, 23, 42, 0.16)',
+                                '--ListItem-radius': '12px',
+                              },
+                            },
+                          }}
+                          sx={{
+                            minHeight: 44,
+                            minWidth: { xs: '100%', sm: 220 },
+                            borderRadius: '6px',
+                            bgcolor: '#fff',
+                            color: '#0f172a',
+                            borderColor: '#cbd5e1',
+                            '&:focus-within': {
+                              outline: '2px solid #2563eb',
+                              outlineOffset: '2px',
+                            },
+                            '& .MuiSelect-button': {
+                              minHeight: 44,
+                            },
+                          }}
+                        >
+                          {profileVersions.map((version) => (
+                            <Option key={version.version} value={version.version}>
+                              {pickVersionLabel(version)}
+                            </Option>
+                          ))}
+                        </Select>
+                      )}
+                    </Stack>
+                  </Box>
+                )}
               </Stack>
-              <Typography
-                sx={{
-                  mt: 1,
-                  color: '#881337',
-                  fontSize: { xs: '1.2rem', sm: '1.45rem' },
-                  fontWeight: 950,
-                  lineHeight: 1.25,
-                }}
-              >
-                {summary.criticalBanner}
-              </Typography>
-            </Box>
+            )}
 
             <Box
               sx={{
@@ -423,7 +649,7 @@ export function SpeciesCareScanView({
                 gap: 2,
               }}
             >
-              {record.scanSections.map((section) => (
+              {activeSections.map((section) => (
                 <ScanSectionCard key={section.title} section={section} />
               ))}
             </Box>

@@ -147,6 +147,109 @@ function CompactFieldRow({
   );
 }
 
+function CompactFieldPair({
+  left,
+  right,
+  strong = false,
+}: {
+  left: { label: string; value?: string };
+  right: { label: string; value?: string };
+  strong?: boolean;
+}) {
+  if (!left.value && !right.value) return null;
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+        columnGap: { xs: 1, sm: 1.4 },
+        borderBottom: '1px solid rgba(203, 213, 225, 0.72)',
+        py: 0.5,
+      }}
+    >
+      {[left, right].map((field) => (
+        <Box
+          key={field.label}
+          sx={{
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.15,
+          }}
+        >
+          {field.value && (
+            <>
+              <SmallLabel>{field.label}</SmallLabel>
+              <Typography
+                component="span"
+                sx={{
+                  minWidth: 0,
+                  color: '#0f172a',
+                  fontSize: strong
+                    ? { xs: '0.76rem', sm: '0.84rem' }
+                    : { xs: '0.66rem', sm: '0.73rem' },
+                  fontWeight: strong ? 700 : 600,
+                  lineHeight: 1.18,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {field.value}
+              </Typography>
+            </>
+          )}
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+function CompactFieldBlock({
+  label,
+  value,
+  strong = false,
+  valueColor = '#0f172a',
+}: {
+  label: string;
+  value?: string;
+  strong?: boolean;
+  valueColor?: string;
+}) {
+  if (!value) return null;
+  return (
+    <Box
+      sx={{
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0.15,
+        borderBottom: '1px solid rgba(203, 213, 225, 0.72)',
+        py: 0.5,
+      }}
+    >
+      <SmallLabel>{label}</SmallLabel>
+      <Typography
+        component="span"
+        sx={{
+          minWidth: 0,
+          color: valueColor,
+          fontSize: strong ? { xs: '0.76rem', sm: '0.84rem' } : { xs: '0.66rem', sm: '0.73rem' },
+          fontWeight: strong ? 700 : 600,
+          lineHeight: 1.18,
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
 function FrontCard({
   record,
   photoUrl,
@@ -224,47 +327,30 @@ function FrontCard({
 
           <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <Stack gap={0} sx={{ minWidth: 0 }}>
-              {summary.primaryCareFlag && (
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '78px minmax(0, 1fr)', sm: '84px minmax(0, 1fr)' },
-                    gap: 0.6,
-                    borderBottom: '1px solid rgba(203, 213, 225, 0.72)',
-                    py: 0.55,
-                  }}
-                >
-                  <SmallLabel>Primary care</SmallLabel>
-                  <Typography
-                    component="span"
-                    sx={{
-                      minWidth: 0,
-                      color: '#064e3b',
-                      fontSize: { xs: '0.7rem', sm: '0.78rem' },
-                      fontWeight: 700,
-                      lineHeight: 1.18,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {summary.primaryCareFlag}
-                  </Typography>
-                </Box>
-              )}
-              <CompactFieldRow label="Legal" value={summary.legalName} strong />
-              <CompactFieldRow label="Preferred" value={summary.preferredName} strong />
-              <CompactFieldRow label="Pronouns" value={summary.pronouns} />
-              <CompactFieldRow label="DOB / age" value={summary.dobAge} />
-              <CompactFieldRow label="Sex" value={summary.sex} />
-              <CompactFieldRow label="Gender" value={summary.gender} />
+              <CompactFieldPair
+                left={{ label: 'Legal', value: summary.legalName }}
+                right={{ label: 'Preferred', value: summary.preferredName }}
+                strong
+              />
+              <CompactFieldPair
+                left={{ label: 'Pronouns', value: summary.pronouns }}
+                right={{ label: 'DOB / age', value: summary.dobAge }}
+              />
+              <CompactFieldPair
+                left={{ label: 'Sex', value: summary.sex }}
+                right={{ label: 'Gender', value: summary.gender }}
+              />
+              <CompactFieldBlock
+                label="Primary care"
+                value={summary.primaryCareFlag}
+                strong
+                valueColor="#064e3b"
+              />
             </Stack>
 
             <Box
               sx={{
-                mt: 0.7,
-                borderTop: '1px solid rgba(203, 213, 225, 0.72)',
+                mt: 0.45,
                 pt: 0.55,
                 color: '#78350f',
                 fontSize: { xs: '0.62rem', sm: '0.68rem' },

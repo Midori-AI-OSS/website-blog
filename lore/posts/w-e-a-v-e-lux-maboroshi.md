@@ -10,8 +10,6 @@ story_order: 17
 episode_label: "Lux Maboroshi"
 ---
 
-{{speciescard: lore/w-e-a-v-e}}
-
 > **Disclaimer:** This file is fictional roleplay writing created for a
 > tabletop RPG context. It may use real names, familiar personal details, or
 > real-world framing for immersion, but it is not a factual record, memoir,

@@ -22,11 +22,12 @@ export default async function SpeciesCarePage({
   searchParams,
 }: {
   params: Promise<{ path: string[] }>;
-  searchParams: Promise<{ version?: string | string[] }>;
+  searchParams: Promise<{ version?: string | string[]; profileVersion?: string | string[] }>;
 }) {
   const [{ path }, query] = await Promise.all([params, searchParams]);
   const version = getSingleQueryValue(query.version)?.trim().toLowerCase();
-  const result = await loadSpeciesCareCardByRoutePath(path, { version });
+  const profileVersion = getSingleQueryValue(query.profileVersion)?.trim().toLowerCase();
+  const result = await loadSpeciesCareCardByRoutePath(path, { version, profileVersion });
 
   if (!result) notFound();
 
@@ -34,6 +35,7 @@ export default async function SpeciesCarePage({
     <SpeciesCareScanView
       record={result.record}
       availableVersions={result.availableVersions}
+      linkedProfile={result.linkedProfile}
       photoUrl={`/api/lore-images/species-photos/${result.record.slug}.png`}
     />
   );

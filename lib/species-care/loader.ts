@@ -14,10 +14,14 @@ import type {
   SpeciesCareCardVariant,
   SpeciesCareCardVersionMetadata,
   SpeciesCareField,
+  SpeciesCareLinkedProfile,
+  SpeciesCareProfileMetadata,
+  SpeciesCareProfileRecord,
   SpeciesCareScanSection,
 } from './types';
 
 const SPECIES_CARDS_DIR = join(process.cwd(), 'lore/species-cards');
+const SPECIES_PROFILES_DIR = join(process.cwd(), 'lore/species-care-profiles');
 
 interface ParsedHeadingSection {
   title: string;
@@ -31,6 +35,13 @@ interface ParseOptions {
   slug?: string;
   version?: string;
   metadata?: SpeciesCareCardMetadata;
+  sourceFilename?: string;
+}
+
+interface ProfileParseOptions {
+  slug?: string;
+  version?: string;
+  metadata?: SpeciesCareProfileMetadata;
   sourceFilename?: string;
 }
 
@@ -111,6 +122,26 @@ export function slugifySpeciesCareVersion(value: string | undefined): string {
     .replace(/[^a-z0-9.]+/g, '-')
     .replace(/^-+|-+$/g, '');
   return slug || 'unversioned';
+}
+
+export function normalizeSpeciesCareSourceReference(value: string | undefined): string {
+  return (value ?? '')
+    .trim()
+    .replace(/^['"`]+|['"`]+$/g, '')
+    .replace(/\.+$/g, '')
+    .replace(/\\/g, '/')
+    .replace(/^\/+|\/+$/g, '');
+}
+
+function sourceReferenceMatches(candidate: string | undefined, reference: string): boolean {
+  const normalizedCandidate = normalizeSpeciesCareSourceReference(candidate);
+  const normalizedReference = normalizeSpeciesCareSourceReference(reference);
+  if (!normalizedCandidate || !normalizedReference) return false;
+  return (
+    normalizedCandidate === normalizedReference ||
+    normalizedCandidate.endsWith(`/${normalizedReference}`) ||
+    normalizedReference.endsWith(`/${normalizedCandidate}`)
+  );
 }
 
 function getField(section: ParsedHeadingSection | undefined, labels: string[]): string | undefined {
@@ -521,6 +552,57 @@ export function parseSpeciesCareCardMarkdown(
   };
 }
 
+export function getLinkedSpeciesCareProfileSource(
+  record: SpeciesCareCardRecord,
+): string | undefined {
+  const entry = Object.entries(record.recordStatus).find(
+    ([label]) => normalizeKey(label) === normalizeKey('Shared care profile'),
+  );
+  return entry?.[1] ? normalizeSpeciesCareSourceReference(entry[1]) : undefined;
+}
+
+export function parseSpeciesCareProfileMarkdown(
+  markdown: string,
+  options: ProfileParseOptions = {},
+): SpeciesCareProfileRecord {
+  const roots = parseHeadingMarkdown(markdown);
+  const titleSection = roots.find((section) => section.level === 1);
+  if (!titleSection) throw new Error('Species care profile is missing required H1 title.');
+
+  const scope = requireSection(titleSection.children, 'Scope', 'top-level');
+  const designation = requireValue(
+    getField(scope, ['Designation', 'Species / designation']),
+    'Scope > Designation',
+  );
+  const profileVersion = requireValue(
+    getField(scope, ['Profile version', 'Species profile version']),
+    'Scope > Profile version',
+  );
+  const profileId = getField(scope, ['Species/profile ID', 'Species profile ID', 'Profile ID']);
+  const version = options.version ?? slugifySpeciesCareVersion(profileVersion);
+  const slug = options.slug ?? slugifySpeciesCareValue(designation);
+  if (!isValidSpeciesCareSlug(slug)) throw new Error(`Invalid species profile slug: ${slug}`);
+  if (!isValidSpeciesCareVersion(version))
+    throw new Error(`Invalid species profile version: ${version}`);
+
+  const sections = titleSection.children
+    .filter((section) => normalizeKey(section.title) !== normalizeKey('Scope'))
+    .map(toScanSection);
+
+  return {
+    slug,
+    title: titleSection.title,
+    version,
+    profileVersion,
+    designation,
+    profileId: profileId ? stripTrailingPeriod(profileId) : undefined,
+    metadata: options.metadata,
+    sourceFilename: options.sourceFilename,
+    scope: fieldsToRecord(scope),
+    sections,
+  };
+}
+
 function isSafeRealPath(candidate: string, root: string): boolean {
   return candidate === root || candidate.startsWith(`${root}${sep}`);
 }
@@ -597,6 +679,107 @@ export async function loadSpeciesCareCard(
   });
 }
 
+export async function loadSpeciesCareProfileMetadataList(
+  profilesDir: string = SPECIES_PROFILES_DIR,
+): Promise<SpeciesCareProfileMetadata[]> {
+  try {
+    const dirStat = await stat(profilesDir).catch(() => null);
+    if (!dirStat?.isDirectory()) return [];
+    const realProfilesDir = await realpath(profilesDir);
+    const entries = await readdir(profilesDir, { withFileTypes: true });
+    const metadata: SpeciesCareProfileMetadata[] = [];
+
+    for (const entry of entries) {
+      if (!entry.isDirectory() || !isValidSpeciesCareSlug(entry.name)) continue;
+      const metadataPath = join(profilesDir, entry.name, 'metadata.json');
+      const realMetadataPath = await realpath(metadataPath).catch(() => null);
+      if (!realMetadataPath || !isSafeRealPath(realMetadataPath, realProfilesDir)) continue;
+      const parsed = await readJsonFile<SpeciesCareProfileMetadata>(metadataPath);
+      if (!parsed || parsed.slug !== entry.name || !isValidSpeciesCareSlug(parsed.slug)) continue;
+      if (!isValidSpeciesCareVersion(parsed.currentVersion)) continue;
+      metadata.push(parsed);
+    }
+
+    return metadata.sort((a, b) => a.title.localeCompare(b.title));
+  } catch (error) {
+    console.error('Error loading species care profile metadata:', error);
+    return [];
+  }
+}
+
+export async function loadSpeciesCareProfile(
+  slug: string,
+  options: { version?: string; profilesDir?: string } = {},
+): Promise<SpeciesCareProfileRecord | null> {
+  if (!isValidSpeciesCareSlug(slug)) return null;
+  if (options.version && !isValidSpeciesCareVersion(options.version)) return null;
+
+  const profilesDir = options.profilesDir ?? SPECIES_PROFILES_DIR;
+  const realProfilesDir = await realpath(profilesDir).catch(() => null);
+  if (!realProfilesDir) return null;
+
+  const metadataPath = join(profilesDir, slug, 'metadata.json');
+  const realMetadataPath = await realpath(metadataPath).catch(() => null);
+  if (!realMetadataPath || !isSafeRealPath(realMetadataPath, realProfilesDir)) return null;
+
+  const metadata = await readJsonFile<SpeciesCareProfileMetadata>(metadataPath);
+  if (!metadata || metadata.slug !== slug) return null;
+
+  const version = options.version ?? metadata.currentVersion;
+  if (!isValidSpeciesCareVersion(version)) return null;
+  const versionMetadata = metadata.versions.find((entry) => entry.version === version);
+  if (!versionMetadata) return null;
+
+  const profilePath = join(profilesDir, slug, versionMetadata.filename);
+  const realProfilePath = await realpath(profilePath).catch(() => null);
+  if (!realProfilePath || !isSafeRealPath(realProfilePath, realProfilesDir)) return null;
+
+  const markdown = await readFile(profilePath, 'utf-8');
+  return parseSpeciesCareProfileMarkdown(markdown, {
+    slug,
+    version,
+    metadata,
+    sourceFilename: versionMetadata.filename,
+  });
+}
+
+export async function loadLinkedSpeciesCareProfile(
+  sourceReference: string | undefined,
+  options: { version?: string; profilesDir?: string } = {},
+): Promise<SpeciesCareLinkedProfile | null> {
+  const normalizedReference = normalizeSpeciesCareSourceReference(sourceReference);
+  if (!normalizedReference) return null;
+  if (options.version && !isValidSpeciesCareVersion(options.version)) return null;
+
+  const profilesDir = options.profilesDir ?? SPECIES_PROFILES_DIR;
+  const metadataList = await loadSpeciesCareProfileMetadataList(profilesDir);
+
+  for (const metadata of metadataList) {
+    const versionCandidates = options.version
+      ? metadata.versions.filter((entry) => entry.version === options.version)
+      : metadata.versions;
+    const matches = versionCandidates.some(
+      (entry) =>
+        sourceReferenceMatches(entry.sourceRelativePath, normalizedReference) ||
+        sourceReferenceMatches(entry.sourcePath, normalizedReference),
+    );
+    if (!matches) continue;
+
+    const record = await loadSpeciesCareProfile(metadata.slug, {
+      version: options.version,
+      profilesDir,
+    });
+    if (!record) return null;
+    return {
+      record,
+      availableVersions: metadata.versions,
+      sourceReference: normalizedReference,
+    };
+  }
+
+  return null;
+}
+
 export async function loadSpeciesCareCardsForMarkdown(
   markdown: string,
   cardsDir: string = SPECIES_CARDS_DIR,
@@ -635,10 +818,16 @@ function inWorldUriToRoutePath(value: string | undefined): string | null {
 
 export async function loadSpeciesCareCardByRoutePath(
   pathSegments: string[],
-  options: { version?: string; cardsDir?: string } = {},
+  options: {
+    version?: string;
+    profileVersion?: string;
+    cardsDir?: string;
+    profilesDir?: string;
+  } = {},
 ): Promise<{
   record: SpeciesCareCardRecord;
   availableVersions: SpeciesCareCardVersionMetadata[];
+  linkedProfile?: SpeciesCareLinkedProfile;
 } | null> {
   const normalizedSegments = pathSegments.map((segment) => segment.trim()).filter(Boolean);
   if (normalizedSegments.length === 0) return null;
@@ -651,7 +840,18 @@ export async function loadSpeciesCareCardByRoutePath(
     const metadata = metadataList.find((entry) => entry.slug === slug);
     const record = await loadSpeciesCareCard(slug, { version: options.version, cardsDir });
     if (!record) return null;
-    return { record, availableVersions: metadata?.versions ?? record.metadata?.versions ?? [] };
+    const linkedProfile =
+      record.variant === 'healthcare-card'
+        ? await loadLinkedSpeciesCareProfile(getLinkedSpeciesCareProfileSource(record), {
+            version: options.profileVersion,
+            profilesDir: options.profilesDir,
+          })
+        : null;
+    return {
+      record,
+      availableVersions: metadata?.versions ?? record.metadata?.versions ?? [],
+      linkedProfile: linkedProfile ?? undefined,
+    };
   }
 
   const metadataList = await loadSpeciesCareCardMetadataList(cardsDir);
@@ -668,7 +868,18 @@ export async function loadSpeciesCareCardByRoutePath(
       cardsDir,
     });
     if (!record) return null;
-    return { record, availableVersions: metadata.versions };
+    const linkedProfile =
+      record.variant === 'healthcare-card'
+        ? await loadLinkedSpeciesCareProfile(getLinkedSpeciesCareProfileSource(record), {
+            version: options.profileVersion,
+            profilesDir: options.profilesDir,
+          })
+        : null;
+    return {
+      record,
+      availableVersions: metadata.versions,
+      linkedProfile: linkedProfile ?? undefined,
+    };
   }
 
   return null;

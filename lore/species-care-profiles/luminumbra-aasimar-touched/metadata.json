@@ -1,0 +1,20 @@
+{
+  "slug": "luminumbra-aasimar-touched",
+  "title": "Luminumbra Care Profile",
+  "currentVersion": "prov-v0.12",
+  "versions": [
+    {
+      "version": "prov-v0.12",
+      "profileVersion": "PROV v0.12",
+      "filename": "versions/prov-v0.12.md",
+      "title": "Luminumbra Care Profile",
+      "designation": "Luminumbra Aasimar-touched",
+      "profileId": "Luminumbra Aasimar-touched / AAS-TCH-LUMINUMBRA-PROV",
+      "sourcePath": "/home/lunamidori/nfs/Midori-AI-Github/dnd-notes/campaigns/real-moments/medical/luminumbra-care-profile.md",
+      "sourceRelativePath": "campaigns/real-moments/medical/luminumbra-care-profile.md",
+      "sourceHash": "01a262ab6552eaa864250e5ea22575a0938e7059ed5a2ff686590095da5f36c2",
+      "importedAt": "2026-05-20T07:56:26.465Z"
+    }
+  ],
+  "updatedAt": "2026-05-20T07:56:26.465Z"
+}
