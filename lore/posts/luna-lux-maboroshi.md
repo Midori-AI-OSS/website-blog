@@ -471,7 +471,7 @@ Riley was breathing. The sutures were holding. The anchor was still pulsing fain
 
 I turned to Echo.
 
-She was still on the ground beside Riley — the same ground I was kneeling on. Her eyes were open but not tracking. Her head had hit the road. Hard. The residue had gotten to her, the same cold wrong that had hit me during the fight, and I could see what it had done. Her cheekbones were sharper than they should be. Her jaw. Her hands where they lay locked around Riley's — longer, the bones closer to the surface, like something had pulled her forward in a way that was not supposed to happen.
+She was still on the ground beside Riley — the same ground I was kneeling on. Her eyes were open but not tracking. Her head had hit the road. Hard. The residue had gotten to her, the same cold wrong that had hit me during the fight, and I could see what it had done. Her cheekbones were sharper than they should be. Her jaw. Her hands where they lay locked around Riley's — longer, the bones closer to the surface, like something had pulled her forward in a way she could not brace for.
 
 Riley's shoulder was under Echo's head. Riley's arm was around her — not the arm that had been holding the gun, the other one, wrapped loose across Echo's back. Their hands were held together between them, weak, the kind of grip that stays only because neither person had the strength left to let go. Echo was partially on top of Riley, and neither of them had moved from that position since the blade went through. Close. Tender. Two people who really, really needed each other.
 
@@ -481,7 +481,7 @@ Not the staff. The book. I unsnapped it from my side with my right hand — Weav
 
 Marisol landed beside me. Not from the air this time. Just there — her coat brushing my shoulder, one of the glass rods in her hair glowing. I did not ask how she knew. She saw what I was doing and knelt beside me without a word.
 
-I traced the spell through the book. White light rose from the page and fractured — not breaking, splitting, the way a prism splits sunlight. Deep red first, sinking toward Echo's head, toward the place where impact had rattled her brain against her skull. Cool blue next, spreading through her throat — the crushed place, the place the copy had squeezed. Warm gold last, wrapping her face and hands — not undoing what the residue had done, the damage felt permanent, but stopping the spread, sealing the edges where the cold wrong had been trying to dig deeper.
+I traced the spell through the book. White light rose from the page and fractured — not breaking, splitting, the way a prism splits sunlight. Deep red first, sinking toward Echo's head, toward the place where impact had rattled her brain against her skull. Cool blue next, spreading through her throat — the crushed place, the place the copy had squeezed. Warm gold last, wrapping her face and hands — not undoing what the residue had done, the effect felt permanent, but stopping the spread, sealing the edges where the cold wrong had been trying to dig deeper.
 
 Marisol's hands came up beside mine. Shadow-light poured from her fingers — not dark the way her combat magic was dark, but cool, lavender-touched, the same muted color I had seen from her glass rods. She did not trace the spell. She channeled. She found the edges of my framework and pushed her own power through them, the way water follows the shape of a riverbed someone else has dug.
 

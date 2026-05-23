@@ -670,7 +670,7 @@ Luna and Marisol moved to Echo next.
 
 They were already close — Luna kneeling beside me, Marisol somewhere behind. Luna shifted, one hand leaving my chest, finding Echo's shoulder. Marisol landed beside her, dark wings folding back, lavender light threading through the gold. The two of them worked together, gold warmth and lavender clarity sinking into Echo's skin, into the black residue that had been sitting wrong on her since the road.
 
-The residue was still there. The wrongness in Echo's face — the sharper cheekbones, the longer hands, the stretched skin — those did not change. Residue damage. Permanent. But her breathing steadied. The rattle in it faded out. Her eyes shifted toward me and stayed.
+The residue was still there. The wrongness in Echo's face — the sharper cheekbones, the longer hands, the stretched skin — those did not change. Residue change. Permanent. But her breathing steadied. The rattle in it faded out. Her eyes shifted toward me and stayed.
 
 She was here.
 

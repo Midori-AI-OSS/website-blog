@@ -944,7 +944,7 @@ Not violently. Not like somebody had kicked a hornet nest. More like a radio sta
 
 And Echo—
 
-Echo blinked too hard, swayed, caught herself on the staff. Her face had softened — not tired, younger — like someone had turned back a few years on her features without asking first. The bones under her skin looked less settled. She pressed her free hand to her own jaw, then her cheek, as if checking the shape of herself. "Oh. I feel younger. That is incredibly rude."
+Echo blinked too hard, swayed, caught herself on the staff. Her face had softened — not tired, younger — like someone had turned back a few years on her features without asking first. The bones under her skin looked less settled. She pressed her free hand to her own jaw, then her cheek, as if checking the shape of herself. "Oh. That is incredibly rude."
 
 The glitter-eyeliner woman by the door stared. "Did she just—"
 
