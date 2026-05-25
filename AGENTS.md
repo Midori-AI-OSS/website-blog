@@ -24,3 +24,9 @@
 ## Markdown Content Rules
 - In `blog/posts/*.md` and `lore/posts/*.md`, curly double quotes are banned.
 - Use straight double quotes (`"`) instead of `“` and `”`.
+
+## Content System Test Pages
+- Hidden renderer test pages live at `/blog/test` and `/lore/test`.
+- When adding or changing any user-facing blog/lore content behavior, update the relevant test page in the same change.
+- Blog test fixtures must not use lore-only `{{...}}` token systems.
+- Test pages must stay unlinked from normal navigation and content lists, and must cover representative edge cases for the affected system.
