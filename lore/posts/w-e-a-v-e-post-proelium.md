@@ -6,7 +6,7 @@ cover_image: /lore/w-e-a-v-e-post-proelium.png
 author: Luna Midori
 date: 2026-05-22
 game: real-moments
-story_order: 31
+story_order: 21
 episode_label: "Sangre y Lux Residua"
 ---
 

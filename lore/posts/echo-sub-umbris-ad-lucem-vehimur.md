@@ -6,7 +6,7 @@ cover_image: /lore/echo-sub-umbris-ad-lucem-vehimur.png
 author: Luna Midori
 date: 2026-05-27
 game: real-moments
-story_order: 20
+story_order: 22
 episode_label: "Sangre y Lux Residua"
 ---
 

@@ -6,7 +6,7 @@ cover_image: /lore/echo-post-proelium.png
 author: Luna Midori
 date: 2026-05-22
 game: real-moments
-story_order: 19
+story_order: 18
 episode_label: "Sangre y Lux Residua"
 ---
 

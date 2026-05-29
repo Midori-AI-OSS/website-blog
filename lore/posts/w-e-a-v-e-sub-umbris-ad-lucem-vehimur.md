@@ -6,7 +6,7 @@ cover_image: /lore/w-e-a-v-e-sub-umbris-ad-lucem-vehimur.png
 author: Luna Midori
 date: 2026-05-27
 game: real-moments
-story_order: 32
+story_order: 25
 episode_label: "Sangre y Lux Residua"
 ---
 
