@@ -13,6 +13,7 @@ import {
   getPostsByTag,
   getRecentPosts,
   loadAllPosts,
+  loadRecentPosts,
   paginatePosts,
 } from './loader';
 
@@ -224,6 +225,21 @@ Content`,
 
     const all = getRecentPosts(posts, 10);
     expect(all.length).toBe(3);
+  });
+
+  test('loadRecentPosts loads only the newest published posts', async () => {
+    const posts = await loadRecentPosts(2, testPostsDir, { now: '2026-01-17T18:00:00Z' });
+
+    expect(posts.map((post) => post.filename)).toEqual(['2026-01-17.md', '2026-01-16.md']);
+  });
+
+  test('loadRecentPosts can include scheduled posts', async () => {
+    const posts = await loadRecentPosts(2, testPostsDir, {
+      includeScheduled: true,
+      now: '2026-01-17T18:00:00Z',
+    });
+
+    expect(posts.map((post) => post.filename)).toEqual(['2099-12-31.md', '2026-01-17.md']);
   });
 
   test('loadAllPosts hides scheduled posts by default', async () => {

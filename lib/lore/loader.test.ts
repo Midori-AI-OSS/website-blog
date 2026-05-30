@@ -10,6 +10,7 @@ import {
   loadAllLorePosts,
   loadLoreGameGroups,
   loadLoreGameIndexes,
+  loadRecentLorePosts,
 } from './loader';
 
 let testRootDir = '';
@@ -176,6 +177,25 @@ full_story_pov: luna
 
     expect(posts[0]?.filename).toBe('future-lore.md');
     expect(getLorePostBySlug(posts, 'future-lore')?.metadata.title).toBe('Future Lore');
+  });
+
+  test('loadRecentLorePosts returns the newest published lore posts', async () => {
+    const posts = await loadRecentLorePosts(2, { now: '2026-01-16T18:00:00Z' }, testPostsDir);
+
+    expect(posts.map((post) => post.filename)).toEqual(['second-lore.md', 'first-lore.md']);
+  });
+
+  test('loadRecentLorePosts can include scheduled lore', async () => {
+    const posts = await loadRecentLorePosts(
+      2,
+      {
+        includeScheduled: true,
+        now: '2026-01-16T18:00:00Z',
+      },
+      testPostsDir,
+    );
+
+    expect(posts.map((post) => post.filename)).toEqual(['future-lore.md', 'side-pov.md']);
   });
 
   test('loadLoreGameIndexes loads game containers from index files', async () => {

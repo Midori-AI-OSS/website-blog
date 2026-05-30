@@ -37,6 +37,14 @@ export interface LoadAllPostsOptions {
   now?: Date | string;
 }
 
+function sortBlogFilenamesDescending(filenames: string[]): string[] {
+  return [...filenames].sort((a, b) => b.localeCompare(a));
+}
+
+function isPublishedBlogFilename(filename: string, now?: Date | string): boolean {
+  return getPublishState(extractIsoDateFromBlogFilename(filename), now).isPublished;
+}
+
 /**
  * Validate filename format (security)
  * Only allows YYYY-MM-DD.md format to prevent path traversal
@@ -63,6 +71,34 @@ function extractDateFromFilename(filename: string): Date {
 
   const [, year, month, day] = match;
   return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+}
+
+async function loadBlogPostFile(
+  filename: string,
+  postsDir: string,
+  realPostsDir: string,
+): Promise<ParsedPost | null> {
+  try {
+    const filepath = join(postsDir, filename);
+
+    // Security: ensure path is within POSTS_DIR (prevent path traversal)
+    const realFilePath = await realpath(filepath);
+    if (!realFilePath.startsWith(realPostsDir)) {
+      console.error(`Security: Path traversal attempt detected for ${filename}`);
+      return null;
+    }
+
+    // Read file content
+    const content = await readFile(filepath, 'utf-8');
+
+    // Parse the post
+    return parsePost(filename, content);
+  } catch (error) {
+    // Error handling: log but don't crash, continue with other files
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error loading ${filename}:`, errorMessage);
+    return null;
+  }
 }
 
 /**
@@ -102,27 +138,7 @@ export async function loadAllPosts(
     // Load and parse posts in parallel
     const posts = await Promise.all(
       mdFiles.map(async (filename) => {
-        try {
-          const filepath = join(postsDir, filename);
-
-          // Security: ensure path is within POSTS_DIR (prevent path traversal)
-          const realFilePath = await realpath(filepath);
-          if (!realFilePath.startsWith(realPostsDir)) {
-            console.error(`Security: Path traversal attempt detected for ${filename}`);
-            return null;
-          }
-
-          // Read file content
-          const content = await readFile(filepath, 'utf-8');
-
-          // Parse the post
-          return parsePost(filename, content);
-        } catch (error) {
-          // Error handling: log but don't crash, continue with other files
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          console.error(`Error loading ${filename}:`, errorMessage);
-          return null;
-        }
+        return loadBlogPostFile(filename, postsDir, realPostsDir);
       }),
     );
 
@@ -152,6 +168,60 @@ export async function loadAllPosts(
     // Error handling: empty directory or permissions issue
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error loading posts:', errorMessage);
+    return [];
+  }
+}
+
+/**
+ * Load the most recent posts without reading every markdown file.
+ *
+ * @param limit - Number of posts to load (default: 5)
+ * @param postsDir - Override posts directory (primarily for tests)
+ * @param options - Include scheduled posts and/or override current time
+ * @returns Array of recent parsed posts, sorted newest to oldest
+ */
+export async function loadRecentPosts(
+  limit: number = 5,
+  postsDir: string = POSTS_DIR,
+  options: LoadAllPostsOptions = {},
+): Promise<ParsedPost[]> {
+  const safeLimit = Math.max(1, limit);
+
+  try {
+    const files = await readdir(postsDir);
+    const mdFiles = sortBlogFilenamesDescending(
+      files.filter((filename) => isValidFilename(filename)),
+    );
+
+    if (mdFiles.length === 0) {
+      console.info(`No valid markdown files found in ${postsDir}`);
+      return [];
+    }
+
+    const realPostsDir = await realpath(postsDir);
+    const recentPosts: ParsedPost[] = [];
+
+    for (const filename of mdFiles) {
+      if (!options.includeScheduled && !isPublishedBlogFilename(filename, options.now)) {
+        continue;
+      }
+
+      const post = await loadBlogPostFile(filename, postsDir, realPostsDir);
+      if (post === null) {
+        continue;
+      }
+
+      recentPosts.push(post);
+
+      if (recentPosts.length >= safeLimit) {
+        break;
+      }
+    }
+
+    return recentPosts;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error loading recent posts:', errorMessage);
     return [];
   }
 }

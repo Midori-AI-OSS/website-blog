@@ -4,8 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "bun run content:index && next dev",
+    "build": "bun run content:index && next build",
+    "content:index": "bun scripts/generate-lore-post-index.ts",
     "start": "next start",
     "test": "echo 'Tests require Bun runtime. Install Bun (https://bun.sh) and run: bun test' && exit 1",
     "test:bun": "bun test",

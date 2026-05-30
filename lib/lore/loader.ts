@@ -8,6 +8,7 @@ import { join } from 'node:path';
 
 import { type ParsedPost, parsePost } from '@/lib/blog/parser';
 import { getPublishState } from '@/lib/content/publish';
+import { LORE_POST_FILE_INDEX } from './recent-index.generated';
 
 const POSTS_DIR = join(process.cwd(), 'lore/posts');
 const GAMES_DIR = join(process.cwd(), 'lore/games');
@@ -173,6 +174,47 @@ function ensureRequiredLoreMetadata(parsed: ParsedPost): boolean {
   return true;
 }
 
+async function loadLorePostFile(
+  filename: string,
+  postsDir: string,
+  realPostsDir: string,
+): Promise<{
+  parsed: ParsedPost;
+  explicitPublishDate: string | undefined;
+} | null> {
+  try {
+    const filepath = join(postsDir, filename);
+    const realFilePath = await realpath(filepath);
+    if (!realFilePath.startsWith(realPostsDir)) {
+      console.error(`Security: Path traversal attempt detected for ${filename}`);
+      return null;
+    }
+
+    const content = await readFile(filepath, 'utf-8');
+    const parsed = parsePost(filename, content);
+    if (!ensureRequiredLoreMetadata(parsed)) {
+      return null;
+    }
+
+    const explicitPublishDate = parsed.metadata.date;
+
+    // Ensure lore posts have a stable date for SSR/CSR consistency (prevents hydration mismatch).
+    if (!parsed.metadata.date) {
+      const fileStat = await stat(filepath);
+      parsed.metadata.date = fileStat.mtime.toISOString().slice(0, 10);
+    }
+
+    return {
+      parsed,
+      explicitPublishDate,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error loading ${filename}:`, errorMessage);
+    return null;
+  }
+}
+
 export function getLorePostSlug(post: ParsedPost): string {
   return post.filename.replace(/\.md$/i, '');
 }
@@ -311,39 +353,7 @@ export async function loadAllLorePosts(
     const realPostsDir = await realpath(postsDir);
 
     const posts = await Promise.all(
-      mdFiles.map(async (filename) => {
-        try {
-          const filepath = join(postsDir, filename);
-          const realFilePath = await realpath(filepath);
-          if (!realFilePath.startsWith(realPostsDir)) {
-            console.error(`Security: Path traversal attempt detected for ${filename}`);
-            return null;
-          }
-
-          const content = await readFile(filepath, 'utf-8');
-          const parsed = parsePost(filename, content);
-          if (!ensureRequiredLoreMetadata(parsed)) {
-            return null;
-          }
-
-          const explicitPublishDate = parsed.metadata.date;
-
-          // Ensure lore posts have a stable date for SSR/CSR consistency (prevents hydration mismatch).
-          if (!parsed.metadata.date) {
-            const fileStat = await stat(filepath);
-            parsed.metadata.date = fileStat.mtime.toISOString().slice(0, 10);
-          }
-
-          return {
-            parsed,
-            explicitPublishDate,
-          };
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          console.error(`Error loading ${filename}:`, errorMessage);
-          return null;
-        }
-      }),
+      mdFiles.map((filename) => loadLorePostFile(filename, postsDir, realPostsDir)),
     );
 
     const parsedPosts = posts.filter(
@@ -367,6 +377,57 @@ export async function loadAllLorePosts(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error loading lore posts:', errorMessage);
+    return [];
+  }
+}
+
+export async function loadRecentLorePosts(
+  limit: number = 5,
+  options: LoadAllLorePostsOptions = {},
+  postsDir: string = POSTS_DIR,
+): Promise<ParsedPost[]> {
+  const safeLimit = Math.max(1, limit);
+
+  if (postsDir !== POSTS_DIR) {
+    const posts = await loadAllLorePosts(options, postsDir);
+    return posts.slice(0, safeLimit);
+  }
+
+  try {
+    const realPostsDir = await realpath(postsDir);
+    const recentPosts: ParsedPost[] = [];
+
+    for (const entry of LORE_POST_FILE_INDEX) {
+      if (
+        !options.includeScheduled &&
+        !getPublishState(entry.explicitPublishDate, options.now).isPublished
+      ) {
+        continue;
+      }
+
+      const loadedPost = await loadLorePostFile(entry.filename, postsDir, realPostsDir);
+      if (loadedPost === null) {
+        continue;
+      }
+
+      if (
+        !options.includeScheduled &&
+        !getPublishState(loadedPost.explicitPublishDate, options.now).isPublished
+      ) {
+        continue;
+      }
+
+      recentPosts.push(loadedPost.parsed);
+
+      if (recentPosts.length >= safeLimit) {
+        break;
+      }
+    }
+
+    return recentPosts;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error loading recent lore posts:', errorMessage);
     return [];
   }
 }
