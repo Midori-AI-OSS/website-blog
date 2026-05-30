@@ -9,7 +9,7 @@ import { Box, Typography } from '@mui/joy';
 import { loadAllPosts, paginatePosts } from '@/lib/blog/loader';
 import { BlogPageClient } from './BlogPageClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function BlogPage() {
   // Load all posts (this runs at build time with SSG)

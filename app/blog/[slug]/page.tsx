@@ -14,7 +14,7 @@ import {
 } from '@/lib/content/publish';
 import { PostPageClient } from './PostPageClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 /**
  * Generate static params for all posts at build time

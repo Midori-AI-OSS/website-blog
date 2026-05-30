@@ -4,7 +4,7 @@ import { blogRendererTestPost } from '@/lib/content/test-posts';
 
 import { PostPageClient } from '../[slug]/PostPageClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Blog Renderer Test',

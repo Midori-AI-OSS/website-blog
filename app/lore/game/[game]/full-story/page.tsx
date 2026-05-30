@@ -1,11 +1,23 @@
 import { Box } from '@mui/joy';
 import { notFound } from 'next/navigation';
 
-import { getLorePovPosts, loadLoreGameGroups, sortLorePosts } from '@/lib/lore/loader';
+import {
+  getLorePovPosts,
+  loadLoreGameGroups,
+  loadLoreGameIndexes,
+  sortLorePosts,
+} from '@/lib/lore/loader';
 import { FullStoryClient } from './FullStoryClient';
 import { LoreBackButton } from './LoreBackButton';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const games = await loadLoreGameIndexes();
+  return games.map((game) => ({
+    game: game.slug,
+  }));
+}
 
 export default async function LoreGameFullStoryPage({
   params,

@@ -12,7 +12,7 @@ import { loadSpeciesCareCardsForMarkdown } from '@/lib/species-care/loader';
 
 import { LorePostPageClient } from './LorePostPageClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const posts = await loadAllLorePosts({ includeScheduled: true });

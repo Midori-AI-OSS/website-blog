@@ -4,7 +4,7 @@ import { loadLoreGameGroups } from '@/lib/lore/loader';
 
 import { LoreListPageClient } from './LoreListPageClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function LorePage() {
   const gameGroups = await loadLoreGameGroups();
