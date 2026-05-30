@@ -6,14 +6,12 @@
  */
 
 import { Box, Typography } from '@mui/joy';
-import { loadAllPosts, paginatePosts } from '@/lib/blog/loader';
-import { BlogPageClient } from './BlogPageClient';
+import { loadAllPostsCached, paginatePosts } from '@/lib/blog/loader';
 
 export const revalidate = 300;
 
 export default async function BlogPage() {
-  // Load all posts (this runs at build time with SSG)
-  const allPosts = await loadAllPosts();
+  const allPosts = await loadAllPostsCached();
   const { posts: initialPosts } = paginatePosts(allPosts, 0, 10);
 
   return (

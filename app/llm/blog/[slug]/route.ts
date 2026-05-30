@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { getPostBySlug, loadAllPosts } from '@/lib/blog/loader';
+import { getPostBySlug, loadAllPostsCached } from '@/lib/blog/loader';
+
 import { renderLlmPostText } from '@/lib/llm/text';
 
 export const runtime = 'nodejs';
@@ -18,7 +19,7 @@ function textResponse(body: string, status: number = 200): NextResponse {
 
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const posts = await loadAllPosts();
+  const posts = await loadAllPostsCached();
   const post = getPostBySlug(posts, slug);
 
   if (!post) {

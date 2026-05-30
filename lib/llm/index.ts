@@ -1,10 +1,11 @@
-import { loadAllPosts } from '@/lib/blog/loader';
+import { loadAllPostsCached } from '@/lib/blog/loader';
+
 import { loadAllLorePosts } from '@/lib/lore/loader';
 
 import { buildLlmPostEntries, renderLlmIndexText } from './text';
 
 export async function loadLlmIndexText(): Promise<string> {
-  const [blogPosts, lorePosts] = await Promise.all([loadAllPosts(), loadAllLorePosts()]);
+  const [blogPosts, lorePosts] = await Promise.all([loadAllPostsCached(), loadAllLorePosts()]);
 
   const blogEntries = buildLlmPostEntries('blog', blogPosts);
   const loreEntries = buildLlmPostEntries('lore', lorePosts);

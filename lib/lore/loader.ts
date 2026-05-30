@@ -8,7 +8,7 @@ import { join } from 'node:path';
 
 import { type ParsedPost, parsePost } from '@/lib/blog/parser';
 import { getPublishState } from '@/lib/content/publish';
-import { LORE_POST_FILE_INDEX, type IndexedLorePostFile } from './recent-index.generated';
+import { type IndexedLorePostFile, LORE_POST_FILE_INDEX } from './recent-index.generated';
 
 const POSTS_DIR = join(process.cwd(), 'lore/posts');
 const GAMES_DIR = join(process.cwd(), 'lore/games');
@@ -192,8 +192,8 @@ function getIndexedLoreEntries(options: LoadAllLorePostsOptions = {}): IndexedLo
     return LORE_POST_FILE_INDEX;
   }
 
-  return LORE_POST_FILE_INDEX.filter((entry) =>
-    getPublishState(entry.explicitPublishDate, options.now).isPublished,
+  return LORE_POST_FILE_INDEX.filter(
+    (entry) => getPublishState(entry.explicitPublishDate, options.now).isPublished,
   );
 }
 

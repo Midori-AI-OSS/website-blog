@@ -262,12 +262,20 @@ Content`,
     const post = await loadPostBySlug('2026-01-17', { now: '2026-01-17T18:00:00Z' }, testPostsDir);
     expect(post?.metadata.title).toBe('First Post');
 
-    const missing = await loadPostBySlug('2026-01-01', { now: '2026-01-17T18:00:00Z' }, testPostsDir);
+    const missing = await loadPostBySlug(
+      '2026-01-01',
+      { now: '2026-01-17T18:00:00Z' },
+      testPostsDir,
+    );
     expect(missing).toBeNull();
   });
 
   test('loadPostBySlug preserves scheduled filtering', async () => {
-    const hidden = await loadPostBySlug('2099-12-31', { now: '2026-01-17T18:00:00Z' }, testPostsDir);
+    const hidden = await loadPostBySlug(
+      '2099-12-31',
+      { now: '2026-01-17T18:00:00Z' },
+      testPostsDir,
+    );
     expect(hidden).toBeNull();
 
     const visible = await loadPostBySlug(

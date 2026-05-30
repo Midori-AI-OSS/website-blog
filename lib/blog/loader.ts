@@ -136,7 +136,9 @@ export async function loadPostSlugs(
 ): Promise<string[]> {
   try {
     const files = await readdir(postsDir);
-    const mdFiles = sortBlogFilenamesDescending(files.filter((filename) => isValidFilename(filename)));
+    const mdFiles = sortBlogFilenamesDescending(
+      files.filter((filename) => isValidFilename(filename)),
+    );
 
     if (mdFiles.length === 0) {
       console.info(`No valid markdown files found in ${postsDir}`);

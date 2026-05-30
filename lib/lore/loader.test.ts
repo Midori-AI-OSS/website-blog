@@ -202,17 +202,9 @@ full_story_pov: luna
   });
 
   test('loadLorePostSlugs returns visible lore slugs', async () => {
-    const publishedSlugs = await loadLorePostSlugs(
-      { now: '2026-01-16T18:00:00Z' },
-      testPostsDir,
-    );
+    const publishedSlugs = await loadLorePostSlugs({ now: '2026-01-16T18:00:00Z' }, testPostsDir);
 
-    expect(publishedSlugs).toEqual([
-      'side-pov',
-      'arc-post',
-      'second-lore',
-      'first-lore',
-    ]);
+    expect(publishedSlugs).toEqual(['side-pov', 'arc-post', 'second-lore', 'first-lore']);
 
     const allSlugs = await loadLorePostSlugs(
       {
@@ -222,13 +214,7 @@ full_story_pov: luna
       testPostsDir,
     );
 
-    expect(allSlugs).toEqual([
-      'future-lore',
-      'side-pov',
-      'arc-post',
-      'second-lore',
-      'first-lore',
-    ]);
+    expect(allSlugs).toEqual(['future-lore', 'side-pov', 'arc-post', 'second-lore', 'first-lore']);
   });
 
   test('loadLorePostBySlug reads one lore post directly by slug', async () => {
