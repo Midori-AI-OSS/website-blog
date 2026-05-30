@@ -1,4 +1,3 @@
-import 'highlight.js/styles/atom-one-dark.css';
 import type { Metadata } from 'next';
 import NavBar from '../components/NavBar';
 import RadioWidget from '../components/radio/RadioWidget';
