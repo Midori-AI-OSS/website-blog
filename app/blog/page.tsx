@@ -7,6 +7,7 @@
 
 import { Box, Typography } from '@mui/joy';
 import { loadAllPostsCached, paginatePosts } from '@/lib/blog/loader';
+import { BlogPageClient } from './BlogPageClient';
 
 export const revalidate = 300;
 
