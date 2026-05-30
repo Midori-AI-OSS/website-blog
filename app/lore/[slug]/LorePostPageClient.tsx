@@ -1,11 +1,16 @@
 'use client';
 
+import { Box } from '@mui/joy';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-
-import { PostView } from '@/components/blog/PostView';
 import type { ParsedPost } from '@/lib/blog/parser';
 import type { LorePostNeighbor } from '@/lib/lore/loader';
 import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
+
+const PostView = dynamic(() => import('@/components/blog/PostView').then((mod) => mod.PostView), {
+  loading: () => <Box sx={{ minHeight: '100vh' }} />,
+  ssr: true,
+});
 
 interface LorePostPageClientProps {
   post: ParsedPost;

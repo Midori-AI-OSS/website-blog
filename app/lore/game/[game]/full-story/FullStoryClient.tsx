@@ -1,9 +1,13 @@
 'use client';
 
-import { Stack } from '@mui/joy';
-
-import { PostView } from '@/components/blog/PostView';
+import { Box, Stack } from '@mui/joy';
+import dynamic from 'next/dynamic';
 import type { ParsedPost } from '@/lib/blog/parser';
+
+const PostView = dynamic(() => import('@/components/blog/PostView').then((mod) => mod.PostView), {
+  loading: () => <Box sx={{ minHeight: '100vh' }} />,
+  ssr: true,
+});
 
 interface FullStoryClientProps {
   posts: ParsedPost[];
