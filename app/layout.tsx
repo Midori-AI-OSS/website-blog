@@ -11,6 +11,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: FOUC prevention
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=localStorage.getItem('mui-mode')||'dark';document.documentElement.setAttribute('data-mui-color-scheme',m);}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body suppressHydrationWarning>
         <ThemeRegistry>
           <NavBar />
