@@ -1,7 +1,7 @@
 {
   "slug": "luna-midori",
   "title": "Luna Midori Species Card",
-  "currentVersion": "prov-v0.15",
+  "currentVersion": "prov-v0.16",
   "versions": [
     {
       "version": "prov-v0.15",
@@ -14,7 +14,19 @@
       "sourcePath": "/home/lunamidori/nfs/Midori-AI-Github/dnd-notes/campaigns/real-moments/chars/luna/items/phone/species-card.md",
       "sourceHash": "e3de92029c14aae38fa679d09b6cfc6f90db8c6eb92ddd3c30262b4ffd6b2666",
       "importedAt": "2026-05-23T08:05:45.240Z"
+    },
+    {
+      "version": "prov-v0.16",
+      "profileVersion": "PROV v0.16",
+      "filename": "versions/prov-v0.16.md",
+      "title": "Luna Midori Species Card",
+      "preferredName": "Luna Midori",
+      "species": "Luminumbra Aasimar-touched",
+      "inWorldUri": "rm-health://species-card/ar/sapporo/midori/luna/0121/aas-tch-luminumbra-prov",
+      "sourcePath": "/home/lunamidori/nfs/Midori-AI-Github/dnd-notes/campaigns/real-moments/chars/luna/items/phone/species-card.md",
+      "sourceHash": "07b3a097871c242330d4978d43011c06bdd9e7b0834d95c421b753adc067aece",
+      "importedAt": "2026-05-30T04:40:31.137Z"
     }
   ],
-  "updatedAt": "2026-05-23T08:05:45.240Z"
+  "updatedAt": "2026-05-30T04:40:31.137Z"
 }
