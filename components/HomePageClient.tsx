@@ -63,7 +63,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
             }}
           >
             <Image
-              src="https://tea-cup.midori-ai.xyz/download/blog-logo.png"
+              src="/api/logo"
               alt="Midori AI Logo"
               width={1200}
               height={600}
