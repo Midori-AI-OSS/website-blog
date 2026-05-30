@@ -1,11 +1,6 @@
 import type { Metadata } from 'next';
-import dynamic from 'next/dynamic';
 import NavBar from '../components/NavBar';
-
-const RadioWidget = dynamic(() => import('../components/radio/RadioWidget'), {
-  ssr: false,
-  loading: () => null,
-});
+import RadioWidget from '../components/radio/RadioWidgetWrapper';
 
 import ThemeRegistry from '../components/ThemeRegistry';
 
