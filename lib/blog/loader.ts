@@ -37,12 +37,20 @@ export interface LoadAllPostsOptions {
   now?: Date | string;
 }
 
+interface LoadBlogPostFileOptions {
+  suppressMissingFileError?: boolean;
+}
+
 function sortBlogFilenamesDescending(filenames: string[]): string[] {
   return [...filenames].sort((a, b) => b.localeCompare(a));
 }
 
 function isPublishedBlogFilename(filename: string, now?: Date | string): boolean {
   return getPublishState(extractIsoDateFromBlogFilename(filename), now).isPublished;
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
 }
 
 /**
@@ -54,6 +62,15 @@ function isPublishedBlogFilename(filename: string, now?: Date | string): boolean
  */
 function isValidFilename(filename: string): boolean {
   return /^\d{4}-\d{2}-\d{2}\.md$/.test(filename);
+}
+
+function getFilenameForSlug(slug: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(slug)) {
+    console.warn(`Invalid slug format: ${slug}`);
+    return null;
+  }
+
+  return `${slug}.md`;
 }
 
 /**
@@ -77,6 +94,7 @@ async function loadBlogPostFile(
   filename: string,
   postsDir: string,
   realPostsDir: string,
+  options: LoadBlogPostFileOptions = {},
 ): Promise<ParsedPost | null> {
   try {
     const filepath = join(postsDir, filename);
@@ -94,9 +112,79 @@ async function loadBlogPostFile(
     // Parse the post
     return parsePost(filename, content);
   } catch (error) {
+    if (options.suppressMissingFileError && isMissingFileError(error)) {
+      return null;
+    }
+
     // Error handling: log but don't crash, continue with other files
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Error loading ${filename}:`, errorMessage);
+    return null;
+  }
+}
+
+/**
+ * Load all blog post slugs without reading every markdown file.
+ *
+ * @param options - Include scheduled posts and/or override current time
+ * @param postsDir - Override posts directory (primarily for tests)
+ * @returns Array of slugs, sorted newest to oldest
+ */
+export async function loadPostSlugs(
+  options: LoadAllPostsOptions = {},
+  postsDir: string = POSTS_DIR,
+): Promise<string[]> {
+  try {
+    const files = await readdir(postsDir);
+    const mdFiles = sortBlogFilenamesDescending(files.filter((filename) => isValidFilename(filename)));
+
+    if (mdFiles.length === 0) {
+      console.info(`No valid markdown files found in ${postsDir}`);
+      return [];
+    }
+
+    const visibleFiles = options.includeScheduled
+      ? mdFiles
+      : mdFiles.filter((filename) => isPublishedBlogFilename(filename, options.now));
+
+    return visibleFiles.map((filename) => filename.replace(/\.md$/i, ''));
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error loading post slugs:', errorMessage);
+    return [];
+  }
+}
+
+/**
+ * Load a single post directly from its slug.
+ *
+ * @param slug - The date slug (YYYY-MM-DD)
+ * @param options - Include scheduled posts and/or override current time
+ * @param postsDir - Override posts directory (primarily for tests)
+ * @returns Found post or null
+ */
+export async function loadPostBySlug(
+  slug: string,
+  options: LoadAllPostsOptions = {},
+  postsDir: string = POSTS_DIR,
+): Promise<ParsedPost | null> {
+  const filename = getFilenameForSlug(slug);
+  if (!filename) {
+    return null;
+  }
+
+  if (!options.includeScheduled && !isPublishedBlogFilename(filename, options.now)) {
+    return null;
+  }
+
+  try {
+    const realPostsDir = await realpath(postsDir);
+    return loadBlogPostFile(filename, postsDir, realPostsDir, {
+      suppressMissingFileError: true,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error loading post ${slug}:`, errorMessage);
     return null;
   }
 }
@@ -264,13 +352,12 @@ export function paginatePosts(
  * @returns Found post or null
  */
 export function getPostBySlug(allPosts: ParsedPost[], slug: string): ParsedPost | null {
-  // Validate slug format (security)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(slug)) {
-    console.warn(`Invalid slug format: ${slug}`);
+  const filename = getFilenameForSlug(slug);
+  if (!filename) {
     return null;
   }
 
-  return allPosts.find((p) => p.filename === `${slug}.md`) || null;
+  return allPosts.find((p) => p.filename === filename) || null;
 }
 
 /**

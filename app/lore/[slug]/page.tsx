@@ -7,7 +7,11 @@
 import { notFound } from 'next/navigation';
 
 import { getPublishState } from '@/lib/content/publish';
-import { getLorePostBySlug, getLoreStoryNeighbors, loadAllLorePosts } from '@/lib/lore/loader';
+import {
+  loadLorePostBySlug,
+  loadLorePostSlugs,
+  loadLoreStoryNeighborsForPost,
+} from '@/lib/lore/loader';
 import { loadSpeciesCareCardsForMarkdown } from '@/lib/species-care/loader';
 
 import { LorePostPageClient } from './LorePostPageClient';
@@ -15,23 +19,22 @@ import { LorePostPageClient } from './LorePostPageClient';
 export const revalidate = 300;
 
 export async function generateStaticParams() {
-  const posts = await loadAllLorePosts({ includeScheduled: true });
-  return posts.map((post) => ({
-    slug: post.filename.replace('.md', ''),
+  const slugs = await loadLorePostSlugs({ includeScheduled: true });
+  return slugs.map((slug) => ({
+    slug,
   }));
 }
 
 export default async function LoreEntryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const allPosts = await loadAllLorePosts({ includeScheduled: true });
-  const post = getLorePostBySlug(allPosts, slug);
+  const post = await loadLorePostBySlug(slug, { includeScheduled: true });
 
   if (!post) {
     notFound();
   }
 
   const publishState = getPublishState(post.metadata.date);
-  const neighbors = getLoreStoryNeighbors(allPosts, post);
+  const neighbors = await loadLoreStoryNeighborsForPost(post, { includeScheduled: true });
   const speciesCareCards = publishState.isScheduled
     ? {}
     : await loadSpeciesCareCardsForMarkdown(post.content);

@@ -13,6 +13,8 @@ import {
   getPostsByTag,
   getRecentPosts,
   loadAllPosts,
+  loadPostBySlug,
+  loadPostSlugs,
   loadRecentPosts,
   paginatePosts,
 } from './loader';
@@ -240,6 +242,43 @@ Content`,
     });
 
     expect(posts.map((post) => post.filename)).toEqual(['2099-12-31.md', '2026-01-17.md']);
+  });
+
+  test('loadPostSlugs returns sorted visible slugs', async () => {
+    const publishedSlugs = await loadPostSlugs({ now: '2026-01-17T18:00:00Z' }, testPostsDir);
+    expect(publishedSlugs).toEqual(['2026-01-17', '2026-01-16', '2026-01-15']);
+
+    const allSlugs = await loadPostSlugs(
+      {
+        includeScheduled: true,
+        now: '2026-01-17T18:00:00Z',
+      },
+      testPostsDir,
+    );
+    expect(allSlugs).toEqual(['2099-12-31', '2026-01-17', '2026-01-16', '2026-01-15']);
+  });
+
+  test('loadPostBySlug reads one post directly by slug', async () => {
+    const post = await loadPostBySlug('2026-01-17', { now: '2026-01-17T18:00:00Z' }, testPostsDir);
+    expect(post?.metadata.title).toBe('First Post');
+
+    const missing = await loadPostBySlug('2026-01-01', { now: '2026-01-17T18:00:00Z' }, testPostsDir);
+    expect(missing).toBeNull();
+  });
+
+  test('loadPostBySlug preserves scheduled filtering', async () => {
+    const hidden = await loadPostBySlug('2099-12-31', { now: '2026-01-17T18:00:00Z' }, testPostsDir);
+    expect(hidden).toBeNull();
+
+    const visible = await loadPostBySlug(
+      '2099-12-31',
+      {
+        includeScheduled: true,
+        now: '2026-01-17T18:00:00Z',
+      },
+      testPostsDir,
+    );
+    expect(visible?.metadata.title).toBe('Future Post');
   });
 
   test('loadAllPosts hides scheduled posts by default', async () => {

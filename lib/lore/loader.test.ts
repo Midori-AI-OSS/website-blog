@@ -10,6 +10,9 @@ import {
   loadAllLorePosts,
   loadLoreGameGroups,
   loadLoreGameIndexes,
+  loadLorePostBySlug,
+  loadLorePostSlugs,
+  loadLoreStoryNeighborsForPost,
   loadRecentLorePosts,
 } from './loader';
 
@@ -196,6 +199,97 @@ full_story_pov: luna
     );
 
     expect(posts.map((post) => post.filename)).toEqual(['future-lore.md', 'side-pov.md']);
+  });
+
+  test('loadLorePostSlugs returns visible lore slugs', async () => {
+    const publishedSlugs = await loadLorePostSlugs(
+      { now: '2026-01-16T18:00:00Z' },
+      testPostsDir,
+    );
+
+    expect(publishedSlugs).toEqual([
+      'side-pov',
+      'arc-post',
+      'second-lore',
+      'first-lore',
+    ]);
+
+    const allSlugs = await loadLorePostSlugs(
+      {
+        includeScheduled: true,
+        now: '2026-01-16T18:00:00Z',
+      },
+      testPostsDir,
+    );
+
+    expect(allSlugs).toEqual([
+      'future-lore',
+      'side-pov',
+      'arc-post',
+      'second-lore',
+      'first-lore',
+    ]);
+  });
+
+  test('loadLorePostBySlug reads one lore post directly by slug', async () => {
+    const post = await loadLorePostBySlug(
+      'second-lore',
+      { now: '2026-01-16T18:00:00Z' },
+      testPostsDir,
+    );
+    expect(post?.metadata.title).toBe('Second Lore');
+
+    const missing = await loadLorePostBySlug(
+      'missing-lore',
+      { now: '2026-01-16T18:00:00Z' },
+      testPostsDir,
+    );
+    expect(missing).toBeNull();
+  });
+
+  test('loadLorePostBySlug preserves scheduled filtering', async () => {
+    const hidden = await loadLorePostBySlug(
+      'future-lore',
+      { now: '2026-01-16T18:00:00Z' },
+      testPostsDir,
+    );
+    expect(hidden).toBeNull();
+
+    const visible = await loadLorePostBySlug(
+      'future-lore',
+      {
+        includeScheduled: true,
+        now: '2026-01-16T18:00:00Z',
+      },
+      testPostsDir,
+    );
+    expect(visible?.metadata.title).toBe('Future Lore');
+  });
+
+  test('loadLoreStoryNeighborsForPost matches existing neighbor resolution', async () => {
+    const second = await loadLorePostBySlug(
+      'second-lore',
+      {
+        includeScheduled: true,
+        now: '2026-01-16T18:00:00Z',
+      },
+      testPostsDir,
+    );
+
+    expect(second).toBeDefined();
+    if (!second) throw new Error('second-lore missing');
+
+    const neighbors = await loadLoreStoryNeighborsForPost(
+      second,
+      {
+        includeScheduled: true,
+        now: '2026-01-16T18:00:00Z',
+      },
+      testPostsDir,
+    );
+
+    expect(neighbors.previous?.slug).toBe('first-lore');
+    expect(neighbors.next?.slug).toBe('future-lore');
   });
 
   test('loadLoreGameIndexes loads game containers from index files', async () => {

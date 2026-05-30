@@ -8,7 +8,7 @@ import { join } from 'node:path';
 
 import { type ParsedPost, parsePost } from '@/lib/blog/parser';
 import { getPublishState } from '@/lib/content/publish';
-import { LORE_POST_FILE_INDEX } from './recent-index.generated';
+import { LORE_POST_FILE_INDEX, type IndexedLorePostFile } from './recent-index.generated';
 
 const POSTS_DIR = join(process.cwd(), 'lore/posts');
 const GAMES_DIR = join(process.cwd(), 'lore/games');
@@ -27,6 +27,10 @@ export interface PaginatedLorePosts {
 export interface LoadAllLorePostsOptions {
   includeScheduled?: boolean;
   now?: Date | string;
+}
+
+interface LoadLorePostFileOptions {
+  suppressMissingFileError?: boolean;
 }
 
 export interface LoreGameIndex {
@@ -62,6 +66,19 @@ function isValidFilename(filename: string): boolean {
 
 function isValidSlug(value: string): boolean {
   return /^[a-z0-9][a-z0-9-]*$/i.test(value);
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
+}
+
+function getFilenameForLoreSlug(slug: string): string | null {
+  if (!isValidSlug(slug)) {
+    console.warn(`Invalid lore slug format: ${slug}`);
+    return null;
+  }
+
+  return `${slug}.md`;
 }
 
 function normalizeSlug(value: string | undefined): string | null {
@@ -154,6 +171,36 @@ function hasTag(post: ParsedPost, tag: string): boolean {
   return normalizeTags(post).includes(target);
 }
 
+function indexEntryToParsedPost(entry: IndexedLorePostFile): ParsedPost {
+  return {
+    metadata: {
+      title: entry.metadata.title,
+      summary: entry.metadata.summary,
+      tags: [...entry.metadata.tags],
+      date: entry.metadata.date,
+      game: entry.metadata.game,
+      story_order: entry.metadata.story_order,
+    },
+    content: '',
+    rawMarkdown: '',
+    filename: entry.filename,
+  };
+}
+
+function getIndexedLoreEntries(options: LoadAllLorePostsOptions = {}): IndexedLorePostFile[] {
+  if (options.includeScheduled) {
+    return LORE_POST_FILE_INDEX;
+  }
+
+  return LORE_POST_FILE_INDEX.filter((entry) =>
+    getPublishState(entry.explicitPublishDate, options.now).isPublished,
+  );
+}
+
+function getIndexedLorePosts(options: LoadAllLorePostsOptions = {}): ParsedPost[] {
+  return getIndexedLoreEntries(options).map(indexEntryToParsedPost);
+}
+
 function ensureRequiredLoreMetadata(parsed: ParsedPost): boolean {
   const game = normalizeSlug(parsed.metadata.game);
   if (!game) {
@@ -178,6 +225,7 @@ async function loadLorePostFile(
   filename: string,
   postsDir: string,
   realPostsDir: string,
+  options: LoadLorePostFileOptions = {},
 ): Promise<{
   parsed: ParsedPost;
   explicitPublishDate: string | undefined;
@@ -209,6 +257,10 @@ async function loadLorePostFile(
       explicitPublishDate,
     };
   } catch (error) {
+    if (options.suppressMissingFileError && isMissingFileError(error)) {
+      return null;
+    }
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Error loading ${filename}:`, errorMessage);
     return null;
@@ -217,6 +269,69 @@ async function loadLorePostFile(
 
 export function getLorePostSlug(post: ParsedPost): string {
   return post.filename.replace(/\.md$/i, '');
+}
+
+export async function loadLorePostSlugs(
+  options: LoadAllLorePostsOptions = {},
+  postsDir: string = POSTS_DIR,
+): Promise<string[]> {
+  if (postsDir === POSTS_DIR) {
+    return getIndexedLoreEntries(options).map((entry) => entry.filename.replace(/\.md$/i, ''));
+  }
+
+  const posts = await loadAllLorePosts(options, postsDir);
+  return posts.map(getLorePostSlug);
+}
+
+export async function loadLorePostBySlug(
+  slug: string,
+  options: LoadAllLorePostsOptions = {},
+  postsDir: string = POSTS_DIR,
+): Promise<ParsedPost | null> {
+  const filename = getFilenameForLoreSlug(slug);
+  if (!filename) {
+    return null;
+  }
+
+  try {
+    const realPostsDir = await realpath(postsDir);
+    const loadedPost = await loadLorePostFile(filename, postsDir, realPostsDir, {
+      suppressMissingFileError: true,
+    });
+
+    if (loadedPost === null) {
+      return null;
+    }
+
+    if (
+      !options.includeScheduled &&
+      !getPublishState(loadedPost.explicitPublishDate, options.now).isPublished
+    ) {
+      return null;
+    }
+
+    return loadedPost.parsed;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error loading lore post ${slug}:`, errorMessage);
+    return null;
+  }
+}
+
+export async function loadLoreStoryNeighborsForPost(
+  currentPost: ParsedPost,
+  options: LoadAllLorePostsOptions = {},
+  postsDir: string = POSTS_DIR,
+): Promise<LorePostNeighbors> {
+  if (postsDir === POSTS_DIR) {
+    const indexedPosts = getIndexedLorePosts(options);
+    if (indexedPosts.some((post) => post.filename === currentPost.filename)) {
+      return getLoreStoryNeighbors(indexedPosts, currentPost);
+    }
+  }
+
+  const posts = await loadAllLorePosts(options, postsDir);
+  return getLoreStoryNeighbors(posts, currentPost);
 }
 
 export function sortLorePosts(posts: ParsedPost[], mode: LorePostSortMode): ParsedPost[] {
@@ -555,10 +670,10 @@ export function paginateLorePosts(
 }
 
 export function getLorePostBySlug(allPosts: ParsedPost[], slug: string): ParsedPost | null {
-  if (!isValidSlug(slug)) {
-    console.warn(`Invalid lore slug format: ${slug}`);
+  const filename = getFilenameForLoreSlug(slug);
+  if (!filename) {
     return null;
   }
 
-  return allPosts.find((p) => p.filename === `${slug}.md`) || null;
+  return allPosts.find((p) => p.filename === filename) || null;
 }

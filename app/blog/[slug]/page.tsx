@@ -6,7 +6,7 @@
  */
 
 import { notFound } from 'next/navigation';
-import { getPostBySlug, loadAllPosts } from '@/lib/blog/loader';
+import { loadPostBySlug, loadPostSlugs } from '@/lib/blog/loader';
 import {
   extractIsoDateFromBlogFilename,
   formatLongDate,
@@ -20,16 +20,15 @@ export const revalidate = 300;
  * Generate static params for all posts at build time
  */
 export async function generateStaticParams() {
-  const posts = await loadAllPosts(undefined, { includeScheduled: true });
-  return posts.map((post) => ({
-    slug: post.filename.replace('.md', ''),
+  const slugs = await loadPostSlugs({ includeScheduled: true });
+  return slugs.map((slug) => ({
+    slug,
   }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const allPosts = await loadAllPosts(undefined, { includeScheduled: true });
-  const post = getPostBySlug(allPosts, slug);
+  const post = await loadPostBySlug(slug, { includeScheduled: true });
 
   if (!post) {
     return {
@@ -57,9 +56,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   // Await params as per Next.js 15 requirements
   const { slug } = await params;
 
-  // Load all posts and find the requested one
-  const allPosts = await loadAllPosts(undefined, { includeScheduled: true });
-  const post = getPostBySlug(allPosts, slug);
+  // Load only the requested post
+  const post = await loadPostBySlug(slug, { includeScheduled: true });
 
   // Handle 404 for non-existent posts
   if (!post) {
