@@ -26,6 +26,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@mui/joy": "^5.0.0-beta.52",
     "gray-matter": "4.0.3",
