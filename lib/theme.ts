@@ -51,8 +51,8 @@ export const theme = extendTheme({
     },
   },
   fontFamily: {
-    body: 'Inter, var(--joy-fontFamily-fallback)',
-    display: 'Inter, var(--joy-fontFamily-fallback)',
+    body: '"Liberation Sans", var(--joy-fontFamily-fallback)',
+    display: '"Liberation Sans", var(--joy-fontFamily-fallback)',
   },
   radius: {
     xs: '0px',
