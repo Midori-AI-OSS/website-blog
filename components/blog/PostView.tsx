@@ -19,6 +19,7 @@ import 'highlight.js/styles/atom-one-dark.css';
 import { keyframes } from '@emotion/react';
 import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Tag, User } from 'lucide-react';
+import Image from 'next/image';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
@@ -244,47 +245,48 @@ const markdownComponents: Components = {
           />
 
           <Box
-            component="img"
-            src={src}
-            alt=""
-            loading="lazy"
             sx={{
               position: 'absolute',
               top: 0,
               left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              filter: 'blur(20px) brightness(0.55)',
-              transform: 'scale(1.1)',
+              right: 0,
+              bottom: 0,
               zIndex: 0,
-              opacity: 0.85,
-              my: 0,
-              border: 'none',
-              background: 'none',
-              animation: 'none',
             }}
-          />
+          >
+            <Image
+              src={src}
+              alt=""
+              fill
+              sizes="100vw"
+              style={{
+                objectFit: 'cover',
+                filter: 'blur(20px) brightness(0.55)',
+                transform: 'scale(1.1)',
+                opacity: 0.85,
+              }}
+            />
+          </Box>
 
           <Box
-            component="img"
-            src={src}
-            alt={typeof alt === 'string' ? alt : ''}
-            loading="lazy"
             sx={{
               position: 'relative',
               zIndex: 1,
-              objectFit: 'contain',
               width: '60%',
               maxWidth: '100%',
-              height: 'auto',
-              display: 'block',
-              my: 0,
-              border: 'none',
-              background: 'none',
-              animation: 'none',
+              height: { xs: '22vh', sm: '15vh' },
+              mx: 'auto',
             }}
-          />
+          >
+            <Image
+              src={src}
+              alt={typeof alt === 'string' ? alt : ''}
+              fill
+              loading="lazy"
+              sizes="60vw"
+              style={{ objectFit: 'contain' }}
+            />
+          </Box>
         </Card>
       );
     }

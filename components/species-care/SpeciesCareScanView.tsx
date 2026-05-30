@@ -2,6 +2,7 @@
 
 import { Box, Button, Option, Select, Stack, Typography } from '@mui/joy';
 import { ArrowLeft, BadgeCheck, FileHeart, HeartPulse, ShieldAlert } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -243,6 +244,7 @@ export function SpeciesCareScanView({
   const versions =
     availableVersions.length > 0 ? availableVersions : (record.metadata?.versions ?? []);
   const [clinicalView, setClinicalView] = useState<'patient' | 'protocol'>('patient');
+  const [photoErrored, setPhotoErrored] = useState(false);
   const profileVersions =
     linkedProfile && linkedProfile.availableVersions.length > 0
       ? linkedProfile.availableVersions
@@ -460,32 +462,32 @@ export function SpeciesCareScanView({
             }}
           >
             <Stack direction="row" gap={1.25} alignItems="center">
-              {photoUrl ? (
+              {photoUrl && !photoErrored ? (
                 <Box
-                  component="img"
-                  src={photoUrl}
-                  alt=""
-                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    const fallback = (e.target as HTMLImageElement)
-                      .nextElementSibling as HTMLElement | null;
-                    if (fallback) fallback.style.display = 'grid';
-                  }}
                   sx={{
                     width: 60,
                     height: 60,
                     borderRadius: '8px',
-                    objectFit: 'cover',
+                    overflow: 'hidden',
                     display: 'block',
                   }}
-                />
+                >
+                  <Image
+                    src={photoUrl}
+                    alt=""
+                    width={60}
+                    height={60}
+                    style={{ objectFit: 'cover', display: 'block' }}
+                    onError={() => setPhotoErrored(true)}
+                  />
+                </Box>
               ) : null}
               <Box
                 sx={{
                   width: 60,
                   height: 60,
                   borderRadius: '8px',
-                  display: photoUrl ? 'none' : 'grid',
+                  display: photoUrl && !photoErrored ? 'none' : 'grid',
                   placeItems: 'center',
                   bgcolor: '#dbeafe',
                   color: '#1e3a8a',

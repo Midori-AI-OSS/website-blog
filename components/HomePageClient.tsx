@@ -14,6 +14,7 @@ import {
   Twitter,
   Youtube,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ParsedPost } from '../lib/blog/parser';
@@ -55,19 +56,28 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
           style={{ width: '100%', maxWidth: '98%', display: 'flex', justifyContent: 'center' }}
         >
           <Box
-            component="img"
-            src="https://tea-cup.midori-ai.xyz/download/blog-logo.png"
-            alt="Midori AI Logo"
-            loading="lazy"
             sx={{
               width: '100%',
-              height: 'auto',
-              borderRadius: 'lg',
-              // enhance the look slightly
-              filter: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.3))', // Purple glow
-              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'center',
             }}
-          />
+          >
+            <Image
+              src="https://tea-cup.midori-ai.xyz/download/blog-logo.png"
+              alt="Midori AI Logo"
+              width={1200}
+              height={600}
+              priority
+              style={{
+                width: '100%',
+                height: 'auto',
+                maxWidth: '100%',
+                borderRadius: 'var(--joy-radius-lg)',
+                filter: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.3))',
+                cursor: 'pointer',
+              }}
+            />
+          </Box>
         </Link>
         <Typography level="h1" sx={{ fontSize: { xs: '2rem', md: '3rem' } }}>
           Midori AI Blog & Updates (and a little Lore)

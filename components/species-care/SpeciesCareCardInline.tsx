@@ -2,6 +2,7 @@
 // Species healthcare card — inline 3D flip card rendered in lore posts
 
 import { Box, Stack, Typography } from '@mui/joy';
+import Image from 'next/image';
 import { useState } from 'react';
 
 import { SpeciesCareQr } from '@/components/species-care/SpeciesCareQr';
@@ -90,18 +91,23 @@ function PersonPhoto({ photoUrl, initials }: { photoUrl?: string; initials: stri
 
   return (
     <Box
-      component="img"
-      src={photoUrl}
-      alt=""
-      onError={() => setErrored(true)}
       sx={{
+        position: 'relative',
         width: '100%',
         aspectRatio: '1 / 1',
         borderRadius: { xs: '14px', sm: '18px' },
-        objectFit: 'cover',
-        display: 'block',
+        overflow: 'hidden',
       }}
-    />
+    >
+      <Image
+        src={photoUrl}
+        alt=""
+        fill
+        sizes="307px"
+        style={{ objectFit: 'cover' }}
+        onError={() => setErrored(true)}
+      />
+    </Box>
   );
 }
 

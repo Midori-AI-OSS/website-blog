@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Typography } from '@mui/joy';
+import Image from 'next/image';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 
@@ -47,11 +48,13 @@ export function SpeciesCareQr({ value, size = 104, label, plain = false }: Speci
     return (
       <Box sx={{ width: size, minWidth: size, lineHeight: 0 }}>
         {dataUrl ? (
-          <Box
-            component="img"
+          <Image
             src={dataUrl}
             alt={label ?? 'Species care QR code'}
-            sx={{ width: '100%', height: 'auto', display: 'block' }}
+            width={size}
+            height={size}
+            unoptimized
+            style={{ display: 'block' }}
           />
         ) : (
           <Box
@@ -84,11 +87,13 @@ export function SpeciesCareQr({ value, size = 104, label, plain = false }: Speci
       }}
     >
       {dataUrl ? (
-        <Box
-          component="img"
+        <Image
           src={dataUrl}
           alt={label ?? 'Species care QR code'}
-          sx={{ width: '100%', height: 'auto', display: 'block' }}
+          width={size}
+          height={size}
+          unoptimized
+          style={{ display: 'block' }}
         />
       ) : (
         <Box

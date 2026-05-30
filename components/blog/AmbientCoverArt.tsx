@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Card } from '@mui/joy';
+import Image from 'next/image';
 import { type ReactNode, useEffect, useState } from 'react';
 
 export const AMBIENT_PULSE_KEYFRAMES = {
@@ -76,55 +77,65 @@ export function AmbientCoverArt({
       />
 
       <Box
-        component="img"
-        src={coverImageUrl}
-        alt=""
-        onError={() => onImageError?.(coverImageUrl)}
         sx={{
           position: 'absolute',
           top: 0,
           left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          filter: isScheduledPreview ? 'blur(34px) brightness(0.45)' : 'blur(20px) brightness(0.6)',
-          transform: 'scale(1.1)',
+          right: 0,
+          bottom: 0,
           zIndex: 0,
-          opacity: 0.8,
-          animation: 'ambient-pulse 10s ease-in-out infinite',
         }}
-      />
+      >
+        <Image
+          src={coverImageUrl}
+          alt=""
+          fill
+          sizes="100vw"
+          style={{
+            objectFit: 'cover',
+            filter: isScheduledPreview
+              ? 'blur(34px) brightness(0.45)'
+              : 'blur(20px) brightness(0.6)',
+            transform: 'scale(1.1)',
+            opacity: 0.8,
+            animation: 'ambient-pulse 10s ease-in-out infinite',
+          }}
+          onError={() => onImageError?.(coverImageUrl)}
+        />
+      </Box>
 
       <Box
-        component="img"
-        src={coverImageUrl}
-        alt={alt}
-        loading="lazy"
-        onError={() => onImageError?.(coverImageUrl)}
-        onLoad={(event) => {
-          const img = event.currentTarget;
-          if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-            const isLandscape = img.naturalWidth > img.naturalHeight;
-            setCoverIsLandscape(isLandscape);
-            onAspectRatioChange?.(isLandscape);
-          }
-        }}
         sx={{
           position: 'relative',
           zIndex: 1,
-          objectFit: 'contain',
-          maxWidth: {
-            xs: coverIsLandscape === true ? '84%' : '72%',
-            sm: coverIsLandscape === true ? '60%' : '35%',
-          },
-          height: 'auto',
-          maxHeight: { xs: '22%', sm: '15%' },
-          width: 'auto',
-          display: 'block',
-          filter: isScheduledPreview ? 'blur(18px) saturate(0.72) brightness(0.7)' : 'none',
-          transform: isScheduledPreview ? 'scale(1.08)' : 'none',
+          width: coverIsLandscape === true ? { xs: '84%', sm: '60%' } : { xs: '72%', sm: '35%' },
+          maxWidth: '100%',
+          height: { xs: '22vh', sm: '15vh' },
+          mx: 'auto',
         }}
-      />
+      >
+        <Image
+          src={coverImageUrl}
+          alt={alt}
+          fill
+          loading="lazy"
+          sizes="(max-width: 600px) 84vw, 60vw"
+          style={{
+            objectFit: 'contain',
+            filter: isScheduledPreview ? 'blur(18px) saturate(0.72) brightness(0.7)' : 'none',
+            transform: isScheduledPreview ? 'scale(1.08)' : 'none',
+          }}
+          onError={() => onImageError?.(coverImageUrl)}
+          onLoad={(event) => {
+            const img = event.currentTarget;
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+              const isLandscape = img.naturalWidth > img.naturalHeight;
+              setCoverIsLandscape(isLandscape);
+              onAspectRatioChange?.(isLandscape);
+            }
+          }}
+        />
+      </Box>
 
       {children}
     </Card>
