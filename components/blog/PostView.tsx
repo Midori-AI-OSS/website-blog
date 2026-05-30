@@ -278,17 +278,17 @@ const markdownComponents: Components = {
               zIndex: 1,
               width: '60%',
               maxWidth: '100%',
-              height: { xs: '180px', sm: '260px' },
               mx: 'auto',
             }}
           >
             <Image
               src={src}
               alt={typeof alt === 'string' ? alt : ''}
-              fill
+              width={1200}
+              height={675}
               loading="lazy"
               sizes="60vw"
-              style={{ objectFit: 'contain' }}
+              style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
             />
           </Box>
         </Card>

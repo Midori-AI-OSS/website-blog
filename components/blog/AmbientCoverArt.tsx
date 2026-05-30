@@ -32,6 +32,7 @@ export function AmbientCoverArt({
   onImageError,
 }: AmbientCoverArtProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
+  const [imageDims, setImageDims] = useState({ width: 1200, height: 675 });
 
   useEffect(() => {
     setCoverIsLandscape(null);
@@ -110,17 +111,19 @@ export function AmbientCoverArt({
           zIndex: 1,
           width: coverIsLandscape === true ? { xs: '84%', sm: '60%' } : { xs: '72%', sm: '35%' },
           maxWidth: '100%',
-          height: { xs: '180px', sm: '260px' },
           mx: 'auto',
         }}
       >
         <Image
           src={coverImageUrl}
           alt={alt}
-          fill
+          width={imageDims.width}
+          height={imageDims.height}
           loading="lazy"
           sizes="(max-width: 600px) 84vw, 60vw"
           style={{
+            width: '100%',
+            height: 'auto',
             objectFit: 'contain',
             filter: isScheduledPreview ? 'blur(18px) saturate(0.72) brightness(0.7)' : 'none',
             transform: isScheduledPreview ? 'scale(1.08)' : 'none',
@@ -129,6 +132,7 @@ export function AmbientCoverArt({
           onLoad={(event) => {
             const img = event.currentTarget;
             if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+              setImageDims({ width: img.naturalWidth, height: img.naturalHeight });
               const isLandscape = img.naturalWidth > img.naturalHeight;
               setCoverIsLandscape(isLandscape);
               onAspectRatioChange?.(isLandscape);
