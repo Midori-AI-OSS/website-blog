@@ -77,7 +77,7 @@ export async function GET(
       return new NextResponse(new Uint8Array(cached.data), {
         headers: {
           'Content-Type': cached.contentType,
-          'Cache-Control': 'public, max-age=60',
+          'Cache-Control': 'public, max-age=86400, stale-while-revalidate=86400',
         },
       });
     }
@@ -98,7 +98,7 @@ export async function GET(
     return new NextResponse(new Uint8Array(imageData), {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=60',
+        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=86400',
       },
     });
   } catch (error) {
