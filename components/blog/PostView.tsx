@@ -19,6 +19,7 @@ import 'highlight.js/styles/atom-one-dark.css';
 import { keyframes } from '@emotion/react';
 import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Tag, User } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Components } from 'react-markdown';
@@ -44,7 +45,10 @@ import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import { splitMarkdownSpeciesCareTokens } from '@/lib/species-care/tokens';
 import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
 import type { ParsedPost } from '../../lib/blog/parser';
-import { TtsPlayer } from './TtsPlayer';
+
+const TtsPlayer = dynamic(() => import('./TtsPlayer').then((mod) => mod.TtsPlayer), {
+  loading: () => null,
+});
 
 const shimmerKeyframes = keyframes({
   '0%': { backgroundPosition: '-1000px 0' },
