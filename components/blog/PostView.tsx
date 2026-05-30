@@ -278,7 +278,7 @@ const markdownComponents: Components = {
               zIndex: 1,
               width: '60%',
               maxWidth: '100%',
-              height: { xs: '22vh', sm: '15vh' },
+              height: { xs: '180px', sm: '260px' },
               mx: 'auto',
             }}
           >

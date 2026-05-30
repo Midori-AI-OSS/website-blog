@@ -110,7 +110,7 @@ export function AmbientCoverArt({
           zIndex: 1,
           width: coverIsLandscape === true ? { xs: '84%', sm: '60%' } : { xs: '72%', sm: '35%' },
           maxWidth: '100%',
-          height: { xs: '22vh', sm: '15vh' },
+          height: { xs: '180px', sm: '260px' },
           mx: 'auto',
         }}
       >
