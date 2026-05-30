@@ -357,11 +357,8 @@ export const BlogCard = React.memo(
     // If href is provided, wrap in Next.js Link
     if (href) {
       return (
-        <Link href={href} passHref legacyBehavior>
-          {/* biome-ignore lint/a11y/useValidAnchor: href provided by next/link parent */}
-          <a style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-            {cardContent}
-          </a>
+        <Link href={href} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+          {cardContent}
         </Link>
       );
     }
