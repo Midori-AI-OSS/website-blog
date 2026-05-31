@@ -2,7 +2,7 @@
 
 import { Box, Card } from '@mui/joy';
 import Image from 'next/image';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 export const AMBIENT_PULSE_KEYFRAMES = {
   '@keyframes ambient-pulse': {
@@ -32,9 +32,33 @@ export function AmbientCoverArt({
   onImageError,
 }: AmbientCoverArtProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
-  const [imageDims, setImageDims] = useState({ width: 1200, height: 675 });
+  const [imageDims, setImageDims] = useState<{ width: number; height: number } | null>(null);
+  const [dimensionsReady, setDimensionsReady] = useState(false);
   const loadedUrlRef = useRef<string | null>(null);
   const foregroundLoaded = loadedUrlRef.current === coverImageUrl;
+
+  useEffect(() => {
+    let active = true;
+    setDimensionsReady(false);
+    const img = new window.Image();
+    img.onload = () => {
+      if (!active) return;
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+        setImageDims({ width: img.naturalWidth, height: img.naturalHeight });
+        const isLandscape = img.naturalWidth > img.naturalHeight;
+        setCoverIsLandscape(isLandscape);
+        onAspectRatioChange?.(isLandscape);
+      }
+      setDimensionsReady(true);
+    };
+    img.onerror = () => {
+      if (active) onImageError?.(coverImageUrl);
+    };
+    img.src = coverImageUrl;
+    return () => {
+      active = false;
+    };
+  }, [coverImageUrl]);
 
   return (
     <Card
@@ -103,49 +127,44 @@ export function AmbientCoverArt({
         />
       </Box>
 
-      <Box
-        sx={{
-          position: 'relative',
-          zIndex: 1,
-          width: coverIsLandscape === true ? { xs: '84%', sm: '60%' } : { xs: '72%', sm: '35%' },
-          maxWidth: '100%',
-          mx: 'auto',
-          aspectRatio: `${imageDims.width} / ${imageDims.height}`,
-        }}
-      >
-        <Image
-          src={coverImageUrl}
-          alt={alt}
-          width={imageDims.width}
-          height={imageDims.height}
-          loading="lazy"
-          sizes="(max-width: 600px) 84vw, 60vw"
-          style={{
-            width: '100%',
-            height: 'auto',
-            objectFit: 'contain',
-            filter: foregroundLoaded
-              ? isScheduledPreview
-                ? 'blur(18px) saturate(0.72) brightness(0.7)'
-                : 'none'
-              : 'blur(8px)',
-            transform: isScheduledPreview ? 'scale(1.08)' : 'none',
-            opacity: foregroundLoaded ? 1 : 0.3,
-            transition: 'filter 0.6s ease-out, opacity 0.4s ease-out',
+      {dimensionsReady && imageDims && (
+        <Box
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            width: coverIsLandscape === true ? { xs: '84%', sm: '60%' } : { xs: '72%', sm: '35%' },
+            maxWidth: '100%',
+            mx: 'auto',
+            aspectRatio: `${imageDims.width} / ${imageDims.height}`,
           }}
-          onError={() => onImageError?.(coverImageUrl)}
-          onLoad={(event) => {
-            const img = event.currentTarget;
-            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-              setImageDims({ width: img.naturalWidth, height: img.naturalHeight });
-              const isLandscape = img.naturalWidth > img.naturalHeight;
-              setCoverIsLandscape(isLandscape);
-              onAspectRatioChange?.(isLandscape);
-            }
-            loadedUrlRef.current = coverImageUrl;
-          }}
-        />
-      </Box>
+        >
+          <Image
+            src={coverImageUrl}
+            alt={alt}
+            width={imageDims.width}
+            height={imageDims.height}
+            loading="lazy"
+            sizes="(max-width: 600px) 84vw, 60vw"
+            style={{
+              width: '100%',
+              height: 'auto',
+              objectFit: 'contain',
+              filter: foregroundLoaded
+                ? isScheduledPreview
+                  ? 'blur(18px) saturate(0.72) brightness(0.7)'
+                  : 'none'
+                : 'blur(8px)',
+              transform: isScheduledPreview ? 'scale(1.08)' : 'none',
+              opacity: foregroundLoaded ? 1 : 0.3,
+              transition: 'filter 0.6s ease-out, opacity 0.4s ease-out',
+            }}
+            onError={() => onImageError?.(coverImageUrl)}
+            onLoad={() => {
+              loadedUrlRef.current = coverImageUrl;
+            }}
+          />
+        </Box>
+      )}
 
       {children}
     </Card>
