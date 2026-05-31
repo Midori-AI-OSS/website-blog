@@ -35,6 +35,7 @@ export function PostPageClient({
 
   return (
     <PostView
+      key={post.filename}
       post={post}
       onClose={handleClose}
       isScheduledPreview={isScheduledPreview}

@@ -359,11 +359,14 @@ export function PostView({
     () => splitMarkdownSpeciesCareTokens(markdownContent),
     [markdownContent],
   );
-  const transformedCoverImageUrl = useMemo(
-    () => resolvePostCoverImageUrl(post.metadata.cover_image),
-    [post.metadata.cover_image],
+  const [coverImageError, setCoverImageError] = useState(false);
+  const effectiveCoverImageUrl = useMemo(
+    () =>
+      coverImageError
+        ? POST_COVER_PLACEHOLDER_IMAGE_URL
+        : resolvePostCoverImageUrl(post.metadata.cover_image),
+    [post.metadata.cover_image, coverImageError],
   );
-  const [effectiveCoverImageUrl, setEffectiveCoverImageUrl] = useState(transformedCoverImageUrl);
   const dialogueColor = useMemo(
     () =>
       ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)',
@@ -398,10 +401,6 @@ export function PostView({
     [ttsPrimaryColor],
   );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
-
-  useEffect(() => {
-    setEffectiveCoverImageUrl(transformedCoverImageUrl);
-  }, [transformedCoverImageUrl]);
 
   useEffect(() => {
     if (disableDynamicBackdrop) return;
@@ -564,7 +563,7 @@ export function PostView({
                 onAspectRatioChange={(val) => setCoverIsLandscape(val)}
                 onImageError={(url) => {
                   if (url !== POST_COVER_PLACEHOLDER_IMAGE_URL) {
-                    setEffectiveCoverImageUrl(POST_COVER_PLACEHOLDER_IMAGE_URL);
+                    setCoverImageError(true);
                   }
                 }}
               >

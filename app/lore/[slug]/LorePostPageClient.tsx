@@ -33,6 +33,7 @@ export function LorePostPageClient({
 
   return (
     <PostView
+      key={post.filename}
       post={post}
       onClose={() => router.push('/lore')}
       backButtonLabel="Back to lore"

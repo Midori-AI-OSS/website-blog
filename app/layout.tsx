@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import FirstLoadOverlay from '../components/FirstLoadOverlay';
 import NavBar from '../components/NavBar';
 import RadioWidget from '../components/radio/RadioWidgetWrapper';
 
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NavBar />
           {children}
           <RadioWidget />
+          <FirstLoadOverlay />
         </ThemeRegistry>
       </body>
     </html>
