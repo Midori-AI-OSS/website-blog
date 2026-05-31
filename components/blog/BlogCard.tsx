@@ -1,5 +1,6 @@
 'use client';
 
+import { keyframes } from '@emotion/react';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Card from '@mui/joy/Card';
@@ -40,6 +41,11 @@ function toRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
+const cardShimmer = keyframes({
+  '0%': { backgroundPosition: '-1000px 0' },
+  '100%': { backgroundPosition: '1000px 0' },
+});
+
 export const BlogCard = React.memo(
   ({
     post,
@@ -60,6 +66,7 @@ export const BlogCard = React.memo(
     );
     const [decorativeImageUrl, setDecorativeImageUrl] = React.useState(resolvedDecorativeImageUrl);
     const [palette, setPalette] = React.useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
+    const [decorativeLoaded, setDecorativeLoaded] = React.useState(false);
 
     // Extract date from filename if not in metadata (YYYY-MM-DD format)
     const dateFromFilename = filename.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
@@ -67,6 +74,7 @@ export const BlogCard = React.memo(
 
     React.useEffect(() => {
       setDecorativeImageUrl(resolvedDecorativeImageUrl);
+      setDecorativeLoaded(false);
     }, [resolvedDecorativeImageUrl]);
 
     React.useEffect(() => {
@@ -76,6 +84,11 @@ export const BlogCard = React.memo(
 
       let active = true;
       const image = new Image();
+      image.onload = () => {
+        if (active) {
+          setDecorativeLoaded(true);
+        }
+      };
       image.onerror = () => {
         if (active) {
           setDecorativeImageUrl(POST_COVER_PLACEHOLDER_IMAGE_URL);
@@ -266,7 +279,22 @@ export const BlogCard = React.memo(
                   'linear-gradient(to right, rgba(19, 10, 30, 0.98) 0%, rgba(19, 10, 30, 0.65) 28%, rgba(19, 10, 30, 0) 72%)',
               },
             }}
-          />
+          >
+            {!decorativeLoaded && (
+              <Box
+                aria-hidden
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 1,
+                  background:
+                    'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0) 100%)',
+                  backgroundSize: '1000px 100%',
+                  animation: `${cardShimmer} 2s linear infinite`,
+                }}
+              />
+            )}
+          </Box>
         )}
         <CardContent
           sx={{

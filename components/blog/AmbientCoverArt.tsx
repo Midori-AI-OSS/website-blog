@@ -33,10 +33,12 @@ export function AmbientCoverArt({
 }: AmbientCoverArtProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
   const [imageDims, setImageDims] = useState({ width: 1200, height: 675 });
+  const [foregroundLoaded, setForegroundLoaded] = useState(false);
 
   useEffect(() => {
     setCoverIsLandscape(null);
-  }, []);
+    setForegroundLoaded(false);
+  }, [coverImageUrl]);
 
   return (
     <Card
@@ -127,6 +129,8 @@ export function AmbientCoverArt({
             objectFit: 'contain',
             filter: isScheduledPreview ? 'blur(18px) saturate(0.72) brightness(0.7)' : 'none',
             transform: isScheduledPreview ? 'scale(1.08)' : 'none',
+            opacity: foregroundLoaded ? 1 : 0,
+            transition: 'opacity 0.35s ease-in',
           }}
           onError={() => onImageError?.(coverImageUrl)}
           onLoad={(event) => {
@@ -137,6 +141,7 @@ export function AmbientCoverArt({
               setCoverIsLandscape(isLandscape);
               onAspectRatioChange?.(isLandscape);
             }
+            setForegroundLoaded(true);
           }}
         />
       </Box>

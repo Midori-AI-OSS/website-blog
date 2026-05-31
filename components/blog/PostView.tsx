@@ -136,6 +136,28 @@ function getPostDateString(post: ParsedPost): string | undefined {
 
 const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
 
+function LoreFadeImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={1200}
+      height={675}
+      loading="lazy"
+      sizes="60vw"
+      style={{
+        width: '100%',
+        height: 'auto',
+        objectFit: 'contain',
+        opacity: loaded ? 1 : 0,
+        transition: 'opacity 0.35s ease-in',
+      }}
+      onLoad={() => setLoaded(true)}
+    />
+  );
+}
+
 const markdownSanitizeSchema = {
   ...defaultSchema,
   attributes: {
@@ -281,15 +303,7 @@ const markdownComponents: Components = {
               mx: 'auto',
             }}
           >
-            <Image
-              src={src}
-              alt={typeof alt === 'string' ? alt : ''}
-              width={1200}
-              height={675}
-              loading="lazy"
-              sizes="60vw"
-              style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
-            />
+            <LoreFadeImage src={src} alt={typeof alt === 'string' ? alt : ''} />
           </Box>
         </Card>
       );
