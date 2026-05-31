@@ -34,9 +34,6 @@ export function AmbientCoverArt({
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
   const [imageDims, setImageDims] = useState<{ width: number; height: number } | null>(null);
   const [dimensionsReady, setDimensionsReady] = useState(false);
-  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
-  const foregroundLoaded = loadedUrl === coverImageUrl;
-
   useEffect(() => {
     let active = true;
     setDimensionsReady(false);
@@ -149,24 +146,12 @@ export function AmbientCoverArt({
               width: '100%',
               height: 'auto',
               objectFit: 'contain',
-              filter: foregroundLoaded
-                ? isScheduledPreview
-                  ? 'blur(18px) saturate(0.72) brightness(0.7)'
-                  : 'none'
-                : 'blur(8px)',
-              transform: foregroundLoaded
-                ? isScheduledPreview
-                  ? 'scale(1.08)'
-                  : 'scale(1)'
-                : 'scale(0.85)',
-              opacity: foregroundLoaded ? 1 : 0.3,
-              transition:
-                'transform 0.8s ease-out, filter 1.2s ease-out 0.6s, opacity 0.8s ease-out 0.6s',
+              filter: isScheduledPreview
+                ? 'blur(18px) saturate(0.72) brightness(0.7)'
+                : 'none',
+              transform: isScheduledPreview ? 'scale(1.08)' : 'scale(1)',
             }}
             onError={() => onImageError?.(coverImageUrl)}
-            onLoad={() => {
-              setLoadedUrl(coverImageUrl);
-            }}
           />
         </Box>
       )}
