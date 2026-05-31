@@ -2,7 +2,7 @@
 
 import { Box, Card } from '@mui/joy';
 import Image from 'next/image';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 
 export const AMBIENT_PULSE_KEYFRAMES = {
   '@keyframes ambient-pulse': {
@@ -33,12 +33,8 @@ export function AmbientCoverArt({
 }: AmbientCoverArtProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
   const [imageDims, setImageDims] = useState({ width: 1200, height: 675 });
-  const [foregroundLoaded, setForegroundLoaded] = useState(false);
-
-  useEffect(() => {
-    setCoverIsLandscape(null);
-    setForegroundLoaded(false);
-  }, [coverImageUrl]);
+  const loadedUrlRef = useRef<string | null>(null);
+  const foregroundLoaded = loadedUrlRef.current === coverImageUrl;
 
   return (
     <Card
@@ -114,6 +110,7 @@ export function AmbientCoverArt({
           width: coverIsLandscape === true ? { xs: '84%', sm: '60%' } : { xs: '72%', sm: '35%' },
           maxWidth: '100%',
           mx: 'auto',
+          aspectRatio: `${imageDims.width} / ${imageDims.height}`,
         }}
       >
         <Image
@@ -127,10 +124,14 @@ export function AmbientCoverArt({
             width: '100%',
             height: 'auto',
             objectFit: 'contain',
-            filter: isScheduledPreview ? 'blur(18px) saturate(0.72) brightness(0.7)' : 'none',
+            filter: foregroundLoaded
+              ? isScheduledPreview
+                ? 'blur(18px) saturate(0.72) brightness(0.7)'
+                : 'none'
+              : 'blur(20px)',
             transform: isScheduledPreview ? 'scale(1.08)' : 'none',
-            opacity: foregroundLoaded ? 1 : 0,
-            transition: 'opacity 0.35s ease-in',
+            opacity: foregroundLoaded ? 1 : 0.2,
+            transition: 'filter 1.2s ease-out, opacity 0.8s ease-out',
           }}
           onError={() => onImageError?.(coverImageUrl)}
           onLoad={(event) => {
@@ -141,7 +142,7 @@ export function AmbientCoverArt({
               setCoverIsLandscape(isLandscape);
               onAspectRatioChange?.(isLandscape);
             }
-            setForegroundLoaded(true);
+            loadedUrlRef.current = coverImageUrl;
           }}
         />
       </Box>
