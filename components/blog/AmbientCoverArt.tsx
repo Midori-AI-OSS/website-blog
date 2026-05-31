@@ -2,7 +2,7 @@
 
 import { Box, Card } from '@mui/joy';
 import Image from 'next/image';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 
 export const AMBIENT_PULSE_KEYFRAMES = {
   '@keyframes ambient-pulse': {
@@ -34,8 +34,8 @@ export function AmbientCoverArt({
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
   const [imageDims, setImageDims] = useState<{ width: number; height: number } | null>(null);
   const [dimensionsReady, setDimensionsReady] = useState(false);
-  const loadedUrlRef = useRef<string | null>(null);
-  const foregroundLoaded = loadedUrlRef.current === coverImageUrl;
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const foregroundLoaded = loadedUrl === coverImageUrl;
 
   useEffect(() => {
     let active = true;
@@ -160,7 +160,7 @@ export function AmbientCoverArt({
             }}
             onError={() => onImageError?.(coverImageUrl)}
             onLoad={() => {
-              loadedUrlRef.current = coverImageUrl;
+              setLoadedUrl(coverImageUrl);
             }}
           />
         </Box>

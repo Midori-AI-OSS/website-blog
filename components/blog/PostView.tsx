@@ -137,8 +137,8 @@ function getPostDateString(post: ParsedPost): string | undefined {
 const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
 
 function LoreFadeImage({ src, alt }: { src: string; alt: string }) {
-  const loadedUrlRef = useRef<string | null>(null);
-  const loaded = loadedUrlRef.current === src;
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const loaded = loadedUrl === src;
   return (
     <Image
       src={src}
@@ -156,7 +156,7 @@ function LoreFadeImage({ src, alt }: { src: string; alt: string }) {
         transition: 'filter 0.6s ease-out, opacity 0.4s ease-out',
       }}
       onLoad={() => {
-        loadedUrlRef.current = src;
+        setLoadedUrl(src);
       }}
     />
   );
