@@ -128,10 +128,10 @@ export function AmbientCoverArt({
               ? isScheduledPreview
                 ? 'blur(18px) saturate(0.72) brightness(0.7)'
                 : 'none'
-              : 'blur(20px)',
+              : 'blur(8px)',
             transform: isScheduledPreview ? 'scale(1.08)' : 'none',
-            opacity: foregroundLoaded ? 1 : 0.2,
-            transition: 'filter 1.2s ease-out, opacity 0.8s ease-out',
+            opacity: foregroundLoaded ? 1 : 0.3,
+            transition: 'filter 0.6s ease-out, opacity 0.4s ease-out',
           }}
           onError={() => onImageError?.(coverImageUrl)}
           onLoad={(event) => {

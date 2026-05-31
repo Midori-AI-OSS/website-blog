@@ -151,9 +151,9 @@ function LoreFadeImage({ src, alt }: { src: string; alt: string }) {
         width: '100%',
         height: 'auto',
         objectFit: 'contain',
-        filter: loaded ? 'none' : 'blur(20px)',
-        opacity: loaded ? 1 : 0.2,
-        transition: 'filter 1.2s ease-out, opacity 0.8s ease-out',
+        filter: loaded ? 'none' : 'blur(8px)',
+        opacity: loaded ? 1 : 0.3,
+        transition: 'filter 0.6s ease-out, opacity 0.4s ease-out',
       }}
       onLoad={() => {
         loadedUrlRef.current = src;
