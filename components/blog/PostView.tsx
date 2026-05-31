@@ -153,7 +153,7 @@ function LoreFadeImage({ src, alt }: { src: string; alt: string }) {
         objectFit: 'contain',
         filter: loaded ? 'none' : 'blur(8px)',
         opacity: loaded ? 1 : 0.3,
-        transition: 'filter 0.6s ease-out, opacity 0.4s ease-out',
+        transition: 'filter 1.2s ease-out 0.6s, opacity 0.8s ease-out 0.6s',
       }}
       onLoad={() => {
         setLoadedUrl(src);

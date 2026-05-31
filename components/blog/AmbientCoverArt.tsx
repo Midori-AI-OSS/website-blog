@@ -58,7 +58,7 @@ export function AmbientCoverArt({
     return () => {
       active = false;
     };
-  }, [coverImageUrl]);
+  }, [coverImageUrl, onAspectRatioChange, onImageError]);
 
   return (
     <Card
@@ -154,9 +154,14 @@ export function AmbientCoverArt({
                   ? 'blur(18px) saturate(0.72) brightness(0.7)'
                   : 'none'
                 : 'blur(8px)',
-              transform: isScheduledPreview ? 'scale(1.08)' : 'none',
+              transform: foregroundLoaded
+                ? isScheduledPreview
+                  ? 'scale(1.08)'
+                  : 'scale(1)'
+                : 'scale(0.85)',
               opacity: foregroundLoaded ? 1 : 0.3,
-              transition: 'filter 0.6s ease-out, opacity 0.4s ease-out',
+              transition:
+                'transform 0.8s ease-out, filter 1.2s ease-out 0.6s, opacity 0.8s ease-out 0.6s',
             }}
             onError={() => onImageError?.(coverImageUrl)}
             onLoad={() => {
