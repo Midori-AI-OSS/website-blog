@@ -114,6 +114,8 @@ export interface PostViewProps {
   disableDynamicBackdrop?: boolean;
   /** Species care cards loaded for any {{speciescard: lore/<slug>}} tokens in this post */
   speciesCareCards?: SpeciesCareCardEmbedMap;
+  /** Optional game cover image URL to use as the backdrop */
+  gameCoverImage?: string;
 }
 
 /**
@@ -198,101 +200,6 @@ function buildTooltipText(
   return `${prefix}: ${story.title} - ${snippet}`;
 }
 
-const markdownComponents: Components = {
-  img: (props) => {
-    const { node: _node, ...imgProps } = props;
-    const { src, alt, title } = imgProps;
-
-    if (title === LORE_IMAGE_TOKEN_TITLE && typeof src === 'string' && src.length > 0) {
-      return (
-        <Card
-          variant="plain"
-          sx={{
-            p: 0,
-            my: 4,
-            overflow: 'hidden',
-            borderRadius: 0,
-            border: 'none',
-            bgcolor: 'black',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            py: { xs: 3, sm: 4 },
-            '--Card-padding': '0px',
-            '&:hover, &:focus-within': {
-              bgcolor: 'black',
-              borderColor: 'transparent',
-              boxShadow: 'none',
-              outline: 'none',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 10,
-              boxShadow: 'inset 0 0 60px 30px #000',
-              pointerEvents: 'none',
-            }}
-          />
-
-          <Box
-            component="img"
-            src={src}
-            alt=""
-            loading="lazy"
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              filter: 'blur(20px) brightness(0.55)',
-              transform: 'scale(1.1)',
-              zIndex: 0,
-              opacity: 0.85,
-              my: 0,
-              border: 'none',
-              background: 'none',
-              animation: 'none',
-            }}
-          />
-
-          <Box
-            component="img"
-            src={src}
-            alt={typeof alt === 'string' ? alt : ''}
-            loading="lazy"
-            sx={{
-              position: 'relative',
-              zIndex: 1,
-              objectFit: 'contain',
-              width: '60%',
-              maxWidth: '100%',
-              height: 'auto',
-              display: 'block',
-              my: 0,
-              border: 'none',
-              background: 'none',
-              animation: 'none',
-            }}
-          />
-        </Card>
-      );
-    }
-
-    // biome-ignore lint/a11y/useAltText: alt set via imgProps spread
-    // biome-ignore lint/performance/noImgElement: markdown renderer, next/image not applicable here
-    return <img {...imgProps} />;
-  },
-};
-
 /**
  * PostView Component
  *
@@ -313,6 +220,7 @@ export function PostView({
   hideBackButton = false,
   disableDynamicBackdrop = false,
   speciesCareCards = {},
+  gameCoverImage,
 }: PostViewProps) {
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
@@ -372,6 +280,119 @@ export function PostView({
     [ttsPrimaryColor],
   );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
+
+  const markdownComponents = useMemo<Components>(
+    () => ({
+      img: (props) => {
+        const { node: _node, ...imgProps } = props;
+        const { src, alt, title } = imgProps;
+
+        if (title === LORE_IMAGE_TOKEN_TITLE && typeof src === 'string' && src.length > 0) {
+          const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+            const img = e.currentTarget;
+            const depth = Number(img.getAttribute('data-fallback-depth') ?? 0);
+
+            if (depth === 0 && gameCoverImage) {
+              img.setAttribute('data-fallback-depth', '1');
+              img.src = gameCoverImage;
+            } else if (depth <= 1) {
+              img.setAttribute('data-fallback-depth', '2');
+              img.src = POST_COVER_PLACEHOLDER_IMAGE_URL;
+            }
+          };
+
+          return (
+            <Card
+              variant="plain"
+              sx={{
+                p: 0,
+                my: 4,
+                overflow: 'hidden',
+                borderRadius: 0,
+                border: 'none',
+                bgcolor: 'black',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: { xs: 3, sm: 4 },
+                '--Card-padding': '0px',
+                '&:hover, &:focus-within': {
+                  bgcolor: 'black',
+                  borderColor: 'transparent',
+                  boxShadow: 'none',
+                  outline: 'none',
+                },
+              }}
+            >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 10,
+                  boxShadow: 'inset 0 0 60px 30px #000',
+                  pointerEvents: 'none',
+                }}
+              />
+
+              <Box
+                component="img"
+                src={src}
+                alt=""
+                loading="lazy"
+                onError={handleImageError}
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: 'blur(20px) brightness(0.55)',
+                  transform: 'scale(1.1)',
+                  zIndex: 0,
+                  opacity: 0.85,
+                  my: 0,
+                  border: 'none',
+                  background: 'none',
+                  animation: 'none',
+                }}
+              />
+
+              <Box
+                component="img"
+                src={src}
+                alt={typeof alt === 'string' ? alt : ''}
+                loading="lazy"
+                onError={handleImageError}
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  objectFit: 'contain',
+                  width: '60%',
+                  maxWidth: '100%',
+                  height: 'auto',
+                  display: 'block',
+                  my: 0,
+                  border: 'none',
+                  background: 'none',
+                  animation: 'none',
+                }}
+              />
+            </Card>
+          );
+        }
+
+        // biome-ignore lint/a11y/useAltText: alt set via imgProps spread
+        // biome-ignore lint/performance/noImgElement: markdown renderer, next/image not applicable here
+        return <img {...imgProps} />;
+      },
+    }),
+    [gameCoverImage],
+  );
 
   useEffect(() => {
     setEffectiveCoverImageUrl(transformedCoverImageUrl);
