@@ -17,7 +17,6 @@
 import { keyframes } from '@emotion/react';
 import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Tag, User } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
@@ -117,8 +116,6 @@ export interface PostViewProps {
   speciesCareCards?: SpeciesCareCardEmbedMap;
   /** Optional game cover image URL to use as the backdrop */
   gameCoverImage?: string;
-  /** Show debug links under species care card embeds (test pages only) */
-  showSpeciesDebugLinks?: boolean;
 }
 
 /**
@@ -224,7 +221,6 @@ export function PostView({
   disableDynamicBackdrop = false,
   speciesCareCards = {},
   gameCoverImage,
-  showSpeciesDebugLinks = false,
 }: PostViewProps) {
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
@@ -1080,58 +1076,21 @@ export function PostView({
                           />
                         ),
                     )}
-                    {showSpeciesDebugLinks && (
-                      <Box sx={{ gridColumn: '1 / -1', display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {chunk.cardParts.map((part) => {
-                          const webPath =
-                            part.token &&
-                            speciesCareCards[part.token.key]?.record?.summary.webScanPath;
-                          if (!webPath) return null;
-                          return (
-                            <Typography key={part.id} sx={{ fontSize: '0.75rem' }}>
-                              <Link
-                                href={webPath}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: '#2563eb' }}
-                              >
-                                View full record
-                              </Link>
-                            </Typography>
-                          );
-                        })}
-                      </Box>
-                    )}
                   </Box>
                 );
               }
 
               if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length === 1) {
                 const part = chunk.cardParts.at(0);
-                const webPath =
-                  part?.token && speciesCareCards[part.token.key]?.record?.summary.webScanPath;
 
                 return (
                   part?.token && (
-                    <Box key={part.id}>
-                      <SpeciesCareCardEmbed
-                        data={speciesCareCards[part.token.key]}
-                        tokenKey={part.token.key}
-                        coverImageUrl={effectiveCoverImageUrl}
-                      />
-                      {showSpeciesDebugLinks && webPath && (
-                        <Typography sx={{ mt: 1, fontSize: '0.75rem' }}>
-                          <Link
-                            href={webPath}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: '#2563eb' }}
-                          >
-                            View full record
-                          </Link>
-                        </Typography>
-                      )}
-                    </Box>
+                    <SpeciesCareCardEmbed
+                      key={part.id}
+                      data={speciesCareCards[part.token.key]}
+                      tokenKey={part.token.key}
+                      coverImageUrl={effectiveCoverImageUrl}
+                    />
                   )
                 );
               }

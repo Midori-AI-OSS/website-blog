@@ -64,7 +64,7 @@ function PortalLabel({ children }: { children: React.ReactNode }) {
       sx={{
         color: '#52647a',
         fontSize: '0.72rem',
-        fontWeight: 950,
+        fontWeight: 900,
         letterSpacing: '0.1em',
         lineHeight: 1.25,
         textTransform: 'uppercase',
@@ -91,7 +91,7 @@ function InfoTile({ label, value }: { label: string; value?: string }) {
           mt: 0.4,
           color: '#172033',
           fontSize: '0.95rem',
-          fontWeight: 760,
+          fontWeight: 700,
           lineHeight: 1.45,
           overflowWrap: 'break-word',
           wordBreak: 'break-word',
@@ -110,7 +110,7 @@ function FieldBlock({ field }: { field: SpeciesCareField }) {
         sx={{
           color: '#52647a',
           fontSize: '0.72rem',
-          fontWeight: 950,
+          fontWeight: 900,
           letterSpacing: '0.1em',
           lineHeight: 1.25,
           textTransform: 'uppercase',
@@ -136,7 +136,7 @@ function ScanSectionCard({ section }: { section: SpeciesCareScanSection }) {
     >
       <Typography
         component="h2"
-        sx={{ color: '#0f172a', fontSize: '1rem', fontWeight: 950, lineHeight: 1.25 }}
+        sx={{ color: '#0f172a', fontSize: '1rem', fontWeight: 900, lineHeight: 1.25 }}
       >
         {section.title}
       </Typography>
@@ -360,7 +360,7 @@ export function SpeciesCareScanView({
                     mt: 0.35,
                     color: '#0f172a',
                     fontSize: { xs: '1.28rem', sm: '1.45rem', lg: '1.55rem' },
-                    fontWeight: 950,
+                    fontWeight: 900,
                     lineHeight: 1.08,
                   }}
                 >
@@ -372,7 +372,7 @@ export function SpeciesCareScanView({
                       mt: 0.35,
                       color: '#64748b',
                       fontSize: '0.78rem',
-                      fontWeight: 750,
+                      fontWeight: 700,
                       lineHeight: 1.25,
                       overflowWrap: 'anywhere',
                     }}
@@ -499,23 +499,23 @@ export function SpeciesCareScanView({
                   bgcolor: '#dbeafe',
                   color: '#1e3a8a',
                   fontSize: '1.55rem',
-                  fontWeight: 950,
+                  fontWeight: 900,
                 }}
               >
                 {summary.initials}
               </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography
-                  sx={{ color: '#0f172a', fontSize: '1.22rem', fontWeight: 950, lineHeight: 1.1 }}
+                  sx={{ color: '#0f172a', fontSize: '1.22rem', fontWeight: 900, lineHeight: 1.1 }}
                 >
                   {patientFirstName}
                 </Typography>
                 <Typography
-                  sx={{ mt: 0.15, color: '#334155', fontSize: '0.95rem', fontWeight: 820 }}
+                  sx={{ mt: 0.15, color: '#334155', fontSize: '0.95rem', fontWeight: 800 }}
                 >
                   {summary.preferredName}
                 </Typography>
-                <Typography sx={{ color: '#64748b', fontSize: '0.92rem', fontWeight: 750 }}>
+                <Typography sx={{ color: '#64748b', fontSize: '0.92rem', fontWeight: 700 }}>
                   {summary.pronouns ?? summary.profileVersion}
                 </Typography>
               </Box>
@@ -537,7 +537,7 @@ export function SpeciesCareScanView({
                     sx={{
                       color: '#991b1b',
                       fontSize: '0.75rem',
-                      fontWeight: 950,
+                      fontWeight: 900,
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                     }}
@@ -550,7 +550,7 @@ export function SpeciesCareScanView({
                     mt: 0.65,
                     color: '#0f172a',
                     fontSize: '0.96rem',
-                    fontWeight: 850,
+                    fontWeight: 800,
                     lineHeight: 1.38,
                   }}
                 >
@@ -594,7 +594,7 @@ export function SpeciesCareScanView({
                             sx={{
                               color: '#0f172a',
                               fontSize: '1rem',
-                              fontWeight: 950,
+                              fontWeight: 900,
                               lineHeight: 1.25,
                             }}
                           >
@@ -602,7 +602,7 @@ export function SpeciesCareScanView({
                           </Typography>
                         </Stack>
                         <Typography
-                          sx={{ mt: 0.3, color: '#64748b', fontSize: '0.88rem', fontWeight: 750 }}
+                          sx={{ mt: 0.3, color: '#64748b', fontSize: '0.88rem', fontWeight: 700 }}
                         >
                           {linkedProfile.record.designation} / {linkedProfile.record.profileVersion}
                         </Typography>

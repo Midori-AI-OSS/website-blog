@@ -15,7 +15,6 @@ interface LorePostPageClientProps {
   scheduledPublishDate?: string;
   speciesCareCards?: SpeciesCareCardEmbedMap;
   gameCoverImage?: string;
-  showSpeciesDebugLinks?: boolean;
 }
 
 export function LorePostPageClient({
@@ -26,7 +25,6 @@ export function LorePostPageClient({
   scheduledPublishDate,
   speciesCareCards = {},
   gameCoverImage,
-  showSpeciesDebugLinks,
 }: LorePostPageClientProps) {
   const router = useRouter();
 
@@ -60,7 +58,6 @@ export function LorePostPageClient({
       scheduledPublishDate={scheduledPublishDate}
       speciesCareCards={speciesCareCards}
       gameCoverImage={gameCoverImage}
-      showSpeciesDebugLinks={showSpeciesDebugLinks}
     />
   );
 }

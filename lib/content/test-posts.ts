@@ -134,6 +134,13 @@ LORE TEST SIGNAL :: TOKEN SYSTEMS ACTIVE
 
 {{speciescard: /lore/luna-midori}} {{speciescard: /lore/leo-midori}}
 
+## Debug Links
+
+- [W.E.A.V.E.](/species-care/species-card/ar/de/duisburg/sylvomech/luna/weave/sylv-logic-prov?version=prov-v0.17)
+- [Echo](/species-care/species-card/ar/farmington/poindexter/echo/1003/hum-mg-tch/echo-prov?version=prov-v0.16)
+- [Luna](/species-care/species-card/ar/sapporo/midori/luna/0121/aas-tch-luminumbra-prov?version=prov-v0.17)
+- [Leo](/species-care/species-card/ar/sapporo/midori/leo/0121/aas-tch-luminumbra-prov?version=prov-v0.17)
+
 ## Thinking Styles
 
 The line can hold <thinking>inline private-style thought</thinking> inside prose.
