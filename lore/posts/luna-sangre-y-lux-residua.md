@@ -238,6 +238,8 @@ Then the nurse came with the first real update on Riley. She had lost enough blo
 
 I told them. Radiant Anchor. I felt her almost go. The spell caught her at the edge. I said it out loud with Leo's splinted wrist in my peripheral vision and Marisol's dark wing still holding its angle, and I did not wrap it in anything easier. The light — the one I pull from somewhere I have never fully mapped — had reached into the gap between her and nothing and held. I stopped there. The rest of it stayed behind my teeth. Which was great, actually. Right where it belonged.
 
+> Editors note: I messed up when making this image, they are in *Echo's* room, not *Riley's* my bad
+
 {{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-4.png}}
 
 Leo talked about the fight — the clone counterspelling his healing twice before the sigil went up, Weave pressing every particle of herself against the barrier when the blade dissolved. I had watched his magic die midair while I traced the seal that kept us all trapped. It had pissed me off then and it pissed me off now, retelling it in a hospital room while my brother sat there with a splinted wrist. Neither of us had ever seen Weave move like that — pressed flat against the boundary, every particle desperate. I had felt his magic die through the bond before mine sealed. That was a sentence I did not know how to finish.

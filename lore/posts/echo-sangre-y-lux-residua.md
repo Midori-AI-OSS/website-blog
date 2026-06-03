@@ -255,7 +255,7 @@ I reach for her hand.
 
 Slow at first. Then not slow enough. The last inch collapses on me and I have her fingers between both of mine before I can make myself be careful about wanting it.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/echo/echo-sangre-y-lux-residua-3.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/echo/echo-sangre-y-lux-residua-2.png}}
 
 She does not squeeze back.
 
@@ -327,7 +327,7 @@ That almost breaks something.
 
 I bend forward over Riley's hand. Not enough to pull the line. Not enough to set off the nurse. But enough that my forehead nearly touches our joined fingers. My shoulders shake once. Then lock down hard.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/echo/echo-sangre-y-lux-residua-4.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/echo/echo-sangre-y-lux-residua-3.png}}
 
 Riley still does not move.
 
@@ -467,7 +467,7 @@ I shut my eyes for one second. Open them again. Put my hand back where it was on
 
 The room is different in daylight. Someone gave me a different blanket — gray and thicker than the one from the car. There is a pillow behind my neck. It does not make the position comfortable. It just makes it survivable. My wheelchair is still pulled tight against the bed. I do not remember falling asleep. I do not remember anyone tucking the blanket over my knees. But it is there.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/echo/echo-sangre-y-lux-residua-2.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/echo/echo-sangre-y-lux-residua-4.png}}
 
 Luna is in the chair on Riley's other side. Chin tipped down. Bad shoulder held stiff even in sleep. The green in her hair looks flatter in the daylight. More exhausted. One hand is on the mattress near Riley's sleeve like she went under by accident and not very far.
 
