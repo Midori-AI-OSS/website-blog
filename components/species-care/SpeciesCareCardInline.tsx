@@ -559,7 +559,7 @@ export function SpeciesCareCardInline({
 
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
-        const rect = rectRef.current!;
+        const rect = rectRef.current!; // rectRef is guaranteed to have a value here due to check on line 558
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
         const rotateX = (y - 0.5) * MAX_TILT * 2;
@@ -567,10 +567,10 @@ export function SpeciesCareCardInline({
         const glareX = `${x * 100}%`;
         const glareY = `${y * 100}%`;
 
-        tiltRef.current!.style.setProperty('--rotate-x', `${rotateX}deg`);
-        tiltRef.current!.style.setProperty('--rotate-y', `${rotateY}deg`);
-        tiltRef.current!.style.setProperty('--glare-x', glareX);
-        tiltRef.current!.style.setProperty('--glare-y', glareY);
+        tiltRef.current?.style.setProperty('--rotate-x', `${rotateX}deg`);
+        tiltRef.current?.style.setProperty('--rotate-y', `${rotateY}deg`);
+        tiltRef.current?.style.setProperty('--glare-x', glareX);
+        tiltRef.current?.style.setProperty('--glare-y', glareY);
       });
     },
     [tiltEnabled, flipped],

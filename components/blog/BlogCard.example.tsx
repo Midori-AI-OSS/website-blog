@@ -49,12 +49,15 @@ const examplePosts: ParsedPost[] = [
  */
 const getExamplePost = (index: number): ParsedPost => {
   const post = examplePosts[index];
-  return post ?? ({
-    filename: '',
-    metadata: {},
-    content: '',
-    rawMarkdown: '',
-  } as ParsedPost);
+  return (
+    post ??
+    ({
+      filename: '',
+      metadata: {},
+      content: '',
+      rawMarkdown: '',
+    } as ParsedPost)
+  );
 };
 
 /**
