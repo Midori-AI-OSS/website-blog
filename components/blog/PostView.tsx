@@ -1056,10 +1056,7 @@ export function PostView({
                       gridTemplateColumns: {
                         xs: '1fr',
                         sm: 'repeat(2, 1fr)',
-                        md:
-                          chunk.cardParts.length >= 3
-                            ? 'repeat(3, 1fr)'
-                            : 'repeat(6, 1fr)',
+                        md: chunk.cardParts.length >= 3 ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)',
                       },
                       gap: { xs: 1.5, sm: 2 },
                       ...(chunk.cardParts.length === 2 && {

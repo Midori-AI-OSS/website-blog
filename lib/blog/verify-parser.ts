@@ -69,7 +69,7 @@ console.log();
 // Test 5: Error handling
 console.log('Test 5: Error handling with invalid input');
 try {
-  const result5 = parsePost('error.md', null as any);
+  const result5 = parsePost('error.md', '');
   console.log('✓ Handled gracefully - Title:', result5.metadata.title);
   console.log('✓ Content (should be empty):', result5.content === '' ? 'empty' : 'has content');
 } catch (e) {

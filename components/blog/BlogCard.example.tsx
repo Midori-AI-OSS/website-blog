@@ -59,23 +59,23 @@ export function BlogCardExample() {
 
       {/* Example 1: Card with href (recommended for proper linking) */}
       <BlogCard
-        post={examplePosts[0]!}
+        post={examplePosts?.[0]}
         href="/blog/2026-01-17"
-        onClick={() => handlePostClick(examplePosts[0]!)}
+        onClick={() => handlePostClick(examplePosts?.[0])}
       />
 
       {/* Example 2: Card with variant and href */}
       <BlogCard
-        post={examplePosts[1]!}
+        post={examplePosts?.[1]}
         href="/blog/2026-01-15"
-        onClick={() => handlePostClick(examplePosts[1]!)}
+        onClick={() => handlePostClick(examplePosts?.[1])}
         variant="outlined"
       />
 
       {/* Example 3: Card with onClick only (legacy mode) */}
       <BlogCard
-        post={examplePosts[2]!}
-        onClick={() => handlePostClick(examplePosts[2]!)}
+        post={examplePosts?.[2]}
+        onClick={() => handlePostClick(examplePosts?.[2])}
         color="primary"
         variant="soft"
       />
