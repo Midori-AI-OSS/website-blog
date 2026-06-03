@@ -318,7 +318,7 @@ function FrontCard({
             maxWidth: { xs: '90px', sm: '130px' },
             maxHeight: { xs: '70px', sm: '100px' },
             objectFit: 'contain',
-            opacity: 0.36,
+            opacity: 0.6,
             mixBlendMode: 'multiply',
             borderRadius: { xs: '10px', sm: '14px' },
           }}
@@ -460,7 +460,7 @@ function BackCard({
             maxWidth: { xs: '90px', sm: '130px' },
             maxHeight: { xs: '70px', sm: '100px' },
             objectFit: 'contain',
-            opacity: 0.36,
+            opacity: 0.6,
             mixBlendMode: 'multiply',
             borderRadius: { xs: '10px', sm: '14px' },
           }}
