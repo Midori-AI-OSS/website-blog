@@ -35,5 +35,5 @@
 - The `.agents/` directory and all of its subdirectories are permanent infrastructure. Do not delete, move, or restructure them.
 - `.gitkeep` files in `.agents/` subdirectories must be preserved so empty directories remain tracked in git.
 - **No per-task working files belong under `.agents/`.** All task files, audit reports, temp screenshots, and scratch notes must be created under `/tmp/agents-artifacts/`.
-- If a prior agent left stray files inside `.agents/`, move them to `/tmp/agents-artifacts/` — never delete the directory, its `.gitkeep`, or its `AGENTS.md`.
+- If a prior agent left stray files inside `.agents/`, move them to `/tmp/agents-artifacts/` — never delete the directory, its `.gitkeep`, its `AGENTS.md`, or `setup-agents.sh`.
 - When in doubt about whether something is infrastructure vs a working file, **keep it** rather than delete it.
