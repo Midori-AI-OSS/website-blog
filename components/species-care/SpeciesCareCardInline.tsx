@@ -314,11 +314,11 @@ function FrontCard({
           sx={{
             position: 'absolute',
             right: { xs: 12, sm: 18 },
-            bottom: { xs: 2, sm: 4 },
+            bottom: 0,
             maxWidth: { xs: '90px', sm: '130px' },
             maxHeight: { xs: '70px', sm: '100px' },
             objectFit: 'contain',
-            opacity: 0.18,
+            opacity: 0.26,
             mixBlendMode: 'multiply',
             borderRadius: { xs: '10px', sm: '14px' },
           }}
@@ -456,11 +456,11 @@ function BackCard({
           sx={{
             position: 'absolute',
             right: { xs: 12, sm: 18 },
-            bottom: { xs: 2, sm: 4 },
+            bottom: 0,
             maxWidth: { xs: '90px', sm: '130px' },
             maxHeight: { xs: '70px', sm: '100px' },
             objectFit: 'contain',
-            opacity: 0.18,
+            opacity: 0.26,
             mixBlendMode: 'multiply',
             borderRadius: { xs: '10px', sm: '14px' },
           }}
