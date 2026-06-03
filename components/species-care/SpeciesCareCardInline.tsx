@@ -487,7 +487,7 @@ export function SpeciesCareCardInline({ record, photoUrl }: SpeciesCareCardInlin
       }}
     >
       <Box
-        sx={{ mx: 'auto', width: '100%', maxWidth: { sm: 360, md: 520 }, perspective: '1400px' }}
+        sx={{ mx: 'auto', width: '100%', maxWidth: { sm: 360, md: 580 }, perspective: '1400px' }}
       >
         <Box
           onClick={() => setFlipped((value) => !value)}
