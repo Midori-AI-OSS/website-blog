@@ -25,7 +25,14 @@ export function SpeciesCareCardEmbed({
     const backgroundPhotoUrl = data.record.slug
       ? `/api/lore-images/species-photos/backgrounds/${data.record.slug}-signing.png`
       : undefined;
-    return <SpeciesCareCardInline record={data.record} photoUrl={photoUrl} backgroundPhotoUrl={backgroundPhotoUrl} plain={plain} />;
+    return (
+      <SpeciesCareCardInline
+        record={data.record}
+        photoUrl={photoUrl}
+        backgroundPhotoUrl={backgroundPhotoUrl}
+        plain={plain}
+      />
+    );
   }
 
   const backgroundImage = coverImageUrl

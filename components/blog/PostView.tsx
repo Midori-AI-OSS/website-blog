@@ -1056,10 +1056,7 @@ export function PostView({
                       gridTemplateColumns: {
                         xs: '1fr',
                         sm: 'repeat(2, 1fr)',
-                        md:
-                          chunk.cardParts.length >= 3
-                            ? 'repeat(3, 1fr)'
-                            : 'repeat(6, 1fr)',
+                        md: chunk.cardParts.length >= 3 ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)',
                       },
                       gap: { xs: 1.5, sm: 2 },
                       ...(chunk.cardParts.length === 2 && {
@@ -1086,16 +1083,14 @@ export function PostView({
 
               if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length === 1) {
                 const part = chunk.cardParts[0]!;
-                return (
-                  part.token && (
-                    <SpeciesCareCardEmbed
-                      key={part.id}
-                      data={speciesCareCards[part.token.key]}
-                      tokenKey={part.token.key}
-                      coverImageUrl={effectiveCoverImageUrl}
-                    />
-                  )
-                );
+                return part.token?.key ? (
+                  <SpeciesCareCardEmbed
+                    key={part.id}
+                    data={speciesCareCards[part.token.key]}
+                    tokenKey={part.token.key}
+                    coverImageUrl={effectiveCoverImageUrl}
+                  />
+                ) : null;
               }
 
               if (chunk.type === 'markdown' && chunk.markdownPart) {

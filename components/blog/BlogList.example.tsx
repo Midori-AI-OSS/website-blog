@@ -169,12 +169,20 @@ export function CustomPageSizeExample() {
 // This would go in pages/api/posts.ts or app/api/posts/route.ts
 
 /**
- * Example API route for client-side pagination
+ * Example API route for client-side pagination - commented out to avoid type conflicts
  * GET /api/posts?page=0&pageSize=10
  */
-export async function exampleApiHandler(req: any, res: any) {
-  const page = parseInt(req.query.page || '0', 10);
-  const pageSize = parseInt(req.query.pageSize || '10', 10);
+/* export async function exampleApiHandler(req: { query?: Record<string, string | string[]> }, res: typeof Response) {
+  const parseSafe = (str: unknown): number => {
+    try {
+      return parseInt(String(str ?? ''), 10);
+    } catch {
+      return 0;
+    }
+  };
+
+  const page = parseSafe(req?.query?.page);
+  const pageSize = parseSafe(req?.query?.pageSize ?? '10');
 
   // Fetch posts from database, CMS, or file system
   const allPosts: ParsedPost[] = []; // Your posts here
@@ -190,4 +198,4 @@ export async function exampleApiHandler(req: any, res: any) {
     page,
     pageSize,
   });
-}
+} */

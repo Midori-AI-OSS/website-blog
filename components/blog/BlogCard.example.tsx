@@ -45,6 +45,19 @@ const examplePosts: ParsedPost[] = [
 ];
 
 /**
+ * Get example post from array with default handling
+ */
+const getExamplePost = (index: number): ParsedPost => {
+  const post = examplePosts[index];
+  return post ?? ({
+    filename: '',
+    metadata: {},
+    content: '',
+    rawMarkdown: '',
+  } as ParsedPost);
+};
+
+/**
  * Example component showing BlogCard usage
  */
 export function BlogCardExample() {
@@ -59,23 +72,23 @@ export function BlogCardExample() {
 
       {/* Example 1: Card with href (recommended for proper linking) */}
       <BlogCard
-        post={examplePosts[0]!}
+        post={getExamplePost(0)}
         href="/blog/2026-01-17"
-        onClick={() => handlePostClick(examplePosts[0]!)}
+        onClick={() => handlePostClick(getExamplePost(0))}
       />
 
       {/* Example 2: Card with variant and href */}
       <BlogCard
-        post={examplePosts[1]!}
+        post={getExamplePost(1)}
         href="/blog/2026-01-15"
-        onClick={() => handlePostClick(examplePosts[1]!)}
+        onClick={() => handlePostClick(getExamplePost(1))}
         variant="outlined"
       />
 
       {/* Example 3: Card with onClick only (legacy mode) */}
       <BlogCard
-        post={examplePosts[2]!}
-        onClick={() => handlePostClick(examplePosts[2]!)}
+        post={getExamplePost(2)}
+        onClick={() => handlePostClick(getExamplePost(2))}
         color="primary"
         variant="soft"
       />

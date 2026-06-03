@@ -53,8 +53,13 @@ function isOnlyContentInParent(
     if (i >= openingIndex && i <= closingIndex) continue;
     const child = parent.children[i] as Content | undefined;
     if (!child) continue;
-    if (child.type === 'text' && (child as any).value?.trim() !== '') return false;
-    if (child.type !== 'text') return false;
+    if (child.type === 'text') {
+      // @ts-ignore - text node may have value property in practice
+      const value = child.value;
+      if (value?.trim() !== '') return false;
+    } else {
+      return false;
+    }
   }
   return true;
 }

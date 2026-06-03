@@ -525,7 +525,12 @@ function BackCard({
   );
 }
 
-export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, plain }: SpeciesCareCardInlineProps) {
+export function SpeciesCareCardInline({
+  record,
+  photoUrl,
+  backgroundPhotoUrl,
+  plain,
+}: SpeciesCareCardInlineProps) {
   const [flipped, setFlipped] = useState(false);
   const [tiltEnabled, setTiltEnabled] = useState(false);
   const interactiveRef = useRef<HTMLButtonElement>(null);
@@ -548,7 +553,8 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (!tiltRef.current || !tiltEnabled || flipped) return;
-      if (!rectRef.current) rectRef.current = interactiveRef.current?.getBoundingClientRect() ?? null;
+      if (!rectRef.current)
+        rectRef.current = interactiveRef.current?.getBoundingClientRect() ?? null;
       if (!rectRef.current) return;
 
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -698,7 +704,12 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
                 transform="rotateY(0deg) translateZ(0)"
                 visible={!flipped}
               />
-              <BackCard record={record} backgroundPhotoUrl={backgroundPhotoUrl} transform="rotateY(180deg) translateZ(0)" visible={flipped} />
+              <BackCard
+                record={record}
+                backgroundPhotoUrl={backgroundPhotoUrl}
+                transform="rotateY(180deg) translateZ(0)"
+                visible={flipped}
+              />
             </Box>
           </Box>
         </Box>
