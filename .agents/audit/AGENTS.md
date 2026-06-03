@@ -8,5 +8,5 @@ This directory is reserved for repository-level audit metadata only.
 
 #
 # ⚠️ Reminder: The `.agents/` directory and all subdirectories are permanent infrastructure.
-# Do not delete, move, or restructure them. Per-task files may be removed, but directories
-# and `.gitkeep` files inside them must be preserved.
+# Do not delete, move, or restructure them. No per-task files belong here — use
+# /tmp/agents-artifacts/ instead. Directories and .gitkeep files must be preserved.
