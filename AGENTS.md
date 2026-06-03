@@ -30,3 +30,8 @@
 - When adding or changing any user-facing blog/lore content behavior, update the relevant test page in the same change.
 - Blog test fixtures must not use lore-only `{{...}}` token systems.
 - Test pages must stay unlinked from normal navigation and content lists, and must cover representative edge cases for the affected system.
+
+## Agent Directory Integrity
+- The `.agents/` directory and all of its subdirectories are permanent infrastructure. Do not delete, move, or restructure them.
+- `.gitkeep` files in `.agents/` subdirectories must be preserved so empty directories remain tracked in git.
+- Per-task working files (logs, notes, temp artifacts) may be cleaned up to `/tmp/agents-artifacts/`, but the directory structure itself is protected.
