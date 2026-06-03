@@ -144,7 +144,7 @@ If I was still feeling it this openly, they knew it was bad. Nobody had to stop 
 
 {{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-2.png}}
 
-{{speciescard: lore/leo-midori}}
+{{speciescard: lore/leo-midori}} {{speciescard: lore/luna-midori}}
 
 A second nurse caught Luna long enough for quick vitals and one brief look at the shoulder she was still favoring.
 

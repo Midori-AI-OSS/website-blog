@@ -160,7 +160,7 @@ Good. One less fight.
 
 {{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-2.png}}
 
-{{speciescard: lore/luna-midori}}
+{{speciescard: lore/luna-midori}} {{speciescard: lore/leo-midori}}
 
 A second nurse caught me long enough for quick vitals and one brief look at the shoulder I was still favoring.
 
