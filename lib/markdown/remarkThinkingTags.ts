@@ -53,7 +53,7 @@ function isOnlyContentInParent(
     if (i >= openingIndex && i <= closingIndex) continue;
     const child = parent.children[i] as Content | undefined;
     if (!child) continue;
-    if (child.type === 'text' && (child as any).value?.trim() !== '') return false;
+    if (child.type === 'text' && child.value?.trim() !== '') return false;
     if (child.type !== 'text') return false;
   }
   return true;

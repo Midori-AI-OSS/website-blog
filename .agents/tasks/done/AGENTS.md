@@ -1,6 +1,7 @@
 # .agents/tasks/done
 
-Completed work items are reviewed here.
+Legacy placeholder. Not used for active task work.
 
-- Store completed tasks as `.md` or `.txt` files directly in this directory.
-- Keep this directory flat (no subfolders).
+- Do not create, move, or delete files here.
+- Only `AGENTS.md` and `.gitkeep` belong in this directory.
+- Use `/tmp/agents-artifacts/tasks/` for task working files.

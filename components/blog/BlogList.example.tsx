@@ -172,7 +172,10 @@ export function CustomPageSizeExample() {
  * Example API route for client-side pagination
  * GET /api/posts?page=0&pageSize=10
  */
-export async function exampleApiHandler(req: any, res: any) {
+export async function exampleApiHandler(
+  req: { query: { page?: string; pageSize?: string } },
+  res: { status: (s: number) => { json: (data: object) => void } },
+) {
   const page = parseInt(req.query.page || '0', 10);
   const pageSize = parseInt(req.query.pageSize || '10', 10);
 

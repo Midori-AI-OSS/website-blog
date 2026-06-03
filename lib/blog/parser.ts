@@ -67,7 +67,7 @@ function extractTitleFromFilename(filename: string): string {
  * @param data - Raw metadata object from front matter
  * @returns true if metadata is valid
  */
-function validateMetadata(data: any): boolean {
+function validateMetadata(data: Record<string, unknown>): boolean {
   // Tags must be an array if present
   if (data.tags !== undefined && !Array.isArray(data.tags)) {
     console.warn('Invalid tags format: expected array');
@@ -150,7 +150,7 @@ function parseFrontMatter(fileContent: string) {
  * @param data - Raw metadata object
  * @returns Sanitized metadata
  */
-function sanitizeMetadata(data: any): Partial<PostMetadata> {
+function sanitizeMetadata(data: Record<string, unknown>): Partial<PostMetadata> {
   const sanitized: Partial<PostMetadata> = {};
 
   if (typeof data.title === 'string') {

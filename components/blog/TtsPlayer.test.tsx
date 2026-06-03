@@ -256,7 +256,8 @@ function getAllElements(rootElement: Element) {
   const stack: Element[] = [rootElement];
 
   while (stack.length > 0) {
-    const current = stack.pop()!;
+    const current = stack.pop();
+    if (!current) break;
     const children = Array.from(current.children);
 
     for (const child of children) {

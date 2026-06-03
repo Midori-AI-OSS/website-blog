@@ -525,7 +525,12 @@ function BackCard({
   );
 }
 
-export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, plain }: SpeciesCareCardInlineProps) {
+export function SpeciesCareCardInline({
+  record,
+  photoUrl,
+  backgroundPhotoUrl,
+  plain,
+}: SpeciesCareCardInlineProps) {
   const [flipped, setFlipped] = useState(false);
   const [tiltEnabled, setTiltEnabled] = useState(false);
   const interactiveRef = useRef<HTMLButtonElement>(null);
@@ -548,12 +553,14 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (!tiltRef.current || !tiltEnabled || flipped) return;
-      if (!rectRef.current) rectRef.current = interactiveRef.current?.getBoundingClientRect() ?? null;
+      if (!rectRef.current)
+        rectRef.current = interactiveRef.current?.getBoundingClientRect() ?? null;
       if (!rectRef.current) return;
 
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
-        const rect = rectRef.current!;
+        if (!rectRef.current) return;
+        const rect: DOMRect = rectRef.current;
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
         const rotateX = (y - 0.5) * MAX_TILT * 2;
@@ -561,10 +568,10 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
         const glareX = `${x * 100}%`;
         const glareY = `${y * 100}%`;
 
-        tiltRef.current!.style.setProperty('--rotate-x', `${rotateX}deg`);
-        tiltRef.current!.style.setProperty('--rotate-y', `${rotateY}deg`);
-        tiltRef.current!.style.setProperty('--glare-x', glareX);
-        tiltRef.current!.style.setProperty('--glare-y', glareY);
+        tiltRef.current?.style.setProperty('--rotate-x', `${rotateX}deg`);
+        tiltRef.current?.style.setProperty('--rotate-y', `${rotateY}deg`);
+        tiltRef.current?.style.setProperty('--glare-x', glareX);
+        tiltRef.current?.style.setProperty('--glare-y', glareY);
       });
     },
     [tiltEnabled, flipped],
@@ -584,10 +591,12 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
       rafRef.current = null;
     }
     rectRef.current = null;
-    tiltRef.current?.style.setProperty('--rotate-x', '0deg');
-    tiltRef.current?.style.setProperty('--rotate-y', '0deg');
-    tiltRef.current?.style.setProperty('--glare-opacity', '0');
-    tiltRef.current!.style.transition = 'transform 0.4s ease-out';
+    if (tiltRef.current?.style) {
+      tiltRef.current.style.setProperty('--rotate-x', '0deg');
+      tiltRef.current.style.setProperty('--rotate-y', '0deg');
+      tiltRef.current.style.setProperty('--glare-opacity', '0');
+      tiltRef.current.style.transition = 'transform 0.4s ease-out';
+    }
   }, [tiltEnabled]);
 
   useEffect(() => {
@@ -596,7 +605,7 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
       tiltRef.current.style.setProperty('--rotate-y', '0deg');
       tiltRef.current.style.setProperty('--glare-opacity', '0');
     }
-  }, [flipped]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -698,7 +707,12 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
                 transform="rotateY(0deg) translateZ(0)"
                 visible={!flipped}
               />
-              <BackCard record={record} backgroundPhotoUrl={backgroundPhotoUrl} transform="rotateY(180deg) translateZ(0)" visible={flipped} />
+              <BackCard
+                record={record}
+                backgroundPhotoUrl={backgroundPhotoUrl}
+                transform="rotateY(180deg) translateZ(0)"
+                visible={flipped}
+              />
             </Box>
           </Box>
         </Box>

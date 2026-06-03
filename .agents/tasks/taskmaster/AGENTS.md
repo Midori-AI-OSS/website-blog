@@ -1,7 +1,7 @@
 # .agents/tasks/taskmaster
 
-Final review queue: tasks that are believed to be done live here temporarily for Task Master verification and deletion.
+Legacy placeholder. Not used for active task work.
 
-- Add items as `.md` or `.txt` files directly in this directory.
-- Keep this directory flat (no subfolders).
-- Task Master must delete items here after review.
+- Do not create, move, or delete files here.
+- Only `AGENTS.md` and `.gitkeep` belong in this directory.
+- Use `/tmp/agents-artifacts/tasks/` for task working files.
