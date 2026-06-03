@@ -10,6 +10,7 @@ import type { SpeciesCareCardRecord } from '@/lib/species-care/types';
 interface SpeciesCareCardInlineProps {
   record: SpeciesCareCardRecord;
   photoUrl?: string;
+  plain?: boolean;
 }
 
 const CARD_FONT_FAMILY = '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback)';
@@ -458,36 +459,45 @@ function BackCard({
   );
 }
 
-export function SpeciesCareCardInline({ record, photoUrl }: SpeciesCareCardInlineProps) {
+export function SpeciesCareCardInline({ record, photoUrl, plain }: SpeciesCareCardInlineProps) {
   const [flipped, setFlipped] = useState(false);
 
   return (
     <Box
-      sx={{
-        my: { xs: 3, sm: 5 },
-        mx: 'auto',
-        width: '100%',
-        border: '1px solid rgba(219, 234, 254, 0.9)',
-        borderRadius: { xs: '24px', sm: '32px' },
-        bgcolor: 'rgba(248,250,252,0.94)',
-        color: '#0f172a',
-        '--joy-fontFamily-body': CARD_FONT_FAMILY,
-        fontFamily: CARD_FONT_FAMILY,
-        p: { xs: 1.25, sm: 2 },
-        boxShadow: '0 24px 80px rgba(15,23,42,0.25)',
-        '& p': {
-          m: 0,
-        },
-        '&& img': {
-          m: 0,
-          border: 0,
-          background: 'none',
-          animation: 'none',
-        },
-      }}
+      sx={
+        plain
+          ? { width: '100%' }
+          : {
+              my: { xs: 3, sm: 5 },
+              mx: 'auto',
+              width: '100%',
+              border: '1px solid rgba(219, 234, 254, 0.9)',
+              borderRadius: { xs: '24px', sm: '32px' },
+              bgcolor: 'rgba(248,250,252,0.94)',
+              color: '#0f172a',
+              '--joy-fontFamily-body': CARD_FONT_FAMILY,
+              fontFamily: CARD_FONT_FAMILY,
+              p: { xs: 1.25, sm: 2 },
+              boxShadow: '0 24px 80px rgba(15,23,42,0.25)',
+              '& p': {
+                m: 0,
+              },
+              '&& img': {
+                m: 0,
+                border: 0,
+                background: 'none',
+                animation: 'none',
+              },
+            }
+      }
     >
       <Box
-        sx={{ mx: 'auto', width: '100%', maxWidth: { sm: 360, md: 580 }, perspective: '1400px' }}
+        sx={{
+          mx: plain ? undefined : 'auto',
+          width: '100%',
+          maxWidth: plain ? undefined : { sm: 360, md: 580 },
+          perspective: '1400px',
+        }}
       >
         <Box
           onClick={() => setFlipped((value) => !value)}

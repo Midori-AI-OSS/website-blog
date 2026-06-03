@@ -52,7 +52,7 @@ I moved first. My staff went into the back seat, laid across the bench. The glim
 
 Leo added his staff and sword without a word. Just unbuckled, slid them in, stepped back.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/luna/luna-sangre-y-lux-residua-1.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-1.png}}
 
 The snapped halves of Echo's brass staff followed — lifted from the second cruiser by a ribbon of gold-green particles, carried to the Malibu's open door, laid gently across the seat. Then Riley's holstered gun came off her side inside the second cruiser, eased free by the same ribbon and carried after it. Gentle. Even now, Weave was gentle.
 
@@ -158,7 +158,7 @@ When Leo got his species card out with his good hand, it took him two tries. I t
 
 Good. One less fight.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/luna/luna-sangre-y-lux-residua-2.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-2.png}}
 
 {{speciescard: lore/luna-midori}}
 
@@ -188,7 +188,7 @@ A broad-shouldered man in green scrubs wheeled Leo to a curtained treatment bay.
 
 A nurse took one look at the shape of his wrist and the angle he was protecting his forearm at and called for a splint first, imaging after, before the chair had even stopped moving. Another moved in with padding and practiced hands — bracing his forearm from underneath, checking his fingers for feeling, warning him before they immobilized anything. She talked him through staying still while they stabilized what they could without asking him to do more than breathe through it.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/leo/leo-sangre-y-lux-residua-1.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/leo-sangre-y-lux-residua-1.png}}
 
 When the question came about pain level and whether he wanted help for it, Leo opened his mouth like he was about to refuse on principle.
 
@@ -220,7 +220,7 @@ It was not peace.
 
 It was what we had.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/luna/luna-sangre-y-lux-residua-3.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-3.png}}
 
 For one breath, in the narrow pause before the next set of hands came back, that was the whole frame. Five hours later, Riley is on the second floor.
 
@@ -238,7 +238,7 @@ Then the nurse came with the first real update on Riley. She had lost enough blo
 
 I told them. Radiant Anchor. I felt her almost go. The spell caught her at the edge. I said it out loud with Leo's splinted wrist in my peripheral vision and Marisol's dark wing still holding its angle, and I did not wrap it in anything easier. The light — the one I pull from somewhere I have never fully mapped — had reached into the gap between her and nothing and held. I stopped there. The rest of it stayed behind my teeth. Which was great, actually. Right where it belonged.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/luna/luna-sangre-y-lux-residua-4.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-4.png}}
 
 Leo talked about the fight — the clone counterspelling his healing twice before the sigil went up, Weave pressing every particle of herself against the barrier when the blade dissolved. I had watched his magic die midair while I traced the seal that kept us all trapped. It had pissed me off then and it pissed me off now, retelling it in a hospital room while my brother sat there with a splinted wrist. Neither of us had ever seen Weave move like that — pressed flat against the boundary, every particle desperate. I had felt his magic die through the bond before mine sealed. That was a sentence I did not know how to finish.
 
@@ -306,7 +306,7 @@ Nobody answers her out loud.
 
 I move to the other side of the bed. I don't touch Riley at first. I stand there with one hand curled against the blanket edge — near enough that she'd know someone's here if she could feel anything, far enough back that nobody has a reason to tell me to move. My hair dried wrong from sweat and road air and hospital heat. The green's gone dull in the fluorescent light.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/luna/luna-sangre-y-lux-residua-5.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-5.png}}
 
 "She knows," I say softly.
 
@@ -458,7 +458,7 @@ Echo finally fell asleep in the wheelchair — pulled tight against the bed, one
 
 I slept badly in the chair on Riley's other side. Chin tipped down. Bad shoulder held stiff even in sleep — my body refusing to forget it's injured even when I'm not conscious enough to feel it. In daylight the green in my hair looks flatter, less theatrical, more exhausted. One hand is still on the mattress near Riley's sleeve. I went under by accident and not very far.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/luna/luna-sangre-y-lux-residua-6.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-6.png}}
 
 Leo is awake because of course he is.
 

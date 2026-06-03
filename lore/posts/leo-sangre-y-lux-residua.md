@@ -142,7 +142,7 @@ The effect was immediate. The nurse stopped reaching for the default medication 
 
 If I was still feeling it this openly, they knew it was bad. Nobody had to stop and argue over what counted as normal.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/luna/luna-sangre-y-lux-residua-2.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/luna-sangre-y-lux-residua-2.png}}
 
 {{speciescard: lore/leo-midori}}
 
@@ -152,7 +152,7 @@ A second nurse caught Luna long enough for quick vitals and one brief look at th
 
 Before we left the desk, Luna picked Riley's glasses back up from beside the keyboard and passed them to me. I tucked them into my hoodie pocket with my good hand. One more thing not left behind.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/leo/leo-sangre-y-lux-residua-2.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/leo-sangre-y-lux-residua-2.png}}
 
 Hicks stayed just long enough to help push the line through the desk. When my chair started rolling, he touched the back of it once and looked at Luna.
 
@@ -172,7 +172,7 @@ A guy in pale blue scrubs wheeled me to a curtained treatment bay, his grip stea
 
 A nurse took one look at the shape of my wrist and the angle I was protecting my forearm at and called for a splint first, imaging after, before the chair had even stopped moving. Another moved in with padding and practiced hands — bracing my forearm from underneath, checking my fingers for feeling, warning me before they immobilized anything. She talked me through staying still while they stabilized what they could without asking me to do more than breathe through it.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/leo/leo-sangre-y-lux-residua-1.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/leo-sangre-y-lux-residua-1.png}}
 
 When the question came about pain level and whether I wanted help for it, I opened my mouth to refuse on principle.
 
@@ -264,7 +264,7 @@ I sit because standing has stopped being a useful lie. The chair near the window
 
 I watch Riley's monitor instead of Riley's face. The green line keeps moving. The numbers are easier than her face.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/leo/leo-sangre-y-lux-residua-3.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/leo-sangre-y-lux-residua-3.png}}
 
 Marisol stands near the foot of the bed, away from the door, exactly where she can move if she has to and not where anyone will trip over her.
 
@@ -286,7 +286,7 @@ __Yes.__
 
 Echo bends forward over Riley's hand — not enough to pull the line, but enough that her forehead nearly touches their joined fingers. Her shoulders shake once. Then lock down hard. Riley still does not move. The monitor keeps counting.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/leo/leo-sangre-y-lux-residua-6.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/leo-sangre-y-lux-residua-6.png}}
 
 Luna sits down on the edge of the visitor chair on Riley's other side because her legs make the decision without asking her pride. She rests her forearm on the mattress, careful of every tube, every sensor. Her hand stops just short of Riley's sleeve.
 
@@ -364,7 +364,7 @@ Sometime during the night, a second visitor chair appears. Someone swaps the bla
 
 I am awake. Have been for a while. I sit by the window with a paper cup gone cool in my good hand and Riley's glasses folded on the tray table beside me. I worked the bent temple straighter than it had any right to go one-handed. Not perfect. Good enough to be useful when she wakes.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/leo/leo-sangre-y-lux-residua-4.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/leo-sangre-y-lux-residua-4.png}}
 
 The sun is up. The light falls at a different angle than the fluorescents — I can make out more of the room now. Riley looks less pale, which is not the same as looking well. The bruise at her temple has darkened. The tape at her hand has started to curl at one corner. Her breathing is steadier.
 
@@ -374,7 +374,7 @@ Luna sleeps badly in the chair on Riley's other side — chin tipped down, bad s
 
 Marisol stands at the counter reading the whiteboard like it owes her accuracy.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/leo/leo-sangre-y-lux-residua-5.png}}
+{{image: /lore/real-moments/sangre-y-lux-residua/twins/leo-sangre-y-lux-residua-5.png}}
 
 Weave has redistributed with the light. Gold-green particles run in a thin line along the window frame, the monitor housing, and the IV pole.
 

@@ -126,9 +126,13 @@ LORE TEST SIGNAL :: TOKEN SYSTEMS ACTIVE
 
 {{image: /lore/the-story-luna-midori/01-veiled-crossing-first-shift.png}}
 
-## Species Card Token
+## Species Card Tokens
 
-{{speciescard: /lore/luna-midori}}
+{{speciescard: /lore/echo-poindexter}} {{speciescard: /lore/luna-midori}} {{speciescard: /lore/leo-midori}}
+
+{{speciescard: /lore/luna-midori}} {{speciescard: /lore/leo-midori}}
+
+{{speciescard: /lore/w-e-a-v-e}}
 
 ## Thinking Styles
 
