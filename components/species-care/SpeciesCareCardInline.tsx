@@ -396,17 +396,6 @@ function FrontCard({
             </Box>
           </Box>
         </Box>
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'repeating-linear-gradient(-28deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 24px, rgba(255,255,255,0.10) 24px, rgba(255,255,255,0.10) 28px)',
-            mixBlendMode: 'overlay',
-            pointerEvents: 'none',
-            borderRadius: { xs: '20px', sm: '28px' },
-          }}
-        />
       </Box>
     </Box>
   );
