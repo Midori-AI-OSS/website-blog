@@ -152,8 +152,6 @@ A second nurse caught Luna long enough for quick vitals and one brief look at th
 
 Before we left the desk, Luna picked Riley's glasses back up from beside the keyboard and passed them to me. I tucked them into my hoodie pocket with my good hand. One more thing not left behind.
 
-{{image: /lore/real-moments/sangre-y-lux-residua/twins/leo-sangre-y-lux-residua-2.png}}
-
 Hicks stayed just long enough to help push the line through the desk. When my chair started rolling, he touched the back of it once and looked at Luna.
 
 "I'm sorry," he said. "I'll be back in the morning."
