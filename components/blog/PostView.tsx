@@ -1082,9 +1082,10 @@ export function PostView({
               }
 
               if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length === 1) {
-                const part = chunk.cardParts[0]!;
+                const part = chunk.cardParts.at(0);
+
                 return (
-                  part.token && (
+                  part?.token && (
                     <SpeciesCareCardEmbed
                       key={part.id}
                       data={speciesCareCards[part.token.key]}

@@ -168,11 +168,13 @@ export function extractPaletteFromImage(
           return;
         }
 
-        const picked: typeof sorted = [sorted[0]!];
+        const picked: typeof sorted = [...sorted.slice(0, 3)];
         const minDistance = 3000;
 
         for (let index = 1; index < sorted.length && picked.length < 3; index += 1) {
-          const candidate = sorted[index]!;
+          const candidate = sorted[index];
+
+          if (!candidate) continue;
           const isTooClose = picked.some(
             (entry) =>
               colorDistance([entry.r, entry.g, entry.b], [candidate.r, candidate.g, candidate.b]) <
@@ -185,7 +187,10 @@ export function extractPaletteFromImage(
         }
 
         while (picked.length < 3) {
-          picked.push(picked[picked.length - 1]!);
+          const last = picked.at(-1);
+          if (last && last.count > 0) {
+            picked.push(last);
+          }
         }
 
         const primaryColor = picked[0];
