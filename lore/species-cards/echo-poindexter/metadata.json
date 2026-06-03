@@ -1,7 +1,7 @@
 {
   "slug": "echo-poindexter",
   "title": "Echo Poindexter Species Card",
-  "currentVersion": "prov-v0.15",
+  "currentVersion": "prov-v0.16",
   "versions": [
     {
       "version": "prov-v0.15",
@@ -14,7 +14,19 @@
       "sourcePath": "/home/lunamidori/nfs/Midori-AI-Github/dnd-notes/campaigns/real-moments/chars/echo/items/species-card.md",
       "sourceHash": "68da5a5d4e971a22ed547b10c49ac9f6406d21d180dc14b051413363733c19ab",
       "importedAt": "2026-05-30T04:40:31.112Z"
+    },
+    {
+      "version": "prov-v0.16",
+      "profileVersion": "PROV v0.16",
+      "filename": "versions/prov-v0.16.md",
+      "title": "Echo Poindexter Species Card",
+      "preferredName": "Echo Poindexter",
+      "species": "Human (magic-touched)",
+      "inWorldUri": "rm-health://species-card/ar/farmington/poindexter/echo/1003/hum-mg-tch/echo-prov",
+      "sourcePath": "/home/lunamidori/nfs/Midori-AI-Github/dnd-notes/campaigns/real-moments/chars/echo/items/species-card.md",
+      "sourceHash": "1e08ba57c38e10c8af50ed01a50a13222d37f96a6eb8eaea7ab39a2050d35367",
+      "importedAt": "2026-06-03T05:59:12.994Z"
     }
   ],
-  "updatedAt": "2026-05-30T04:40:31.112Z"
+  "updatedAt": "2026-06-03T05:59:12.994Z"
 }

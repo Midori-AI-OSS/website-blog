@@ -1,7 +1,7 @@
 {
   "slug": "leo-midori",
   "title": "Leo Midori Species Card",
-  "currentVersion": "prov-v0.16",
+  "currentVersion": "prov-v0.17",
   "versions": [
     {
       "version": "prov-v0.15",
@@ -26,7 +26,19 @@
       "sourcePath": "/home/lunamidori/nfs/Midori-AI-Github/dnd-notes/campaigns/real-moments/chars/leo/items/wallet/species-card.md",
       "sourceHash": "1c5c09471f2a5fdadcc142812d3514d3a5624d529487fd1f6b99495bbc0844ee",
       "importedAt": "2026-05-30T04:40:31.125Z"
+    },
+    {
+      "version": "prov-v0.17",
+      "profileVersion": "PROV v0.17",
+      "filename": "versions/prov-v0.17.md",
+      "title": "Leo Midori Species Card",
+      "preferredName": "Leo Midori",
+      "species": "Luminumbra Aasimar-touched",
+      "inWorldUri": "rm-health://species-card/ar/sapporo/midori/leo/0121/aas-tch-luminumbra-prov",
+      "sourcePath": "/home/lunamidori/nfs/Midori-AI-Github/dnd-notes/campaigns/real-moments/chars/leo/items/wallet/species-card.md",
+      "sourceHash": "b95dc1b90db254bf3abf6ab8ab27b58dd920f681d1a37154ae7d54c7e8dfb44c",
+      "importedAt": "2026-06-03T05:59:12.996Z"
     }
   ],
-  "updatedAt": "2026-05-30T04:40:31.125Z"
+  "updatedAt": "2026-06-03T05:59:12.996Z"
 }

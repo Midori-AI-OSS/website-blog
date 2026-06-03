@@ -241,6 +241,39 @@ export function PostView({
     () => splitMarkdownSpeciesCareTokens(markdownContent),
     [markdownContent],
   );
+  const renderChunks = useMemo(() => {
+    const chunks: Array<
+      | { key: string; type: 'card-group'; cardParts: typeof markdownParts }
+      | { key: string; type: 'markdown'; markdownPart: (typeof markdownParts)[number] }
+    > = [];
+    let cardBuffer: typeof markdownParts = [];
+    let groupIndex = 0;
+
+    const flushCards = () => {
+      if (cardBuffer.length > 0) {
+        chunks.push({
+          key: `card-group-${groupIndex}`,
+          type: 'card-group',
+          cardParts: [...cardBuffer],
+        });
+        cardBuffer = [];
+        groupIndex++;
+      }
+    };
+
+    for (const part of markdownParts) {
+      if (part.type === 'species-card') {
+        cardBuffer.push(part);
+      } else if (part.content && !part.content.trim()) {
+        if (part.content.includes('\n')) flushCards();
+      } else {
+        flushCards();
+        chunks.push({ key: part.id, type: 'markdown', markdownPart: part });
+      }
+    }
+    flushCards();
+    return chunks;
+  }, [markdownParts]);
   const transformedCoverImageUrl = useMemo(
     () => resolvePostCoverImageUrl(post.metadata.cover_image),
     [post.metadata.cover_image],
@@ -999,34 +1032,93 @@ export function PostView({
               },
             }}
           >
-            {markdownParts.map((part) => {
-              if (part.type === 'species-card' && part.token) {
+            {renderChunks.map((chunk) => {
+              if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length > 1) {
                 return (
-                  <SpeciesCareCardEmbed
-                    key={part.id}
-                    data={speciesCareCards[part.token.key]}
-                    tokenKey={part.token.key}
-                    coverImageUrl={effectiveCoverImageUrl}
-                  />
+                  <Box
+                    key={chunk.key}
+                    sx={{
+                      my: { xs: 3, sm: 5 },
+                      mx: 'auto',
+                      width: '100%',
+                      border: '1px solid rgba(219, 234, 254, 0.9)',
+                      borderRadius: { xs: '24px', sm: '32px' },
+                      bgcolor: 'rgba(248,250,252,0.94)',
+                      color: '#0f172a',
+                      '--joy-fontFamily-body':
+                        '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback)',
+                      fontFamily: '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback)',
+                      p: { xs: 1.25, sm: 2 },
+                      boxShadow: '0 24px 80px rgba(15,23,42,0.25)',
+                      '& p': { m: 0 },
+                      '&& img': { m: 0, border: 0, background: 'none', animation: 'none' },
+                      display: 'grid',
+                      gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'repeat(2, 1fr)',
+                        md:
+                          chunk.cardParts.length >= 3
+                            ? 'repeat(3, 1fr)'
+                            : 'repeat(6, 1fr)',
+                      },
+                      gap: { xs: 1.5, sm: 2 },
+                      ...(chunk.cardParts.length === 2 && {
+                        '& > *:nth-of-type(1)': { gridColumn: { md: '2 / 4' } },
+                        '& > *:nth-of-type(2)': { gridColumn: { md: '4 / 6' } },
+                      }),
+                    }}
+                  >
+                    {chunk.cardParts.map(
+                      (part) =>
+                        part.token && (
+                          <SpeciesCareCardEmbed
+                            key={part.id}
+                            data={speciesCareCards[part.token.key]}
+                            tokenKey={part.token.key}
+                            coverImageUrl={effectiveCoverImageUrl}
+                            plain
+                          />
+                        ),
+                    )}
+                  </Box>
                 );
               }
 
-              const content = part.content ?? '';
-              if (!content.trim()) return null;
-              return (
-                <ReactMarkdown
-                  key={part.id}
-                  remarkPlugins={[remarkGfm, remarkThinkingTags]}
-                  rehypePlugins={[
-                    [rehypeSanitize, markdownSanitizeSchema],
-                    rehypeHighlight,
-                    rehypeDialogueQuotes,
-                  ]}
-                  components={markdownComponents}
-                >
-                  {content}
-                </ReactMarkdown>
-              );
+              if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length === 1) {
+                const part = chunk.cardParts[0]!;
+                return (
+                  part.token && (
+                    <SpeciesCareCardEmbed
+                      key={part.id}
+                      data={speciesCareCards[part.token.key]}
+                      tokenKey={part.token.key}
+                      coverImageUrl={effectiveCoverImageUrl}
+                    />
+                  )
+                );
+              }
+
+              if (chunk.type === 'markdown' && chunk.markdownPart) {
+                const part = chunk.markdownPart;
+                const content = part.content ?? '';
+                if (!content.trim()) return null;
+                return (
+                  <ReactMarkdown
+                    key={part.id}
+                    remarkPlugins={[remarkGfm, remarkThinkingTags]}
+                    rehypePlugins={[
+                      [rehypeSanitize, markdownSanitizeSchema],
+                      rehypeHighlight,
+                      rehypeDialogueQuotes,
+                    ]}
+                    components={markdownComponents}
+                  >
+                    {content}
+                  </ReactMarkdown>
+                );
+              }
+
+              return null;
             })}
           </Box>
         )}

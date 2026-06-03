@@ -109,6 +109,22 @@ function stripTrailingPeriod(value: string): string {
   return value.trim().replace(/\.$/, '');
 }
 
+const TRAILING_PERIOD_NORMALIZED_FIELD_LABELS = new Set([
+  normalizeKey('Legal name'),
+  normalizeKey('Preferred name'),
+  normalizeKey('Legal / system name'),
+  normalizeKey('Preferred / display name'),
+  normalizeKey('Pronouns'),
+  normalizeKey('DOB / age'),
+  normalizeKey('Sex'),
+  normalizeKey('Gender'),
+]);
+
+function normalizeSpeciesCareFieldValue(label: string, value: string): string {
+  if (!TRAILING_PERIOD_NORMALIZED_FIELD_LABELS.has(normalizeKey(label))) return value;
+  return stripTrailingPeriod(value);
+}
+
 export function slugifySpeciesCareValue(value: string): string {
   return value
     .toLowerCase()
@@ -147,12 +163,19 @@ function sourceReferenceMatches(candidate: string | undefined, reference: string
 function getField(section: ParsedHeadingSection | undefined, labels: string[]): string | undefined {
   if (!section) return undefined;
   const targets = new Set(labels.map(normalizeKey));
-  return section.fields.find((field) => targets.has(normalizeKey(field.label)))?.value;
+  const field = section.fields.find((candidate) => targets.has(normalizeKey(candidate.label)));
+  if (!field) return undefined;
+  return normalizeSpeciesCareFieldValue(field.label, field.value);
 }
 
 function fieldsToRecord(section: ParsedHeadingSection | undefined): Record<string, string> {
   if (!section) return {};
-  return Object.fromEntries(section.fields.map((field) => [field.label, field.value]));
+  return Object.fromEntries(
+    section.fields.map((field) => [
+      field.label,
+      normalizeSpeciesCareFieldValue(field.label, field.value),
+    ]),
+  );
 }
 
 function findSection(
@@ -234,7 +257,10 @@ function parseHeadingMarkdown(markdown: string): ParsedHeadingSection[] {
 function toScanSection(section: ParsedHeadingSection): SpeciesCareScanSection {
   return {
     title: section.title,
-    fields: section.fields,
+    fields: section.fields.map((field) => ({
+      ...field,
+      value: normalizeSpeciesCareFieldValue(field.label, field.value),
+    })),
     body: section.body,
     subsections: section.children.map(toScanSection),
   };

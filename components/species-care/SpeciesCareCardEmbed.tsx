@@ -9,14 +9,23 @@ interface SpeciesCareCardEmbedProps {
   data?: SpeciesCareCardEmbedData;
   tokenKey: string;
   coverImageUrl?: string | null;
+  plain?: boolean;
 }
 
-export function SpeciesCareCardEmbed({ data, tokenKey, coverImageUrl }: SpeciesCareCardEmbedProps) {
+export function SpeciesCareCardEmbed({
+  data,
+  tokenKey,
+  coverImageUrl,
+  plain,
+}: SpeciesCareCardEmbedProps) {
   if (data?.status === 'loaded' && data.record) {
     const photoUrl = data.record.slug
       ? `/api/lore-images/species-photos/${data.record.slug}.png`
       : undefined;
-    return <SpeciesCareCardInline record={data.record} photoUrl={photoUrl} />;
+    const backgroundPhotoUrl = data.record.slug
+      ? `/api/lore-images/species-photos/backgrounds/${data.record.slug}-signing.png`
+      : undefined;
+    return <SpeciesCareCardInline record={data.record} photoUrl={photoUrl} backgroundPhotoUrl={backgroundPhotoUrl} plain={plain} />;
   }
 
   const backgroundImage = coverImageUrl

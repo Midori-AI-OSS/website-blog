@@ -23,7 +23,7 @@
 
 - **Species / designation:** Luminumbra Aasimar-touched.
 - **Species profile ID:** `AAS-TCH-LUMINUMBRA-PROV`.
-- **Species profile version:** `PROV v0.16`.
+- **Species profile version:** `PROV v0.17`.
 - **Subtype status:** Provisional.
 - **Primary care flag:** Pain may understate injury severity; halo/eye glow flags pain-reflex power activity; assess structure/function first and use lower-start medication protocol.
 

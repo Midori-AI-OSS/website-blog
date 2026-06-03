@@ -23,7 +23,7 @@
 
 - **Species / designation:** Human (magic-touched).
 - **Species profile ID:** `HUM-MG-TCH / ECHO-PROV`.
-- **Species profile version:** `PROV v0.15`.
+- **Species profile version:** `PROV v0.16`.
 - **Primary care flag:** Verify DOB by record, not appearance; healing may progress unusually fast, and early visible improvement does not prove minor injury.
 
 ### Issuance

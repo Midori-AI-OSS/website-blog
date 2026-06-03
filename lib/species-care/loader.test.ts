@@ -373,6 +373,19 @@ describe('Species care loader', () => {
     expect(parsed.slug).toBe('luna-midori');
     expect(parsed.version).toBe('prov-v0.15');
     expect(parsed.variant).toBe('healthcare-card');
+    expect(parsed.summary.legalName).toBe('Luna Midori');
+    expect(parsed.summary.preferredName).toBe('Luna Midori');
+    expect(parsed.summary.pronouns).toBe('she/her');
+    expect(parsed.summary.dobAge).toBe('01/21; late 20s');
+    expect(parsed.summary.sex).toBe('Female');
+    expect(parsed.summary.gender).toBe('Female');
+    expect(parsed.identity['Legal name']).toBe('Luna Midori');
+    expect(parsed.identity['Preferred name']).toBe('Luna Midori');
+    expect(parsed.identity.Pronouns).toBe('she/her');
+    expect(parsed.identity['DOB / age']).toBe('01/21; late 20s');
+    expect(parsed.identity.Sex).toBe('Female');
+    expect(parsed.identity.Gender).toBe('Female');
+    expect(parsed.identity['Identity caution']).toBe('Verify by card/name.');
     expect(parsed.summary.webScanPath).toBe(
       '/species-care/species-card/ar/sapporo/midori/luna/0121/aas-tch-luminumbra-prov?version=prov-v0.15',
     );
@@ -397,6 +410,15 @@ describe('Species care loader', () => {
     expect(parsed.slug).toBe('w-e-a-v-e');
     expect(parsed.version).toBe('prov-v0.16');
     expect(parsed.variant).toBe('protocol');
+    expect(parsed.summary.legalName).toBe('L.U.N.A. (Logical Universal Nimble Assistant)');
+    expect(parsed.summary.preferredName).toBe('W.E.A.V.E');
+    expect(parsed.summary.pronouns).toBe('it/its');
+    expect(parsed.identity['Legal / system name']).toBe(
+      'L.U.N.A. (Logical Universal Nimble Assistant)',
+    );
+    expect(parsed.identity['Preferred / display name']).toBe('W.E.A.V.E');
+    expect(parsed.identity.Pronouns).toBe('it/its');
+    expect(parsed.identity.Nature).toBe('Bismuth-particle swarm; not a solid humanoid body.');
     expect(parsed.summary.species).toBe('SYLV-LOGIC-PROV');
     expect(parsed.scanSections.some((section) => section.title === 'State Transitions')).toBe(true);
   });
