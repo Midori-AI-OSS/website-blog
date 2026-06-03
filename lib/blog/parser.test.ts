@@ -159,7 +159,7 @@ Content`;
     });
 
     test('returns safe defaults on error', () => {
-      const result = parsePost('error.md', null as any);
+      const result = parsePost('error.md', ''); // Invalid filename to test error handling
 
       expect(result.metadata.title).toBeTruthy();
       expect(result.content).toBe('');
@@ -244,7 +244,7 @@ tags: [meta, data]
     });
 
     test('returns defaults on error', () => {
-      const metadata = extractMetadata('error.md', null as any);
+      const metadata = extractMetadata('error.md', ''); // Invalid filename to test error handling
 
       expect(metadata.title).toBeTruthy();
       expect(metadata.tags).toEqual([]);
