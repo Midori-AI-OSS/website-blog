@@ -1055,8 +1055,8 @@ export function PostView({
                       display: 'grid',
                       gridTemplateColumns: {
                         xs: '1fr',
-                        sm: `repeat(${Math.min(chunk.cardParts.length, 2)}, 1fr)`,
-                        md: `repeat(${Math.min(chunk.cardParts.length, 3)}, 1fr)`,
+                        sm: 'repeat(2, 1fr)',
+                        md: 'repeat(3, 1fr)',
                       },
                       gap: { xs: 1.5, sm: 2 },
                     }}
