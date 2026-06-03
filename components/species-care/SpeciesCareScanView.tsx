@@ -64,7 +64,6 @@ function PortalLabel({ children }: { children: React.ReactNode }) {
       sx={{
         color: '#52647a',
         fontSize: '0.72rem',
-        fontWeight: 900,
         letterSpacing: '0.1em',
         lineHeight: 1.25,
         textTransform: 'uppercase',
@@ -111,7 +110,6 @@ function FieldBlock({ field }: { field: SpeciesCareField }) {
           color: '#52647a',
           fontSize: '0.72rem',
           fontWeight: 900,
-          letterSpacing: '0.1em',
           lineHeight: 1.25,
           textTransform: 'uppercase',
         }}
@@ -538,7 +536,6 @@ export function SpeciesCareScanView({
                       color: '#991b1b',
                       fontSize: '0.75rem',
                       fontWeight: 900,
-                      letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                     }}
                   >
