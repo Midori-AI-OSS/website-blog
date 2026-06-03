@@ -22,7 +22,10 @@ export function SpeciesCareCardEmbed({
     const photoUrl = data.record.slug
       ? `/api/lore-images/species-photos/${data.record.slug}.png`
       : undefined;
-    return <SpeciesCareCardInline record={data.record} photoUrl={photoUrl} plain={plain} />;
+    const backgroundPhotoUrl = data.record.slug
+      ? `/api/lore-images/species-photos/backgrounds/${data.record.slug}-signing.png`
+      : undefined;
+    return <SpeciesCareCardInline record={data.record} photoUrl={photoUrl} backgroundPhotoUrl={backgroundPhotoUrl} plain={plain} />;
   }
 
   const backgroundImage = coverImageUrl

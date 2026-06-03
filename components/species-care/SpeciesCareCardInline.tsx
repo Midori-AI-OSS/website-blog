@@ -10,6 +10,7 @@ import type { SpeciesCareCardRecord } from '@/lib/species-care/types';
 interface SpeciesCareCardInlineProps {
   record: SpeciesCareCardRecord;
   photoUrl?: string;
+  backgroundPhotoUrl?: string;
   plain?: boolean;
 }
 
@@ -254,11 +255,13 @@ function CompactFieldBlock({
 function FrontCard({
   record,
   photoUrl,
+  backgroundPhotoUrl,
   transform,
   visible,
 }: {
   record: SpeciesCareCardRecord;
   photoUrl?: string;
+  backgroundPhotoUrl?: string;
   transform: string;
   visible: boolean;
 }) {
@@ -301,6 +304,23 @@ function FrontCard({
       >
         {summary.initials}
       </Box>
+      {backgroundPhotoUrl && (
+        <Box
+          component="img"
+          src={backgroundPhotoUrl}
+          alt=""
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: 0.06,
+            mixBlendMode: 'multiply',
+            borderRadius: { xs: '20px', sm: '28px' },
+          }}
+        />
+      )}
       <Box
         sx={{
           position: 'relative',
@@ -375,10 +395,12 @@ function FrontCard({
 
 function BackCard({
   record,
+  backgroundPhotoUrl,
   transform,
   visible,
 }: {
   record: SpeciesCareCardRecord;
+  backgroundPhotoUrl?: string;
   transform: string;
   visible: boolean;
 }) {
@@ -421,6 +443,23 @@ function BackCard({
       >
         {summary.initials}
       </Box>
+      {backgroundPhotoUrl && (
+        <Box
+          component="img"
+          src={backgroundPhotoUrl}
+          alt=""
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: 0.06,
+            mixBlendMode: 'multiply',
+            borderRadius: { xs: '20px', sm: '28px' },
+          }}
+        />
+      )}
       <Box
         sx={{
           position: 'relative',
@@ -459,7 +498,7 @@ function BackCard({
   );
 }
 
-export function SpeciesCareCardInline({ record, photoUrl, plain }: SpeciesCareCardInlineProps) {
+export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, plain }: SpeciesCareCardInlineProps) {
   const [flipped, setFlipped] = useState(false);
 
   return (
@@ -537,10 +576,11 @@ export function SpeciesCareCardInline({ record, photoUrl, plain }: SpeciesCareCa
             <FrontCard
               record={record}
               photoUrl={photoUrl}
+              backgroundPhotoUrl={backgroundPhotoUrl}
               transform="rotateY(0deg) translateZ(0)"
               visible={!flipped}
             />
-            <BackCard record={record} transform="rotateY(180deg) translateZ(0)" visible={flipped} />
+            <BackCard record={record} backgroundPhotoUrl={backgroundPhotoUrl} transform="rotateY(180deg) translateZ(0)" visible={flipped} />
           </Box>
         </Box>
       </Box>
