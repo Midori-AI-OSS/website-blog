@@ -35,3 +35,4 @@
 - The `.agents/` directory and all of its subdirectories are permanent infrastructure. Do not delete, move, or restructure them.
 - `.gitkeep` files in `.agents/` subdirectories must be preserved so empty directories remain tracked in git.
 - Per-task working files (logs, notes, temp artifacts) may be cleaned up to `/tmp/agents-artifacts/`, but the directory structure itself is protected.
+- **Cleanup rule reminder**: When clearing task files from `wip/`, `done/`, or `taskmaster/` directories, only remove the individual task files — never remove the directory itself, its `.gitkeep`, or its `AGENTS.md`.
