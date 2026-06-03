@@ -239,7 +239,7 @@ function CompactFieldBlock({
           fontWeight: strong ? 700 : 600,
           lineHeight: 1.18,
           display: '-webkit-box',
-          WebkitLineClamp: 2,
+          WebkitLineClamp: 4,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         }}
