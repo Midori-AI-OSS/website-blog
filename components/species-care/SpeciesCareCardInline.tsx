@@ -291,19 +291,21 @@ function FrontCard({
             'radial-gradient(circle at 0% 0%, rgba(20,184,166,0.16), transparent 34%), radial-gradient(circle at 100% 0%, rgba(37,99,235,0.13), transparent 32%), linear-gradient(135deg, #ffffff, #f8fafc 62%, #eef6ff)',
         }}
       />
-      <Box
-        sx={{
-          position: 'absolute',
-          right: { xs: 12, sm: 18 },
-          bottom: { xs: 6, sm: 10 },
-          color: 'rgba(15, 23, 42, 0.045)',
-          fontSize: { xs: '2.4rem', sm: '3.6rem' },
-          fontWeight: 700,
-          lineHeight: 1,
-        }}
-      >
-        {summary.initials}
-      </Box>
+      {!backgroundPhotoUrl && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: { xs: 12, sm: 18 },
+            bottom: { xs: 6, sm: 10 },
+            color: 'rgba(15, 23, 42, 0.045)',
+            fontSize: { xs: '2.4rem', sm: '3.6rem' },
+            fontWeight: 700,
+            lineHeight: 1,
+          }}
+        >
+          {summary.initials}
+        </Box>
+      )}
       {backgroundPhotoUrl && (
         <Box
           component="img"
@@ -311,13 +313,14 @@ function FrontCard({
           alt=""
           sx={{
             position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            opacity: 0.06,
+            right: { xs: 12, sm: 18 },
+            bottom: { xs: 6, sm: 10 },
+            maxWidth: { xs: '90px', sm: '130px' },
+            maxHeight: { xs: '70px', sm: '100px' },
+            objectFit: 'contain',
+            opacity: 0.12,
             mixBlendMode: 'multiply',
-            borderRadius: { xs: '20px', sm: '28px' },
+            borderRadius: { xs: '10px', sm: '14px' },
           }}
         />
       )}
@@ -430,19 +433,21 @@ function BackCard({
             'radial-gradient(circle at 0% 0%, rgba(20,184,166,0.16), transparent 34%), radial-gradient(circle at 100% 0%, rgba(37,99,235,0.13), transparent 32%), linear-gradient(135deg, #ffffff, #f8fafc 62%, #eef6ff)',
         }}
       />
-      <Box
-        sx={{
-          position: 'absolute',
-          right: { xs: 12, sm: 18 },
-          bottom: { xs: 6, sm: 10 },
-          color: 'rgba(15, 23, 42, 0.045)',
-          fontSize: { xs: '2.4rem', sm: '3.6rem' },
-          fontWeight: 700,
-          lineHeight: 1,
-        }}
-      >
-        {summary.initials}
-      </Box>
+      {!backgroundPhotoUrl && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: { xs: 12, sm: 18 },
+            bottom: { xs: 6, sm: 10 },
+            color: 'rgba(15, 23, 42, 0.045)',
+            fontSize: { xs: '2.4rem', sm: '3.6rem' },
+            fontWeight: 700,
+            lineHeight: 1,
+          }}
+        >
+          {summary.initials}
+        </Box>
+      )}
       {backgroundPhotoUrl && (
         <Box
           component="img"
@@ -450,13 +455,14 @@ function BackCard({
           alt=""
           sx={{
             position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            opacity: 0.06,
+            right: { xs: 12, sm: 18 },
+            bottom: { xs: 6, sm: 10 },
+            maxWidth: { xs: '90px', sm: '130px' },
+            maxHeight: { xs: '70px', sm: '100px' },
+            objectFit: 'contain',
+            opacity: 0.12,
             mixBlendMode: 'multiply',
-            borderRadius: { xs: '20px', sm: '28px' },
+            borderRadius: { xs: '10px', sm: '14px' },
           }}
         />
       )}
