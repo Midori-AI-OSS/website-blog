@@ -54,7 +54,7 @@ function isOnlyContentInParent(
     const child = parent.children[i] as Content | undefined;
     if (!child) continue;
     if (child.type === 'text') {
-      // @ts-ignore - text node may have value property in practice
+      // @ts-ignore - next-level children may have value property for text nodes in MDAST
       const value = child.value;
       if (value?.trim() !== '') return false;
     } else {
