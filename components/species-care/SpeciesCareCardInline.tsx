@@ -559,7 +559,7 @@ export function SpeciesCareCardInline({
 
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
-        const rect = rectRef.current!; // rectRef is guaranteed to have a value here due to check on line 558
+        const rect = rectRef.current!; // Guaranteed: checked on line 558-559 before use
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
         const rotateX = (y - 0.5) * MAX_TILT * 2;
