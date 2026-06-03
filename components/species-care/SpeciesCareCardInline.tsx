@@ -2,7 +2,7 @@
 // Species healthcare card — inline 3D flip card rendered in lore posts
 
 import { Box, Stack, Typography } from '@mui/joy';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { SpeciesCareQr } from '@/components/species-care/SpeciesCareQr';
 import type { SpeciesCareCardRecord } from '@/lib/species-care/types';
@@ -17,6 +17,8 @@ interface SpeciesCareCardInlineProps {
 const CARD_FONT_FAMILY = '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback)';
 
 const GUILLOCHE_SVG = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240"><path d="M0 60 Q 30 20, 60 60 T 120 60 T 180 60 T 240 60" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.18"/><path d="M0 60 Q 30 100, 60 60 T 120 60 T 180 60 T 240 60" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.14"/><path d="M0 120 Q 30 80, 60 120 T 120 120 T 180 120 T 240 120" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.18"/><path d="M0 120 Q 30 160, 60 120 T 120 120 T 180 120 T 240 120" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.14"/><path d="M0 180 Q 30 140, 60 180 T 120 180 T 180 180 T 240 180" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.18"/><path d="M0 180 Q 30 220, 60 180 T 120 180 T 180 180 T 240 180" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.14"/><path d="M60 0 Q 120 30, 60 60 T 60 120 T 60 180 T 60 240" fill="none" stroke="#94a3b8" stroke-width="0.4" opacity="0.12"/><path d="M120 0 Q 180 30, 120 60 T 120 120 T 120 180 T 120 240" fill="none" stroke="#94a3b8" stroke-width="0.4" opacity="0.12"/><path d="M180 0 Q 240 30, 180 60 T 180 120 T 180 180 T 180 240" fill="none" stroke="#94a3b8" stroke-width="0.4" opacity="0.12"/></svg>`)}`;
+
+const MAX_TILT = 6;
 
 function SmallLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -296,6 +298,17 @@ function FrontCard({
             'radial-gradient(circle at 0% 0%, rgba(20,184,166,0.16), transparent 34%), radial-gradient(circle at 100% 0%, rgba(37,99,235,0.13), transparent 32%), linear-gradient(135deg, #ffffff, #f8fafc 62%, #eef6ff)',
         }}
       />
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(circle at var(--glare-x, 50%) var(--glare-y, 50%), rgba(255,255,255,0.28) 0%, transparent 55%)',
+          opacity: 'var(--glare-opacity, 0)',
+          pointerEvents: 'none',
+          borderRadius: { xs: '20px', sm: '28px' },
+        }}
+      />
       {!backgroundPhotoUrl && (
         <Box
           sx={{
@@ -514,6 +527,82 @@ function BackCard({
 
 export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, plain }: SpeciesCareCardInlineProps) {
   const [flipped, setFlipped] = useState(false);
+  const [tiltEnabled, setTiltEnabled] = useState(false);
+  const interactiveRef = useRef<HTMLButtonElement>(null);
+  const tiltRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const rectRef = useRef<DOMRect | null>(null);
+
+  useEffect(() => {
+    const hoverMql = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const check = () => {
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const forcedColors = window.matchMedia('(forced-colors: active)').matches;
+      setTiltEnabled(hoverMql.matches && !reducedMotion && !forcedColors);
+    };
+    check();
+    hoverMql.addEventListener('change', check);
+    return () => hoverMql.removeEventListener('change', check);
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!tiltRef.current || !tiltEnabled) return;
+      if (!rectRef.current) rectRef.current = interactiveRef.current?.getBoundingClientRect() ?? null;
+      if (!rectRef.current) return;
+
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        const rect = rectRef.current!;
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        const tiltX = (y - 0.5) * -MAX_TILT * 2;
+        const tiltY = (x - 0.5) * MAX_TILT * 2;
+        const glareX = `${x * 100}%`;
+        const glareY = `${y * 100}%`;
+
+        tiltRef.current!.style.setProperty('--tilt-x', `${tiltY}deg`);
+        tiltRef.current!.style.setProperty('--tilt-y', `${tiltX}deg`);
+        tiltRef.current!.style.setProperty('--glare-x', glareX);
+        tiltRef.current!.style.setProperty('--glare-y', glareY);
+      });
+    },
+    [tiltEnabled],
+  );
+
+  const handleMouseEnter = useCallback(() => {
+    if (!tiltEnabled) return;
+    rectRef.current = interactiveRef.current?.getBoundingClientRect() ?? null;
+    tiltRef.current?.style.setProperty('--glare-opacity', '1');
+    tiltRef.current?.style.removeProperty('transition');
+  }, [tiltEnabled]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (!tiltEnabled) return;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    rectRef.current = null;
+    tiltRef.current?.style.setProperty('--tilt-x', '0deg');
+    tiltRef.current?.style.setProperty('--tilt-y', '0deg');
+    tiltRef.current?.style.setProperty('--glare-opacity', '0');
+    tiltRef.current!.style.transition = 'transform 0.4s ease-out';
+  }, [tiltEnabled]);
+
+  useEffect(() => {
+    if (tiltRef.current) {
+      tiltRef.current.style.setProperty('--tilt-x', '0deg');
+      tiltRef.current.style.setProperty('--tilt-y', '0deg');
+      tiltRef.current.style.setProperty('--glare-opacity', '0');
+    }
+  }, [flipped]);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   return (
     <Box
@@ -553,7 +642,14 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
         }}
       >
         <Box
-          onClick={() => setFlipped((value) => !value)}
+          ref={interactiveRef}
+          component="button"
+          onClick={() => setFlipped((v) => !v)}
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          aria-pressed={flipped}
+          aria-label={flipped ? 'Show front of card' : 'Show back of card'}
           sx={{
             position: 'relative',
             width: '100%',
@@ -561,40 +657,46 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
             maxHeight: { xs: 300, sm: 280, md: 320 },
             cursor: 'pointer',
             userSelect: 'none',
+            border: 0,
+            padding: 0,
+            background: 'transparent',
             '&:focus-visible': {
               outline: '2px solid #2563eb',
               outlineOffset: '4px',
               borderRadius: { xs: '20px', sm: '28px' },
             },
           }}
-          tabIndex={0}
-          role="button"
-          aria-label={flipped ? 'Show front of card' : 'Show back of card'}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setFlipped((value) => !value);
-            }
-          }}
         >
           <Box
+            ref={tiltRef}
             sx={{
               position: 'absolute',
               inset: 0,
               transformStyle: 'preserve-3d',
-              transition: 'transform 650ms cubic-bezier(.2,.8,.2,1)',
-              transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-              '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+              transform:
+                'rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg))',
+              borderRadius: { xs: '20px', sm: '28px' },
             }}
           >
-            <FrontCard
-              record={record}
-              photoUrl={photoUrl}
-              backgroundPhotoUrl={backgroundPhotoUrl}
-              transform="rotateY(0deg) translateZ(0)"
-              visible={!flipped}
-            />
-            <BackCard record={record} backgroundPhotoUrl={backgroundPhotoUrl} transform="rotateY(180deg) translateZ(0)" visible={flipped} />
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                transformStyle: 'preserve-3d',
+                transition: 'transform 650ms cubic-bezier(.2,.8,.2,1)',
+                transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+              }}
+            >
+              <FrontCard
+                record={record}
+                photoUrl={photoUrl}
+                backgroundPhotoUrl={backgroundPhotoUrl}
+                transform="rotateY(0deg) translateZ(0)"
+                visible={!flipped}
+              />
+              <BackCard record={record} backgroundPhotoUrl={backgroundPhotoUrl} transform="rotateY(180deg) translateZ(0)" visible={flipped} />
+            </Box>
           </Box>
         </Box>
       </Box>
