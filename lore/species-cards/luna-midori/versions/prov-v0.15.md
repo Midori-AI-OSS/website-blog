@@ -14,7 +14,7 @@
 - **Legal name:** Luna Midori.
 - **Preferred name:** Luna Midori.
 - **Pronouns:** she/her.
-- **DOB / age:** 01/21; late 20s.
+- **DOB / age:** 01/21/1998.
 - **Sex:** Female.
 - **Gender:** Female.
 - **Identity caution:** Verify by card/name; outfit is not diagnostic.

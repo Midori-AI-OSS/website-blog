@@ -14,7 +14,7 @@
 - **Legal name:** Leo Midori.
 - **Preferred name:** Leo Midori.
 - **Pronouns:** he/him.
-- **DOB / age:** 01/21; late 20s.
+- **DOB / age:** 01/21/1998.
 - **Sex:** Male.
 - **Gender:** Male.
 - **Identity caution:** Verify by card/name; outfit is not diagnostic.
