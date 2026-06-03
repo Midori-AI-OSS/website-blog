@@ -14,7 +14,7 @@
 - **Legal name:** Echo Poindexter.
 - **Preferred name:** Echo Poindexter.
 - **Pronouns:** she/her.
-- **DOB / age:** 10/03/2005.
+- **DOB / age:** 10/03/2003.
 - **Sex:** Female.
 - **Gender:** Female.
 - **Identity caution:** Verify DOB by record, not appearance.
