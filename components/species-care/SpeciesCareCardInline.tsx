@@ -28,7 +28,6 @@ function SmallLabel({ children }: { children: React.ReactNode }) {
       sx={{
         color: '#64748b',
         fontSize: '0.64rem',
-        fontWeight: 700,
         letterSpacing: '0.06em',
         lineHeight: 1.16,
         textTransform: 'uppercase',
@@ -47,7 +46,6 @@ function CardFaceHeader() {
         sx={{
           color: '#047857',
           fontSize: { xs: '0.74rem', sm: '0.82rem' },
-          fontWeight: 700,
           letterSpacing: '0.04em',
           textTransform: 'uppercase',
         }}
@@ -59,7 +57,6 @@ function CardFaceHeader() {
         sx={{
           color: '#047857',
           fontSize: { xs: '0.74rem', sm: '0.82rem' },
-          fontWeight: 700,
           letterSpacing: '0.04em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
