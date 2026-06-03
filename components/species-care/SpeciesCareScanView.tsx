@@ -21,7 +21,7 @@ interface SpeciesCareScanViewProps {
   photoUrl?: string;
 }
 
-const CARE_FONT_FAMILY = '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback)';
+const CARE_FONT_FAMILY = 'Inter, var(--joy-fontFamily-fallback)';
 const PANEL_BORDER = '1px solid #dbe3ea';
 const PANEL_RADIUS = '8px';
 const PANEL_SHADOW = '0 1px 3px rgba(15, 23, 42, 0.06)';
@@ -82,11 +82,20 @@ function InfoTile({ label, value }: { label: string; value?: string }) {
       sx={{
         borderTop: '1px solid #e2e8f0',
         pt: 1,
+        minWidth: 0,
       }}
     >
       <PortalLabel>{label}</PortalLabel>
       <Typography
-        sx={{ mt: 0.4, color: '#172033', fontSize: '0.95rem', fontWeight: 760, lineHeight: 1.45 }}
+        sx={{
+          mt: 0.4,
+          color: '#172033',
+          fontSize: '0.95rem',
+          fontWeight: 760,
+          lineHeight: 1.45,
+          overflowWrap: 'break-word',
+          wordBreak: 'break-word',
+        }}
       >
         {value}
       </Typography>

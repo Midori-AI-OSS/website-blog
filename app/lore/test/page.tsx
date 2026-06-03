@@ -15,5 +15,11 @@ export const metadata: Metadata = {
 export default async function LoreRendererTestPage() {
   const speciesCareCards = await loadSpeciesCareCardsForMarkdown(loreRendererTestPost.content);
 
-  return <LorePostPageClient post={loreRendererTestPost} speciesCareCards={speciesCareCards} />;
+  return (
+    <LorePostPageClient
+      post={loreRendererTestPost}
+      speciesCareCards={speciesCareCards}
+      showSpeciesDebugLinks
+    />
+  );
 }
