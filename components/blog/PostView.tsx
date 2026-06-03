@@ -1056,9 +1056,16 @@ export function PostView({
                       gridTemplateColumns: {
                         xs: '1fr',
                         sm: 'repeat(2, 1fr)',
-                        md: 'repeat(3, 1fr)',
+                        md:
+                          chunk.cardParts.length >= 3
+                            ? 'repeat(3, 1fr)'
+                            : 'repeat(5, 1fr)',
                       },
                       gap: { xs: 1.5, sm: 2 },
+                      ...(chunk.cardParts.length === 2 && {
+                        '& > *:nth-of-type(1)': { gridColumn: { md: '2 / 3' } },
+                        '& > *:nth-of-type(2)': { gridColumn: { md: '4 / 5' } },
+                      }),
                     }}
                   >
                     {chunk.cardParts.map(
