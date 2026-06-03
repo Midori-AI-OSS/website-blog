@@ -256,7 +256,7 @@ function getAllElements(rootElement: Element) {
   const stack: Element[] = [rootElement];
 
   while (stack.length > 0) {
-    const current = stack.pop()!; // Stack is empty-checked, so pop is safe here
+    const current = stack.pop()!; // Stack guaranteed non-empty by while condition
     const children = Array.from(current.children);
 
     for (const child of children) {

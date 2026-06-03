@@ -593,7 +593,7 @@ export function SpeciesCareCardInline({
     tiltRef.current?.style.setProperty('--rotate-x', '0deg');
     tiltRef.current?.style.setProperty('--rotate-y', '0deg');
     tiltRef.current?.style.setProperty('--glare-opacity', '0');
-    tiltRef.current!.style.transition = 'transform 0.4s ease-out';
+    tiltRef.current!.style.transition = 'transform 0.4s ease-out'; // tiltRef guaranteed non-null by check above
   }, [tiltEnabled]);
 
   useEffect(() => {

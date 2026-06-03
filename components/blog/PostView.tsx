@@ -1082,7 +1082,7 @@ export function PostView({
               }
 
               if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length === 1) {
-                const part = chunk.cardParts[0]!;
+                const part = chunk.cardParts[0]!; // Guaranteed to exist by branch condition above
                 return part.token?.key ? (
                   <SpeciesCareCardEmbed
                     key={part.id}
