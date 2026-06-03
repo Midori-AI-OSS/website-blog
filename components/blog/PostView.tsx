@@ -1059,12 +1059,12 @@ export function PostView({
                         md:
                           chunk.cardParts.length >= 3
                             ? 'repeat(3, 1fr)'
-                            : 'repeat(5, 1fr)',
+                            : 'repeat(6, 1fr)',
                       },
                       gap: { xs: 1.5, sm: 2 },
                       ...(chunk.cardParts.length === 2 && {
-                        '& > *:nth-of-type(1)': { gridColumn: { md: '2 / 3' } },
-                        '& > *:nth-of-type(2)': { gridColumn: { md: '4 / 5' } },
+                        '& > *:nth-of-type(1)': { gridColumn: { md: '2 / 4' } },
+                        '& > *:nth-of-type(2)': { gridColumn: { md: '4 / 6' } },
                       }),
                     }}
                   >
