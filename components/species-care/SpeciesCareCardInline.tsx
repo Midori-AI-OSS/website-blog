@@ -18,7 +18,7 @@ const CARD_FONT_FAMILY = '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback
 
 const GUILLOCHE_SVG = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240"><path d="M0 60 Q 30 20, 60 60 T 120 60 T 180 60 T 240 60" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.18"/><path d="M0 60 Q 30 100, 60 60 T 120 60 T 180 60 T 240 60" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.14"/><path d="M0 120 Q 30 80, 60 120 T 120 120 T 180 120 T 240 120" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.18"/><path d="M0 120 Q 30 160, 60 120 T 120 120 T 180 120 T 240 120" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.14"/><path d="M0 180 Q 30 140, 60 180 T 120 180 T 180 180 T 240 180" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.18"/><path d="M0 180 Q 30 220, 60 180 T 120 180 T 180 180 T 240 180" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.14"/><path d="M60 0 Q 120 30, 60 60 T 60 120 T 60 180 T 60 240" fill="none" stroke="#94a3b8" stroke-width="0.4" opacity="0.12"/><path d="M120 0 Q 180 30, 120 60 T 120 120 T 120 180 T 120 240" fill="none" stroke="#94a3b8" stroke-width="0.4" opacity="0.12"/><path d="M180 0 Q 240 30, 180 60 T 180 120 T 180 180 T 180 240" fill="none" stroke="#94a3b8" stroke-width="0.4" opacity="0.12"/></svg>`)}`;
 
-const MAX_TILT = 4;
+const MAX_TILT = 2.5;
 
 function SmallLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -351,8 +351,6 @@ function FrontCard({
           height: '100%',
           minHeight: 0,
           p: { xs: 2, sm: 2.5 },
-          willChange: 'transform',
-          transform: 'translateZ(0)',
         }}
       >
         <CardFaceHeader />
@@ -498,8 +496,6 @@ function BackCard({
           height: '100%',
           minHeight: 0,
           p: { xs: 2, sm: 2.5 },
-          willChange: 'transform',
-          transform: 'translateZ(0)',
         }}
       >
         <CardFaceHeader />
@@ -561,7 +557,7 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
         const rotateX = (y - 0.5) * MAX_TILT * 2;
-        const rotateY = (0.5 - x) * MAX_TILT * 2;
+        const rotateY = (x - 0.5) * MAX_TILT * 2;
         const glareX = `${x * 100}%`;
         const glareY = `${y * 100}%`;
 
