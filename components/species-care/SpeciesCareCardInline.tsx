@@ -308,16 +308,16 @@ function FrontCard({
           flexDirection: 'column',
           height: '100%',
           minHeight: 0,
-          p: { xs: 3, sm: 4 },
+          p: { xs: 2, sm: 2.5 },
         }}
       >
         <CardFaceHeader />
         <Box
           sx={{
-            mt: { xs: 0.6, sm: 0.9 },
+            mt: { xs: 0.3, sm: 0.5 },
             display: 'grid',
             alignItems: 'center',
-            gridTemplateColumns: '307px minmax(0, 1fr)',
+            gridTemplateColumns: { xs: '38% 62%', sm: '40% 60%' },
             gap: { xs: 0.8, sm: 1.1 },
             flex: 1,
             minHeight: 0,
@@ -350,7 +350,7 @@ function FrontCard({
 
             <Box
               sx={{
-                mt: 0.45,
+                mt: 0.2,
                 pt: 0.55,
                 color: '#78350f',
                 fontSize: { xs: '0.62rem', sm: '0.68rem' },
@@ -428,13 +428,13 @@ function BackCard({
           flexDirection: 'column',
           height: '100%',
           minHeight: 0,
-          p: { xs: 3, sm: 4 },
+          p: { xs: 2, sm: 2.5 },
         }}
       >
         <CardFaceHeader />
         <Box
           sx={{
-            mt: { xs: 0.6, sm: 0.9 },
+            mt: { xs: 0.3, sm: 0.5 },
             display: 'grid',
             alignItems: 'center',
             gridTemplateColumns: 'minmax(0, 1fr) auto',
@@ -451,7 +451,7 @@ function BackCard({
             <CompactFieldRow label="Lookup" value={summary.fallbackLookupCode} />
             <CompactFieldRow label="DHS ID" value={summary.healthcareId} />
           </Stack>
-          <SpeciesCareQr value={summary.webScanPath} size={320} plain />
+          <SpeciesCareQr value={summary.webScanPath} size={130} plain />
         </Box>
       </Box>
     </Box>
@@ -486,14 +486,16 @@ export function SpeciesCareCardInline({ record, photoUrl }: SpeciesCareCardInlin
         },
       }}
     >
-      <Box sx={{ mx: 'auto', width: '100%', perspective: '1400px' }}>
+      <Box
+        sx={{ mx: 'auto', width: '100%', maxWidth: { sm: 360, md: 485 }, perspective: '1400px' }}
+      >
         <Box
           onClick={() => setFlipped((value) => !value)}
           sx={{
             position: 'relative',
             width: '100%',
             aspectRatio: '534 / 336',
-            maxHeight: { xs: 340, sm: 420, md: 500 },
+            maxHeight: { xs: 300, sm: 280, md: 320 },
             cursor: 'pointer',
             userSelect: 'none',
             '&:focus-visible': {
