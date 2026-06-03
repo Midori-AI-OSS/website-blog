@@ -109,7 +109,6 @@ function FieldBlock({ field }: { field: SpeciesCareField }) {
         sx={{
           color: '#52647a',
           fontSize: '0.72rem',
-          fontWeight: 900,
           lineHeight: 1.25,
           textTransform: 'uppercase',
         }}
@@ -535,7 +534,7 @@ export function SpeciesCareScanView({
                     sx={{
                       color: '#991b1b',
                       fontSize: '0.75rem',
-                      fontWeight: 900,
+                      letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                     }}
                   >
