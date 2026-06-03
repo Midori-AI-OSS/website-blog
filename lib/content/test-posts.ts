@@ -128,11 +128,11 @@ LORE TEST SIGNAL :: TOKEN SYSTEMS ACTIVE
 
 ## Species Card Tokens
 
+{{speciescard: /lore/w-e-a-v-e}}
+
 {{speciescard: /lore/echo-poindexter}} {{speciescard: /lore/luna-midori}} {{speciescard: /lore/leo-midori}}
 
 {{speciescard: /lore/luna-midori}} {{speciescard: /lore/leo-midori}}
-
-{{speciescard: /lore/w-e-a-v-e}}
 
 ## Thinking Styles
 
