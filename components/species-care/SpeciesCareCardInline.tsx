@@ -651,6 +651,7 @@ export function SpeciesCareCardInline({ record, photoUrl, backgroundPhotoUrl, pl
           aria-pressed={flipped}
           aria-label={flipped ? 'Show front of card' : 'Show back of card'}
           sx={{
+            textAlign: 'start',
             position: 'relative',
             width: '100%',
             aspectRatio: '534 / 336',
