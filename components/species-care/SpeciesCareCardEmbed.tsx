@@ -61,10 +61,10 @@ export function SpeciesCareCardEmbed({
           p: { xs: 2, sm: 3 },
         }}
       >
-        <Typography sx={{ fontSize: '0.78rem', fontWeight: 950, letterSpacing: '0.14em' }}>
+        <Typography sx={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: '0.14em' }}>
           SPECIES CARD UNAVAILABLE
         </Typography>
-        <Typography component="h2" sx={{ mt: 0.75, color: '#450a0a', fontWeight: 950 }}>
+        <Typography component="h2" sx={{ mt: 0.75, color: '#450a0a', fontWeight: 900 }}>
           This card could not be loaded.
         </Typography>
         <Typography sx={{ mt: 1, color: '#7f1d1d', fontSize: '1rem', lineHeight: 1.6 }}>

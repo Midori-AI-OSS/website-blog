@@ -1045,9 +1045,8 @@ export function PostView({
                       borderRadius: { xs: '24px', sm: '32px' },
                       bgcolor: 'rgba(248,250,252,0.94)',
                       color: '#0f172a',
-                      '--joy-fontFamily-body':
-                        '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback)',
-                      fontFamily: '"__nextjs-Geist", Inter, var(--joy-fontFamily-fallback)',
+                      '--joy-fontFamily-body': 'Inter, var(--joy-fontFamily-fallback)',
+                      fontFamily: 'Inter, var(--joy-fontFamily-fallback)',
                       p: { xs: 1.25, sm: 2 },
                       boxShadow: '0 24px 80px rgba(15,23,42,0.25)',
                       '& p': { m: 0 },
