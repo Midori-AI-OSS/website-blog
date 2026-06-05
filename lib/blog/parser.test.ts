@@ -95,6 +95,38 @@ Content`;
       expect(result.metadata.tags).toEqual(['tag1', 'tag2']);
     });
 
+    test('strips thinking title tags and marks the title for fx', () => {
+      const input = `---
+title: "W.E.A.V.E. System Log: Sangre y Lux Residua, <THINKING>Deeper Contact: Under Evaluation</THINKING>"
+---
+
+Content`;
+
+      const result = parsePost('thinking-title.md', input);
+
+      expect(result.metadata.title).toBe(
+        'W.E.A.V.E. System Log: Sangre y Lux Residua, Deeper Contact: Under Evaluation',
+      );
+      expect(result.metadata.hasThinkingTitle).toBe(true);
+      expect(result.metadata.titleSegments).toEqual([
+        { text: 'W.E.A.V.E. System Log: Sangre y Lux Residua,', isThinking: false },
+        { text: 'Deeper Contact: Under Evaluation', isThinking: true },
+      ]);
+    });
+
+    test('falls back to the filename title when thinking tags strip the title empty', () => {
+      const input = `---
+title: "<thinking>   </thinking>"
+---
+
+Content`;
+
+      const result = parsePost('fallback-title.md', input);
+
+      expect(result.metadata.title).toBe('Fallback Title');
+      expect(result.metadata.hasThinkingTitle).toBeUndefined();
+    });
+
     test('filters out invalid tags', () => {
       const input = `---
 title: Test
@@ -241,6 +273,23 @@ tags: [meta, data]
       expect(metadata.title).toBe('Metadata Only');
       expect(metadata.summary).toBe('Just the metadata');
       expect(metadata.tags).toEqual(['meta', 'data']);
+    });
+
+    test('extracts stripped thinking titles and the fx flag', () => {
+      const input = `---
+title: "Signal Trace <thinking>Under Review</thinking>"
+---
+
+Content`;
+
+      const metadata = extractMetadata('test.md', input);
+
+      expect(metadata.title).toBe('Signal Trace Under Review');
+      expect(metadata.hasThinkingTitle).toBe(true);
+      expect(metadata.titleSegments).toEqual([
+        { text: 'Signal Trace', isThinking: false },
+        { text: 'Under Review', isThinking: true },
+      ]);
     });
 
     test('returns defaults on error', () => {

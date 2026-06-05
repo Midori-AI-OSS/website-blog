@@ -26,6 +26,7 @@ import remarkGfm from 'remark-gfm';
 import { AMBIENT_PULSE_KEYFRAMES, AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import { SpeciesCareCardEmbed } from '@/components/species-care/SpeciesCareCardEmbed';
+import { shouldInsertSpaceBetweenTitleSegments } from '@/lib/blog/titleSegments';
 import {
   POST_COVER_PLACEHOLDER_IMAGE_URL,
   resolvePostCoverImageUrl,
@@ -40,8 +41,15 @@ import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import { splitMarkdownSpeciesCareTokens } from '@/lib/species-care/tokens';
 import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
+import {
+  DEFAULT_ART_PALETTE,
+  type ExtractedPalette,
+  extractPaletteFromImage,
+} from '@/lib/theme/artPalette';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
+
+const WEAVE_BLUE = '#bae6fd';
 
 const shimmerKeyframes = keyframes({
   '0%': { backgroundPosition: '-1000px 0' },
@@ -52,12 +60,13 @@ const thinkingPulseKeyframes = keyframes({
   '0%, 100%': {
     opacity: 0.92,
     backgroundPosition: '160% 50%',
-    textShadow: '0 0 0 transparent',
+    textShadow: 'var(--PostView-thinking-static-shadow, 0 0 0 transparent)',
   },
   '50%': {
     opacity: 1,
     backgroundPosition: '20% 50%',
-    textShadow: '0 0 18px var(--PostView-thinking-glow)',
+    textShadow:
+      'var(--PostView-thinking-static-shadow, 0 0 0 transparent), 0 0 18px var(--PostView-thinking-glow)',
   },
 });
 
@@ -74,6 +83,71 @@ const glitchFlickerKeyframes = keyframes({
   '92%': { opacity: 1 },
   '95%': { opacity: 0.75, transform: 'translateX(-0.5px)' },
   '98%': { opacity: 1, transform: 'translateX(0.5px)' },
+});
+
+const thinkingTitleIntroKeyframes = keyframes({
+  '0%': {
+    opacity: 0,
+    transform: 'translate3d(-8px, 0, 0)',
+  },
+  '14%': {
+    opacity: 1,
+    transform: 'translate3d(5px, -1px, 0)',
+  },
+  '22%': {
+    opacity: 0.68,
+    transform: 'translate3d(-4px, 1px, 0)',
+  },
+  '36%': {
+    opacity: 1,
+    transform: 'translate3d(2px, 0, 0)',
+  },
+  '100%': {
+    opacity: 1,
+    transform: 'translate3d(0, 0, 0)',
+  },
+});
+
+const thinkingTitleShearKeyframes = keyframes({
+  '0%, 95%, 100%': {
+    textShadow: '1px 0 rgba(251,113,133,0.25), -1px 0 rgba(186,230,253,0.25)',
+    transform: 'translateX(0)',
+  },
+  '96%': {
+    textShadow: '3px 0 rgba(251,113,133,0.35), -3px 0 rgba(186,230,253,0.35)',
+    transform: 'translateX(-3px) skewX(-0.6deg)',
+  },
+  '97%': {
+    textShadow: '-3px 0 rgba(251,113,133,0.4), 3px 0 rgba(186,230,253,0.4)',
+    transform: 'translateX(3px) skewX(0.5deg)',
+  },
+  '98%': {
+    textShadow: '2px 0 rgba(251,113,133,0.15), -2px 0 rgba(186,230,253,0.15)',
+    transform: 'translateX(-1px)',
+  },
+});
+
+const thinkingTitleSliceKeyframes = keyframes({
+  '0%, 95%, 100%': {
+    clipPath: 'inset(0 0 100% 0)',
+    transform: 'translateX(0)',
+    opacity: 0,
+  },
+  '96%': {
+    clipPath: 'inset(18% 0 60% 0)',
+    transform: 'translateX(-8px)',
+    opacity: 0.45,
+  },
+  '97%': {
+    clipPath: 'inset(65% 0 12% 0)',
+    transform: 'translateX(10px)',
+    opacity: 0.4,
+  },
+  '98%': {
+    clipPath: 'inset(0 0 100% 0)',
+    transform: 'translateX(0)',
+    opacity: 0,
+  },
 });
 
 /**
@@ -225,6 +299,7 @@ export function PostView({
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
+  const [titlePalette, setTitlePalette] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const dateString = useMemo(
@@ -279,6 +354,7 @@ export function PostView({
     [post.metadata.cover_image],
   );
   const [effectiveCoverImageUrl, setEffectiveCoverImageUrl] = useState(transformedCoverImageUrl);
+  const hasThinkingTitleFx = postType === 'lore' && post.metadata.hasThinkingTitle;
   const dialogueColor = useMemo(
     () =>
       ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)',
@@ -312,7 +388,113 @@ export function PostView({
     () => hexToRgba(ttsPrimaryColor, 0.25, 'rgba(59, 130, 246, 0.2)'),
     [ttsPrimaryColor],
   );
+  const thinkingTitleTintColor = useMemo(() => titlePalette.primary, [titlePalette.primary]);
+  const thinkingTitleGradient = useMemo(
+    () =>
+      `linear-gradient(118deg, ${thinkingTitleTintColor} 0%, ${WEAVE_BLUE} 20%, rgba(255,255,255,0.98) 36%, ${thinkingTitleTintColor} 56%, ${WEAVE_BLUE} 78%, ${thinkingTitleTintColor} 100%)`,
+    [thinkingTitleTintColor],
+  );
+  const thinkingTitleGlow = useMemo(
+    () => hexToRgba(thinkingTitleTintColor, 0.6, 'rgba(125, 211, 252, 0.6)'),
+    [thinkingTitleTintColor],
+  );
+  const thinkingTitleBlueGlow = useMemo(
+    () => hexToRgba(WEAVE_BLUE, 0.34, 'rgba(186, 230, 253, 0.34)'),
+    [],
+  );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
+  const renderedThinkingTitle = useMemo(() => {
+    if (!hasThinkingTitleFx || !post.metadata.titleSegments) {
+      return null;
+    }
+
+    let segmentOffset = 0;
+    let previousSegmentText: string | null = null;
+
+    return post.metadata.titleSegments.map((segment) => {
+      const needsLeadingSpace = shouldInsertSpaceBetweenTitleSegments(
+        previousSegmentText,
+        segment.text,
+      );
+      const segmentKey = `${segment.isThinking ? 'thinking' : 'plain'}-${segmentOffset}-${segment.text}`;
+      segmentOffset += segment.text.length + (needsLeadingSpace ? 1 : 0);
+      previousSegmentText = segment.text;
+
+      if (segment.isThinking) {
+        return (
+          <Box
+            component="span"
+            key={segmentKey}
+            data-thinking-title-intro="true"
+            sx={{
+              display: 'inline-block',
+              maxWidth: '100%',
+              animation: `${thinkingTitleIntroKeyframes} 1.5s ease-out both`,
+            }}
+          >
+            {needsLeadingSpace ? ' ' : ''}
+            <Box
+              component="span"
+              sx={{
+                position: 'relative',
+                display: 'inline-block',
+              }}
+            >
+              <Box
+                component="span"
+                aria-hidden="true"
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 2,
+                  pointerEvents: 'none',
+                  color: 'rgba(251, 113, 133, 0.4)',
+                  mixBlendMode: 'screen',
+                  animation: `${thinkingTitleSliceKeyframes} 11.3s steps(1, end) infinite`,
+                  '@media (prefers-reduced-motion: reduce)': { display: 'none' },
+                }}
+              >
+                {segment.text}
+              </Box>
+              <Box
+                component="span"
+                data-thinking-title="true"
+                sx={{
+                  '--PostView-thinking-glow': thinkingTitleGlow,
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'inline-block',
+                  background: thinkingTitleGradient,
+                  backgroundSize: '240% 100%',
+                  backgroundPosition: '160% 50%',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: `drop-shadow(0 0 14px ${thinkingTitleBlueGlow})`,
+                  animation: `${thinkingPulseKeyframes} 10.5s ease-in-out infinite, ${thinkingTitleShearKeyframes} 11s steps(1, end) infinite`,
+                }}
+              >
+                {segment.text}
+              </Box>
+            </Box>
+          </Box>
+        );
+      }
+
+      return (
+        <Box component="span" key={segmentKey}>
+          {needsLeadingSpace ? ' ' : ''}
+          {segment.text}
+        </Box>
+      );
+    });
+  }, [
+    hasThinkingTitleFx,
+    post.metadata.titleSegments,
+    thinkingTitleBlueGlow,
+    thinkingTitleGlow,
+    thinkingTitleGradient,
+  ]);
 
   const markdownComponents = useMemo<Components>(
     () => ({
@@ -335,8 +517,8 @@ export function PostView({
           };
 
           return (
-            <Card
-              variant="plain"
+            <Box
+              component="span"
               sx={{
                 p: 0,
                 my: 4,
@@ -349,16 +531,11 @@ export function PostView({
                 alignItems: 'center',
                 justifyContent: 'center',
                 py: { xs: 3, sm: 4 },
-                '--Card-padding': '0px',
-                '&:hover, &:focus-within': {
-                  bgcolor: 'black',
-                  borderColor: 'transparent',
-                  boxShadow: 'none',
-                  outline: 'none',
-                },
+                width: '100%',
               }}
             >
               <Box
+                component="span"
                 sx={{
                   position: 'absolute',
                   top: 0,
@@ -415,7 +592,7 @@ export function PostView({
                   animation: 'none',
                 }}
               />
-            </Card>
+            </Box>
           );
         }
 
@@ -430,6 +607,29 @@ export function PostView({
   useEffect(() => {
     setEffectiveCoverImageUrl(transformedCoverImageUrl);
   }, [transformedCoverImageUrl]);
+
+  useEffect(() => {
+    if (!hasThinkingTitleFx) {
+      setTitlePalette(DEFAULT_ART_PALETTE);
+      return;
+    }
+
+    let active = true;
+
+    const syncTitlePalette = async () => {
+      const extracted = await extractPaletteFromImage(effectiveCoverImageUrl, {
+        fallback: DEFAULT_ART_PALETTE,
+      });
+      if (!active) return;
+      setTitlePalette(extracted);
+    };
+
+    void syncTitlePalette();
+
+    return () => {
+      active = false;
+    };
+  }, [effectiveCoverImageUrl, hasThinkingTitleFx]);
 
   useEffect(() => {
     if (disableDynamicBackdrop) return;
@@ -548,12 +748,26 @@ export function PostView({
               fontWeight: 800,
               mb: 3,
               lineHeight: 1.1,
-              background: 'linear-gradient(to right, #fff, #a78bfa)', // White to Purple gradient text
+              overflowWrap: 'anywhere',
+              background: 'linear-gradient(to right, #fff, #a78bfa)',
               WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              ...(hasThinkingTitleFx && {
+                '@media (prefers-reduced-motion: reduce)': {
+                  '& [data-thinking-title-intro="true"]': {
+                    animation: 'none',
+                  },
+                  '& [data-thinking-title="true"]': {
+                    animation: 'none',
+                    backgroundPosition: '45% 50%',
+                    textShadow: '1px 0 rgba(251,113,133,0.25), -1px 0 rgba(186,230,253,0.25)',
+                  },
+                },
+              }),
             }}
           >
-            {post.metadata.title}
+            {renderedThinkingTitle ? renderedThinkingTitle : post.metadata.title}
           </Typography>
 
           {/* Metadata Row */}
@@ -954,6 +1168,7 @@ export function PostView({
                 textWrap: 'pretty',
               },
               '& [data-thinking="block"]': {
+                display: 'block',
                 textAlign: 'center',
                 borderLeft: '4px solid',
                 borderColor: 'primary.500',

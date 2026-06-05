@@ -1,0 +1,73 @@
+name: Build & Smoke Test
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.13'
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run build
+
+      - name: Production smoke test
+        run: |
+          PORT=3000 timeout 120 bun run start &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          FAILED=0
+          READY=0
+          for i in $(seq 1 30); do
+            if curl -sf --max-time 5 http://localhost:3000 > /dev/null 2>&1; then
+              echo "Server ready after ${i}s"
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$READY" -eq 0 ]; then
+            echo "Server failed to start within 30s"
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          fi
+
+          for route in "/" "/blog" "/lore"; do
+            if curl -sf --max-time 10 "http://localhost:3000${route}" > /dev/null 2>&1; then
+              echo "✓ ${route}"
+            else
+              echo "✗ ${route} FAILED"
+              FAILED=1
+            fi
+          done
+
+          set +e
+          wait $SERVER_PID 2>/dev/null
+          SERVER_EXIT=$?
+          set -e
+
+          if [ "$SERVER_EXIT" -eq 124 ]; then
+            echo "Server ran for 120s (timeout) — OK"
+          elif [ "$SERVER_EXIT" -eq 0 ] && [ "$FAILED" -eq 0 ]; then
+            echo "Server exited cleanly — OK"
+          else
+            echo "Server exited with code $SERVER_EXIT"
+            FAILED=1
+          fi
+
+          if [ "$FAILED" -ne 0 ]; then
+            echo "Smoke test FAILED"
+            exit 1
+          fi
+
+          echo "Smoke test PASSED"

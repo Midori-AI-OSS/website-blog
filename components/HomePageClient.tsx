@@ -156,6 +156,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
             <BlogCard
               key={post.filename}
               post={post}
+              postType="lore"
               onClick={() => handleLorePostClick(post)}
               variant="outlined"
             />

@@ -11,6 +11,7 @@ import Typography from '@mui/joy/Typography';
 import { ArrowRight, Calendar, Tag, User } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
+import { shouldInsertSpaceBetweenTitleSegments } from '@/lib/blog/titleSegments';
 import { POST_COVER_PLACEHOLDER_IMAGE_URL, resolvePostCoverImageUrl } from '@/lib/content/imageUrl';
 import {
   DEFAULT_ART_PALETTE,
@@ -21,8 +22,11 @@ import {
 import { toDarkMediumBackdropPalette } from '@/lib/theme/dynamicBackdrop';
 import type { ParsedPost } from '../../lib/blog/parser';
 
+const WEAVE_BLUE = '#bae6fd';
+
 export type BlogCardProps = {
   post: ParsedPost;
+  postType?: 'blog' | 'lore';
   onClick?: () => void;
   href?: string;
   variant?: 'plain' | 'outlined' | 'soft' | 'solid';
@@ -43,6 +47,7 @@ function toRgba(hex: string, alpha: number): string {
 export const BlogCard = React.memo(
   ({
     post,
+    postType = 'blog',
     onClick,
     href,
     variant = 'outlined',
@@ -54,6 +59,7 @@ export const BlogCard = React.memo(
     secondaryCtaAriaLabel,
   }: BlogCardProps) => {
     const { metadata, filename } = post;
+    const isThinkingLoreCard = postType === 'lore' && metadata.hasThinkingTitle;
     const resolvedDecorativeImageUrl = React.useMemo(
       () => resolvePostCoverImageUrl(metadata.cover_image),
       [metadata.cover_image],
@@ -126,6 +132,59 @@ export const BlogCard = React.memo(
         decorativeOverlay,
       };
     }, [decorativeImageUrl, palette]);
+    const thinkingTitleGradient = React.useMemo(
+      () =>
+        `linear-gradient(110deg, ${palette.primary} 0%, ${toRgba(WEAVE_BLUE, 0.92)} 34%, rgba(255,255,255,0.96) 52%, ${palette.primary} 72%, ${WEAVE_BLUE} 100%)`,
+      [palette.primary],
+    );
+    const renderedSegmentedTitle = React.useMemo(() => {
+      if (!isThinkingLoreCard || !metadata.titleSegments) {
+        return null;
+      }
+
+      let segmentOffset = 0;
+      let previousSegmentText: string | null = null;
+
+      return metadata.titleSegments.map((segment) => {
+        const needsLeadingSpace = shouldInsertSpaceBetweenTitleSegments(
+          previousSegmentText,
+          segment.text,
+        );
+        const segmentKey = `${segment.isThinking ? 'thinking' : 'plain'}-${segmentOffset}-${segment.text}`;
+        segmentOffset += segment.text.length + (needsLeadingSpace ? 1 : 0);
+        previousSegmentText = segment.text;
+
+        if (segment.isThinking) {
+          return (
+            <Box
+              component="span"
+              key={segmentKey}
+              data-thinking-card-title="true"
+              sx={{
+                display: 'inline',
+                background: thinkingTitleGradient,
+                backgroundSize: '200% 100%',
+                backgroundPosition: '0% 50%',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                transition: 'background-position 0.9s ease',
+              }}
+            >
+              {needsLeadingSpace ? ' ' : ''}
+              {segment.text}
+            </Box>
+          );
+        }
+
+        return (
+          <Box component="span" key={segmentKey}>
+            {needsLeadingSpace ? ' ' : ''}
+            {segment.text}
+          </Box>
+        );
+      });
+    }, [isThinkingLoreCard, metadata.titleSegments, thinkingTitleGradient]);
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
       if (event.key === 'Enter' || event.key === ' ') {
@@ -215,7 +274,7 @@ export const BlogCard = React.memo(
         onClick={onClick}
         onKeyDown={!href ? handleKeyDown : undefined}
         tabIndex={!href ? 0 : undefined}
-        aria-label={`Read blog post: ${metadata.title}`}
+        aria-label={`Read ${postType} post: ${metadata.title}`}
         sx={{
           position: 'relative',
           gap: 2,
@@ -235,6 +294,21 @@ export const BlogCard = React.memo(
             outline: '2px solid',
             outlineColor: tintStyles?.hoverBorderColor ?? 'primary.500',
           },
+          ...(isThinkingLoreCard && {
+            '&:hover [data-thinking-card-title="true"], &:focus-visible [data-thinking-card-title="true"], &:focus-within [data-thinking-card-title="true"]':
+              {
+                backgroundPosition: '100% 50%',
+              },
+            '@media (prefers-reduced-motion: reduce)': {
+              '& [data-thinking-card-title="true"]': {
+                transition: 'none',
+              },
+              '&:hover [data-thinking-card-title="true"], &:focus-visible [data-thinking-card-title="true"], &:focus-within [data-thinking-card-title="true"]':
+                {
+                  backgroundPosition: '0% 50%',
+                },
+            },
+          }),
         }}
       >
         {decorativeImageUrl && (
@@ -289,9 +363,29 @@ export const BlogCard = React.memo(
               >
                 <Typography
                   level="title-md"
-                  sx={{ color: 'text.primary', fontWeight: 600, lineHeight: 1.2 }}
+                  data-thinking-card-title={
+                    isThinkingLoreCard && !metadata.titleSegments ? 'true' : undefined
+                  }
+                  sx={{
+                    color:
+                      isThinkingLoreCard && !metadata.titleSegments
+                        ? palette.primary
+                        : 'text.primary',
+                    fontWeight: 600,
+                    lineHeight: 1.2,
+                    ...(isThinkingLoreCard &&
+                      !metadata.titleSegments && {
+                        background: thinkingTitleGradient,
+                        backgroundSize: '200% 100%',
+                        backgroundPosition: '0% 50%',
+                        WebkitBackgroundClip: 'text',
+                        backgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        transition: 'background-position 0.9s ease',
+                      }),
+                  }}
                 >
-                  {metadata.title}
+                  {renderedSegmentedTitle ?? metadata.title}
                 </Typography>
                 {metadata.tags && metadata.tags.length > 0 && (
                   <Chip

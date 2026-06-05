@@ -1,4 +1,4 @@
-import type { ParsedPost } from '@/lib/blog/parser';
+import { type ParsedPost, parsePost } from '@/lib/blog/parser';
 
 export const blogRendererTestPost: ParsedPost = {
   filename: 'blog-renderer-test.md',
@@ -78,21 +78,19 @@ The last paragraph checks bottom spacing and confirms the post can end normally 
 
 blogRendererTestPost.rawMarkdown = blogRendererTestPost.content;
 
-export const loreRendererTestPost: ParsedPost = {
-  filename: 'lore-renderer-test.md',
-  metadata: {
-    title: 'Lore Renderer Test Post',
-    summary:
-      'A hidden fixture for checking lore metadata, lore image tokens, species cards, story styling, and markdown rendering.',
-    tags: ['lore', 'real-moments', 'test-fixture', 'luna'],
-    cover_image: '/lore/luna-lux-maboroshi.png',
-    date: '2026-05-25',
-    author: 'Midori AI Test Fixture',
-    game: 'real-moments',
-    story_order: 9999,
-    episode_label: 'Renderer Test',
-  },
-  content: `# Lore Markdown Coverage
+const loreRendererTestPostMarkdown = `---
+title: "W.E.A.V.E. System Log: Sangre y Lux Residua, <thinking>Deeper Contact: Under Evaluation</thinking>"
+summary: "A hidden fixture for checking lore metadata, lore image tokens, species cards, story styling, and markdown rendering."
+tags: [lore, real-moments, test-fixture, luna]
+cover_image: /lore/luna-lux-maboroshi.png
+date: 2026-05-25
+author: Midori AI Test Fixture
+game: real-moments
+story_order: 9999
+episode_label: Renderer Test
+---
+
+# Lore Markdown Coverage
 
 This page is a hidden renderer fixture for lore posts. It intentionally includes lore-only token systems that normal blog posts should not rely on.
 
@@ -152,8 +150,22 @@ This standalone thinking block should remain visually distinct from normal narra
 ## Closing Check
 
 The lore fixture should prove token embeds, markdown media, dialogue styling, and long-form story typography can coexist on one page.
-`,
-  rawMarkdown: '',
-};
+`;
 
-loreRendererTestPost.rawMarkdown = loreRendererTestPost.content;
+export const loreRendererTestPost = parsePost(
+  'lore-renderer-test.md',
+  loreRendererTestPostMarkdown,
+);
+
+if (
+  loreRendererTestPost.metadata.title !==
+    'W.E.A.V.E. System Log: Sangre y Lux Residua, Deeper Contact: Under Evaluation' ||
+  !loreRendererTestPost.metadata.hasThinkingTitle ||
+  JSON.stringify(loreRendererTestPost.metadata.titleSegments) !==
+    JSON.stringify([
+      { text: 'W.E.A.V.E. System Log: Sangre y Lux Residua,', isThinking: false },
+      { text: 'Deeper Contact: Under Evaluation', isThinking: true },
+    ])
+) {
+  throw new Error('Lore renderer test post thinking title parsing failed');
+}
