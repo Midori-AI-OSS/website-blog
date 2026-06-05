@@ -50,7 +50,6 @@ import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
 const WEAVE_BLUE = '#bae6fd';
-const THINKING_TITLE_CHROMATIC_SHADOW = '1px 0 rgba(251,113,133,0.4), -1px 0 rgba(186,230,253,0.4)';
 
 const shimmerKeyframes = keyframes({
   '0%': { backgroundPosition: '-1000px 0' },
@@ -106,6 +105,48 @@ const thinkingTitleIntroKeyframes = keyframes({
   '100%': {
     opacity: 1,
     transform: 'translate3d(0, 0, 0)',
+  },
+});
+
+const thinkingTitleShearKeyframes = keyframes({
+  '0%, 95%, 100%': {
+    textShadow: '1px 0 rgba(251,113,133,0.25), -1px 0 rgba(186,230,253,0.25)',
+    transform: 'translateX(0)',
+  },
+  '96%': {
+    textShadow: '3px 0 rgba(251,113,133,0.35), -3px 0 rgba(186,230,253,0.35)',
+    transform: 'translateX(-3px) skewX(-0.6deg)',
+  },
+  '97%': {
+    textShadow: '-3px 0 rgba(251,113,133,0.4), 3px 0 rgba(186,230,253,0.4)',
+    transform: 'translateX(3px) skewX(0.5deg)',
+  },
+  '98%': {
+    textShadow: '2px 0 rgba(251,113,133,0.15), -2px 0 rgba(186,230,253,0.15)',
+    transform: 'translateX(-1px)',
+  },
+});
+
+const thinkingTitleSliceKeyframes = keyframes({
+  '0%, 95%, 100%': {
+    clipPath: 'inset(0 0 100% 0)',
+    transform: 'translateX(0)',
+    opacity: 0,
+  },
+  '96%': {
+    clipPath: 'inset(18% 0 60% 0)',
+    transform: 'translateX(-8px)',
+    opacity: 0.45,
+  },
+  '97%': {
+    clipPath: 'inset(65% 0 12% 0)',
+    transform: 'translateX(10px)',
+    opacity: 0.4,
+  },
+  '98%': {
+    clipPath: 'inset(0 0 100% 0)',
+    transform: 'translateX(0)',
+    opacity: 0,
   },
 });
 
@@ -394,23 +435,47 @@ export function PostView({
             {needsLeadingSpace ? ' ' : ''}
             <Box
               component="span"
-              data-thinking-title="true"
               sx={{
-                '--PostView-thinking-glow': thinkingTitleGlow,
-                '--PostView-thinking-static-shadow': THINKING_TITLE_CHROMATIC_SHADOW,
+                position: 'relative',
                 display: 'inline-block',
-                background: thinkingTitleGradient,
-                backgroundSize: '240% 100%',
-                backgroundPosition: '160% 50%',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: THINKING_TITLE_CHROMATIC_SHADOW,
-                filter: `drop-shadow(0 0 14px ${thinkingTitleBlueGlow})`,
-                animation: `${thinkingPulseKeyframes} 10.5s ease-in-out infinite, ${glitchFlickerKeyframes} 8s steps(1, end) infinite`,
               }}
             >
-              {segment.text}
+              <Box
+                component="span"
+                aria-hidden="true"
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 2,
+                  pointerEvents: 'none',
+                  color: 'rgba(251, 113, 133, 0.4)',
+                  mixBlendMode: 'screen',
+                  animation: `${thinkingTitleSliceKeyframes} 11.3s steps(1, end) infinite`,
+                  '@media (prefers-reduced-motion: reduce)': { display: 'none' },
+                }}
+              >
+                {segment.text}
+              </Box>
+              <Box
+                component="span"
+                data-thinking-title="true"
+                sx={{
+                  '--PostView-thinking-glow': thinkingTitleGlow,
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'inline-block',
+                  background: thinkingTitleGradient,
+                  backgroundSize: '240% 100%',
+                  backgroundPosition: '160% 50%',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: `drop-shadow(0 0 14px ${thinkingTitleBlueGlow})`,
+                  animation: `${thinkingPulseKeyframes} 10.5s ease-in-out infinite, ${thinkingTitleShearKeyframes} 11s steps(1, end) infinite`,
+                }}
+              >
+                {segment.text}
+              </Box>
             </Box>
           </Box>
         );
@@ -696,7 +761,7 @@ export function PostView({
                   '& [data-thinking-title="true"]': {
                     animation: 'none',
                     backgroundPosition: '45% 50%',
-                    textShadow: THINKING_TITLE_CHROMATIC_SHADOW,
+                    textShadow: '1px 0 rgba(251,113,133,0.25), -1px 0 rgba(186,230,253,0.25)',
                   },
                 },
               }),
