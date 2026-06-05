@@ -40,8 +40,15 @@ import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import { splitMarkdownSpeciesCareTokens } from '@/lib/species-care/tokens';
 import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
+import {
+  DEFAULT_ART_PALETTE,
+  type ExtractedPalette,
+  extractPaletteFromImage,
+} from '@/lib/theme/artPalette';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
+
+const WEAVE_BLUE = '#bae6fd';
 
 const shimmerKeyframes = keyframes({
   '0%': { backgroundPosition: '-1000px 0' },
@@ -74,6 +81,34 @@ const glitchFlickerKeyframes = keyframes({
   '92%': { opacity: 1 },
   '95%': { opacity: 0.75, transform: 'translateX(-0.5px)' },
   '98%': { opacity: 1, transform: 'translateX(0.5px)' },
+});
+
+const thinkingTitleIntroKeyframes = keyframes({
+  '0%': {
+    opacity: 0,
+    filter: 'blur(10px)',
+    transform: 'translate3d(-8px, 0, 0)',
+  },
+  '14%': {
+    opacity: 1,
+    filter: 'blur(1.2px)',
+    transform: 'translate3d(5px, -1px, 0)',
+  },
+  '22%': {
+    opacity: 0.68,
+    filter: 'blur(2px)',
+    transform: 'translate3d(-4px, 1px, 0)',
+  },
+  '36%': {
+    opacity: 1,
+    filter: 'blur(0.4px)',
+    transform: 'translate3d(2px, 0, 0)',
+  },
+  '100%': {
+    opacity: 1,
+    filter: 'blur(0)',
+    transform: 'translate3d(0, 0, 0)',
+  },
 });
 
 /**
@@ -225,6 +260,7 @@ export function PostView({
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
+  const [titlePalette, setTitlePalette] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const dateString = useMemo(
@@ -279,6 +315,7 @@ export function PostView({
     [post.metadata.cover_image],
   );
   const [effectiveCoverImageUrl, setEffectiveCoverImageUrl] = useState(transformedCoverImageUrl);
+  const hasThinkingTitleFx = postType === 'lore' && post.metadata.hasThinkingTitle;
   const dialogueColor = useMemo(
     () =>
       ttsPrimaryColor ? lightenHexColor(ttsPrimaryColor, 0.18) : 'var(--joy-palette-primary-400)',
@@ -312,6 +349,28 @@ export function PostView({
     () => hexToRgba(ttsPrimaryColor, 0.25, 'rgba(59, 130, 246, 0.2)'),
     [ttsPrimaryColor],
   );
+  const thinkingTitleTintColor = useMemo(() => titlePalette.primary, [titlePalette.primary]);
+  const thinkingTitleGradient = useMemo(
+    () =>
+      `linear-gradient(118deg, ${thinkingTitleTintColor} 0%, ${WEAVE_BLUE} 20%, rgba(255,255,255,0.98) 36%, ${thinkingTitleTintColor} 56%, ${WEAVE_BLUE} 78%, ${thinkingTitleTintColor} 100%)`,
+    [thinkingTitleTintColor],
+  );
+  const thinkingTitleGlow = useMemo(
+    () => hexToRgba(thinkingTitleTintColor, 0.6, 'rgba(125, 211, 252, 0.6)'),
+    [thinkingTitleTintColor],
+  );
+  const thinkingTitleBlueGlow = useMemo(
+    () => hexToRgba(WEAVE_BLUE, 0.34, 'rgba(186, 230, 253, 0.34)'),
+    [],
+  );
+  const thinkingTitleRedLayerColor = useMemo(
+    () => hexToRgba('#fb7185', 0.9, 'rgba(251, 113, 133, 0.9)'),
+    [],
+  );
+  const thinkingTitleCyanLayerColor = useMemo(
+    () => hexToRgba(WEAVE_BLUE, 0.92, 'rgba(186, 230, 253, 0.92)'),
+    [],
+  );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
 
   const markdownComponents = useMemo<Components>(
@@ -335,8 +394,8 @@ export function PostView({
           };
 
           return (
-            <Card
-              variant="plain"
+            <Box
+              component="span"
               sx={{
                 p: 0,
                 my: 4,
@@ -349,16 +408,11 @@ export function PostView({
                 alignItems: 'center',
                 justifyContent: 'center',
                 py: { xs: 3, sm: 4 },
-                '--Card-padding': '0px',
-                '&:hover, &:focus-within': {
-                  bgcolor: 'black',
-                  borderColor: 'transparent',
-                  boxShadow: 'none',
-                  outline: 'none',
-                },
+                width: '100%',
               }}
             >
               <Box
+                component="span"
                 sx={{
                   position: 'absolute',
                   top: 0,
@@ -415,7 +469,7 @@ export function PostView({
                   animation: 'none',
                 }}
               />
-            </Card>
+            </Box>
           );
         }
 
@@ -430,6 +484,29 @@ export function PostView({
   useEffect(() => {
     setEffectiveCoverImageUrl(transformedCoverImageUrl);
   }, [transformedCoverImageUrl]);
+
+  useEffect(() => {
+    if (!hasThinkingTitleFx) {
+      setTitlePalette(DEFAULT_ART_PALETTE);
+      return;
+    }
+
+    let active = true;
+
+    const syncTitlePalette = async () => {
+      const extracted = await extractPaletteFromImage(effectiveCoverImageUrl, {
+        fallback: DEFAULT_ART_PALETTE,
+      });
+      if (!active) return;
+      setTitlePalette(extracted);
+    };
+
+    void syncTitlePalette();
+
+    return () => {
+      active = false;
+    };
+  }, [effectiveCoverImageUrl, hasThinkingTitleFx]);
 
   useEffect(() => {
     if (disableDynamicBackdrop) return;
@@ -548,12 +625,117 @@ export function PostView({
               fontWeight: 800,
               mb: 3,
               lineHeight: 1.1,
-              background: 'linear-gradient(to right, #fff, #a78bfa)', // White to Purple gradient text
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              overflowWrap: 'anywhere',
+              ...(hasThinkingTitleFx
+                ? {
+                    color: 'text.primary',
+                  }
+                : {
+                    background: 'linear-gradient(to right, #fff, #a78bfa)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }),
             }}
           >
-            {post.metadata.title}
+            {hasThinkingTitleFx ? (
+              <Box
+                component="span"
+                sx={{
+                  '--PostView-thinking-glow': thinkingTitleGlow,
+                  position: 'relative',
+                  display: 'inline-block',
+                  maxWidth: '100%',
+                  isolation: 'isolate',
+                  animation: `${thinkingTitleIntroKeyframes} 1.5s ease-out both`,
+                  '@media (prefers-reduced-motion: reduce)': {
+                    animation: 'none',
+                    '& [data-thinking-title-layer="true"]': {
+                      display: 'none',
+                    },
+                    '& [data-thinking-title-main="true"]': {
+                      animation: 'none',
+                      backgroundPosition: '45% 50%',
+                      textShadow: `0 0 16px ${thinkingTitleBlueGlow}`,
+                    },
+                  },
+                }}
+              >
+                <Box
+                  component="span"
+                  aria-hidden="true"
+                  data-thinking-title-layer="true"
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                    opacity: 0.24,
+                    mixBlendMode: 'screen',
+                    transform: 'translate(0.028em, -0.014em)',
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      display: 'block',
+                      color: thinkingTitleRedLayerColor,
+                      animation: `${glitchFlickerKeyframes} 7.6s steps(1, end) infinite`,
+                      animationDelay: '-0.8s',
+                    }}
+                  >
+                    {post.metadata.title}
+                  </Box>
+                </Box>
+                <Box
+                  component="span"
+                  aria-hidden="true"
+                  data-thinking-title-layer="true"
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                    opacity: 0.28,
+                    mixBlendMode: 'screen',
+                    transform: 'translate(-0.024em, 0.016em)',
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      display: 'block',
+                      color: thinkingTitleCyanLayerColor,
+                      animation: `${glitchFlickerKeyframes} 9.4s steps(1, end) infinite`,
+                      animationDelay: '-3.2s',
+                    }}
+                  >
+                    {post.metadata.title}
+                  </Box>
+                </Box>
+                <Box
+                  component="span"
+                  data-thinking-title-main="true"
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    display: 'block',
+                    color: thinkingTitleTintColor,
+                    background: thinkingTitleGradient,
+                    backgroundSize: '240% 100%',
+                    backgroundPosition: '160% 50%',
+                    WebkitBackgroundClip: 'text',
+                    backgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    filter: `drop-shadow(0 0 14px ${thinkingTitleBlueGlow})`,
+                    animation: `${thinkingPulseKeyframes} 10.5s ease-in-out infinite`,
+                  }}
+                >
+                  {post.metadata.title}
+                </Box>
+              </Box>
+            ) : (
+              post.metadata.title
+            )}
           </Typography>
 
           {/* Metadata Row */}
@@ -954,6 +1136,7 @@ export function PostView({
                 textWrap: 'pretty',
               },
               '& [data-thinking="block"]': {
+                display: 'block',
                 textAlign: 'center',
                 borderLeft: '4px solid',
                 borderColor: 'primary.500',

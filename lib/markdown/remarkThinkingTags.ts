@@ -7,7 +7,7 @@ const CLOSING_THINKING_TAG = /^<\/thinking\s*>$/i;
 interface ThinkingNode extends Parent {
   type: 'thinking';
   data: {
-    hName: 'span' | 'div';
+    hName: 'span';
     hProperties: {
       'data-thinking': 'inline' | 'block';
     };
@@ -35,7 +35,7 @@ function createThinkingNode(variant: 'inline' | 'block', children: Content[]): T
   return {
     type: 'thinking',
     data: {
-      hName: variant === 'inline' ? 'span' : 'div',
+      hName: 'span',
       hProperties: {
         'data-thinking': variant,
       },

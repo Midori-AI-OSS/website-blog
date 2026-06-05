@@ -53,29 +53,37 @@ export function BlogCardExample() {
     // In real app: navigate to /blog/[slug]
   };
 
+  const firstPost = examplePosts[0];
+  const secondPost = examplePosts[1];
+  const thirdPost = examplePosts[2];
+
+  if (!firstPost || !secondPost || !thirdPost) {
+    return null;
+  }
+
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
       <h1>Blog Posts</h1>
 
       {/* Example 1: Card with href (recommended for proper linking) */}
       <BlogCard
-        post={examplePosts?.[0]}
+        post={firstPost}
         href="/blog/2026-01-17"
-        onClick={() => handlePostClick(examplePosts?.[0])}
+        onClick={() => handlePostClick(firstPost)}
       />
 
       {/* Example 2: Card with variant and href */}
       <BlogCard
-        post={examplePosts?.[1]}
+        post={secondPost}
         href="/blog/2026-01-15"
-        onClick={() => handlePostClick(examplePosts?.[1])}
+        onClick={() => handlePostClick(secondPost)}
         variant="outlined"
       />
 
       {/* Example 3: Card with onClick only (legacy mode) */}
       <BlogCard
-        post={examplePosts?.[2]}
-        onClick={() => handlePostClick(examplePosts?.[2])}
+        post={thirdPost}
+        onClick={() => handlePostClick(thirdPost)}
         color="primary"
         variant="soft"
       />

@@ -395,6 +395,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                     <BlogCard
                       key={post.filename}
                       post={cardPost}
+                      postType="lore"
                       onClick={() => router.push(`/lore/${getPostSlug(post)}`)}
                       variant="outlined"
                     />

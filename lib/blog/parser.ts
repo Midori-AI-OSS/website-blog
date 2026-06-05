@@ -10,6 +10,7 @@ import matter from 'gray-matter';
  */
 export interface PostMetadata {
   title: string;
+  hasThinkingTitle?: boolean;
   summary?: string;
   tags?: string[];
   cover_image?: string;
@@ -145,6 +146,35 @@ function parseFrontMatter(fileContent: string) {
   return matter(fileContent, { delimiters });
 }
 
+const THINKING_TITLE_SPAN_REGEX = /<thinking\b[^>]*>[\s\S]*?<\/thinking>/i;
+const THINKING_TITLE_TAG_REGEX = /<\/?thinking\b[^>]*>/gi;
+
+function sanitizeTitle(
+  title: string,
+): Pick<PostMetadata, 'title'> & { hasThinkingTitle?: boolean } {
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) {
+    return { title: '' };
+  }
+
+  if (!THINKING_TITLE_SPAN_REGEX.test(trimmedTitle)) {
+    return { title: trimmedTitle };
+  }
+
+  const strippedTitle = trimmedTitle
+    .replace(THINKING_TITLE_TAG_REGEX, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!strippedTitle) {
+    return { title: '' };
+  }
+
+  return {
+    title: strippedTitle,
+    hasThinkingTitle: true,
+  };
+}
+
 /**
  * Sanitize and normalize metadata values
  * @param data - Raw metadata object
@@ -154,7 +184,13 @@ function sanitizeMetadata(data: Record<string, unknown>): Partial<PostMetadata> 
   const sanitized: Partial<PostMetadata> = {};
 
   if (typeof data.title === 'string') {
-    sanitized.title = data.title.trim();
+    const titleResult = sanitizeTitle(data.title);
+    if (titleResult.title) {
+      sanitized.title = titleResult.title;
+    }
+    if (titleResult.hasThinkingTitle) {
+      sanitized.hasThinkingTitle = true;
+    }
   }
 
   if (typeof data.summary === 'string') {
@@ -245,6 +281,7 @@ export function parsePost(filename: string, fileContent: string): ParsedPost {
     const sanitizedData = sanitizeMetadata(data);
     const metadata: PostMetadata = {
       title: sanitizedData.title || extractTitleFromFilename(filename),
+      hasThinkingTitle: sanitizedData.hasThinkingTitle,
       summary: sanitizedData.summary,
       tags: sanitizedData.tags || [],
       cover_image: sanitizedData.cover_image,
@@ -306,6 +343,7 @@ export function extractMetadata(filename: string, fileContent: string): PostMeta
     const sanitizedData = sanitizeMetadata(data);
     return {
       title: sanitizedData.title || extractTitleFromFilename(filename),
+      hasThinkingTitle: sanitizedData.hasThinkingTitle,
       summary: sanitizedData.summary,
       tags: sanitizedData.tags || [],
       cover_image: sanitizedData.cover_image,
