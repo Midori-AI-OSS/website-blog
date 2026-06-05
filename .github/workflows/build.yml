@@ -24,7 +24,7 @@ jobs:
         run: |
           PORT=3000 timeout 120 bun run start &
           SERVER_PID=$!
-          trap 'kill $SERVER_PID 2>/dev/null' EXIT
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
           FAILED=0
           READY=0
           for i in $(seq 1 30); do
