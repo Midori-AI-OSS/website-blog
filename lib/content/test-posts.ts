@@ -160,7 +160,12 @@ export const loreRendererTestPost = parsePost(
 if (
   loreRendererTestPost.metadata.title !==
     'W.E.A.V.E. System Log: Sangre y Lux Residua, Deeper Contact: Under Evaluation' ||
-  !loreRendererTestPost.metadata.hasThinkingTitle
+  !loreRendererTestPost.metadata.hasThinkingTitle ||
+  JSON.stringify(loreRendererTestPost.metadata.titleSegments) !==
+    JSON.stringify([
+      { text: 'W.E.A.V.E. System Log: Sangre y Lux Residua,', isThinking: false },
+      { text: 'Deeper Contact: Under Evaluation', isThinking: true },
+    ])
 ) {
   throw new Error('Lore renderer test post thinking title parsing failed');
 }

@@ -108,6 +108,10 @@ Content`;
         'W.E.A.V.E. System Log: Sangre y Lux Residua, Deeper Contact: Under Evaluation',
       );
       expect(result.metadata.hasThinkingTitle).toBe(true);
+      expect(result.metadata.titleSegments).toEqual([
+        { text: 'W.E.A.V.E. System Log: Sangre y Lux Residua,', isThinking: false },
+        { text: 'Deeper Contact: Under Evaluation', isThinking: true },
+      ]);
     });
 
     test('falls back to the filename title when thinking tags strip the title empty', () => {
@@ -282,6 +286,10 @@ Content`;
 
       expect(metadata.title).toBe('Signal Trace Under Review');
       expect(metadata.hasThinkingTitle).toBe(true);
+      expect(metadata.titleSegments).toEqual([
+        { text: 'Signal Trace', isThinking: false },
+        { text: 'Under Review', isThinking: true },
+      ]);
     });
 
     test('returns defaults on error', () => {

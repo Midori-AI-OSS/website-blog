@@ -26,6 +26,7 @@ import remarkGfm from 'remark-gfm';
 import { AMBIENT_PULSE_KEYFRAMES, AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import { SpeciesCareCardEmbed } from '@/components/species-care/SpeciesCareCardEmbed';
+import { shouldInsertSpaceBetweenTitleSegments } from '@/lib/blog/titleSegments';
 import {
   POST_COVER_PLACEHOLDER_IMAGE_URL,
   resolvePostCoverImageUrl,
@@ -49,6 +50,7 @@ import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
 const WEAVE_BLUE = '#bae6fd';
+const THINKING_TITLE_CHROMATIC_SHADOW = '1px 0 rgba(251,113,133,0.4), -1px 0 rgba(186,230,253,0.4)';
 
 const shimmerKeyframes = keyframes({
   '0%': { backgroundPosition: '-1000px 0' },
@@ -59,12 +61,13 @@ const thinkingPulseKeyframes = keyframes({
   '0%, 100%': {
     opacity: 0.92,
     backgroundPosition: '160% 50%',
-    textShadow: '0 0 0 transparent',
+    textShadow: 'var(--PostView-thinking-static-shadow, 0 0 0 transparent)',
   },
   '50%': {
     opacity: 1,
     backgroundPosition: '20% 50%',
-    textShadow: '0 0 18px var(--PostView-thinking-glow)',
+    textShadow:
+      'var(--PostView-thinking-static-shadow, 0 0 0 transparent), 0 0 18px var(--PostView-thinking-glow)',
   },
 });
 
@@ -86,27 +89,22 @@ const glitchFlickerKeyframes = keyframes({
 const thinkingTitleIntroKeyframes = keyframes({
   '0%': {
     opacity: 0,
-    filter: 'blur(10px)',
     transform: 'translate3d(-8px, 0, 0)',
   },
   '14%': {
     opacity: 1,
-    filter: 'blur(1.2px)',
     transform: 'translate3d(5px, -1px, 0)',
   },
   '22%': {
     opacity: 0.68,
-    filter: 'blur(2px)',
     transform: 'translate3d(-4px, 1px, 0)',
   },
   '36%': {
     opacity: 1,
-    filter: 'blur(0.4px)',
     transform: 'translate3d(2px, 0, 0)',
   },
   '100%': {
     opacity: 1,
-    filter: 'blur(0)',
     transform: 'translate3d(0, 0, 0)',
   },
 });
@@ -363,15 +361,75 @@ export function PostView({
     () => hexToRgba(WEAVE_BLUE, 0.34, 'rgba(186, 230, 253, 0.34)'),
     [],
   );
-  const thinkingTitleRedLayerColor = useMemo(
-    () => hexToRgba('#fb7185', 0.9, 'rgba(251, 113, 133, 0.9)'),
-    [],
-  );
-  const thinkingTitleCyanLayerColor = useMemo(
-    () => hexToRgba(WEAVE_BLUE, 0.92, 'rgba(186, 230, 253, 0.92)'),
-    [],
-  );
   const hasLoreStoryNavigation = postType === 'lore' && (previousStory || nextStory);
+  const renderedThinkingTitle = useMemo(() => {
+    if (!hasThinkingTitleFx || !post.metadata.titleSegments) {
+      return null;
+    }
+
+    let segmentOffset = 0;
+    let previousSegmentText: string | null = null;
+
+    return post.metadata.titleSegments.map((segment) => {
+      const needsLeadingSpace = shouldInsertSpaceBetweenTitleSegments(
+        previousSegmentText,
+        segment.text,
+      );
+      const segmentKey = `${segment.isThinking ? 'thinking' : 'plain'}-${segmentOffset}-${segment.text}`;
+      segmentOffset += segment.text.length + (needsLeadingSpace ? 1 : 0);
+      previousSegmentText = segment.text;
+
+      if (segment.isThinking) {
+        return (
+          <Box
+            component="span"
+            key={segmentKey}
+            data-thinking-title-intro="true"
+            sx={{
+              display: 'inline-block',
+              maxWidth: '100%',
+              animation: `${thinkingTitleIntroKeyframes} 1.5s ease-out both`,
+            }}
+          >
+            {needsLeadingSpace ? ' ' : ''}
+            <Box
+              component="span"
+              data-thinking-title="true"
+              sx={{
+                '--PostView-thinking-glow': thinkingTitleGlow,
+                '--PostView-thinking-static-shadow': THINKING_TITLE_CHROMATIC_SHADOW,
+                display: 'inline-block',
+                background: thinkingTitleGradient,
+                backgroundSize: '240% 100%',
+                backgroundPosition: '160% 50%',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: THINKING_TITLE_CHROMATIC_SHADOW,
+                filter: `drop-shadow(0 0 14px ${thinkingTitleBlueGlow})`,
+                animation: `${thinkingPulseKeyframes} 10.5s ease-in-out infinite, ${glitchFlickerKeyframes} 8s steps(1, end) infinite`,
+              }}
+            >
+              {segment.text}
+            </Box>
+          </Box>
+        );
+      }
+
+      return (
+        <Box component="span" key={segmentKey}>
+          {needsLeadingSpace ? ' ' : ''}
+          {segment.text}
+        </Box>
+      );
+    });
+  }, [
+    hasThinkingTitleFx,
+    post.metadata.titleSegments,
+    thinkingTitleBlueGlow,
+    thinkingTitleGlow,
+    thinkingTitleGradient,
+  ]);
 
   const markdownComponents = useMemo<Components>(
     () => ({
@@ -626,116 +684,25 @@ export function PostView({
               mb: 3,
               lineHeight: 1.1,
               overflowWrap: 'anywhere',
-              ...(hasThinkingTitleFx
-                ? {
-                    color: 'text.primary',
-                  }
-                : {
-                    background: 'linear-gradient(to right, #fff, #a78bfa)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }),
+              background: 'linear-gradient(to right, #fff, #a78bfa)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              ...(hasThinkingTitleFx && {
+                '@media (prefers-reduced-motion: reduce)': {
+                  '& [data-thinking-title-intro="true"]': {
+                    animation: 'none',
+                  },
+                  '& [data-thinking-title="true"]': {
+                    animation: 'none',
+                    backgroundPosition: '45% 50%',
+                    textShadow: THINKING_TITLE_CHROMATIC_SHADOW,
+                  },
+                },
+              }),
             }}
           >
-            {hasThinkingTitleFx ? (
-              <Box
-                component="span"
-                sx={{
-                  '--PostView-thinking-glow': thinkingTitleGlow,
-                  position: 'relative',
-                  display: 'inline-block',
-                  maxWidth: '100%',
-                  isolation: 'isolate',
-                  animation: `${thinkingTitleIntroKeyframes} 1.5s ease-out both`,
-                  '@media (prefers-reduced-motion: reduce)': {
-                    animation: 'none',
-                    '& [data-thinking-title-layer="true"]': {
-                      display: 'none',
-                    },
-                    '& [data-thinking-title-main="true"]': {
-                      animation: 'none',
-                      backgroundPosition: '45% 50%',
-                      textShadow: `0 0 16px ${thinkingTitleBlueGlow}`,
-                    },
-                  },
-                }}
-              >
-                <Box
-                  component="span"
-                  aria-hidden="true"
-                  data-thinking-title-layer="true"
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 0,
-                    pointerEvents: 'none',
-                    opacity: 0.24,
-                    mixBlendMode: 'screen',
-                    transform: 'translate(0.028em, -0.014em)',
-                  }}
-                >
-                  <Box
-                    component="span"
-                    sx={{
-                      display: 'block',
-                      color: thinkingTitleRedLayerColor,
-                      animation: `${glitchFlickerKeyframes} 7.6s steps(1, end) infinite`,
-                      animationDelay: '-0.8s',
-                    }}
-                  >
-                    {post.metadata.title}
-                  </Box>
-                </Box>
-                <Box
-                  component="span"
-                  aria-hidden="true"
-                  data-thinking-title-layer="true"
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 0,
-                    pointerEvents: 'none',
-                    opacity: 0.28,
-                    mixBlendMode: 'screen',
-                    transform: 'translate(-0.024em, 0.016em)',
-                  }}
-                >
-                  <Box
-                    component="span"
-                    sx={{
-                      display: 'block',
-                      color: thinkingTitleCyanLayerColor,
-                      animation: `${glitchFlickerKeyframes} 9.4s steps(1, end) infinite`,
-                      animationDelay: '-3.2s',
-                    }}
-                  >
-                    {post.metadata.title}
-                  </Box>
-                </Box>
-                <Box
-                  component="span"
-                  data-thinking-title-main="true"
-                  sx={{
-                    position: 'relative',
-                    zIndex: 1,
-                    display: 'block',
-                    color: thinkingTitleTintColor,
-                    background: thinkingTitleGradient,
-                    backgroundSize: '240% 100%',
-                    backgroundPosition: '160% 50%',
-                    WebkitBackgroundClip: 'text',
-                    backgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    filter: `drop-shadow(0 0 14px ${thinkingTitleBlueGlow})`,
-                    animation: `${thinkingPulseKeyframes} 10.5s ease-in-out infinite`,
-                  }}
-                >
-                  {post.metadata.title}
-                </Box>
-              </Box>
-            ) : (
-              post.metadata.title
-            )}
+            {renderedThinkingTitle ? renderedThinkingTitle : post.metadata.title}
           </Typography>
 
           {/* Metadata Row */}

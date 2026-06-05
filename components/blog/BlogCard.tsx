@@ -11,6 +11,7 @@ import Typography from '@mui/joy/Typography';
 import { ArrowRight, Calendar, Tag, User } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
+import { shouldInsertSpaceBetweenTitleSegments } from '@/lib/blog/titleSegments';
 import { POST_COVER_PLACEHOLDER_IMAGE_URL, resolvePostCoverImageUrl } from '@/lib/content/imageUrl';
 import {
   DEFAULT_ART_PALETTE,
@@ -136,6 +137,54 @@ export const BlogCard = React.memo(
         `linear-gradient(110deg, ${palette.primary} 0%, ${toRgba(WEAVE_BLUE, 0.92)} 34%, rgba(255,255,255,0.96) 52%, ${palette.primary} 72%, ${WEAVE_BLUE} 100%)`,
       [palette.primary],
     );
+    const renderedSegmentedTitle = React.useMemo(() => {
+      if (!isThinkingLoreCard || !metadata.titleSegments) {
+        return null;
+      }
+
+      let segmentOffset = 0;
+      let previousSegmentText: string | null = null;
+
+      return metadata.titleSegments.map((segment) => {
+        const needsLeadingSpace = shouldInsertSpaceBetweenTitleSegments(
+          previousSegmentText,
+          segment.text,
+        );
+        const segmentKey = `${segment.isThinking ? 'thinking' : 'plain'}-${segmentOffset}-${segment.text}`;
+        segmentOffset += segment.text.length + (needsLeadingSpace ? 1 : 0);
+        previousSegmentText = segment.text;
+
+        if (segment.isThinking) {
+          return (
+            <Box
+              component="span"
+              key={segmentKey}
+              data-thinking-card-title="true"
+              sx={{
+                display: 'inline',
+                background: thinkingTitleGradient,
+                backgroundSize: '200% 100%',
+                backgroundPosition: '0% 50%',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                transition: 'background-position 0.9s ease',
+              }}
+            >
+              {needsLeadingSpace ? ' ' : ''}
+              {segment.text}
+            </Box>
+          );
+        }
+
+        return (
+          <Box component="span" key={segmentKey}>
+            {needsLeadingSpace ? ' ' : ''}
+            {segment.text}
+          </Box>
+        );
+      });
+    }, [isThinkingLoreCard, metadata.titleSegments, thinkingTitleGradient]);
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
       if (event.key === 'Enter' || event.key === ' ') {
@@ -314,23 +363,29 @@ export const BlogCard = React.memo(
               >
                 <Typography
                   level="title-md"
-                  data-thinking-card-title={isThinkingLoreCard ? 'true' : undefined}
+                  data-thinking-card-title={
+                    isThinkingLoreCard && !metadata.titleSegments ? 'true' : undefined
+                  }
                   sx={{
-                    color: isThinkingLoreCard ? palette.primary : 'text.primary',
+                    color:
+                      isThinkingLoreCard && !metadata.titleSegments
+                        ? palette.primary
+                        : 'text.primary',
                     fontWeight: 600,
                     lineHeight: 1.2,
-                    ...(isThinkingLoreCard && {
-                      background: thinkingTitleGradient,
-                      backgroundSize: '200% 100%',
-                      backgroundPosition: '0% 50%',
-                      WebkitBackgroundClip: 'text',
-                      backgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      transition: 'background-position 0.9s ease',
-                    }),
+                    ...(isThinkingLoreCard &&
+                      !metadata.titleSegments && {
+                        background: thinkingTitleGradient,
+                        backgroundSize: '200% 100%',
+                        backgroundPosition: '0% 50%',
+                        WebkitBackgroundClip: 'text',
+                        backgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        transition: 'background-position 0.9s ease',
+                      }),
                   }}
                 >
-                  {metadata.title}
+                  {renderedSegmentedTitle ?? metadata.title}
                 </Typography>
                 {metadata.tags && metadata.tags.length > 0 && (
                   <Chip

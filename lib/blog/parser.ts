@@ -4,13 +4,20 @@
  */
 
 import matter from 'gray-matter';
+import { joinTitleSegments } from './titleSegments';
 
 /**
  * Post metadata structure extracted from front matter
  */
+export interface TitleSegment {
+  text: string;
+  isThinking: boolean;
+}
+
 export interface PostMetadata {
   title: string;
   hasThinkingTitle?: boolean;
+  titleSegments?: TitleSegment[];
   summary?: string;
   tags?: string[];
   cover_image?: string;
@@ -146,32 +153,62 @@ function parseFrontMatter(fileContent: string) {
   return matter(fileContent, { delimiters });
 }
 
-const THINKING_TITLE_SPAN_REGEX = /<thinking\b[^>]*>[\s\S]*?<\/thinking>/i;
-const THINKING_TITLE_TAG_REGEX = /<\/?thinking\b[^>]*>/gi;
+const THINKING_TITLE_SPAN_REGEX = /<thinking\b[^>]*>([\s\S]*?)<\/thinking>/gi;
+
+function normalizeTitleSegmentText(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
 
 function sanitizeTitle(
   title: string,
-): Pick<PostMetadata, 'title'> & { hasThinkingTitle?: boolean } {
+): Pick<PostMetadata, 'title' | 'titleSegments'> & { hasThinkingTitle?: boolean } {
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {
     return { title: '' };
   }
 
-  if (!THINKING_TITLE_SPAN_REGEX.test(trimmedTitle)) {
+  const matches = Array.from(trimmedTitle.matchAll(new RegExp(THINKING_TITLE_SPAN_REGEX)));
+  if (matches.length === 0) {
     return { title: trimmedTitle };
   }
 
-  const strippedTitle = trimmedTitle
-    .replace(THINKING_TITLE_TAG_REGEX, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const titleSegments: TitleSegment[] = [];
+  let cursor = 0;
+
+  for (const match of matches) {
+    const matchText = match[0] ?? '';
+    const matchIndex = match.index ?? cursor;
+    const leadingText = normalizeTitleSegmentText(trimmedTitle.slice(cursor, matchIndex));
+    if (leadingText) {
+      titleSegments.push({ text: leadingText, isThinking: false });
+    }
+
+    const thinkingText = normalizeTitleSegmentText(match[1] ?? '');
+    if (thinkingText) {
+      titleSegments.push({ text: thinkingText, isThinking: true });
+    }
+
+    cursor = matchIndex + matchText.length;
+  }
+
+  const trailingText = normalizeTitleSegmentText(trimmedTitle.slice(cursor));
+  if (trailingText) {
+    titleSegments.push({ text: trailingText, isThinking: false });
+  }
+
+  const strippedTitle = joinTitleSegments(titleSegments);
   if (!strippedTitle) {
     return { title: '' };
+  }
+
+  if (!titleSegments.some((segment) => segment.isThinking)) {
+    return { title: strippedTitle };
   }
 
   return {
     title: strippedTitle,
     hasThinkingTitle: true,
+    titleSegments,
   };
 }
 
@@ -190,6 +227,7 @@ function sanitizeMetadata(data: Record<string, unknown>): Partial<PostMetadata> 
     }
     if (titleResult.hasThinkingTitle) {
       sanitized.hasThinkingTitle = true;
+      sanitized.titleSegments = titleResult.titleSegments;
     }
   }
 
@@ -282,6 +320,7 @@ export function parsePost(filename: string, fileContent: string): ParsedPost {
     const metadata: PostMetadata = {
       title: sanitizedData.title || extractTitleFromFilename(filename),
       hasThinkingTitle: sanitizedData.hasThinkingTitle,
+      titleSegments: sanitizedData.titleSegments,
       summary: sanitizedData.summary,
       tags: sanitizedData.tags || [],
       cover_image: sanitizedData.cover_image,
@@ -344,6 +383,7 @@ export function extractMetadata(filename: string, fileContent: string): PostMeta
     return {
       title: sanitizedData.title || extractTitleFromFilename(filename),
       hasThinkingTitle: sanitizedData.hasThinkingTitle,
+      titleSegments: sanitizedData.titleSegments,
       summary: sanitizedData.summary,
       tags: sanitizedData.tags || [],
       cover_image: sanitizedData.cover_image,
