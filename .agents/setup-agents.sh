@@ -66,7 +66,7 @@ run_setup() {
 
   # Install Python TTS dependencies
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  cd "${SCRIPT_DIR}/../tts" && uv sync && cd "${SCRIPT_DIR}/.."
+  cd "${SCRIPT_DIR}/../tts" && uv sync --seed && cd "${SCRIPT_DIR}/.."
 
   bunx playwright install chromium
 
