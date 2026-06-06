@@ -64,11 +64,6 @@ run_setup() {
 
   bun install
 
-  # Install uv if not available
-  if ! command -v uv >/dev/null 2>&1; then
-    pip install uv
-  fi
-
   # Install Python TTS dependencies
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   cd "${SCRIPT_DIR}/../tts" && uv sync && cd "${SCRIPT_DIR}/.."
