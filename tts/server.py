@@ -100,7 +100,7 @@ def _strip_standard_disclaimer(text: str) -> str:
 def _clean_text(text: str) -> str:
     text = text.replace("\r\n", "\n")
     text = _strip_standard_disclaimer(text)
-    text = re.sub(r"\{\{image:[^}]*\}\}", "", text)
+    text = re.sub(r"\{\{[^}]*\}\}", "", text)
     text = re.sub(r"!\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"\*{1,3}([^*]+)\*{1,3}", r"\1", text)
