@@ -64,6 +64,15 @@ run_setup() {
 
   bun install
 
+  # Install uv if not available
+  if ! command -v uv >/dev/null 2>&1; then
+    pip install uv
+  fi
+
+  # Install Python TTS dependencies
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  cd "${SCRIPT_DIR}/../tts" && uv sync && cd "${SCRIPT_DIR}/.."
+
   bunx playwright install chromium
 
   PLAYWRIGHT_CHROME="$(find "${HOME}/.cache/ms-playwright" -type f -path '*/chrome-linux64/chrome' | sort | tail -n 1)"
@@ -82,6 +91,11 @@ run_setup() {
       exit 0
     else
       nohup bun run dev >"${DEV_LOG}" 2>&1 &
+    fi
+
+    # Start TTS server if not already running
+    if ! ss -ltn 2>/dev/null | grep -q ':8888 '; then
+      cd "${SCRIPT_DIR}/../tts" && nohup uv run uvicorn server:app --host 127.0.0.1 --port 8888 >/tmp/tts-server.log 2>&1 &
     fi
   fi
 }
