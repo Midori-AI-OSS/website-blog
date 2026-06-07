@@ -3,7 +3,14 @@
 import { Box, Stack, Typography } from '@mui/joy';
 import { useEffect, useRef, useState } from 'react';
 import type { ExtractedPalette } from '@/lib/theme/artPalette';
-import { DEFAULT_ART_PALETTE, extractPaletteFromImage } from '@/lib/theme/artPalette';
+import {
+  DEFAULT_ART_PALETTE,
+  extractPaletteFromImage,
+  hexToRgb,
+  hslToRgb,
+  rgbToHex,
+  rgbToHsl,
+} from '@/lib/theme/artPalette';
 
 export interface GamePickerGame {
   slug: string;
@@ -13,6 +20,16 @@ export interface GamePickerGame {
 
 interface GamePickerProps {
   games: GamePickerGame[];
+}
+
+function ensureReadableBackground(hex: string): string {
+  const [r, g, b] = hexToRgb(hex);
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  if (luminance <= 150) return hex;
+  // Too light — darken by reducing HSL lightness to 0.35
+  const [h, s] = rgbToHsl(r, g, b);
+  const [dr, dg, db] = hslToRgb(h, s, 0.35);
+  return rgbToHex(dr, dg, db);
 }
 
 export function GamePicker({ games }: GamePickerProps) {
@@ -27,7 +44,7 @@ export function GamePicker({ games }: GamePickerProps) {
       if (!game.coverUrl) continue;
 
       extractPaletteFromImage(game.coverUrl).then((palette: ExtractedPalette) => {
-        setColors((prev) => ({ ...prev, [game.slug]: palette.primary }));
+        setColors((prev) => ({ ...prev, [game.slug]: ensureReadableBackground(palette.primary) }));
       });
     }
   }, [games]);
@@ -140,6 +157,7 @@ export function GamePicker({ games }: GamePickerProps) {
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
+                  textShadow: '0 0 3px rgba(0,0,0,0.6)',
                 }}
               >
                 {game.title}

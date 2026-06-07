@@ -26,7 +26,7 @@ export function rgbToHex(r: number, g: number, b: number): string {
   );
 }
 
-function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+export function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
   const rn = r / 255;
   const gn = g / 255;
   const bn = b / 255;
@@ -48,7 +48,7 @@ function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
   return [h, s, l];
 }
 
-function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+export function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   if (s === 0) {
     const value = Math.round(l * 255);
     return [value, value, value];
