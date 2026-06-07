@@ -174,7 +174,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
     return gameGroups.map((group) => {
       const sortMode = sortByGame[group.game.slug] ?? 'story_order_desc';
       const selectedCharacter = characterByGame[group.game.slug] ?? '';
-      const pageSize = pageSizeByGame[group.game.slug] ?? Infinity;
+      const pageSize = pageSizeByGame[group.game.slug] ?? 10;
       const currentPage = currentPageByGame[group.game.slug] ?? 1;
       const sortedPosts = sortPosts(group.posts, sortMode);
 
@@ -219,6 +219,23 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
       prevPageByGame.current[group.game.slug] = group.currentPage;
     }
   }, [groupsWithUiState]);
+
+  // Hydrate page sizes from localStorage on mount
+  useEffect(() => {
+    const hydrated: Record<string, number> = {};
+    for (const group of gameGroups) {
+      const stored = localStorage.getItem(`lore-page-size-${group.game.slug}`);
+      if (stored !== null) {
+        const parsed = Number(stored);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          hydrated[group.game.slug] = parsed;
+        }
+      }
+    }
+    if (Object.keys(hydrated).length > 0) {
+      setPageSizeByGame((current) => ({ ...current, ...hydrated }));
+    }
+  }, [gameGroups]);
 
   if (groupsWithUiState.length === 0) {
     return (
@@ -378,6 +395,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                         value={group.pageSize}
                         onChange={(_event, value) => {
                           if (value === null) return;
+                          localStorage.setItem(`lore-page-size-${group.game.slug}`, String(value));
                           setPageSizeByGame((current) => ({
                             ...current,
                             [group.game.slug]: value,
