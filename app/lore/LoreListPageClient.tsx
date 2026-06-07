@@ -18,6 +18,8 @@ import { useMemo, useState } from 'react';
 
 import { AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { BlogCard } from '@/components/blog/BlogCard';
+import type { GamePickerGame } from '@/components/GamePicker';
+import { GamePicker } from '@/components/GamePicker';
 import type { ParsedPost } from '@/lib/blog/parser';
 import { transformPostImageUrl } from '@/lib/content/imageUrl';
 import type { LoreGameGroup } from '@/lib/lore/loader';
@@ -169,6 +171,14 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
     });
   }, [characterByGame, gameGroups, sortByGame]);
 
+  const pickerGames = useMemo<GamePickerGame[]>(() => {
+    return gameGroups.map((group) => ({
+      slug: group.game.slug,
+      title: group.game.title,
+      coverUrl: getGameCoverImage(group.game.coverImage, group.posts),
+    }));
+  }, [gameGroups]);
+
   if (groupsWithUiState.length === 0) {
     return (
       <Box
@@ -190,224 +200,227 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
   }
 
   return (
-    <Stack spacing={3}>
-      {groupsWithUiState.map((group) => {
-        const cover = getGameCoverImage(group.game.coverImage, group.posts);
-        const povLabel = toSentenceCase(group.game.fullStoryPov.replace(/-/g, ' '));
+    <>
+      <GamePicker games={pickerGames} />
+      <Stack spacing={3}>
+        {groupsWithUiState.map((group) => {
+          const cover = getGameCoverImage(group.game.coverImage, group.posts);
+          const povLabel = toSentenceCase(group.game.fullStoryPov.replace(/-/g, ' '));
 
-        return (
-          <Box
-            key={group.game.slug}
-            id={`game-${group.game.slug}`}
-            sx={{
-              p: { xs: 1.25, sm: 2.25 },
-              bgcolor: 'rgba(10, 12, 18, 0.72)',
-              scrollMarginTop: '80px',
-            }}
-          >
-            <Stack spacing={1.75} sx={{ minWidth: 0 }}>
-              <Stack
-                direction={{ xs: 'column', xl: 'row' }}
-                spacing={{ xs: 1.25, xl: 1.5 }}
-                alignItems={{ xs: 'stretch', xl: 'flex-start' }}
-              >
-                <Box sx={{ minWidth: 0, flex: 1 }}>
+          return (
+            <Box
+              key={group.game.slug}
+              id={`game-${group.game.slug}`}
+              sx={{
+                p: { xs: 1.25, sm: 2.25 },
+                bgcolor: 'rgba(10, 12, 18, 0.72)',
+                scrollMarginTop: '80px',
+              }}
+            >
+              <Stack spacing={1.75} sx={{ minWidth: 0 }}>
+                <Stack
+                  direction={{ xs: 'column', xl: 'row' }}
+                  spacing={{ xs: 1.25, xl: 1.5 }}
+                  alignItems={{ xs: 'stretch', xl: 'flex-start' }}
+                >
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      spacing={1}
+                      alignItems={{ xs: 'flex-start', sm: 'center' }}
+                    >
+                      <Typography
+                        level="h2"
+                        sx={{ fontSize: { xs: '1.5rem', sm: '1.85rem' }, lineHeight: 1.1 }}
+                      >
+                        {group.game.title}
+                      </Typography>
+                      <Chip size="sm" variant="soft" color="primary" sx={{ borderRadius: 0 }}>
+                        POV: {povLabel}
+                      </Chip>
+                    </Stack>
+
+                    <Typography
+                      level="body-md"
+                      sx={{
+                        mt: 1,
+                        color: 'text.secondary',
+                        fontSize: { xs: '1rem', sm: '1.03rem' },
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {group.game.summary}
+                    </Typography>
+                  </Box>
+
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}
                     spacing={1}
-                    alignItems={{ xs: 'flex-start', sm: 'center' }}
-                  >
-                    <Typography
-                      level="h2"
-                      sx={{ fontSize: { xs: '1.5rem', sm: '1.85rem' }, lineHeight: 1.1 }}
-                    >
-                      {group.game.title}
-                    </Typography>
-                    <Chip size="sm" variant="soft" color="primary" sx={{ borderRadius: 0 }}>
-                      POV: {povLabel}
-                    </Chip>
-                  </Stack>
-
-                  <Typography
-                    level="body-md"
+                    alignItems={{ xs: 'stretch', sm: 'center' }}
+                    justifyContent={{ sm: 'flex-end' }}
                     sx={{
-                      mt: 1,
-                      color: 'text.secondary',
-                      fontSize: { xs: '1rem', sm: '1.03rem' },
-                      lineHeight: 1.6,
+                      width: { xs: '100%', xl: 'auto' },
+                      ml: { xl: 'auto' },
+                      flexShrink: 0,
                     }}
                   >
-                    {group.game.summary}
-                  </Typography>
-                </Box>
-
-                <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
-                  spacing={1}
-                  alignItems={{ xs: 'stretch', sm: 'center' }}
-                  justifyContent={{ sm: 'flex-end' }}
-                  sx={{
-                    width: { xs: '100%', xl: 'auto' },
-                    ml: { xl: 'auto' },
-                    flexShrink: 0,
-                  }}
-                >
-                  <FormControl
-                    size="sm"
-                    sx={{ minWidth: { xs: '100%', sm: 250 }, flex: { sm: '0 0 250px' } }}
-                  >
-                    <Select
-                      value={group.sortMode}
-                      onChange={(_event, value) => {
-                        if (!value) return;
-                        setSortByGame((current) => ({
-                          ...current,
-                          [group.game.slug]: value,
-                        }));
-                      }}
-                      aria-label={`Sort ${group.game.title} stories`}
-                      sx={{
-                        minHeight: 44,
-                        borderRadius: 0,
-                        bgcolor: 'rgba(10, 12, 20, 0.82)',
-                      }}
+                    <FormControl
+                      size="sm"
+                      sx={{ minWidth: { xs: '100%', sm: 250 }, flex: { sm: '0 0 250px' } }}
                     >
-                      {SORT_OPTIONS.map((option) => (
-                        <Option key={option.value} value={option.value}>
-                          {option.label}
-                        </Option>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      <Select
+                        value={group.sortMode}
+                        onChange={(_event, value) => {
+                          if (!value) return;
+                          setSortByGame((current) => ({
+                            ...current,
+                            [group.game.slug]: value,
+                          }));
+                        }}
+                        aria-label={`Sort ${group.game.title} stories`}
+                        sx={{
+                          minHeight: 44,
+                          borderRadius: 0,
+                          bgcolor: 'rgba(10, 12, 20, 0.82)',
+                        }}
+                      >
+                        {SORT_OPTIONS.map((option) => (
+                          <Option key={option.value} value={option.value}>
+                            {option.label}
+                          </Option>
+                        ))}
+                      </Select>
+                    </FormControl>
 
-                  <FormControl
-                    size="sm"
-                    sx={{ minWidth: { xs: '100%', sm: 220 }, flex: { sm: '0 0 220px' } }}
-                  >
-                    <Select
-                      value={group.selectedCharacter || ''}
-                      onChange={(_event, value) => {
-                        setCharacterByGame((current) => ({
-                          ...current,
-                          [group.game.slug]: value ?? '',
-                        }));
-                      }}
-                      aria-label={`Filter ${group.game.title} by character`}
-                      sx={{
-                        minHeight: 44,
-                        borderRadius: 0,
-                        bgcolor: 'rgba(10, 12, 20, 0.82)',
-                      }}
+                    <FormControl
+                      size="sm"
+                      sx={{ minWidth: { xs: '100%', sm: 220 }, flex: { sm: '0 0 220px' } }}
                     >
-                      <Option value="">All characters</Option>
-                      {group.characters.map((character) => (
-                        <Option key={character} value={character}>
-                          {toSentenceCase(character)}
-                        </Option>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      <Select
+                        value={group.selectedCharacter || ''}
+                        onChange={(_event, value) => {
+                          setCharacterByGame((current) => ({
+                            ...current,
+                            [group.game.slug]: value ?? '',
+                          }));
+                        }}
+                        aria-label={`Filter ${group.game.title} by character`}
+                        sx={{
+                          minHeight: 44,
+                          borderRadius: 0,
+                          bgcolor: 'rgba(10, 12, 20, 0.82)',
+                        }}
+                      >
+                        <Option value="">All characters</Option>
+                        {group.characters.map((character) => (
+                          <Option key={character} value={character}>
+                            {toSentenceCase(character)}
+                          </Option>
+                        ))}
+                      </Select>
+                    </FormControl>
 
-                  <Tooltip
-                    arrow
-                    placement="top-start"
-                    variant="soft"
-                    title={group.game.fullStoryTooltip || `Read ${povLabel}'s full story`}
-                    enterTouchDelay={0}
-                  >
-                    <Button
-                      component={Link}
-                      href={group.fullStoryHref}
-                      variant="solid"
-                      color="primary"
-                      sx={{
-                        minHeight: 44,
-                        px: 2,
-                        borderRadius: 0,
-                        fontWeight: 700,
-                        textTransform: 'none',
-                        width: { xs: '100%', sm: 'auto' },
-                        whiteSpace: 'nowrap',
-                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                        '&:focus-visible': {
-                          outline: '2px solid',
-                          outlineColor: 'primary.500',
-                          outlineOffset: '2px',
-                        },
-                      }}
+                    <Tooltip
+                      arrow
+                      placement="top-start"
+                      variant="soft"
+                      title={group.game.fullStoryTooltip || `Read ${povLabel}'s full story`}
+                      enterTouchDelay={0}
                     >
-                      Read {povLabel}&apos;s full story
-                    </Button>
-                  </Tooltip>
+                      <Button
+                        component={Link}
+                        href={group.fullStoryHref}
+                        variant="solid"
+                        color="primary"
+                        sx={{
+                          minHeight: 44,
+                          px: 2,
+                          borderRadius: 0,
+                          fontWeight: 700,
+                          textTransform: 'none',
+                          width: { xs: '100%', sm: 'auto' },
+                          whiteSpace: 'nowrap',
+                          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                          '&:focus-visible': {
+                            outline: '2px solid',
+                            outlineColor: 'primary.500',
+                            outlineOffset: '2px',
+                          },
+                        }}
+                      >
+                        Read {povLabel}&apos;s full story
+                      </Button>
+                    </Tooltip>
+                  </Stack>
                 </Stack>
+
+                <Box sx={{ width: '100%', minWidth: 0 }}>
+                  {cover ? (
+                    <AmbientCoverArt
+                      coverImageUrl={cover}
+                      alt={`${group.game.title} cover`}
+                      minHeight={{ xs: '100px', sm: '100px' }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        minHeight: { xs: '100px', sm: '100px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: 'rgba(30,34,50,0.4)',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      <Typography level="body-sm">No cover art</Typography>
+                    </Box>
+                  )}
+                </Box>
               </Stack>
 
-              <Box sx={{ width: '100%', minWidth: 0 }}>
-                {cover ? (
-                  <AmbientCoverArt
-                    coverImageUrl={cover}
-                    alt={`${group.game.title} cover`}
-                    minHeight={{ xs: '100px', sm: '100px' }}
-                  />
-                ) : (
+              <Divider sx={{ my: 2.25, borderColor: 'rgba(255,255,255,0.1)' }} />
+
+              <Stack spacing={1.25}>
+                {group.filteredPosts.length === 0 ? (
                   <Box
                     sx={{
-                      minHeight: { xs: '100px', sm: '100px' },
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: 'rgba(30,34,50,0.4)',
-                      color: 'text.secondary',
+                      p: 2,
+                      border: '1px solid',
+                      borderColor: 'rgba(255,255,255,0.1)',
+                      bgcolor: 'rgba(8, 10, 15, 0.5)',
                     }}
                   >
-                    <Typography level="body-sm">No cover art</Typography>
+                    <Typography level="body-md" sx={{ color: 'text.secondary' }}>
+                      No stories match this character filter yet.
+                    </Typography>
                   </Box>
+                ) : (
+                  group.filteredPosts.map((post) => {
+                    const visibleTags = getVisibleTags(post, group.game.slug);
+                    const cardPost: ParsedPost = {
+                      ...post,
+                      metadata: {
+                        ...post.metadata,
+                        tags: visibleTags,
+                      },
+                    };
+
+                    return (
+                      <BlogCard
+                        key={post.filename}
+                        post={cardPost}
+                        postType="lore"
+                        onClick={() => router.push(`/lore/${getPostSlug(post)}`)}
+                        variant="outlined"
+                      />
+                    );
+                  })
                 )}
-              </Box>
-            </Stack>
-
-            <Divider sx={{ my: 2.25, borderColor: 'rgba(255,255,255,0.1)' }} />
-
-            <Stack spacing={1.25}>
-              {group.filteredPosts.length === 0 ? (
-                <Box
-                  sx={{
-                    p: 2,
-                    border: '1px solid',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    bgcolor: 'rgba(8, 10, 15, 0.5)',
-                  }}
-                >
-                  <Typography level="body-md" sx={{ color: 'text.secondary' }}>
-                    No stories match this character filter yet.
-                  </Typography>
-                </Box>
-              ) : (
-                group.filteredPosts.map((post) => {
-                  const visibleTags = getVisibleTags(post, group.game.slug);
-                  const cardPost: ParsedPost = {
-                    ...post,
-                    metadata: {
-                      ...post.metadata,
-                      tags: visibleTags,
-                    },
-                  };
-
-                  return (
-                    <BlogCard
-                      key={post.filename}
-                      post={cardPost}
-                      postType="lore"
-                      onClick={() => router.push(`/lore/${getPostSlug(post)}`)}
-                      variant="outlined"
-                    />
-                  );
-                })
-              )}
-            </Stack>
-          </Box>
-        );
-      })}
-    </Stack>
+              </Stack>
+            </Box>
+          );
+        })}
+      </Stack>
+    </>
   );
 }
