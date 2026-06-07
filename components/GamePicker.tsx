@@ -137,7 +137,6 @@ export function GamePicker({ games }: GamePickerProps) {
                 '&:hover': {
                   filter: 'brightness(1.15)',
                 },
-                animation: `${breathePulse} ${timing.dur}s ease-in-out ${timing.delay}s infinite`,
                 ...(game.coverUrl && {
                   '&::before': {
                     content: '""',
@@ -148,6 +147,7 @@ export function GamePicker({ games }: GamePickerProps) {
                     backgroundPosition: 'center',
                     filter: 'blur(8px)',
                     zIndex: 0,
+                    animation: `${breathePulse} ${timing.dur}s ease-in-out ${timing.delay}s infinite`,
                   },
                 }),
                 '&::after': {
@@ -157,6 +157,7 @@ export function GamePicker({ games }: GamePickerProps) {
                   bgcolor: 'rgba(0,0,0,0.35)',
                   borderRadius: 9999,
                   zIndex: 1,
+                  animation: `${breathePulse} ${timing.dur}s ease-in-out ${timing.delay}s infinite`,
                 },
               }}
             >
