@@ -37,6 +37,13 @@ const SORT_OPTIONS: Array<{ value: SortMode; label: string }> = [
   { value: 'date_asc', label: 'Publish Date (Oldest First)' },
 ];
 
+const PAGE_SIZE_OPTIONS = [
+  { value: 10, label: '10 per page' },
+  { value: 20, label: '20 per page' },
+  { value: 100, label: '100 per page' },
+  { value: Infinity, label: 'All' },
+] as const;
+
 function parseDateUtcMs(value: string | undefined): number | null {
   if (!value) return null;
   const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -147,11 +154,15 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
   const router = useRouter();
   const [sortByGame, setSortByGame] = useState<Record<string, SortMode>>({});
   const [characterByGame, setCharacterByGame] = useState<Record<string, string>>({});
+  const [pageSizeByGame, setPageSizeByGame] = useState<Record<string, number>>({});
+  const [currentPageByGame, setCurrentPageByGame] = useState<Record<string, number>>({});
 
   const groupsWithUiState = useMemo(() => {
     return gameGroups.map((group) => {
       const sortMode = sortByGame[group.game.slug] ?? 'story_order_desc';
       const selectedCharacter = characterByGame[group.game.slug] ?? '';
+      const pageSize = pageSizeByGame[group.game.slug] ?? Infinity;
+      const currentPage = currentPageByGame[group.game.slug] ?? 1;
       const sortedPosts = sortPosts(group.posts, sortMode);
 
       const filteredPosts = selectedCharacter
@@ -161,15 +172,26 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
           })
         : sortedPosts;
 
+      const paginatedPosts =
+        pageSize === Infinity
+          ? filteredPosts
+          : filteredPosts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+      const totalPages = pageSize === Infinity ? 1 : Math.ceil(filteredPosts.length / pageSize);
+
       return {
         ...group,
         sortMode,
         selectedCharacter,
         filteredPosts,
+        paginatedPosts,
+        pageSize,
+        currentPage,
+        totalPages,
         fullStoryHref: buildFullStoryHref(group.game.slug),
       };
     });
-  }, [characterByGame, gameGroups, sortByGame]);
+  }, [characterByGame, currentPageByGame, gameGroups, pageSizeByGame, sortByGame]);
 
   const pickerGames = useMemo<GamePickerGame[]>(() => {
     return gameGroups.map((group) => ({
@@ -276,6 +298,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                             ...current,
                             [group.game.slug]: value,
                           }));
+                          setCurrentPageByGame((current) => ({ ...current, [group.game.slug]: 1 }));
                         }}
                         aria-label={`Sort ${group.game.title} stories`}
                         sx={{
@@ -303,6 +326,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                             ...current,
                             [group.game.slug]: value ?? '',
                           }));
+                          setCurrentPageByGame((current) => ({ ...current, [group.game.slug]: 1 }));
                         }}
                         aria-label={`Filter ${group.game.title} by character`}
                         sx={{
@@ -315,6 +339,35 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                         {group.characters.map((character) => (
                           <Option key={character} value={character}>
                             {toSentenceCase(character)}
+                          </Option>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl
+                      size="sm"
+                      sx={{ minWidth: { xs: '100%', sm: 140 }, flex: { sm: '0 0 140px' } }}
+                    >
+                      <Select
+                        value={group.pageSize}
+                        onChange={(_event, value) => {
+                          if (value === null) return;
+                          setPageSizeByGame((current) => ({
+                            ...current,
+                            [group.game.slug]: value,
+                          }));
+                          setCurrentPageByGame((current) => ({ ...current, [group.game.slug]: 1 }));
+                        }}
+                        aria-label={`Posts per page for ${group.game.title}`}
+                        sx={{
+                          minHeight: 44,
+                          borderRadius: 0,
+                          bgcolor: 'rgba(10, 12, 20, 0.82)',
+                        }}
+                      >
+                        {PAGE_SIZE_OPTIONS.map((option) => (
+                          <Option key={String(option.value)} value={option.value}>
+                            {option.label}
                           </Option>
                         ))}
                       </Select>
@@ -395,7 +448,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                     </Typography>
                   </Box>
                 ) : (
-                  group.filteredPosts.map((post) => {
+                  group.paginatedPosts.map((post) => {
                     const visibleTags = getVisibleTags(post, group.game.slug);
                     const cardPost: ParsedPost = {
                       ...post,
@@ -417,6 +470,135 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                   })
                 )}
               </Stack>
+
+              {group.totalPages > 1 && group.pageSize !== Infinity && (
+                <Stack
+                  direction="row"
+                  spacing={0.75}
+                  alignItems="center"
+                  justifyContent="center"
+                  sx={{ mt: 2 }}
+                >
+                  {/* left arrow */}
+                  <Box
+                    component="button"
+                    onClick={() => {
+                      if (group.currentPage > 1) {
+                        setCurrentPageByGame((current) => ({
+                          ...current,
+                          [group.game.slug]: group.currentPage - 1,
+                        }));
+                      }
+                    }}
+                    disabled={group.currentPage <= 1}
+                    aria-label="Previous page"
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 32,
+                      height: 32,
+                      border: 'none',
+                      bgcolor: 'transparent',
+                      color:
+                        group.currentPage <= 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)',
+                      cursor: group.currentPage <= 1 ? 'default' : 'pointer',
+                      borderRadius: 0,
+                      fontSize: '1.2rem',
+                      lineHeight: 1,
+                      '&:hover': group.currentPage > 1 ? { color: '#8b5cf6' } : {},
+                      '&:focus-visible': {
+                        outline: '2px solid',
+                        outlineColor: '#8b5cf6',
+                        outlineOffset: '2px',
+                      },
+                    }}
+                  >
+                    &#8592;
+                  </Box>
+
+                  {/* page dots */}
+                  <Stack direction="row" spacing={0.75} alignItems="center">
+                    {Array.from({ length: group.totalPages }, (_, i) => {
+                      const pageNum = i + 1;
+                      const isActive = pageNum === group.currentPage;
+                      return (
+                        <Box
+                          key={pageNum}
+                          component="button"
+                          onClick={() => {
+                            setCurrentPageByGame((current) => ({
+                              ...current,
+                              [group.game.slug]: pageNum,
+                            }));
+                          }}
+                          aria-label={`Page ${pageNum}`}
+                          aria-current={isActive ? 'page' : undefined}
+                          sx={{
+                            border: 'none',
+                            bgcolor: isActive ? '#8b5cf6' : 'rgba(255,255,255,0.2)',
+                            borderRadius: isActive ? '4px' : '50%',
+                            width: isActive ? 24 : 8,
+                            height: 8,
+                            cursor: 'pointer',
+                            p: 0,
+                            m: 0,
+                            transition: 'width 0.2s ease, background-color 0.2s ease',
+                            '&:hover': {
+                              bgcolor: isActive ? '#9b6dff' : 'rgba(255,255,255,0.4)',
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid',
+                              outlineColor: '#8b5cf6',
+                              outlineOffset: '2px',
+                            },
+                          }}
+                        />
+                      );
+                    })}
+                  </Stack>
+
+                  {/* right arrow */}
+                  <Box
+                    component="button"
+                    onClick={() => {
+                      if (group.currentPage < group.totalPages) {
+                        setCurrentPageByGame((current) => ({
+                          ...current,
+                          [group.game.slug]: group.currentPage + 1,
+                        }));
+                      }
+                    }}
+                    disabled={group.currentPage >= group.totalPages}
+                    aria-label="Next page"
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 32,
+                      height: 32,
+                      border: 'none',
+                      bgcolor: 'transparent',
+                      color:
+                        group.currentPage >= group.totalPages
+                          ? 'rgba(255,255,255,0.2)'
+                          : 'rgba(255,255,255,0.7)',
+                      cursor: group.currentPage >= group.totalPages ? 'default' : 'pointer',
+                      borderRadius: 0,
+                      fontSize: '1.2rem',
+                      lineHeight: 1,
+                      '&:hover': group.currentPage < group.totalPages ? { color: '#8b5cf6' } : {},
+                      '&:focus-visible': {
+                        outline: '2px solid',
+                        outlineColor: '#8b5cf6',
+                        outlineOffset: '2px',
+                      },
+                    }}
+                  >
+                    &#8594;
+                  </Box>
+                </Stack>
+              )}
             </Box>
           );
         })}
