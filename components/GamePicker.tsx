@@ -34,7 +34,6 @@ function ensureReadableBackground(hex: string): string {
 
 export function GamePicker({ games }: GamePickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const currentY = useRef(0);
   const [colors, setColors] = useState<Record<string, string>>({});
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
@@ -80,16 +79,21 @@ export function GamePicker({ games }: GamePickerProps) {
     return () => observer.disconnect();
   }, [games]);
 
-  /* ── Floaty parallax (lerp) ──────────────────────────── */
+  /* ── Floaty parallax (delta) ──────────────────────────── */
   useEffect(() => {
+    let prevScrollY = window.scrollY;
+    let offset = 0;
     let rafId: number;
 
     const frame = () => {
-      const targetY = window.scrollY;
-      currentY.current += (targetY - currentY.current) * 0.08;
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - prevScrollY;
+      offset += delta * -0.08;
+      offset *= 0.94;
+      prevScrollY = currentScrollY;
 
       if (containerRef.current) {
-        containerRef.current.style.transform = `translateY(calc(-50% + ${currentY.current * 0.3}px))`;
+        containerRef.current.style.transform = `translateY(calc(-50% + ${offset}px))`;
       }
 
       rafId = requestAnimationFrame(frame);
