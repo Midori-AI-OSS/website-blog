@@ -1,7 +1,7 @@
 # Task 02: Default 10 per page + localStorage persistence
 
 **File:** `app/lore/LoreListPageClient.tsx`
-**Status:** pending
+**Status:** verified
 
 ## Summary
 Change the fallback default page size from `Infinity` to `10`. Persist each game's page size choice to `localStorage` with per-game keys so choices survive page reloads.

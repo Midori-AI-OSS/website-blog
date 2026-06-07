@@ -131,26 +131,24 @@ export function GamePicker({ games }: GamePickerProps) {
                   ?.scrollIntoView({ behavior: 'smooth' });
               }}
               sx={{
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
+                width: 'auto',
+                minWidth: 120,
+                height: 28,
+                borderRadius: 9999,
+                px: 1.5,
                 bgcolor: getColor(game.slug),
                 cursor: 'pointer',
-                transition: 'width 0.25s ease, padding 0.25s ease, border-radius 0.25s ease',
-                overflow: 'hidden',
+                transition: 'transform 0.2s ease',
                 whiteSpace: 'nowrap',
                 display: 'flex',
                 alignItems: 'center',
                 p: 0,
                 ...(isActive && {
                   border: '2px solid rgba(255,255,255,0.9)',
-                  transform: 'scale(1.15)',
+                  transform: 'scale(1.08)',
                 }),
                 '&:hover': {
-                  width: 120,
-                  height: 28,
-                  borderRadius: 9999,
-                  px: 1.5,
+                  transform: 'scale(1.08)',
                 },
               }}
             >
