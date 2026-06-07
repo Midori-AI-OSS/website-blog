@@ -198,9 +198,11 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
         return (
           <Box
             key={group.game.slug}
+            id={`game-${group.game.slug}`}
             sx={{
               p: { xs: 1.25, sm: 2.25 },
               bgcolor: 'rgba(10, 12, 18, 0.72)',
+              scrollMarginTop: '80px',
             }}
           >
             <Stack spacing={1.75} sx={{ minWidth: 0 }}>
