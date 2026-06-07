@@ -142,6 +142,7 @@ export function GamePicker({ games }: GamePickerProps) {
                 whiteSpace: 'nowrap',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 p: 0,
                 ...(isActive && {
                   border: '2px solid rgba(255,255,255,0.9)',
