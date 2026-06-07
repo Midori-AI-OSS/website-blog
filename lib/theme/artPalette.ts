@@ -101,7 +101,7 @@ function quantizeChannel(value: number): number {
 
 export function extractPaletteFromImage(
   imageUrl: string,
-  options: { fallback?: ExtractedPalette } = {},
+  options: { fallback?: ExtractedPalette; skipMinLuminance?: boolean } = {},
 ): Promise<ExtractedPalette> {
   const fallback = options.fallback ?? DEFAULT_ART_PALETTE;
 
@@ -202,12 +202,15 @@ export function extractPaletteFromImage(
           return;
         }
 
+        const toHex = (r: number, g: number, b: number) => rgbToHex(r, g, b);
+        const wrap = options.skipMinLuminance
+          ? (hex: string) => hex
+          : (hex: string) => ensureMinLuminance(hex);
+
         resolve({
-          primary: ensureMinLuminance(rgbToHex(primaryColor.r, primaryColor.g, primaryColor.b)),
-          secondary: ensureMinLuminance(
-            rgbToHex(secondaryColor.r, secondaryColor.g, secondaryColor.b),
-          ),
-          tertiary: ensureMinLuminance(rgbToHex(tertiaryColor.r, tertiaryColor.g, tertiaryColor.b)),
+          primary: wrap(toHex(primaryColor.r, primaryColor.g, primaryColor.b)),
+          secondary: wrap(toHex(secondaryColor.r, secondaryColor.g, secondaryColor.b)),
+          tertiary: wrap(toHex(tertiaryColor.r, tertiaryColor.g, tertiaryColor.b)),
         });
       } catch {
         resolve(fallback);

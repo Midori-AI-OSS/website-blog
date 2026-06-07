@@ -3,14 +3,7 @@
 import { Box, Stack, Typography } from '@mui/joy';
 import { useEffect, useRef, useState } from 'react';
 import type { ExtractedPalette } from '@/lib/theme/artPalette';
-import {
-  DEFAULT_ART_PALETTE,
-  extractPaletteFromImage,
-  hexToRgb,
-  hslToRgb,
-  rgbToHex,
-  rgbToHsl,
-} from '@/lib/theme/artPalette';
+import { DEFAULT_ART_PALETTE, extractPaletteFromImage, hexToRgb } from '@/lib/theme/artPalette';
 
 export interface GamePickerGame {
   slug: string;
@@ -22,19 +15,9 @@ interface GamePickerProps {
   games: GamePickerGame[];
 }
 
-function ensureReadableBackground(hex: string): string {
-  const [r, g, b] = hexToRgb(hex);
-  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-  if (luminance <= 150) return hex;
-  // Too light — darken by reducing HSL lightness to 0.35
-  const [h, s] = rgbToHsl(r, g, b);
-  const [dr, dg, db] = hslToRgb(h, s, 0.35);
-  return rgbToHex(dr, dg, db);
-}
-
 export function GamePicker({ games }: GamePickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [colors, setColors] = useState<Record<string, string>>({});
+  const [colors, setColors] = useState<Record<string, { bg: string; text: string }>>({});
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
   /* ── Color extraction ────────────────────────────────── */
@@ -42,9 +25,14 @@ export function GamePicker({ games }: GamePickerProps) {
     for (const game of games) {
       if (!game.coverUrl) continue;
 
-      extractPaletteFromImage(game.coverUrl).then((palette: ExtractedPalette) => {
-        setColors((prev) => ({ ...prev, [game.slug]: ensureReadableBackground(palette.primary) }));
-      });
+      extractPaletteFromImage(game.coverUrl, { skipMinLuminance: true }).then(
+        (palette: ExtractedPalette) => {
+          const [r, g, b] = hexToRgb(palette.primary);
+          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+          const text = luminance < 128 ? 'common.white' : '#0a0a0f';
+          setColors((prev) => ({ ...prev, [game.slug]: { bg: palette.primary, text } }));
+        },
+      );
     }
   }, [games]);
 
@@ -104,7 +92,8 @@ export function GamePicker({ games }: GamePickerProps) {
   }, []);
 
   /* ── Helpers ──────────────────────────────────────────── */
-  const getColor = (slug: string): string => colors[slug] ?? DEFAULT_ART_PALETTE.primary;
+  const getPillColors = (slug: string): { bg: string; text: string } =>
+    colors[slug] ?? { bg: DEFAULT_ART_PALETTE.primary, text: 'common.white' };
 
   /* ── Render ───────────────────────────────────────────── */
   return (
@@ -136,7 +125,7 @@ export function GamePicker({ games }: GamePickerProps) {
                 height: 28,
                 borderRadius: 9999,
                 px: 1.5,
-                bgcolor: getColor(game.slug),
+                bgcolor: getPillColors(game.slug).bg,
                 cursor: 'pointer',
                 transition: 'transform 0.2s ease',
                 whiteSpace: 'nowrap',
@@ -156,11 +145,10 @@ export function GamePicker({ games }: GamePickerProps) {
               <Typography
                 level="body-xs"
                 sx={{
-                  color: 'common.white',
+                  color: getPillColors(game.slug).text,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  textShadow: '0 0 3px rgba(0,0,0,0.6)',
                 }}
               >
                 {game.title}
