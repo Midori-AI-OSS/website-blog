@@ -1,5 +1,6 @@
 'use client';
 
+import { keyframes } from '@emotion/react';
 import {
   Box,
   Button,
@@ -12,9 +13,10 @@ import {
   Tooltip,
   Typography,
 } from '@mui/joy';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { BlogCard } from '@/components/blog/BlogCard';
@@ -23,6 +25,16 @@ import { GamePicker } from '@/components/GamePicker';
 import type { ParsedPost } from '@/lib/blog/parser';
 import { transformPostImageUrl } from '@/lib/content/imageUrl';
 import type { LoreGameGroup } from '@/lib/lore/loader';
+
+const fadeInFromRight = keyframes`
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+`;
+
+const fadeInFromLeft = keyframes`
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+`;
 
 type SortMode = 'story_order_desc' | 'story_order_asc' | 'date_desc' | 'date_asc';
 
@@ -156,6 +168,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
   const [characterByGame, setCharacterByGame] = useState<Record<string, string>>({});
   const [pageSizeByGame, setPageSizeByGame] = useState<Record<string, number>>({});
   const [currentPageByGame, setCurrentPageByGame] = useState<Record<string, number>>({});
+  const prevPageByGame = useRef<Record<string, number>>({});
 
   const groupsWithUiState = useMemo(() => {
     return gameGroups.map((group) => {
@@ -201,6 +214,12 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
     }));
   }, [gameGroups]);
 
+  useEffect(() => {
+    for (const group of groupsWithUiState) {
+      prevPageByGame.current[group.game.slug] = group.currentPage;
+    }
+  }, [groupsWithUiState]);
+
   if (groupsWithUiState.length === 0) {
     return (
       <Box
@@ -228,6 +247,13 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
         {groupsWithUiState.map((group) => {
           const cover = getGameCoverImage(group.game.coverImage, group.posts);
           const povLabel = toSentenceCase(group.game.fullStoryPov.replace(/-/g, ' '));
+          const prevPage = prevPageByGame.current[group.game.slug];
+          let animationName: string | undefined;
+          if (prevPage != null && group.currentPage !== prevPage) {
+            animationName = group.currentPage > prevPage ? fadeInFromRight : fadeInFromLeft;
+          } else {
+            animationName = undefined;
+          }
 
           return (
             <Box
@@ -433,7 +459,17 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
 
               <Divider sx={{ my: 2.25, borderColor: 'rgba(255,255,255,0.1)' }} />
 
-              <Stack spacing={1.25}>
+              <Stack
+                key={`${group.game.slug}-${group.currentPage}`}
+                spacing={1.25}
+                sx={
+                  animationName
+                    ? {
+                        animation: `${animationName} 280ms ease-out`,
+                      }
+                    : undefined
+                }
+              >
                 {group.filteredPosts.length === 0 ? (
                   <Box
                     sx={{
@@ -496,16 +532,14 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: 32,
-                      height: 32,
+                      width: 28,
+                      height: 28,
                       border: 'none',
                       bgcolor: 'transparent',
                       color:
                         group.currentPage <= 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)',
                       cursor: group.currentPage <= 1 ? 'default' : 'pointer',
                       borderRadius: 0,
-                      fontSize: '1.2rem',
-                      lineHeight: 1,
                       '&:hover': group.currentPage > 1 ? { color: '#8b5cf6' } : {},
                       '&:focus-visible': {
                         outline: '2px solid',
@@ -514,7 +548,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                       },
                     }}
                   >
-                    &#8592;
+                    <ChevronLeft size={20} strokeWidth={2} />
                   </Box>
 
                   {/* page dots */}
@@ -575,8 +609,8 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: 32,
-                      height: 32,
+                      width: 28,
+                      height: 28,
                       border: 'none',
                       bgcolor: 'transparent',
                       color:
@@ -585,8 +619,6 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                           : 'rgba(255,255,255,0.7)',
                       cursor: group.currentPage >= group.totalPages ? 'default' : 'pointer',
                       borderRadius: 0,
-                      fontSize: '1.2rem',
-                      lineHeight: 1,
                       '&:hover': group.currentPage < group.totalPages ? { color: '#8b5cf6' } : {},
                       '&:focus-visible': {
                         outline: '2px solid',
@@ -595,7 +627,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                       },
                     }}
                   >
-                    &#8594;
+                    <ChevronRight size={20} strokeWidth={2} />
                   </Box>
                 </Stack>
               )}
