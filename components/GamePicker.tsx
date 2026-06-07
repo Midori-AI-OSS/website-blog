@@ -1,9 +1,13 @@
 'use client';
 
+import { keyframes } from '@emotion/react';
 import { Box, Stack, Typography } from '@mui/joy';
-import { useEffect, useRef, useState } from 'react';
-import type { ExtractedPalette } from '@/lib/theme/artPalette';
-import { DEFAULT_ART_PALETTE, extractPaletteFromImage, hexToRgb } from '@/lib/theme/artPalette';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+const breathePulse = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+`;
 
 export interface GamePickerGame {
   slug: string;
@@ -17,23 +21,18 @@ interface GamePickerProps {
 
 export function GamePicker({ games }: GamePickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [colors, setColors] = useState<Record<string, { bg: string; text: string }>>({});
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
-  /* ── Color extraction ────────────────────────────────── */
-  useEffect(() => {
+  /* ── Randomized breathing timings ────────────────────── */
+  const breatheTimings = useMemo(() => {
+    const map = new Map<string, { dur: number; delay: number }>();
     for (const game of games) {
-      if (!game.coverUrl) continue;
-
-      extractPaletteFromImage(game.coverUrl, { skipMinLuminance: true }).then(
-        (palette: ExtractedPalette) => {
-          const [r, g, b] = hexToRgb(palette.primary);
-          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-          const text = luminance < 128 ? 'common.white' : '#0a0a0f';
-          setColors((prev) => ({ ...prev, [game.slug]: { bg: palette.primary, text } }));
-        },
-      );
+      map.set(game.slug, {
+        dur: 3.5 + Math.random() * 3,
+        delay: Math.random() * 4,
+      });
     }
+    return map;
   }, [games]);
 
   /* ── IntersectionObserver for active-section tracking ── */
@@ -91,10 +90,6 @@ export function GamePicker({ games }: GamePickerProps) {
     return () => cancelAnimationFrame(rafId);
   }, []);
 
-  /* ── Helpers ──────────────────────────────────────────── */
-  const getPillColors = (slug: string): { bg: string; text: string } =>
-    colors[slug] ?? { bg: DEFAULT_ART_PALETTE.primary, text: 'common.white' };
-
   /* ── Render ───────────────────────────────────────────── */
   return (
     <Box
@@ -110,6 +105,7 @@ export function GamePicker({ games }: GamePickerProps) {
       <Stack spacing={1}>
         {games.map((game) => {
           const isActive = activeSlug === game.slug;
+          const timing = breatheTimings.get(game.slug) ?? { dur: 5, delay: 0 };
 
           return (
             <Box
@@ -120,32 +116,56 @@ export function GamePicker({ games }: GamePickerProps) {
                   ?.scrollIntoView({ behavior: 'smooth' });
               }}
               sx={{
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: 9999,
                 width: 'auto',
                 minWidth: 120,
                 height: 28,
-                borderRadius: 9999,
                 px: 1.5,
-                bgcolor: getPillColors(game.slug).bg,
                 cursor: 'pointer',
-                transition: 'transform 0.2s ease',
                 whiteSpace: 'nowrap',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 p: 0,
+                transition: 'box-shadow 0.2s ease, filter 0.2s ease',
+                ...(!game.coverUrl && { bgcolor: '#8b5cf6' }),
                 ...(isActive && {
-                  border: '2px solid rgba(255,255,255,0.9)',
-                  transform: 'scale(1.08)',
+                  boxShadow: '0 0 0 2px rgba(255,255,255,0.9)',
                 }),
                 '&:hover': {
-                  transform: 'scale(1.08)',
+                  filter: 'brightness(1.15)',
+                },
+                animation: `${breathePulse} ${timing.dur}s ease-in-out ${timing.delay}s infinite`,
+                ...(game.coverUrl && {
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    inset: -4,
+                    backgroundImage: `url(${game.coverUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    filter: 'blur(8px)',
+                    zIndex: 0,
+                  },
+                }),
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  inset: 0,
+                  bgcolor: 'rgba(0,0,0,0.35)',
+                  borderRadius: 9999,
+                  zIndex: 1,
                 },
               }}
             >
               <Typography
                 level="body-xs"
                 sx={{
-                  color: getPillColors(game.slug).text,
+                  position: 'relative',
+                  zIndex: 2,
+                  color: 'common.white',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
