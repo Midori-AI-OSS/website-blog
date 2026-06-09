@@ -68,10 +68,10 @@ run_setup() {
   bun install
 
   # Install Python TTS dependencies
-  cd "${REPO_ROOT}/tts" && uv venv --seed --clear && uv sync && cd "${REPO_ROOT}"
+  cd tts && uv venv --seed --clear && uv sync && cd ..
 
   # Keep TTS lifecycle independent from the interactive dev server branch.
-  "${REPO_ROOT}/scripts/start-tts.sh"
+  ./scripts/start-tts.sh
 
   bunx playwright install chromium
 
