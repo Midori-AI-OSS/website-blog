@@ -11,8 +11,10 @@ import { getPublishState } from '@/lib/content/publish';
 import {
   getLorePostBySlug,
   getLoreStoryNeighbors,
+  getPovSiblings,
   loadAllLorePosts,
   loadLoreGameIndexes,
+  type PovSibling,
 } from '@/lib/lore/loader';
 import { loadSpeciesCareCardsForMarkdown } from '@/lib/species-care/loader';
 
@@ -52,6 +54,12 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
     ? {}
     : await loadSpeciesCareCardsForMarkdown(post.content);
 
+  const rawPovSiblings = getPovSiblings(allPosts, post);
+  const povSiblings: PovSibling[] = rawPovSiblings.map((sib) => ({
+    ...sib,
+    coverImage: sib.coverImage ? transformPostImageUrl(sib.coverImage) : undefined,
+  }));
+
   return (
     <LorePostPageClient
       post={post}
@@ -61,6 +69,7 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
       scheduledPublishDate={publishState.publishDate ?? undefined}
       speciesCareCards={speciesCareCards}
       gameCoverImage={gameCoverImage}
+      povSiblings={povSiblings}
     />
   );
 }
