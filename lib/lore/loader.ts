@@ -52,6 +52,13 @@ export interface LoreGameGroup {
 
 export type LorePostSortMode = 'story_order_desc' | 'story_order_asc' | 'date_desc' | 'date_asc';
 
+export interface PovSibling {
+  slug: string;
+  title: string;
+  characterTag: string;
+  coverImage: string | undefined;
+}
+
 export interface LorePostNeighbor {
   post: ParsedPost;
   slug: string;
@@ -300,6 +307,71 @@ export function getLorePostsForGame(posts: ParsedPost[], gameSlug: string): Pars
   const normalizedGame = normalizeSlug(gameSlug);
   if (!normalizedGame) return [];
   return posts.filter((post) => normalizeSlug(post.metadata.game) === normalizedGame);
+}
+
+export function getPovSiblings(allPosts: ParsedPost[], currentPost: ParsedPost): PovSibling[] {
+  const gameSlug = normalizeSlug(currentPost.metadata.game);
+  const storyOrder = getStoryOrderValue(currentPost);
+
+  if (!gameSlug || storyOrder === null) return [];
+
+  const currentTags = new Set(getPostCharacterTags(currentPost, gameSlug));
+  const gamePosts = getLorePostsForGame(allPosts, gameSlug);
+  const currentEpisode = currentPost.metadata.episode_label?.trim().toLowerCase() || null;
+
+  const byCharacter = new Map<string, ParsedPost[]>();
+
+  for (const post of gamePosts) {
+    if (post.filename === currentPost.filename) continue;
+
+    const tags = getPostCharacterTags(post, gameSlug);
+    if (tags.length === 0) continue;
+
+    const primaryTag = (tags[0] ?? '').toLowerCase();
+    if (currentTags.has(primaryTag)) continue;
+
+    const bucket = byCharacter.get(primaryTag) ?? [];
+    bucket.push(post);
+    byCharacter.set(primaryTag, bucket);
+  }
+
+  const siblings: PovSibling[] = [];
+
+  for (const [characterTag, posts] of byCharacter) {
+    const withOrder = posts.map((p) => ({
+      post: p,
+      order: getStoryOrderValue(p),
+    }));
+
+    withOrder.sort((a, b) => {
+      const distA = a.order !== null ? Math.abs(a.order - storyOrder) : Number.MAX_SAFE_INTEGER;
+      const distB = b.order !== null ? Math.abs(b.order - storyOrder) : Number.MAX_SAFE_INTEGER;
+      if (distA !== distB) return distA - distB;
+
+      // Tiebreaker: prefer same episode_label
+      const aEpisode = a.post.metadata.episode_label?.trim().toLowerCase() || null;
+      const bEpisode = b.post.metadata.episode_label?.trim().toLowerCase() || null;
+      const aSame = aEpisode === currentEpisode ? 0 : 1;
+      const bSame = bEpisode === currentEpisode ? 0 : 1;
+      if (aSame !== bSame) return aSame - bSame;
+
+      return a.post.filename.localeCompare(b.post.filename);
+    });
+
+    const closest = withOrder[0]?.post;
+    if (!closest) continue;
+    siblings.push({
+      slug: getLorePostSlug(closest),
+      title: closest.metadata.title,
+      characterTag:
+        closest.metadata.tags?.find((t) => t.trim().toLowerCase() === characterTag) ?? characterTag,
+      coverImage: closest.metadata.cover_image?.trim() || undefined,
+    });
+  }
+
+  siblings.sort((a, b) => a.characterTag.localeCompare(b.characterTag));
+
+  return siblings;
 }
 
 export async function loadAllLorePosts(
