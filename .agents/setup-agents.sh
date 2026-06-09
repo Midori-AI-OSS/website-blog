@@ -46,6 +46,9 @@ cleanup_playwright_profile_locks() {
 }
 
 run_setup() {
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
   if ! command -v bun >/dev/null 2>&1; then
     yay -Syu --noconfirm --needed bun
   fi
@@ -65,8 +68,10 @@ run_setup() {
   bun install
 
   # Install Python TTS dependencies
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  cd "${SCRIPT_DIR}/../tts" && uv venv --seed --clear && uv sync && cd "${SCRIPT_DIR}/.."
+  cd "${REPO_ROOT}/tts" && uv venv --seed --clear && uv sync && cd "${REPO_ROOT}"
+
+  # Keep TTS lifecycle independent from the interactive dev server branch.
+  "${REPO_ROOT}/scripts/start-tts.sh"
 
   bunx playwright install chromium
 
@@ -84,11 +89,6 @@ run_setup() {
 
     if ! ss -ltn 2>/dev/null | grep -q ':3000 '; then
       nohup bun run dev >"${DEV_LOG}" 2>&1 &
-    fi
-
-    # Start TTS server if not already running
-    if ! ss -ltn 2>/dev/null | grep -q ':8888 '; then
-      cd "${SCRIPT_DIR}/../tts" && nohup uv run uvicorn server:app --host 127.0.0.1 --port 8888 >/tmp/tts-server.log 2>&1 &
     fi
   fi
 }
