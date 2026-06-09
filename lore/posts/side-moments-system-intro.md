@@ -2,14 +2,12 @@
 title: "Side Moments — A New Space in the Lore"
 summary: "A new lore section for experimental fragments, rapid prototypes, and non-canon works from across all games."
 tags: [lore, side-moments, system]
-cover_image: /lore/side-moments.png
+cover_image: /lore/side-moments-sad.png
 author: system
 date: 2026-06-09
 game: side-moments
 story_order: 1
 ---
-
-A new section, **Side Moments**, is now live within the lore.
 
 This space holds fragments — short stories, early prototypes, cut scenes, and experimental works. These pieces are not bound by canon. They may shift without notice. They may be removed without warning.
 
@@ -18,5 +16,3 @@ Some entries are protected behind a password. Not everything is meant for every 
 Content and characters may be drawn from any game. Nothing is off-limits here. This is a space for the unfinished, the uncertain, and the unbound.
 
 Explore at your own pace. Expect surprises. Expect instability.
-
-— the system
