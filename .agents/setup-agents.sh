@@ -46,6 +46,9 @@ cleanup_playwright_profile_locks() {
 }
 
 run_setup() {
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
   if ! command -v bun >/dev/null 2>&1; then
     yay -Syu --noconfirm --needed bun
   fi
@@ -65,8 +68,10 @@ run_setup() {
   bun install
 
   # Install Python TTS dependencies
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  cd "${SCRIPT_DIR}/../tts" && uv venv --seed --clear && uv sync && cd "${SCRIPT_DIR}/.."
+  cd tts && uv venv --seed --clear && uv sync && cd ..
+
+  # Keep TTS lifecycle independent from the interactive dev server branch.
+  ./scripts/start-tts.sh
 
   bunx playwright install chromium
 
@@ -82,15 +87,8 @@ run_setup() {
   if [[ "${MIDORI_AI_AGENTS_RUNNER_INTERACTIVE:-false}" == "true" ]]; then
     DEV_LOG="/tmp/workspace-dev.log"
 
-    if ss -ltn 2>/dev/null | grep -q ':3000 '; then
-      exit 0
-    else
+    if ! ss -ltn 2>/dev/null | grep -q ':3000 '; then
       nohup bun run dev >"${DEV_LOG}" 2>&1 &
-    fi
-
-    # Start TTS server if not already running
-    if ! ss -ltn 2>/dev/null | grep -q ':8888 '; then
-      cd "${SCRIPT_DIR}/../tts" && nohup uv run uvicorn server:app --host 127.0.0.1 --port 8888 >/tmp/tts-server.log 2>&1 &
     fi
   fi
 }

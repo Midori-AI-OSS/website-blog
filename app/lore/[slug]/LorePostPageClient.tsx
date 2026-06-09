@@ -1,10 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-
+import type { ReactNode } from 'react';
+import PasswordGate from '@/components/blog/PasswordGate';
 import { PostView } from '@/components/blog/PostView';
+import { PovPicker } from '@/components/PovPicker';
 import type { ParsedPost } from '@/lib/blog/parser';
-import type { LorePostNeighbor } from '@/lib/lore/loader';
+import type { LorePostNeighbor, PovSibling } from '@/lib/lore/loader';
 import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
 
 interface LorePostPageClientProps {
@@ -15,6 +17,7 @@ interface LorePostPageClientProps {
   scheduledPublishDate?: string;
   speciesCareCards?: SpeciesCareCardEmbedMap;
   gameCoverImage?: string;
+  povSiblings?: PovSibling[];
 }
 
 export function LorePostPageClient({
@@ -25,39 +28,54 @@ export function LorePostPageClient({
   scheduledPublishDate,
   speciesCareCards = {},
   gameCoverImage,
+  povSiblings,
 }: LorePostPageClientProps) {
   const router = useRouter();
+  const password = post.metadata.password?.trim();
+  const contentWrapper = password
+    ? (content: ReactNode) => {
+        return (
+          <PasswordGate key={post.filename} password={password}>
+            {content}
+          </PasswordGate>
+        );
+      }
+    : undefined;
 
   return (
-    <PostView
-      post={post}
-      onClose={() => router.push('/lore')}
-      backButtonLabel="Back to lore"
-      backButtonAriaLabel="Back to lore list"
-      postType="lore"
-      previousStory={
-        previousStory
-          ? {
-              href: `/lore/${previousStory.slug}`,
-              title: previousStory.post.metadata.title,
-              summary: previousStory.post.metadata.summary,
-            }
-          : null
-      }
-      nextStory={
-        nextStory
-          ? {
-              href: `/lore/${nextStory.slug}`,
-              title: nextStory.post.metadata.title,
-              summary: nextStory.post.metadata.summary,
-            }
-          : null
-      }
-      onNavigateStory={(href) => router.push(href)}
-      isScheduledPreview={isScheduledPreview}
-      scheduledPublishDate={scheduledPublishDate}
-      speciesCareCards={speciesCareCards}
-      gameCoverImage={gameCoverImage}
-    />
+    <>
+      <PovPicker siblings={povSiblings ?? []} gameCoverImage={gameCoverImage} />
+      <PostView
+        post={post}
+        onClose={() => router.push('/lore')}
+        backButtonLabel="Back to lore"
+        backButtonAriaLabel="Back to lore list"
+        postType="lore"
+        previousStory={
+          previousStory
+            ? {
+                href: `/lore/${previousStory.slug}`,
+                title: previousStory.post.metadata.title,
+                summary: previousStory.post.metadata.summary,
+              }
+            : null
+        }
+        nextStory={
+          nextStory
+            ? {
+                href: `/lore/${nextStory.slug}`,
+                title: nextStory.post.metadata.title,
+                summary: nextStory.post.metadata.summary,
+              }
+            : null
+        }
+        onNavigateStory={(href) => router.push(href)}
+        isScheduledPreview={isScheduledPreview}
+        scheduledPublishDate={scheduledPublishDate}
+        speciesCareCards={speciesCareCards}
+        gameCoverImage={gameCoverImage}
+        contentWrapper={contentWrapper}
+      />
+    </>
   );
 }

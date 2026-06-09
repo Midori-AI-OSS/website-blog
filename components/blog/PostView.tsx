@@ -17,7 +17,7 @@
 import { keyframes } from '@emotion/react';
 import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Tag, User } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -190,6 +190,8 @@ export interface PostViewProps {
   speciesCareCards?: SpeciesCareCardEmbedMap;
   /** Optional game cover image URL to use as the backdrop */
   gameCoverImage?: string;
+  /** Optional wrapper applied to the main post body */
+  contentWrapper?: (content: ReactNode) => ReactNode;
 }
 
 /**
@@ -274,43 +276,33 @@ function buildTooltipText(
   return `${prefix}: ${story.title} - ${snippet}`;
 }
 
-/**
- * PostView Component
- *
- * Displays a full blog post with all content and metadata.
- * Content is rendered via react-markdown with sanitization for XSS protection.
- */
-export function PostView({
+interface PostContentSectionProps {
+  post: ParsedPost;
+  isScheduledPreview: boolean;
+  scheduledPublishLabel: string;
+  speciesCareCards: SpeciesCareCardEmbedMap;
+  effectiveCoverImageUrl: string;
+  gameCoverImage?: string;
+  dialogueColor: string;
+  thinkingColor: string;
+  thinkingGlowColor: string;
+  thinkingMutedColor: string;
+}
+
+function PostContentSection({
   post,
-  onClose,
-  backButtonLabel = 'Back to posts',
-  backButtonAriaLabel = 'Back to blog list',
-  postType = 'blog',
-  previousStory = null,
-  nextStory = null,
-  onNavigateStory,
-  isScheduledPreview = false,
-  scheduledPublishDate,
-  hideBackButton = false,
-  disableDynamicBackdrop = false,
-  speciesCareCards = {},
+  isScheduledPreview,
+  scheduledPublishLabel,
+  speciesCareCards,
+  effectiveCoverImageUrl,
   gameCoverImage,
-}: PostViewProps) {
-  const { setPostCoverUrl } = useDynamicBackdrop();
-  const [, setCoverIsLandscape] = useState<boolean | null>(null);
-  const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
-  const [titlePalette, setTitlePalette] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
+  dialogueColor,
+  thinkingColor,
+  thinkingGlowColor,
+  thinkingMutedColor,
+}: PostContentSectionProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const dateString = useMemo(
-    () => getPostDateString(post),
-    [post.filename, post.metadata.date, post],
-  );
-  const formattedDate = useMemo(() => formatLongDate(dateString) ?? 'Unknown date', [dateString]);
-  const scheduledPublishLabel = useMemo(
-    () => formatLongDate(scheduledPublishDate ?? dateString) ?? formattedDate,
-    [scheduledPublishDate, dateString, formattedDate],
-  );
   const markdownContent = useMemo(() => replaceLoreImageTokens(post.content), [post.content]);
   const markdownParts = useMemo(
     () => splitMarkdownSpeciesCareTokens(markdownContent),
@@ -349,6 +341,549 @@ export function PostView({
     flushCards();
     return chunks;
   }, [markdownParts]);
+  const markdownComponents = useMemo<Components>(
+    () => ({
+      img: (props) => {
+        const { node: _node, ...imgProps } = props;
+        const { src, alt, title } = imgProps;
+
+        if (title === LORE_IMAGE_TOKEN_TITLE && typeof src === 'string' && src.length > 0) {
+          const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+            const img = e.currentTarget;
+            const depth = Number(img.getAttribute('data-fallback-depth') ?? 0);
+
+            if (depth === 0 && gameCoverImage) {
+              img.setAttribute('data-fallback-depth', '1');
+              img.src = gameCoverImage;
+            } else if (depth <= 1) {
+              img.setAttribute('data-fallback-depth', '2');
+              img.src = POST_COVER_PLACEHOLDER_IMAGE_URL;
+            }
+          };
+
+          return (
+            <Box
+              component="span"
+              sx={{
+                p: 0,
+                my: 4,
+                overflow: 'hidden',
+                borderRadius: 0,
+                border: 'none',
+                bgcolor: 'black',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: { xs: 3, sm: 4 },
+                width: '100%',
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 10,
+                  boxShadow: 'inset 0 0 60px 30px #000',
+                  pointerEvents: 'none',
+                }}
+              />
+
+              <Box
+                component="img"
+                src={src}
+                alt=""
+                loading="lazy"
+                onError={handleImageError}
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: 'blur(20px) brightness(0.55)',
+                  transform: 'scale(1.1)',
+                  zIndex: 0,
+                  opacity: 0.85,
+                  my: 0,
+                  border: 'none',
+                  background: 'none',
+                  animation: 'none',
+                }}
+              />
+
+              <Box
+                component="img"
+                src={src}
+                alt={typeof alt === 'string' ? alt : ''}
+                loading="lazy"
+                onError={handleImageError}
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  objectFit: 'contain',
+                  width: '60%',
+                  maxWidth: '100%',
+                  height: 'auto',
+                  display: 'block',
+                  my: 0,
+                  border: 'none',
+                  background: 'none',
+                  animation: 'none',
+                }}
+              />
+            </Box>
+          );
+        }
+
+        // biome-ignore lint/a11y/useAltText: alt set via imgProps spread
+        // biome-ignore lint/performance/noImgElement: markdown renderer, next/image not applicable here
+        return <img {...imgProps} />;
+      },
+    }),
+    [gameCoverImage],
+  );
+
+  useLayoutEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+    root.querySelectorAll<HTMLElement>('[data-thinking]').forEach((el) => {
+      el.style.animationDelay = `${-Math.random() * 30}s`;
+    });
+    root.querySelectorAll<HTMLElement>('code.language-layerone').forEach((el) => {
+      el.style.animationDelay = `${-Math.random() * 10}s`;
+    });
+  }, []);
+
+  return (
+    <>
+      <Divider sx={{ mb: 6, bgcolor: 'rgba(255,255,255,0.1)' }} />
+
+      {isScheduledPreview ? (
+        <Card
+          variant="soft"
+          color="neutral"
+          sx={{
+            p: { xs: 2, sm: 3 },
+            borderRadius: 0,
+            border: '1px solid',
+            borderColor: 'rgba(255,255,255,0.08)',
+            bgcolor: 'rgba(255,255,255,0.03)',
+          }}
+        >
+          <Typography level="title-lg" sx={{ mb: 1 }}>
+            Scheduled for {scheduledPublishLabel}
+          </Typography>
+          <Typography
+            level="body-md"
+            sx={{ color: 'text.secondary', fontSize: { xs: '1rem', sm: '1.05rem' } }}
+          >
+            This post is already queued in the site, but it stays hidden until that date begins in
+            Portland time.
+          </Typography>
+          <Typography level="body-sm" sx={{ mt: 1.5, color: 'text.tertiary', fontSize: '0.98rem' }}>
+            The full post content and listen-along player will unlock automatically when the publish
+            date arrives.
+          </Typography>
+        </Card>
+      ) : (
+        <Box
+          ref={contentRef}
+          sx={{
+            // Typography settings for readability
+            fontSize: { xs: '1rem', sm: '1.125rem' }, // 16px on phones, 18px up
+            lineHeight: 1.8,
+            color: 'text.secondary', // Slightly softer than pure white
+
+            // Prose styling for markdown elements
+            '& h1, & h2, & h3, & h4, & h5, & h6': {
+              color: 'primary.200', // Light purple for headers
+              scrollMarginTop: '100px',
+            },
+            '& h1': {
+              fontSize: { xs: '2rem', sm: '2.5rem' },
+              fontWeight: 700,
+              mt: 6,
+              mb: 3,
+            },
+            '& h2': {
+              fontSize: { xs: '1.6rem', sm: '2rem' },
+              fontWeight: 700,
+              mt: 5,
+              mb: 2.5,
+              pb: 1,
+              borderBottom: '1px solid',
+              borderColor: 'rgba(139, 92, 246, 0.2)', // Subtle purple line
+            },
+            '& h3': {
+              fontSize: { xs: '1.25rem', sm: '1.5rem' },
+              fontWeight: 600,
+              mt: 4,
+              mb: 2,
+              color: 'primary.300',
+            },
+            '& h4': {
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              fontWeight: 600,
+              mt: 3,
+              mb: 1.5,
+            },
+            '& p': {
+              mb: 3,
+            },
+            '& strong': {
+              color: 'text.primary',
+              fontWeight: 600,
+            },
+            '& ul, & ol': {
+              ml: { xs: 2, sm: 3 },
+              mb: 3,
+              pl: { xs: 0.5, sm: 1 },
+              '& li': {
+                mb: 1,
+                pl: 1,
+                '&::marker': {
+                  color: 'primary.400', // Purple bullets
+                },
+              },
+            },
+            '& blockquote': {
+              borderLeft: '4px solid',
+              borderColor: 'primary.500',
+              pl: 3,
+              py: 2,
+              my: 4,
+              fontStyle: 'italic',
+              bgcolor: 'rgba(139, 92, 246, 0.05)', // Very subtle purple tint
+              color: 'text.primary',
+            },
+            '& code': {
+              // INLINE CODE STYLING (Dark Green Highlight)
+              backgroundColor: 'rgba(20, 83, 45, 0.6)',
+              color: '#4ade80', // Bright green text
+              px: 0.75,
+              py: 0.25,
+              borderRadius: 0, // Sharp
+              fontSize: '0.9rem',
+              fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+              border: '1px solid',
+              borderColor: 'rgba(74, 222, 128, 0.2)',
+
+              // Shimmer Effect
+              background:
+                'linear-gradient(to right, rgba(20, 83, 45, 0.6) 0%, rgba(74, 222, 128, 0.25) 50%, rgba(20, 83, 45, 0.6) 100%)',
+              backgroundSize: '1000px 100%',
+              animation: `${shimmerKeyframes} 6s linear infinite`,
+              '&:nth-of-type(2n)': { animationDuration: '4s' },
+              '&:nth-of-type(3n)': { animationDuration: '8s' },
+              '&:nth-of-type(5n)': { animationDuration: '5s' },
+              '&:nth-of-type(7n)': { animationDuration: '7s' },
+            },
+            '& pre': {
+              backgroundColor: '#282c34 !important',
+              p: 2,
+              borderRadius: 0,
+              overflow: 'auto',
+              my: 4,
+              border: '1px solid',
+              borderColor: 'rgba(255,255,255,0.1)',
+              '& code': {
+                backgroundColor: 'transparent !important',
+                color: 'inherit',
+                p: 0,
+                border: 'none',
+                fontFamily: 'inherit',
+                background: 'none',
+                animation: 'none',
+              },
+              '& .hljs': {
+                background: 'transparent',
+              },
+            },
+            '& pre:has(code.language-layerone)': {
+              backgroundColor: '#0d0618 !important',
+              border: '1px solid',
+              borderColor: 'rgba(0, 255, 200, 0.25)',
+              position: 'relative',
+              overflow: 'hidden',
+              my: 4,
+              p: 2,
+              borderRadius: 0,
+              textAlign: 'center',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background:
+                  'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 200, 0.04) 2px, rgba(0, 255, 200, 0.04) 4px)',
+                pointerEvents: 'none',
+                zIndex: 1,
+              },
+              '& code.language-layerone': {
+                backgroundColor: 'transparent !important',
+                color: '#7fffe0',
+                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                p: 0,
+                border: 'none',
+                background: 'none !important',
+                textAlign: 'center',
+                textShadow: '1px 0 rgba(255, 0, 180, 0.4), -1px 0 rgba(0, 200, 255, 0.4)',
+                animation: `${glitchFlickerKeyframes} 6s steps(1) infinite`,
+              },
+              '& .hljs': {
+                background: 'transparent',
+              },
+            },
+            '& a': {
+              color: 'primary.400',
+              textDecoration: 'none',
+              borderBottom: '1px dashed',
+              borderColor: 'primary.400',
+              transition: 'all 0.2s',
+              '&:hover': {
+                color: 'primary.300',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                borderBottomStyle: 'solid',
+              },
+            },
+            '& [data-dialogue="true"]': {
+              color: dialogueColor,
+            },
+            '& [data-thinking]': {
+              '--PostView-thinking-color': thinkingColor,
+              '--PostView-thinking-glow': thinkingGlowColor,
+              '--PostView-thinking-muted': thinkingMutedColor,
+              position: 'relative',
+              fontStyle: 'italic',
+              color: 'var(--PostView-thinking-color)',
+              background:
+                'linear-gradient(90deg, var(--PostView-thinking-muted) 0%, var(--PostView-thinking-color) 32%, rgba(255,255,255,0.96) 48%, var(--PostView-thinking-color) 64%, var(--PostView-thinking-muted) 100%)',
+              backgroundSize: '260% 100%',
+              backgroundPosition: '160% 50%',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              animation: `${thinkingPulseKeyframes} 18s ease-in-out infinite`,
+            },
+            '& [data-thinking="inline"]': {
+              textWrap: 'pretty',
+            },
+            '& [data-thinking="block"]': {
+              display: 'block',
+              textAlign: 'center',
+              borderLeft: '4px solid',
+              borderColor: 'primary.500',
+              px: { xs: 3, sm: 4 },
+              py: 2,
+              my: 6,
+              fontStyle: 'italic',
+              backgroundColor: 'rgba(139, 92, 246, 0.05)',
+              backgroundImage: `linear-gradient(90deg, var(--PostView-thinking-muted) 0%, var(--PostView-thinking-color) 32%, rgba(255,255,255,0.96) 48%, var(--PostView-thinking-color) 64%, var(--PostView-thinking-muted) 100%), none`,
+              backgroundSize: '260% 100%, auto',
+              backgroundPosition: '160% 50%, 0 0',
+              backgroundClip: 'text, border-box',
+              WebkitTextFillColor: 'transparent',
+              color: 'text.primary',
+              boxShadow: `inset 0 0 28px rgba(139, 92, 246, 0.08), 0 0 32px ${thinkingGlowColor}`,
+              animation: `${thinkingPulseKeyframes} 18s ease-in-out infinite, ${thinkingFloatKeyframes} 6s ease-in-out infinite`,
+              '& p': { my: 0 },
+              '& p + p': { mt: 2 },
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              '& [data-thinking]': {
+                animation: 'none',
+                background: 'none',
+                WebkitTextFillColor: 'currentColor',
+              },
+              '& [data-thinking="block"]': {
+                animation: 'none',
+                backgroundImage: 'none',
+                backgroundClip: 'border-box',
+                WebkitTextFillColor: 'currentColor',
+                bgcolor: 'rgba(139, 92, 246, 0.05)',
+              },
+              '& pre code.language-layerone': {
+                animation: 'none',
+                textShadow: 'none',
+                color: '#7fffe0',
+              },
+            },
+            '& img': {
+              maxWidth: '100%',
+              height: 'auto',
+              borderRadius: 0,
+              my: 4,
+              display: 'block',
+              border: '1px solid',
+              borderColor: 'rgba(255,255,255,0.1)',
+              background:
+                'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)',
+              backgroundSize: '1000px 100%',
+              animation: `${shimmerKeyframes} 15s linear infinite`,
+            },
+            '& hr': {
+              border: 'none',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              my: 6,
+            },
+            '& table': {
+              width: '100%',
+              borderCollapse: 'collapse',
+              my: 4,
+              display: 'block',
+              overflowX: 'auto',
+            },
+            '& th': {
+              textAlign: 'left',
+              p: 2,
+              borderBottom: '2px solid',
+              borderColor: 'primary.500',
+              color: 'primary.100',
+            },
+            '& td': {
+              p: 2,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            },
+          }}
+        >
+          {renderChunks.map((chunk) => {
+            if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length > 1) {
+              return (
+                <Box
+                  key={chunk.key}
+                  sx={{
+                    my: { xs: 3, sm: 5 },
+                    mx: 'auto',
+                    width: '100%',
+                    border: '1px solid rgba(219, 234, 254, 0.9)',
+                    borderRadius: { xs: '24px', sm: '32px' },
+                    bgcolor: 'rgba(248,250,252,0.94)',
+                    color: '#0f172a',
+                    '--joy-fontFamily-body': 'Inter, var(--joy-fontFamily-fallback)',
+                    fontFamily: 'Inter, var(--joy-fontFamily-fallback)',
+                    p: { xs: 1.25, sm: 2 },
+                    boxShadow: '0 24px 80px rgba(15,23,42,0.25)',
+                    '& p': { m: 0 },
+                    '&& img': { m: 0, border: 0, background: 'none', animation: 'none' },
+                    display: 'grid',
+                    gridTemplateColumns: {
+                      xs: '1fr',
+                      sm: 'repeat(2, 1fr)',
+                      md: chunk.cardParts.length >= 3 ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)',
+                    },
+                    gap: { xs: 1.5, sm: 2 },
+                    ...(chunk.cardParts.length === 2 && {
+                      '& > *:nth-of-type(1)': { gridColumn: { md: '2 / 4' } },
+                      '& > *:nth-of-type(2)': { gridColumn: { md: '4 / 6' } },
+                    }),
+                  }}
+                >
+                  {chunk.cardParts.map(
+                    (part) =>
+                      part.token && (
+                        <SpeciesCareCardEmbed
+                          key={part.id}
+                          data={speciesCareCards[part.token.key]}
+                          tokenKey={part.token.key}
+                          coverImageUrl={effectiveCoverImageUrl}
+                          plain
+                        />
+                      ),
+                  )}
+                </Box>
+              );
+            }
+
+            if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length === 1) {
+              const part = chunk.cardParts.at(0);
+
+              return (
+                part?.token && (
+                  <SpeciesCareCardEmbed
+                    key={part.id}
+                    data={speciesCareCards[part.token.key]}
+                    tokenKey={part.token.key}
+                    coverImageUrl={effectiveCoverImageUrl}
+                  />
+                )
+              );
+            }
+
+            if (chunk.type === 'markdown' && chunk.markdownPart) {
+              const part = chunk.markdownPart;
+              const content = part.content ?? '';
+              if (!content.trim()) return null;
+              return (
+                <ReactMarkdown
+                  key={part.id}
+                  remarkPlugins={[remarkGfm, remarkThinkingTags]}
+                  rehypePlugins={[
+                    [rehypeSanitize, markdownSanitizeSchema],
+                    rehypeHighlight,
+                    rehypeDialogueQuotes,
+                  ]}
+                  components={markdownComponents}
+                >
+                  {content}
+                </ReactMarkdown>
+              );
+            }
+
+            return null;
+          })}
+        </Box>
+      )}
+    </>
+  );
+}
+
+/**
+ * PostView Component
+ *
+ * Displays a full blog post with all content and metadata.
+ * Content is rendered via react-markdown with sanitization for XSS protection.
+ */
+export function PostView({
+  post,
+  onClose,
+  backButtonLabel = 'Back to posts',
+  backButtonAriaLabel = 'Back to blog list',
+  postType = 'blog',
+  previousStory = null,
+  nextStory = null,
+  onNavigateStory,
+  isScheduledPreview = false,
+  scheduledPublishDate,
+  hideBackButton = false,
+  disableDynamicBackdrop = false,
+  speciesCareCards = {},
+  gameCoverImage,
+  contentWrapper,
+}: PostViewProps) {
+  const { setPostCoverUrl } = useDynamicBackdrop();
+  const [, setCoverIsLandscape] = useState<boolean | null>(null);
+  const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
+  const [titlePalette, setTitlePalette] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
+
+  const dateString = useMemo(
+    () => getPostDateString(post),
+    [post.filename, post.metadata.date, post],
+  );
+  const formattedDate = useMemo(() => formatLongDate(dateString) ?? 'Unknown date', [dateString]);
+  const scheduledPublishLabel = useMemo(
+    () => formatLongDate(scheduledPublishDate ?? dateString) ?? formattedDate,
+    [scheduledPublishDate, dateString, formattedDate],
+  );
   const transformedCoverImageUrl = useMemo(
     () => resolvePostCoverImageUrl(post.metadata.cover_image),
     [post.metadata.cover_image],
@@ -496,114 +1031,6 @@ export function PostView({
     thinkingTitleGradient,
   ]);
 
-  const markdownComponents = useMemo<Components>(
-    () => ({
-      img: (props) => {
-        const { node: _node, ...imgProps } = props;
-        const { src, alt, title } = imgProps;
-
-        if (title === LORE_IMAGE_TOKEN_TITLE && typeof src === 'string' && src.length > 0) {
-          const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-            const img = e.currentTarget;
-            const depth = Number(img.getAttribute('data-fallback-depth') ?? 0);
-
-            if (depth === 0 && gameCoverImage) {
-              img.setAttribute('data-fallback-depth', '1');
-              img.src = gameCoverImage;
-            } else if (depth <= 1) {
-              img.setAttribute('data-fallback-depth', '2');
-              img.src = POST_COVER_PLACEHOLDER_IMAGE_URL;
-            }
-          };
-
-          return (
-            <Box
-              component="span"
-              sx={{
-                p: 0,
-                my: 4,
-                overflow: 'hidden',
-                borderRadius: 0,
-                border: 'none',
-                bgcolor: 'black',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                py: { xs: 3, sm: 4 },
-                width: '100%',
-              }}
-            >
-              <Box
-                component="span"
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 10,
-                  boxShadow: 'inset 0 0 60px 30px #000',
-                  pointerEvents: 'none',
-                }}
-              />
-
-              <Box
-                component="img"
-                src={src}
-                alt=""
-                loading="lazy"
-                onError={handleImageError}
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  filter: 'blur(20px) brightness(0.55)',
-                  transform: 'scale(1.1)',
-                  zIndex: 0,
-                  opacity: 0.85,
-                  my: 0,
-                  border: 'none',
-                  background: 'none',
-                  animation: 'none',
-                }}
-              />
-
-              <Box
-                component="img"
-                src={src}
-                alt={typeof alt === 'string' ? alt : ''}
-                loading="lazy"
-                onError={handleImageError}
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  objectFit: 'contain',
-                  width: '60%',
-                  maxWidth: '100%',
-                  height: 'auto',
-                  display: 'block',
-                  my: 0,
-                  border: 'none',
-                  background: 'none',
-                  animation: 'none',
-                }}
-              />
-            </Box>
-          );
-        }
-
-        // biome-ignore lint/a11y/useAltText: alt set via imgProps spread
-        // biome-ignore lint/performance/noImgElement: markdown renderer, next/image not applicable here
-        return <img {...imgProps} />;
-      },
-    }),
-    [gameCoverImage],
-  );
-
   useEffect(() => {
     setEffectiveCoverImageUrl(transformedCoverImageUrl);
   }, [transformedCoverImageUrl]);
@@ -658,17 +1085,6 @@ export function PostView({
    */
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  useLayoutEffect(() => {
-    const root = contentRef.current;
-    if (!root) return;
-    root.querySelectorAll<HTMLElement>('[data-thinking]').forEach((el) => {
-      el.style.animationDelay = `${-Math.random() * 30}s`;
-    });
-    root.querySelectorAll<HTMLElement>('code.language-layerone').forEach((el) => {
-      el.style.animationDelay = `${-Math.random() * 10}s`;
-    });
   }, []);
 
   return (
@@ -950,389 +1366,34 @@ export function PostView({
           )}
         </Box>
 
-        <Divider sx={{ mb: 6, bgcolor: 'rgba(255,255,255,0.1)' }} />
-
-        {isScheduledPreview ? (
-          <Card
-            variant="soft"
-            color="neutral"
-            sx={{
-              p: { xs: 2, sm: 3 },
-              borderRadius: 0,
-              border: '1px solid',
-              borderColor: 'rgba(255,255,255,0.08)',
-              bgcolor: 'rgba(255,255,255,0.03)',
-            }}
-          >
-            <Typography level="title-lg" sx={{ mb: 1 }}>
-              Scheduled for {scheduledPublishLabel}
-            </Typography>
-            <Typography
-              level="body-md"
-              sx={{ color: 'text.secondary', fontSize: { xs: '1rem', sm: '1.05rem' } }}
-            >
-              This post is already queued in the site, but it stays hidden until that date begins in
-              Portland time.
-            </Typography>
-            <Typography
-              level="body-sm"
-              sx={{ mt: 1.5, color: 'text.tertiary', fontSize: '0.98rem' }}
-            >
-              The full post content and listen-along player will unlock automatically when the
-              publish date arrives.
-            </Typography>
-          </Card>
+        {contentWrapper ? (
+          contentWrapper(
+            <PostContentSection
+              post={post}
+              isScheduledPreview={isScheduledPreview}
+              scheduledPublishLabel={scheduledPublishLabel}
+              speciesCareCards={speciesCareCards}
+              effectiveCoverImageUrl={effectiveCoverImageUrl}
+              gameCoverImage={gameCoverImage}
+              dialogueColor={dialogueColor}
+              thinkingColor={thinkingColor}
+              thinkingGlowColor={thinkingGlowColor}
+              thinkingMutedColor={thinkingMutedColor}
+            />,
+          )
         ) : (
-          <Box
-            ref={contentRef}
-            sx={{
-              // Typography settings for readability
-              fontSize: { xs: '1rem', sm: '1.125rem' }, // 16px on phones, 18px up
-              lineHeight: 1.8,
-              color: 'text.secondary', // Slightly softer than pure white
-
-              // Prose styling for markdown elements
-              '& h1, & h2, & h3, & h4, & h5, & h6': {
-                color: 'primary.200', // Light purple for headers
-                scrollMarginTop: '100px',
-              },
-              '& h1': {
-                fontSize: { xs: '2rem', sm: '2.5rem' },
-                fontWeight: 700,
-                mt: 6,
-                mb: 3,
-              },
-              '& h2': {
-                fontSize: { xs: '1.6rem', sm: '2rem' },
-                fontWeight: 700,
-                mt: 5,
-                mb: 2.5,
-                pb: 1,
-                borderBottom: '1px solid',
-                borderColor: 'rgba(139, 92, 246, 0.2)', // Subtle purple line
-              },
-              '& h3': {
-                fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                fontWeight: 600,
-                mt: 4,
-                mb: 2,
-                color: 'primary.300',
-              },
-              '& h4': {
-                fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                fontWeight: 600,
-                mt: 3,
-                mb: 1.5,
-              },
-              '& p': {
-                mb: 3,
-              },
-              '& strong': {
-                color: 'text.primary',
-                fontWeight: 600,
-              },
-              '& ul, & ol': {
-                ml: { xs: 2, sm: 3 },
-                mb: 3,
-                pl: { xs: 0.5, sm: 1 },
-                '& li': {
-                  mb: 1,
-                  pl: 1,
-                  '&::marker': {
-                    color: 'primary.400', // Purple bullets
-                  },
-                },
-              },
-              '& blockquote': {
-                borderLeft: '4px solid',
-                borderColor: 'primary.500',
-                pl: 3,
-                py: 2,
-                my: 4,
-                fontStyle: 'italic',
-                bgcolor: 'rgba(139, 92, 246, 0.05)', // Very subtle purple tint
-                color: 'text.primary',
-              },
-              '& code': {
-                // INLINE CODE STYLING (Dark Green Highlight)
-                backgroundColor: 'rgba(20, 83, 45, 0.6)',
-                color: '#4ade80', // Bright green text
-                px: 0.75,
-                py: 0.25,
-                borderRadius: 0, // Sharp
-                fontSize: '0.9rem',
-                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-                border: '1px solid',
-                borderColor: 'rgba(74, 222, 128, 0.2)',
-
-                // Shimmer Effect
-                background:
-                  'linear-gradient(to right, rgba(20, 83, 45, 0.6) 0%, rgba(74, 222, 128, 0.25) 50%, rgba(20, 83, 45, 0.6) 100%)',
-                backgroundSize: '1000px 100%',
-                animation: `${shimmerKeyframes} 6s linear infinite`,
-                '&:nth-of-type(2n)': { animationDuration: '4s' },
-                '&:nth-of-type(3n)': { animationDuration: '8s' },
-                '&:nth-of-type(5n)': { animationDuration: '5s' },
-                '&:nth-of-type(7n)': { animationDuration: '7s' },
-              },
-              '& pre': {
-                backgroundColor: '#282c34 !important',
-                p: 2,
-                borderRadius: 0,
-                overflow: 'auto',
-                my: 4,
-                border: '1px solid',
-                borderColor: 'rgba(255,255,255,0.1)',
-                '& code': {
-                  backgroundColor: 'transparent !important',
-                  color: 'inherit',
-                  p: 0,
-                  border: 'none',
-                  fontFamily: 'inherit',
-                  background: 'none',
-                  animation: 'none',
-                },
-                '& .hljs': {
-                  background: 'transparent',
-                },
-              },
-              '& pre:has(code.language-layerone)': {
-                backgroundColor: '#0d0618 !important',
-                border: '1px solid',
-                borderColor: 'rgba(0, 255, 200, 0.25)',
-                position: 'relative',
-                overflow: 'hidden',
-                my: 4,
-                p: 2,
-                borderRadius: 0,
-                textAlign: 'center',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  background:
-                    'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 200, 0.04) 2px, rgba(0, 255, 200, 0.04) 4px)',
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                },
-                '& code.language-layerone': {
-                  backgroundColor: 'transparent !important',
-                  color: '#7fffe0',
-                  fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-                  p: 0,
-                  border: 'none',
-                  background: 'none !important',
-                  textAlign: 'center',
-                  textShadow: '1px 0 rgba(255, 0, 180, 0.4), -1px 0 rgba(0, 200, 255, 0.4)',
-                  animation: `${glitchFlickerKeyframes} 6s steps(1) infinite`,
-                },
-                '& .hljs': {
-                  background: 'transparent',
-                },
-              },
-              '& a': {
-                color: 'primary.400',
-                textDecoration: 'none',
-                borderBottom: '1px dashed',
-                borderColor: 'primary.400',
-                transition: 'all 0.2s',
-                '&:hover': {
-                  color: 'primary.300',
-                  backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                  borderBottomStyle: 'solid',
-                },
-              },
-              '& [data-dialogue="true"]': {
-                color: dialogueColor,
-              },
-              '& [data-thinking]': {
-                '--PostView-thinking-color': thinkingColor,
-                '--PostView-thinking-glow': thinkingGlowColor,
-                '--PostView-thinking-muted': thinkingMutedColor,
-                position: 'relative',
-                fontStyle: 'italic',
-                color: 'var(--PostView-thinking-color)',
-                background:
-                  'linear-gradient(90deg, var(--PostView-thinking-muted) 0%, var(--PostView-thinking-color) 32%, rgba(255,255,255,0.96) 48%, var(--PostView-thinking-color) 64%, var(--PostView-thinking-muted) 100%)',
-                backgroundSize: '260% 100%',
-                backgroundPosition: '160% 50%',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                animation: `${thinkingPulseKeyframes} 18s ease-in-out infinite`,
-              },
-              '& [data-thinking="inline"]': {
-                textWrap: 'pretty',
-              },
-              '& [data-thinking="block"]': {
-                display: 'block',
-                textAlign: 'center',
-                borderLeft: '4px solid',
-                borderColor: 'primary.500',
-                px: { xs: 3, sm: 4 },
-                py: 2,
-                my: 6,
-                fontStyle: 'italic',
-                backgroundColor: 'rgba(139, 92, 246, 0.05)',
-                backgroundImage: `linear-gradient(90deg, var(--PostView-thinking-muted) 0%, var(--PostView-thinking-color) 32%, rgba(255,255,255,0.96) 48%, var(--PostView-thinking-color) 64%, var(--PostView-thinking-muted) 100%), none`,
-                backgroundSize: '260% 100%, auto',
-                backgroundPosition: '160% 50%, 0 0',
-                backgroundClip: 'text, border-box',
-                WebkitTextFillColor: 'transparent',
-                color: 'text.primary',
-                boxShadow: `inset 0 0 28px rgba(139, 92, 246, 0.08), 0 0 32px ${thinkingGlowColor}`,
-                animation: `${thinkingPulseKeyframes} 18s ease-in-out infinite, ${thinkingFloatKeyframes} 6s ease-in-out infinite`,
-                '& p': { my: 0 },
-                '& p + p': { mt: 2 },
-              },
-              '@media (prefers-reduced-motion: reduce)': {
-                '& [data-thinking]': {
-                  animation: 'none',
-                  background: 'none',
-                  WebkitTextFillColor: 'currentColor',
-                },
-                '& [data-thinking="block"]': {
-                  animation: 'none',
-                  backgroundImage: 'none',
-                  backgroundClip: 'border-box',
-                  WebkitTextFillColor: 'currentColor',
-                  bgcolor: 'rgba(139, 92, 246, 0.05)',
-                },
-                '& pre code.language-layerone': {
-                  animation: 'none',
-                  textShadow: 'none',
-                  color: '#7fffe0',
-                },
-              },
-              '& img': {
-                maxWidth: '100%',
-                height: 'auto',
-                borderRadius: 0,
-                my: 4,
-                display: 'block',
-                border: '1px solid',
-                borderColor: 'rgba(255,255,255,0.1)',
-                background:
-                  'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)',
-                backgroundSize: '1000px 100%',
-                animation: `${shimmerKeyframes} 15s linear infinite`,
-              },
-              '& hr': {
-                border: 'none',
-                borderTop: '1px solid',
-                borderColor: 'divider',
-                my: 6,
-              },
-              '& table': {
-                width: '100%',
-                borderCollapse: 'collapse',
-                my: 4,
-                display: 'block',
-                overflowX: 'auto',
-              },
-              '& th': {
-                textAlign: 'left',
-                p: 2,
-                borderBottom: '2px solid',
-                borderColor: 'primary.500',
-                color: 'primary.100',
-              },
-              '& td': {
-                p: 2,
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-              },
-            }}
-          >
-            {renderChunks.map((chunk) => {
-              if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length > 1) {
-                return (
-                  <Box
-                    key={chunk.key}
-                    sx={{
-                      my: { xs: 3, sm: 5 },
-                      mx: 'auto',
-                      width: '100%',
-                      border: '1px solid rgba(219, 234, 254, 0.9)',
-                      borderRadius: { xs: '24px', sm: '32px' },
-                      bgcolor: 'rgba(248,250,252,0.94)',
-                      color: '#0f172a',
-                      '--joy-fontFamily-body': 'Inter, var(--joy-fontFamily-fallback)',
-                      fontFamily: 'Inter, var(--joy-fontFamily-fallback)',
-                      p: { xs: 1.25, sm: 2 },
-                      boxShadow: '0 24px 80px rgba(15,23,42,0.25)',
-                      '& p': { m: 0 },
-                      '&& img': { m: 0, border: 0, background: 'none', animation: 'none' },
-                      display: 'grid',
-                      gridTemplateColumns: {
-                        xs: '1fr',
-                        sm: 'repeat(2, 1fr)',
-                        md: chunk.cardParts.length >= 3 ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)',
-                      },
-                      gap: { xs: 1.5, sm: 2 },
-                      ...(chunk.cardParts.length === 2 && {
-                        '& > *:nth-of-type(1)': { gridColumn: { md: '2 / 4' } },
-                        '& > *:nth-of-type(2)': { gridColumn: { md: '4 / 6' } },
-                      }),
-                    }}
-                  >
-                    {chunk.cardParts.map(
-                      (part) =>
-                        part.token && (
-                          <SpeciesCareCardEmbed
-                            key={part.id}
-                            data={speciesCareCards[part.token.key]}
-                            tokenKey={part.token.key}
-                            coverImageUrl={effectiveCoverImageUrl}
-                            plain
-                          />
-                        ),
-                    )}
-                  </Box>
-                );
-              }
-
-              if (chunk.type === 'card-group' && chunk.cardParts && chunk.cardParts.length === 1) {
-                const part = chunk.cardParts.at(0);
-
-                return (
-                  part?.token && (
-                    <SpeciesCareCardEmbed
-                      key={part.id}
-                      data={speciesCareCards[part.token.key]}
-                      tokenKey={part.token.key}
-                      coverImageUrl={effectiveCoverImageUrl}
-                    />
-                  )
-                );
-              }
-
-              if (chunk.type === 'markdown' && chunk.markdownPart) {
-                const part = chunk.markdownPart;
-                const content = part.content ?? '';
-                if (!content.trim()) return null;
-                return (
-                  <ReactMarkdown
-                    key={part.id}
-                    remarkPlugins={[remarkGfm, remarkThinkingTags]}
-                    rehypePlugins={[
-                      [rehypeSanitize, markdownSanitizeSchema],
-                      rehypeHighlight,
-                      rehypeDialogueQuotes,
-                    ]}
-                    components={markdownComponents}
-                  >
-                    {content}
-                  </ReactMarkdown>
-                );
-              }
-
-              return null;
-            })}
-          </Box>
+          <PostContentSection
+            post={post}
+            isScheduledPreview={isScheduledPreview}
+            scheduledPublishLabel={scheduledPublishLabel}
+            speciesCareCards={speciesCareCards}
+            effectiveCoverImageUrl={effectiveCoverImageUrl}
+            gameCoverImage={gameCoverImage}
+            dialogueColor={dialogueColor}
+            thinkingColor={thinkingColor}
+            thinkingGlowColor={thinkingGlowColor}
+            thinkingMutedColor={thinkingMutedColor}
+          />
         )}
       </Box>
 

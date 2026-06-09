@@ -4,7 +4,7 @@
  */
 
 import { readdir, readFile, realpath, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 import { type ParsedPost, parsePost } from '@/lib/blog/parser';
 import { getPublishState } from '@/lib/content/publish';
@@ -14,6 +14,13 @@ const GAMES_DIR = join(process.cwd(), 'lore/games');
 const DEFAULT_PAGE_SIZE = 10;
 
 const LORE_ROOT_TAG = 'lore';
+
+class DuplicateLoreFilenameError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DuplicateLoreFilenameError';
+  }
+}
 
 export interface PaginatedLorePosts {
   posts: ParsedPost[];
@@ -45,6 +52,13 @@ export interface LoreGameGroup {
 
 export type LorePostSortMode = 'story_order_desc' | 'story_order_asc' | 'date_desc' | 'date_asc';
 
+export interface PovSibling {
+  slug: string;
+  title: string;
+  characterTag: string;
+  coverImage: string | undefined;
+}
+
 export interface LorePostNeighbor {
   post: ParsedPost;
   slug: string;
@@ -56,7 +70,7 @@ export interface LorePostNeighbors {
 }
 
 function isValidFilename(filename: string): boolean {
-  return /^[a-z0-9][a-z0-9-]*\.md$/i.test(filename);
+  return /^[a-z0-9][a-z0-9-]*\.md$/i.test(basename(filename));
 }
 
 function isValidSlug(value: string): boolean {
@@ -295,13 +309,120 @@ export function getLorePostsForGame(posts: ParsedPost[], gameSlug: string): Pars
   return posts.filter((post) => normalizeSlug(post.metadata.game) === normalizedGame);
 }
 
+export function getPovSiblings(allPosts: ParsedPost[], currentPost: ParsedPost): PovSibling[] {
+  const gameSlug = normalizeSlug(currentPost.metadata.game);
+  const storyOrder = getStoryOrderValue(currentPost);
+
+  if (!gameSlug || storyOrder === null) return [];
+
+  const currentFilename = currentPost.filename;
+  const currentTags = new Set(getPostCharacterTags(currentPost, gameSlug));
+  const gamePosts = getLorePostsForGame(allPosts, gameSlug);
+  const currentEpisode = currentPost.metadata.episode_label?.trim().toLowerCase() || null;
+
+  const byCharacter = new Map<string, ParsedPost[]>();
+
+  for (const post of gamePosts) {
+    if (post.filename === currentPost.filename) continue;
+
+    const tags = getPostCharacterTags(post, gameSlug);
+    if (tags.length === 0) continue;
+
+    const primaryTag = (tags[0] ?? '').toLowerCase();
+    if (currentTags.has(primaryTag)) continue;
+
+    const bucket = byCharacter.get(primaryTag) ?? [];
+    bucket.push(post);
+    byCharacter.set(primaryTag, bucket);
+  }
+
+  const siblings: PovSibling[] = [];
+
+  for (const [characterTag, posts] of byCharacter) {
+    const withOrder = posts.map((p) => ({
+      post: p,
+      order: getStoryOrderValue(p),
+      sharedSuffixLen: commonSuffixLength(currentFilename, p.filename),
+    }));
+
+    withOrder.sort((a, b) => {
+      // Primary: prefer same sub-chapter (longer shared filename suffix)
+      if (a.sharedSuffixLen !== b.sharedSuffixLen) {
+        return b.sharedSuffixLen - a.sharedSuffixLen;
+      }
+
+      // Secondary: story_order proximity
+      const distA = a.order !== null ? Math.abs(a.order - storyOrder) : Number.MAX_SAFE_INTEGER;
+      const distB = b.order !== null ? Math.abs(b.order - storyOrder) : Number.MAX_SAFE_INTEGER;
+      if (distA !== distB) return distA - distB;
+
+      // Tertiary: prefer same episode_label
+      const aEpisode = a.post.metadata.episode_label?.trim().toLowerCase() || null;
+      const bEpisode = b.post.metadata.episode_label?.trim().toLowerCase() || null;
+      const aSame = aEpisode === currentEpisode ? 0 : 1;
+      const bSame = bEpisode === currentEpisode ? 0 : 1;
+      if (aSame !== bSame) return aSame - bSame;
+
+      return a.post.filename.localeCompare(b.post.filename);
+    });
+
+    const closest = withOrder[0]?.post;
+    if (!closest) continue;
+    siblings.push({
+      slug: getLorePostSlug(closest),
+      title: closest.metadata.title,
+      characterTag:
+        closest.metadata.tags?.find((t) => t.trim().toLowerCase() === characterTag) ?? characterTag,
+      coverImage: closest.metadata.cover_image?.trim() || undefined,
+    });
+  }
+
+  siblings.sort((a, b) => a.characterTag.localeCompare(b.characterTag));
+
+  return siblings;
+}
+
+function commonSuffixLength(a: string, b: string): number {
+  let i = a.length - 1;
+  let j = b.length - 1;
+  let len = 0;
+  while (i >= 0 && j >= 0 && a[i] === b[j]) {
+    len++;
+    i--;
+    j--;
+  }
+  return len;
+}
+
 export async function loadAllLorePosts(
   options: LoadAllLorePostsOptions = {},
   postsDir: string = POSTS_DIR,
 ): Promise<ParsedPost[]> {
   try {
-    const files = await readdir(postsDir);
-    const mdFiles = files.filter((f) => isValidFilename(f));
+    const files = await readdir(postsDir, { recursive: true });
+    const mdFiles: Array<{ filename: string; relativePath: string }> = [];
+    const seenBasenames = new Map<string, string>();
+
+    for (const relativePath of [...files].sort((a, b) => a.localeCompare(b))) {
+      if (!relativePath.toLowerCase().endsWith('.md')) continue;
+
+      const filename = basename(relativePath);
+      if (!isValidFilename(filename)) continue;
+
+      const firstRelativePath = seenBasenames.get(filename);
+      if (firstRelativePath) {
+        const message = `Duplicate lore filename "${filename}" found in "${firstRelativePath}" and "${relativePath}". Slugs must remain unique.`;
+        if (process.env.NODE_ENV === 'test') {
+          throw new DuplicateLoreFilenameError(message);
+        }
+
+        console.warn(message);
+        continue;
+      }
+
+      seenBasenames.set(filename, relativePath);
+      mdFiles.push({ filename, relativePath });
+    }
 
     if (mdFiles.length === 0) {
       console.info(`No valid markdown files found in ${postsDir}`);
@@ -311,12 +432,12 @@ export async function loadAllLorePosts(
     const realPostsDir = await realpath(postsDir);
 
     const posts = await Promise.all(
-      mdFiles.map(async (filename) => {
+      mdFiles.map(async ({ filename, relativePath }) => {
         try {
-          const filepath = join(postsDir, filename);
+          const filepath = join(postsDir, relativePath);
           const realFilePath = await realpath(filepath);
           if (!realFilePath.startsWith(realPostsDir)) {
-            console.error(`Security: Path traversal attempt detected for ${filename}`);
+            console.error(`Security: Path traversal attempt detected for ${relativePath}`);
             return null;
           }
 
@@ -340,7 +461,7 @@ export async function loadAllLorePosts(
           };
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          console.error(`Error loading ${filename}:`, errorMessage);
+          console.error(`Error loading ${relativePath}:`, errorMessage);
           return null;
         }
       }),
@@ -365,6 +486,10 @@ export async function loadAllLorePosts(
       .filter((post) => getPublishState(post.explicitPublishDate, options.now).isPublished)
       .map((post) => post.parsed);
   } catch (error) {
+    if (error instanceof DuplicateLoreFilenameError) {
+      throw error;
+    }
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error loading lore posts:', errorMessage);
     return [];
