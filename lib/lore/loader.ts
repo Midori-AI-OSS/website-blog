@@ -315,6 +315,7 @@ export function getPovSiblings(allPosts: ParsedPost[], currentPost: ParsedPost):
 
   if (!gameSlug || storyOrder === null) return [];
 
+  const currentFilename = currentPost.filename;
   const currentTags = new Set(getPostCharacterTags(currentPost, gameSlug));
   const gamePosts = getLorePostsForGame(allPosts, gameSlug);
   const currentEpisode = currentPost.metadata.episode_label?.trim().toLowerCase() || null;
@@ -341,14 +342,21 @@ export function getPovSiblings(allPosts: ParsedPost[], currentPost: ParsedPost):
     const withOrder = posts.map((p) => ({
       post: p,
       order: getStoryOrderValue(p),
+      sharedSuffixLen: commonSuffixLength(currentFilename, p.filename),
     }));
 
     withOrder.sort((a, b) => {
+      // Primary: prefer same sub-chapter (longer shared filename suffix)
+      if (a.sharedSuffixLen !== b.sharedSuffixLen) {
+        return b.sharedSuffixLen - a.sharedSuffixLen;
+      }
+
+      // Secondary: story_order proximity
       const distA = a.order !== null ? Math.abs(a.order - storyOrder) : Number.MAX_SAFE_INTEGER;
       const distB = b.order !== null ? Math.abs(b.order - storyOrder) : Number.MAX_SAFE_INTEGER;
       if (distA !== distB) return distA - distB;
 
-      // Tiebreaker: prefer same episode_label
+      // Tertiary: prefer same episode_label
       const aEpisode = a.post.metadata.episode_label?.trim().toLowerCase() || null;
       const bEpisode = b.post.metadata.episode_label?.trim().toLowerCase() || null;
       const aSame = aEpisode === currentEpisode ? 0 : 1;
@@ -372,6 +380,18 @@ export function getPovSiblings(allPosts: ParsedPost[], currentPost: ParsedPost):
   siblings.sort((a, b) => a.characterTag.localeCompare(b.characterTag));
 
   return siblings;
+}
+
+function commonSuffixLength(a: string, b: string): number {
+  let i = a.length - 1;
+  let j = b.length - 1;
+  let len = 0;
+  while (i >= 0 && j >= 0 && a[i] === b[j]) {
+    len++;
+    i--;
+    j--;
+  }
+  return len;
 }
 
 export async function loadAllLorePosts(
