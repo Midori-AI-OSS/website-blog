@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-
+import type { ReactNode } from 'react';
+import PasswordGate from '@/components/blog/PasswordGate';
 import { PostView } from '@/components/blog/PostView';
 import type { ParsedPost } from '@/lib/blog/parser';
 import type { LorePostNeighbor } from '@/lib/lore/loader';
@@ -27,6 +28,16 @@ export function LorePostPageClient({
   gameCoverImage,
 }: LorePostPageClientProps) {
   const router = useRouter();
+  const password = post.metadata.password?.trim();
+  const contentWrapper = password
+    ? (content: ReactNode) => {
+        return (
+          <PasswordGate key={post.filename} password={password}>
+            {content}
+          </PasswordGate>
+        );
+      }
+    : undefined;
 
   return (
     <PostView
@@ -58,6 +69,7 @@ export function LorePostPageClient({
       scheduledPublishDate={scheduledPublishDate}
       speciesCareCards={speciesCareCards}
       gameCoverImage={gameCoverImage}
+      contentWrapper={contentWrapper}
     />
   );
 }

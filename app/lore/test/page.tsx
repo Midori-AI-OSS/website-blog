@@ -5,6 +5,14 @@ import { loadSpeciesCareCardsForMarkdown } from '@/lib/species-care/loader';
 
 import { LorePostPageClient } from '../[slug]/LorePostPageClient';
 
+const passwordProtectedLoreRendererTestPost = {
+  ...loreRendererTestPost,
+  metadata: {
+    ...loreRendererTestPost.metadata,
+    password: 'lore-test',
+  },
+};
+
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
@@ -15,5 +23,10 @@ export const metadata: Metadata = {
 export default async function LoreRendererTestPage() {
   const speciesCareCards = await loadSpeciesCareCardsForMarkdown(loreRendererTestPost.content);
 
-  return <LorePostPageClient post={loreRendererTestPost} speciesCareCards={speciesCareCards} />;
+  return (
+    <LorePostPageClient
+      post={passwordProtectedLoreRendererTestPost}
+      speciesCareCards={speciesCareCards}
+    />
+  );
 }
