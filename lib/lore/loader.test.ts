@@ -16,9 +16,9 @@ let testRootDir = '';
 let testPostsDir = '';
 let testGamesDir = '';
 
-async function createLorePost(filename: string, content: string) {
-  await mkdir(testPostsDir, { recursive: true });
-  await writeFile(join(testPostsDir, filename), content, 'utf-8');
+async function createLorePost(filename: string, content: string, postsDir: string = testPostsDir) {
+  await mkdir(postsDir, { recursive: true });
+  await writeFile(join(postsDir, filename), content, 'utf-8');
 }
 
 async function createGameIndex(gameSlug: string, content: string) {
@@ -231,5 +231,89 @@ full_story_pov: luna
       'second-lore.md',
       'future-lore.md',
     ]);
+  });
+
+  test('loadAllLorePosts loads subdirectory posts with flat slugs', async () => {
+    const nestedRootDir = await mkdtemp(join(tmpdir(), 'website-lore-subdir-'));
+    const nestedPostsDir = join(nestedRootDir, 'lore', 'posts');
+
+    try {
+      await mkdir(join(nestedPostsDir, 'real-moments'), { recursive: true });
+      await createLorePost(
+        'real-moments/foo.md',
+        `---
+title: Nested Lore
+date: 2026-01-14
+tags: [lore, nested-threads, luna]
+game: nested-threads
+story_order: 1
+---
+
+# Nested Lore`,
+        nestedPostsDir,
+      );
+
+      const posts = await loadAllLorePosts(
+        { includeScheduled: true, now: '2026-01-16T18:00:00Z' },
+        nestedPostsDir,
+      );
+
+      expect(posts.map((post) => post.filename)).toEqual(['foo.md']);
+      expect(getLorePostBySlug(posts, 'foo')?.filename).toBe('foo.md');
+    } finally {
+      await rm(nestedRootDir, { recursive: true, force: true });
+    }
+  });
+
+  test('loadAllLorePosts throws for duplicate subdirectory basenames in test env', async () => {
+    const duplicateRootDir = await mkdtemp(join(tmpdir(), 'website-lore-duplicates-'));
+    const duplicatePostsDir = join(duplicateRootDir, 'lore', 'posts');
+
+    try {
+      await mkdir(join(duplicatePostsDir, 'real-moments'), { recursive: true });
+      await mkdir(join(duplicatePostsDir, 'celestial-covenant'), { recursive: true });
+      await createLorePost(
+        'real-moments/shared.md',
+        `---
+title: Shared Lore One
+date: 2026-01-14
+tags: [lore, duplicate-threads, luna]
+game: duplicate-threads
+story_order: 1
+---
+
+# Shared Lore One`,
+        duplicatePostsDir,
+      );
+      await createLorePost(
+        'celestial-covenant/shared.md',
+        `---
+title: Shared Lore Two
+date: 2026-01-15
+tags: [lore, duplicate-threads, riley]
+game: duplicate-threads
+story_order: 2
+---
+
+# Shared Lore Two`,
+        duplicatePostsDir,
+      );
+
+      let duplicateError: unknown;
+
+      try {
+        await loadAllLorePosts(
+          { includeScheduled: true, now: '2026-01-16T18:00:00Z' },
+          duplicatePostsDir,
+        );
+      } catch (error) {
+        duplicateError = error;
+      }
+
+      expect(duplicateError).toBeInstanceOf(Error);
+      expect((duplicateError as Error).message).toContain('Duplicate lore filename "shared.md"');
+    } finally {
+      await rm(duplicateRootDir, { recursive: true, force: true });
+    }
   });
 });

@@ -4,7 +4,7 @@
  */
 
 import { readdir, readFile, realpath, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 import { type ParsedPost, parsePost } from '@/lib/blog/parser';
 import { getPublishState } from '@/lib/content/publish';
@@ -14,6 +14,13 @@ const GAMES_DIR = join(process.cwd(), 'lore/games');
 const DEFAULT_PAGE_SIZE = 10;
 
 const LORE_ROOT_TAG = 'lore';
+
+class DuplicateLoreFilenameError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DuplicateLoreFilenameError';
+  }
+}
 
 export interface PaginatedLorePosts {
   posts: ParsedPost[];
@@ -56,7 +63,7 @@ export interface LorePostNeighbors {
 }
 
 function isValidFilename(filename: string): boolean {
-  return /^[a-z0-9][a-z0-9-]*\.md$/i.test(filename);
+  return /^[a-z0-9][a-z0-9-]*\.md$/i.test(basename(filename));
 }
 
 function isValidSlug(value: string): boolean {
@@ -300,8 +307,30 @@ export async function loadAllLorePosts(
   postsDir: string = POSTS_DIR,
 ): Promise<ParsedPost[]> {
   try {
-    const files = await readdir(postsDir);
-    const mdFiles = files.filter((f) => isValidFilename(f));
+    const files = await readdir(postsDir, { recursive: true });
+    const mdFiles: Array<{ filename: string; relativePath: string }> = [];
+    const seenBasenames = new Map<string, string>();
+
+    for (const relativePath of [...files].sort((a, b) => a.localeCompare(b))) {
+      if (!relativePath.toLowerCase().endsWith('.md')) continue;
+
+      const filename = basename(relativePath);
+      if (!isValidFilename(filename)) continue;
+
+      const firstRelativePath = seenBasenames.get(filename);
+      if (firstRelativePath) {
+        const message = `Duplicate lore filename "${filename}" found in "${firstRelativePath}" and "${relativePath}". Slugs must remain unique.`;
+        if (process.env.NODE_ENV === 'test') {
+          throw new DuplicateLoreFilenameError(message);
+        }
+
+        console.warn(message);
+        continue;
+      }
+
+      seenBasenames.set(filename, relativePath);
+      mdFiles.push({ filename, relativePath });
+    }
 
     if (mdFiles.length === 0) {
       console.info(`No valid markdown files found in ${postsDir}`);
@@ -311,12 +340,12 @@ export async function loadAllLorePosts(
     const realPostsDir = await realpath(postsDir);
 
     const posts = await Promise.all(
-      mdFiles.map(async (filename) => {
+      mdFiles.map(async ({ filename, relativePath }) => {
         try {
-          const filepath = join(postsDir, filename);
+          const filepath = join(postsDir, relativePath);
           const realFilePath = await realpath(filepath);
           if (!realFilePath.startsWith(realPostsDir)) {
-            console.error(`Security: Path traversal attempt detected for ${filename}`);
+            console.error(`Security: Path traversal attempt detected for ${relativePath}`);
             return null;
           }
 
@@ -340,7 +369,7 @@ export async function loadAllLorePosts(
           };
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          console.error(`Error loading ${filename}:`, errorMessage);
+          console.error(`Error loading ${relativePath}:`, errorMessage);
           return null;
         }
       }),
@@ -365,6 +394,10 @@ export async function loadAllLorePosts(
       .filter((post) => getPublishState(post.explicitPublishDate, options.now).isPublished)
       .map((post) => post.parsed);
   } catch (error) {
+    if (error instanceof DuplicateLoreFilenameError) {
+      throw error;
+    }
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error loading lore posts:', errorMessage);
     return [];
