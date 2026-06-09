@@ -3,7 +3,7 @@
 import { keyframes } from '@emotion/react';
 import { Box, Stack, Tooltip, Typography } from '@mui/joy';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import type { PovSibling } from '@/lib/lore/loader';
 
@@ -29,6 +29,7 @@ function toSentenceCase(value: string): string {
 
 export function PovPicker({ siblings, gameCoverImage }: PovPickerProps) {
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const breatheTimings = useMemo(() => {
     const map = new Map<string, { dur: number; delay: number }>();
@@ -41,10 +42,34 @@ export function PovPicker({ siblings, gameCoverImage }: PovPickerProps) {
     return map;
   }, [siblings]);
 
+  useEffect(() => {
+    let prevScrollY = window.scrollY;
+    let offset = 0;
+    let rafId: number;
+
+    const frame = () => {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - prevScrollY;
+      offset += delta * -0.08;
+      offset *= 0.94;
+      prevScrollY = currentScrollY;
+
+      if (containerRef.current) {
+        containerRef.current.style.transform = `translateY(calc(-50% + ${offset}px))`;
+      }
+
+      rafId = requestAnimationFrame(frame);
+    };
+
+    rafId = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
   if (siblings.length === 0) return null;
 
   return (
     <Box
+      ref={containerRef}
       sx={{
         position: 'fixed',
         left: 16,
