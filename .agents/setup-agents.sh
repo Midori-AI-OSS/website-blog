@@ -82,9 +82,7 @@ run_setup() {
   if [[ "${MIDORI_AI_AGENTS_RUNNER_INTERACTIVE:-false}" == "true" ]]; then
     DEV_LOG="/tmp/workspace-dev.log"
 
-    if ss -ltn 2>/dev/null | grep -q ':3000 '; then
-      exit 0
-    else
+    if ! ss -ltn 2>/dev/null | grep -q ':3000 '; then
       nohup bun run dev >"${DEV_LOG}" 2>&1 &
     fi
 
