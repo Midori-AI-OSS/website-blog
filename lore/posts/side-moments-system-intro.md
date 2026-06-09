@@ -3,7 +3,7 @@ title: "Side Moments — A New Space in the Lore"
 summary: "A new lore section for experimental fragments, rapid prototypes, and non-canon works from across all games."
 tags: [lore, side-moments, system]
 cover_image: /lore/side-moments-sad.png
-author: system
+author: System
 date: 2026-06-09
 game: side-moments
 story_order: 1
