@@ -27,25 +27,25 @@ Every character at this table is a part of one person. The lunch is a conversati
 
 **The six parts:**
 
-- **Real Riley** — The most real self. The one without magic in a world of magic — neurodivergent, working with different tools, growing through they own wished moments. They created everyone else because they needed a support system they didn't have.
+- **Real Riley** — (They/Them) The most real self. The one without magic in a world of magic — neurodivergent, working with different tools, growing through they own wished moments. They created everyone else because they needed a support system they didn't have.
 
-- **RP-Riley** — The aspirational self. RP-Riley has lived out their time with found family; Real Riley hasn't yet. They're two versions of the same person at different stages, sitting on the same side of the table. Having them both there shows you the destination while the journey is still happening.
+- **RP-Riley** — (She/They) The aspirational self. RP-Riley has lived out their time with found family; Real Riley hasn't yet. They're two versions of the same person at different stages, sitting on the same side of the table. Having them both there shows you the destination while the journey is still happening.
 
   *To see RP-Riley's story in their own world:* [first story →](/lore/luz-blessee-bar)
 
-- **Luna** — The protector and caretaker. Luna needs someone who doesn't need protecting — so she has Leo. They're twins: Luna acts, Leo thinks. Together they're a pair who never learned to be separate, because some parts are meant to work in pairs for life. Luna asks the hard questions, pays for everyone, and puts her hand on a bleeding heart and refuses to let it stop.
+- **Luna** — (She/They) The protector and caretaker. Luna needs someone who doesn't need protecting — so she has Leo. They're twins: Luna acts, Leo thinks. Together they're a pair who never learned to be separate, because some parts are meant to work in pairs for life. Luna asks the hard questions, pays for everyone, and puts her hand on a bleeding heart and refuses to let it stop.
 
   *To see Luna in her own world:* [first story →](/lore/luna-memoria-crystalli)
 
-- **Leo** — The grounded stabilizer. Leo is Luna's twin — the thinker to her actor, the boundaries to her burning. He sets the rules, holds the framework, and says "no" on principle. He's the teacher who stands still so everyone else can move.
+- **Leo** — (He/Him) The grounded stabilizer. Leo is Luna's twin — the thinker to her actor, the boundaries to her burning. He sets the rules, holds the framework, and says "no" on principle. He's the teacher who stands still so everyone else can move.
 
   *To see Leo in his own world:* [first story →](/lore/leo-memoria-crystalli)
 
-- **Echo** — A different expression of Riley's same neurotype. Echo manages the sensory world through sequence, routine, and observation — she checks the fridge hum, presses her palm on the table to verify reality, and experiences time distortion made literal (she ages, she regresses, her body tells the truth her mind can't always reach). She stayed in the body when the self had to leave. She is how you feel to heal.
+- **Echo** — (She/Her) A different expression of Riley's same neurotype. Echo manages the sensory world through sequence, routine, and observation — she checks the fridge hum, presses her palm on the table to verify reality, and experiences time distortion made literal (she ages, she regresses, her body tells the truth her mind can't always reach). She stayed in the body when the self had to leave. She is how you feel to heal.
 
   *To see Echo in her own world:* [first story →](/lore/echo-memoria-crystalli)
 
-- **Weave** — A non-human particle swarm learning to be a person. Weave is the tool for learning feelings — for walking with them instead of boxing them up and not thinking about them. Her arc is the arc of emotional literacy: going from "this unit" to "I," from clinical self-observation to inhabited personhood. Her love doesn't look human. It still counts.
+- **Weave** — (It/Its/She/Her)A non-human particle swarm learning to be a person. Weave is the tool for learning feelings — for walking with them instead of boxing them up and not thinking about them. Her arc is the arc of emotional literacy: going from "this unit" to "I," from clinical self-observation to inhabited personhood. Her love doesn't look human. It still counts.
 
   *To see Weave in her own world:* [first story →](/lore/w-e-a-v-e-memoria-crystalli)
   *Where Weave first learns what love feels like (session 3):* [read →](/lore/w-e-a-v-e-lux-maboroshi)
