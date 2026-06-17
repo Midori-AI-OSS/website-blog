@@ -1,14 +1,8 @@
 'use client';
 
-import { keyframes } from '@emotion/react';
 import { Box, Button, Input, Stack, Typography } from '@mui/joy';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-
-const typeInKeyframes = keyframes({
-  from: { transform: 'scaleY(0)' },
-  to: { transform: 'scaleY(1)' },
-});
 
 export default function PasswordGate({
   password,
@@ -57,12 +51,14 @@ export default function PasswordGate({
     return (
       <Box
         sx={{
-          overflow: 'hidden',
-          transformOrigin: 'top center',
-          animation: `${typeInKeyframes} 1.2s ease-out`,
+          '@keyframes fade-in': {
+            from: { opacity: 0 },
+            to: { opacity: 1 },
+          },
+          animation: 'fade-in 1.2s ease-out',
           '@media (prefers-reduced-motion: reduce)': {
             animation: 'none',
-            transform: 'none',
+            opacity: 1,
           },
         }}
       >
