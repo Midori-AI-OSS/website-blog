@@ -194,6 +194,8 @@ export interface PostViewProps {
   contentWrapper?: (content: ReactNode, primaryColor?: string | null) => ReactNode;
   /** When true, renders a lock overlay over the TTS player */
   ttsLocked?: boolean;
+  /** Signals the TTS overlay is fading out. Overlay renders with opacity 0 during transition. */
+  ttsFadingOut?: boolean;
 }
 
 /**
@@ -872,6 +874,7 @@ export function PostView({
   gameCoverImage,
   contentWrapper,
   ttsLocked = false,
+  ttsFadingOut = false,
 }: PostViewProps) {
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
@@ -1346,7 +1349,7 @@ export function PostView({
                 onPrimaryColorChange={setTtsPrimaryColor}
                 coverImageUrl={effectiveCoverImageUrl}
               />
-              {ttsLocked && (
+              {(ttsLocked || ttsFadingOut) && (
                 <Box
                   sx={{
                     position: 'absolute',
@@ -1357,6 +1360,8 @@ export function PostView({
                     justifyContent: 'center',
                     bgcolor: 'rgba(19, 10, 30, 0.7)',
                     backdropFilter: 'blur(4px)',
+                    opacity: ttsFadingOut ? 0 : 1,
+                    transition: 'opacity 0.4s ease',
                   }}
                 >
                   <Lock size={20} color="var(--joy-palette-primary-400)" />

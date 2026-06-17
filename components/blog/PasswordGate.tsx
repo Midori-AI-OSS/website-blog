@@ -1,8 +1,14 @@
 'use client';
 
+import { keyframes } from '@emotion/react';
 import { Box, Button, Input, Stack, Typography } from '@mui/joy';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+const typeInKeyframes = keyframes({
+  from: { clipPath: 'inset(0 0 100% 0)' },
+  to: { clipPath: 'inset(0 0 0 0)' },
+});
 
 export default function PasswordGate({
   password,
@@ -21,19 +27,26 @@ export default function PasswordGate({
   const [unlocked, setUnlocked] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [animatingOut, setAnimatingOut] = useState(false);
+  const unlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     onLockedChange?.(true);
     return () => {
       onLockedChange?.(false);
+      if (unlockTimerRef.current) clearTimeout(unlockTimerRef.current);
     };
   }, [onLockedChange]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (value === password) {
-      setUnlocked(true);
+      setAnimatingOut(true);
       setHasError(false);
+      onLockedChange?.(false);
+      unlockTimerRef.current = setTimeout(() => {
+        setUnlocked(true);
+      }, 400);
       return;
     }
     setHasError(true);
@@ -41,7 +54,20 @@ export default function PasswordGate({
   };
 
   if (unlocked) {
-    return <>{children}</>;
+    return (
+      <Box
+        sx={{
+          overflow: 'hidden',
+          animation: `${typeInKeyframes} 0.8s steps(12, end)`,
+          '@media (prefers-reduced-motion: reduce)': {
+            animation: 'none',
+            clipPath: 'inset(0 0 0 0)',
+          },
+        }}
+      >
+        {children}
+      </Box>
+    );
   }
 
   const accent = primaryColor ?? '#8b5cf6';
@@ -59,6 +85,9 @@ export default function PasswordGate({
         borderColor: `${accent}50`,
         px: { xs: 2, sm: 3 },
         py: { xs: 2, sm: 2.5 },
+        opacity: animatingOut ? 0 : 1,
+        transition: 'opacity 0.4s ease',
+        pointerEvents: animatingOut ? 'none' : 'auto',
       }}
     >
       {hint && attempts >= 3 && (
