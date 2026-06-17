@@ -191,7 +191,7 @@ export interface PostViewProps {
   /** Optional game cover image URL to use as the backdrop */
   gameCoverImage?: string;
   /** Optional wrapper applied to the main post body */
-  contentWrapper?: (content: ReactNode) => ReactNode;
+  contentWrapper?: (content: ReactNode, primaryColor?: string | null) => ReactNode;
 }
 
 /**
@@ -1380,6 +1380,7 @@ export function PostView({
               thinkingGlowColor={thinkingGlowColor}
               thinkingMutedColor={thinkingMutedColor}
             />,
+            ttsPrimaryColor,
           )
         ) : (
           <PostContentSection

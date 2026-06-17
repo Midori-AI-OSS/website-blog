@@ -34,9 +34,14 @@ export function LorePostPageClient({
   const password = post.metadata.password?.trim();
   const passwordHint = post.metadata.password_hint?.trim();
   const contentWrapper = password
-    ? (content: ReactNode) => {
+    ? (content: ReactNode, primaryColor?: string | null) => {
         return (
-          <PasswordGate key={post.filename} password={password} hint={passwordHint}>
+          <PasswordGate
+            key={post.filename}
+            password={password}
+            hint={passwordHint}
+            primaryColor={primaryColor}
+          >
             {content}
           </PasswordGate>
         );
