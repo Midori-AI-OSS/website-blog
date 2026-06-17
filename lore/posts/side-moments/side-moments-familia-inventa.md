@@ -27,7 +27,7 @@ Every character at this table is a part of one person. The lunch is a conversati
 
 **The six parts:**
 
-- **Real Riley** — The most real self. The one without magic in a world of magic — neurodivergent, working with different tools, growing through her own wished moments. She created everyone else because she needed a support system she didn't have.
+- **Real Riley** — The most real self. The one without magic in a world of magic — neurodivergent, working with different tools, growing through they own wished moments. They created everyone else because they needed a support system they didn't have.
 
 - **RP-Riley** — The aspirational self. RP-Riley has lived out their time with found family; Real Riley hasn't yet. They're two versions of the same person at different stages, sitting on the same side of the table. Having them both there shows you the destination while the journey is still happening.
 
