@@ -6,6 +6,7 @@ import PasswordGate from '@/components/blog/PasswordGate';
 import { PostView } from '@/components/blog/PostView';
 import { PovPicker } from '@/components/PovPicker';
 import type { ParsedPost } from '@/lib/blog/parser';
+import { transformPostImageUrl } from '@/lib/content/imageUrl';
 import type { LorePostNeighbor, PovSibling } from '@/lib/lore/loader';
 import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
 
@@ -33,10 +34,18 @@ export function LorePostPageClient({
   const router = useRouter();
   const password = post.metadata.password?.trim();
   const passwordHint = post.metadata.password_hint?.trim();
+  const coverImageUrl = post.metadata.cover_image
+    ? transformPostImageUrl(post.metadata.cover_image)
+    : undefined;
   const contentWrapper = password
     ? (content: ReactNode) => {
         return (
-          <PasswordGate key={post.filename} password={password} hint={passwordHint}>
+          <PasswordGate
+            key={post.filename}
+            password={password}
+            hint={passwordHint}
+            coverImageUrl={coverImageUrl}
+          >
             {content}
           </PasswordGate>
         );

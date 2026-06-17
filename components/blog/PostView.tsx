@@ -1334,67 +1334,58 @@ export function PostView({
             </Box>
           )}
 
-          {!isScheduledPreview && (
-            <Box sx={{ mb: 4 }}>
-              <TtsPlayer
-                slug={post.filename.replace(/\.md$/, '')}
-                type={postType}
-                text={post.content}
-                onPrimaryColorChange={setTtsPrimaryColor}
-                coverImageUrl={effectiveCoverImageUrl}
-              />
-            </Box>
-          )}
-
-          {/* Summary */}
-          {post.metadata.summary && (
-            <Typography
-              level="body-lg"
-              sx={{
-                fontStyle: 'italic',
-                color: 'text.secondary',
-                fontSize: { xs: '1.05rem', sm: '1.25rem' },
-                lineHeight: 1.6,
-                borderLeft: '4px solid',
-                borderColor: 'primary.500',
-                pl: { xs: 2, sm: 3 },
-                py: 1,
-              }}
-            >
-              {post.metadata.summary}
-            </Typography>
-          )}
         </Box>
 
-        {contentWrapper ? (
-          contentWrapper(
-            <PostContentSection
-              post={post}
-              isScheduledPreview={isScheduledPreview}
-              scheduledPublishLabel={scheduledPublishLabel}
-              speciesCareCards={speciesCareCards}
-              effectiveCoverImageUrl={effectiveCoverImageUrl}
-              gameCoverImage={gameCoverImage}
-              dialogueColor={dialogueColor}
-              thinkingColor={thinkingColor}
-              thinkingGlowColor={thinkingGlowColor}
-              thinkingMutedColor={thinkingMutedColor}
-            />,
-          )
-        ) : (
-          <PostContentSection
-            post={post}
-            isScheduledPreview={isScheduledPreview}
-            scheduledPublishLabel={scheduledPublishLabel}
-            speciesCareCards={speciesCareCards}
-            effectiveCoverImageUrl={effectiveCoverImageUrl}
-            gameCoverImage={gameCoverImage}
-            dialogueColor={dialogueColor}
-            thinkingColor={thinkingColor}
-            thinkingGlowColor={thinkingGlowColor}
-            thinkingMutedColor={thinkingMutedColor}
-          />
-        )}
+        {(() => {
+          const bodyContent = (
+            <>
+              {!isScheduledPreview && (
+                <Box sx={{ mb: 4 }}>
+                  <TtsPlayer
+                    slug={post.filename.replace(/\.md$/, '')}
+                    type={postType}
+                    text={post.content}
+                    onPrimaryColorChange={setTtsPrimaryColor}
+                    coverImageUrl={effectiveCoverImageUrl}
+                  />
+                </Box>
+              )}
+
+              {post.metadata.summary && (
+                <Typography
+                  level="body-lg"
+                  sx={{
+                    fontStyle: 'italic',
+                    color: 'text.secondary',
+                    fontSize: { xs: '1.05rem', sm: '1.25rem' },
+                    lineHeight: 1.6,
+                    borderLeft: '4px solid',
+                    borderColor: 'primary.500',
+                    pl: { xs: 2, sm: 3 },
+                    py: 1,
+                  }}
+                >
+                  {post.metadata.summary}
+                </Typography>
+              )}
+
+              <PostContentSection
+                post={post}
+                isScheduledPreview={isScheduledPreview}
+                scheduledPublishLabel={scheduledPublishLabel}
+                speciesCareCards={speciesCareCards}
+                effectiveCoverImageUrl={effectiveCoverImageUrl}
+                gameCoverImage={gameCoverImage}
+                dialogueColor={dialogueColor}
+                thinkingColor={thinkingColor}
+                thinkingGlowColor={thinkingGlowColor}
+                thinkingMutedColor={thinkingMutedColor}
+              />
+            </>
+          );
+
+          return contentWrapper ? contentWrapper(bodyContent) : bodyContent;
+        })()}
       </Box>
 
       {postType === 'lore' && nextStory && (

@@ -1,20 +1,68 @@
 'use client';
 
 import type React from 'react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  DEFAULT_ART_PALETTE,
+  type ExtractedPalette,
+  extractPaletteFromImage,
+} from '@/lib/theme/artPalette';
+
+interface PasswordGateProps {
+  password: string;
+  hint?: string;
+  coverImageUrl?: string;
+  children: React.ReactNode;
+}
 
 export default function PasswordGate({
   password,
   hint,
+  coverImageUrl,
   children,
-}: {
-  password: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
+}: PasswordGateProps) {
   const [value, setValue] = useState('');
   const [unlocked, setUnlocked] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [palette, setPalette] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
+
+  useEffect(() => {
+    if (!coverImageUrl) return;
+
+    let active = true;
+
+    const syncPalette = async () => {
+      const extracted = await extractPaletteFromImage(coverImageUrl, {
+        fallback: DEFAULT_ART_PALETTE,
+      });
+      if (!active) return;
+      setPalette(extracted);
+    };
+
+    void syncPalette();
+
+    return () => {
+      active = false;
+    };
+  }, [coverImageUrl]);
+
+  const primaryColor = palette.primary;
+
+  const colorStyles = useMemo(
+    () => ({
+      borderColor: `${primaryColor}55`,
+      focusBorderColor: primaryColor,
+      focusRingColor: `${primaryColor}40`,
+      buttonBg: `${primaryColor}15`,
+      buttonHoverBg: `${primaryColor}25`,
+      buttonBorderColor: `${primaryColor}35`,
+      buttonTextColor: primaryColor,
+      separatorColor: `${primaryColor}30`,
+      errorColor: '#fda4af',
+    }),
+    [primaryColor],
+  );
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -26,6 +74,7 @@ export default function PasswordGate({
     }
 
     setHasError(true);
+    setFailedAttempts((n) => n + 1);
   };
 
   if (unlocked) {
@@ -33,46 +82,94 @@ export default function PasswordGate({
   }
 
   return (
-    <div className="w-full max-w-md border border-white/10 bg-[#130a1e]/80 p-4 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-sm">
-      <form className="space-y-3" onSubmit={handleSubmit}>
-        <div className="space-y-3">
-          {hint && <p className="mb-3 text-slate-400 text-sm italic">Hint: {hint}</p>}
-          <div className="space-y-1.5">
-            <label htmlFor="password-gate" className="block font-medium text-slate-300 text-sm">
-              Password
-            </label>
-            <input
-              id="password-gate"
-              type="password"
-              value={value}
-              autoComplete="current-password"
-              onChange={(event) => {
-                setValue(event.target.value);
-                if (hasError) {
-                  setHasError(false);
-                }
-              }}
-              aria-invalid={hasError}
-              aria-describedby={hasError ? 'password-gate-error' : undefined}
-              className="h-11 w-full border border-white/10 bg-black/30 px-3 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/30"
-              placeholder="Enter password"
-            />
-          </div>
+    <div className="w-full">
+      <form
+        className="flex w-full flex-wrap items-center gap-2 border px-3 py-2"
+        style={{
+          borderColor: hasError ? colorStyles.errorColor : colorStyles.borderColor,
+          backgroundColor: 'rgba(19, 10, 30, 0.4)',
+          backdropFilter: 'blur(8px)',
+          transition: 'border-color 0.2s ease',
+        }}
+        onSubmit={handleSubmit}
+      >
+        <input
+          id="password-gate"
+          type="password"
+          value={value}
+          autoComplete="current-password"
+          onChange={(event) => {
+            setValue(event.target.value);
+            if (hasError) {
+              setHasError(false);
+            }
+          }}
+          aria-invalid={hasError}
+          aria-describedby={hasError ? 'password-gate-error' : undefined}
+          className="min-w-0 flex-1 border-none bg-transparent px-1 py-1 text-base text-slate-100 outline-none placeholder:text-slate-500"
+          placeholder="Enter password"
+          style={{ fontSize: '1rem' }}
+        />
 
-          {hasError && (
-            <p id="password-gate-error" role="alert" className="text-rose-300 text-sm">
-              Incorrect password.
-            </p>
-          )}
+        <span
+          className="select-none text-sm"
+          style={{ color: colorStyles.separatorColor }}
+          aria-hidden="true"
+        >
+          ::
+        </span>
 
-          <button
-            type="submit"
-            className="inline-flex h-11 w-full items-center justify-center border border-violet-400/30 bg-violet-500/10 px-4 font-semibold text-sm text-violet-100 transition hover:bg-violet-500/20 focus:outline-none focus:ring-2 focus:ring-violet-400/40"
-          >
-            Unlock
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="inline-flex h-9 shrink-0 items-center justify-center border px-4 font-semibold text-sm transition focus:outline-none"
+          style={{
+            borderColor: colorStyles.buttonBorderColor,
+            backgroundColor: colorStyles.buttonBg,
+            color: colorStyles.buttonTextColor,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colorStyles.buttonHoverBg;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = colorStyles.buttonBg;
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.outline = `2px solid ${colorStyles.focusRingColor}`;
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.outline = 'none';
+          }}
+        >
+          Enter
+        </button>
+
+        {hint && failedAttempts >= 3 && (
+          <>
+            <span
+              className="select-none text-sm"
+              style={{ color: colorStyles.separatorColor }}
+              aria-hidden="true"
+            >
+              ::
+            </span>
+
+            <span className="text-sm italic" style={{ color: `${primaryColor}99` }}>
+              {hint}
+            </span>
+          </>
+        )}
       </form>
+
+      {hasError && (
+        <p
+          id="password-gate-error"
+          role="alert"
+          className="mt-1.5 text-sm"
+          style={{ color: colorStyles.errorColor }}
+        >
+          Incorrect password.
+        </p>
+      )}
     </div>
   );
 }
