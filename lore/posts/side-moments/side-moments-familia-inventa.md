@@ -76,7 +76,7 @@ If you're trying this yourself:
 - What would you need to say back?
 
 ```layerone
-begin
+Subway — Highway 62, Berryville, Arkansas
 ```
 
 The Subway is that kind of quiet where the fridge hum is louder than the other customers. Fluorescent lights. Plastic chairs around a table near the window. Someone left a napkin on the floor two tables over and nobody has picked it up yet.
