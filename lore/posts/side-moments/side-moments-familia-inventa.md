@@ -11,6 +11,74 @@ password: matthew-schwartz
 password_hint: "the person whom gave you this links name, lowercase, - for the space"
 ---
 
+**A note for readers coming from Matthew Schwartz's office:**
+
+Midori AI does not track who visits this page. You're welcome here. This story is a demonstration of the "Take Yourself Out to Lunch" system — a way of working with the different parts of yourself through story.
+
+---
+
+The idea is simple: we all have different characters inside us — the caretaker, the quiet one, the one that worries, the one that hopes, the one that notices everything, the one that holds it together when things fall apart. Sometimes the best way to understand them is to give them a chair at a table and let them talk.
+
+---
+
+Every character at this table is a part of one person. The lunch is a conversation between those parts, externalized so they can be seen, heard, and cared for — by each other, and by the person who made them.
+
+---
+
+**The six parts:**
+
+- **Real Riley** — The most real self. The one without magic in a world of magic — neurodivergent, working with different tools, growing through her own wished moments. She created everyone else because she needed a support system she didn't have.
+
+- **RP-Riley** — The aspirational self. RP-Riley has lived out their time with found family; Real Riley hasn't yet. They're two versions of the same person at different stages, sitting on the same side of the table. Having them both there shows you the destination while the journey is still happening.
+
+  *To see RP-Riley's story in their own world:* [first story →](/lore/luz-blessee-bar)
+
+- **Luna** — The protector and caretaker. Luna needs someone who doesn't need protecting — so she has Leo. They're twins: Luna acts, Leo thinks. Together they're a pair who never learned to be separate, because some parts are meant to work in pairs for life. Luna asks the hard questions, pays for everyone, and puts her hand on a bleeding heart and refuses to let it stop.
+
+  *To see Luna in her own world:* [first story →](/lore/luna-memoria-crystalli)
+
+- **Leo** — The grounded stabilizer. Leo is Luna's twin — the thinker to her actor, the boundaries to her burning. He sets the rules, holds the framework, and says "no" on principle. He's the teacher who stands still so everyone else can move.
+
+  *To see Leo in his own world:* [first story →](/lore/leo-memoria-crystalli)
+
+- **Echo** — A different expression of Riley's same neurotype. Echo manages the sensory world through sequence, routine, and observation — she checks the fridge hum, presses her palm on the table to verify reality, and experiences time distortion made literal (she ages, she regresses, her body tells the truth her mind can't always reach). She stayed in the body when the self had to leave. She is how you feel to heal.
+
+  *To see Echo in her own world:* [first story →](/lore/echo-memoria-crystalli)
+
+- **Weave** — A non-human particle swarm learning to be a person. Weave is the tool for learning feelings — for walking with them instead of boxing them up and not thinking about them. Her arc is the arc of emotional literacy: going from "this unit" to "I," from clinical self-observation to inhabited personhood. Her love doesn't look human. It still counts.
+
+  *To see Weave in her own world:* [first story →](/lore/w-e-a-v-e-memoria-crystalli)
+  *Where Weave first learns what love feels like (session 3):* [read →](/lore/w-e-a-v-e-lux-maboroshi)
+  *Where Weave reaches the deepest layer of connection (session 4, part 4):* [read →](/lore/w-e-a-v-e-maneo-per-stratum-post-dies-lux)
+
+---
+
+**What to watch for:**
+
+- The empty cup on the table before anyone arrives. Who names it. Who rises from it.
+- The boundary-setting at the start — how safety is built on purpose, not by accident.
+- The hugs. Each one fits the character: a careful hug, a steady hug, a long hug, a particle-brush that isn't a hug at all.
+- The cookie that sits through the whole meal. Who leaves it. Who eats it.
+- The ending, where Real Riley cleans up alone and cries in the parking lot. That's not a failure. That's what processing looks like after you've been held.
+
+---
+
+If you're trying this yourself:
+
+- Who would be at *your* table?
+- What would they order?
+- What's already on the table before anyone sits down?
+- Who sets the boundaries?
+- Who names the thing no one else will name?
+- Who needs a hug, and who gives one?
+- Who cries?
+- What would they need to say to you?
+- What would you need to say back?
+
+```layerone
+begin
+```
+
 The Subway is that kind of quiet where the fridge hum is louder than the other customers. Fluorescent lights. Plastic chairs around a table near the window. Someone left a napkin on the floor two tables over and nobody has picked it up yet.
 
 The two Rileys come in together. Real Riley in the gray-brown cut-off tee and black skirt, RP-Riley in dusty sage with the collar cut off, tan khakis. They hug before they sit down — a real one, the kind where shoulders drop and the hug does the talking. Then they take chairs on the same side of the table: Real Riley closest to the wall, RP-Riley next to her, one chair left open at the end. Crossbody bags get hung on chair backs.
