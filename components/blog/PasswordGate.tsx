@@ -2,22 +2,32 @@
 
 import { Box, Button, Input, Stack, Typography } from '@mui/joy';
 import type React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function PasswordGate({
   password,
   hint,
   primaryColor,
+  onLockedChange,
   children,
 }: {
   password: string;
   hint?: string;
   primaryColor?: string | null;
+  onLockedChange?: (locked: boolean) => void;
   children: React.ReactNode;
 }) {
   const [value, setValue] = useState('');
   const [unlocked, setUnlocked] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+
+  useEffect(() => {
+    onLockedChange?.(true);
+    return () => {
+      onLockedChange?.(false);
+    };
+  }, [onLockedChange]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -27,13 +37,14 @@ export default function PasswordGate({
       return;
     }
     setHasError(true);
+    setAttempts((prev) => prev + 1);
   };
 
   if (unlocked) {
     return <>{children}</>;
   }
 
-  const accent = primaryColor ?? 'var(--joy-palette-primary-500)';
+  const accent = primaryColor ?? '#8b5cf6';
 
   return (
     <Box
@@ -42,15 +53,15 @@ export default function PasswordGate({
       sx={{
         width: '100%',
         mb: 4,
-        bgcolor: 'rgba(19, 10, 30, 0.4)',
+        bgcolor: `${accent}10`,
         backdropFilter: 'blur(12px)',
         border: '1px solid',
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: `${accent}50`,
         px: { xs: 2, sm: 3 },
         py: { xs: 2, sm: 2.5 },
       }}
     >
-      {hint && (
+      {hint && attempts >= 3 && (
         <Typography
           level="body-sm"
           sx={{

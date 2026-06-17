@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import PasswordGate from '@/components/blog/PasswordGate';
 import { PostView } from '@/components/blog/PostView';
 import { PovPicker } from '@/components/PovPicker';
@@ -33,6 +34,7 @@ export function LorePostPageClient({
   const router = useRouter();
   const password = post.metadata.password?.trim();
   const passwordHint = post.metadata.password_hint?.trim();
+  const [isLocked, setIsLocked] = useState(!!password);
   const contentWrapper = password
     ? (content: ReactNode, primaryColor?: string | null) => {
         return (
@@ -41,6 +43,7 @@ export function LorePostPageClient({
             password={password}
             hint={passwordHint}
             primaryColor={primaryColor}
+            onLockedChange={setIsLocked}
           >
             {content}
           </PasswordGate>
@@ -81,6 +84,7 @@ export function LorePostPageClient({
         speciesCareCards={speciesCareCards}
         gameCoverImage={gameCoverImage}
         contentWrapper={contentWrapper}
+        ttsLocked={isLocked}
       />
     </>
   );
