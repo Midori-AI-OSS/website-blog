@@ -1,73 +1,188 @@
 'use client';
 
+import { Box, Button, Input, Stack, Typography } from '@mui/joy';
 import type React from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function PasswordGate({
   password,
+  hint,
+  primaryColor,
+  onLockedChange,
   children,
 }: {
   password: string;
+  hint?: string;
+  primaryColor?: string | null;
+  onLockedChange?: (locked: boolean) => void;
   children: React.ReactNode;
 }) {
   const [value, setValue] = useState('');
   const [unlocked, setUnlocked] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [animatingOut, setAnimatingOut] = useState(false);
+  const unlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    onLockedChange?.(true);
+    return () => {
+      onLockedChange?.(false);
+      if (unlockTimerRef.current) clearTimeout(unlockTimerRef.current);
+    };
+  }, [onLockedChange]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     if (value === password) {
-      setUnlocked(true);
+      setAnimatingOut(true);
       setHasError(false);
+      onLockedChange?.(false);
+      unlockTimerRef.current = setTimeout(() => {
+        setUnlocked(true);
+      }, 400);
       return;
     }
-
     setHasError(true);
+    setAttempts((prev) => prev + 1);
   };
 
   if (unlocked) {
-    return <>{children}</>;
+    return (
+      <Box
+        sx={{
+          '@keyframes fade-in': {
+            from: { opacity: 0 },
+            to: { opacity: 1 },
+          },
+          animation: 'fade-in 1.2s ease-out',
+          '@media (prefers-reduced-motion: reduce)': {
+            animation: 'none',
+            opacity: 1,
+          },
+        }}
+      >
+        {children}
+      </Box>
+    );
   }
 
+  const accent = primaryColor ?? '#8b5cf6';
+
   return (
-    <div className="w-full max-w-md border border-white/10 bg-[#130a1e]/80 p-4 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-sm">
-      <form className="space-y-3" onSubmit={handleSubmit}>
-        <div className="space-y-1.5">
-          <label htmlFor="password-gate" className="block font-medium text-slate-300 text-sm">
-            Password
-          </label>
-          <input
-            id="password-gate"
-            type="password"
-            value={value}
-            autoComplete="current-password"
-            onChange={(event) => {
-              setValue(event.target.value);
-              if (hasError) {
-                setHasError(false);
-              }
-            }}
-            aria-invalid={hasError}
-            aria-describedby={hasError ? 'password-gate-error' : undefined}
-            className="h-11 w-full border border-white/10 bg-black/30 px-3 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/30"
-            placeholder="Enter password"
-          />
-        </div>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{
+        width: '100%',
+        mb: 4,
+        bgcolor: `${accent}10`,
+        backdropFilter: 'blur(12px)',
+        border: '1px solid',
+        borderColor: `${accent}50`,
+        px: { xs: 2, sm: 3 },
+        py: { xs: 2, sm: 2.5 },
+        opacity: animatingOut ? 0 : 1,
+        transition: 'opacity 0.4s ease',
+        pointerEvents: animatingOut ? 'none' : 'auto',
+      }}
+    >
+      {hint && attempts >= 3 && (
+        <Typography
+          level="body-sm"
+          sx={{
+            color: 'text.secondary',
+            fontStyle: 'italic',
+            mb: 1.5,
+          }}
+        >
+          Hint: {hint}
+        </Typography>
+      )}
 
-        {hasError && (
-          <p id="password-gate-error" role="alert" className="text-rose-300 text-sm">
-            Incorrect password.
-          </p>
-        )}
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={{ xs: 1.5, sm: 2 }}
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+      >
+        <Typography
+          component="label"
+          htmlFor="password-gate"
+          level="body-md"
+          sx={{
+            color: 'text.primary',
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+            minWidth: 'fit-content',
+          }}
+        >
+          Password
+        </Typography>
 
-        <button
+        <Input
+          id="password-gate"
+          type="password"
+          value={value}
+          autoComplete="current-password"
+          onChange={(event) => {
+            setValue(event.target.value);
+            if (hasError) {
+              setHasError(false);
+            }
+          }}
+          placeholder="Enter password"
+          aria-invalid={hasError}
+          aria-describedby={hasError ? 'password-gate-error' : undefined}
+          sx={{
+            flex: 1,
+            minHeight: 44,
+            fontSize: '1rem',
+            borderRadius: 0,
+            '&:focus-within': {
+              borderColor: accent,
+            },
+          }}
+        />
+
+        <Button
           type="submit"
-          className="inline-flex h-11 w-full items-center justify-center border border-violet-400/30 bg-violet-500/10 px-4 font-semibold text-sm text-violet-100 transition hover:bg-violet-500/20 focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+          variant="solid"
+          color="primary"
+          sx={{
+            minHeight: 44,
+            minWidth: { xs: '100%', sm: 100 },
+            borderRadius: 0,
+            textTransform: 'none',
+            fontWeight: 600,
+            backgroundColor: `${accent}1a`,
+            border: '1px solid',
+            borderColor: `${accent}40`,
+            color: accent,
+            '&:hover': {
+              backgroundColor: `${accent}28`,
+              borderColor: accent,
+            },
+            '&:focus-visible': {
+              outline: '2px solid',
+              outlineColor: accent,
+              outlineOffset: '2px',
+            },
+          }}
         >
           Unlock
-        </button>
-      </form>
-    </div>
+        </Button>
+      </Stack>
+
+      {hasError && (
+        <Typography
+          id="password-gate-error"
+          role="alert"
+          level="body-sm"
+          sx={{ color: '#fda4af', mt: 1 }}
+        >
+          Incorrect password.
+        </Typography>
+      )}
+    </Box>
   );
 }

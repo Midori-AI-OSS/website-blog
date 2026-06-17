@@ -16,7 +16,7 @@
 
 import { keyframes } from '@emotion/react';
 import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
-import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Tag, User } from 'lucide-react';
+import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Lock, Tag, User } from 'lucide-react';
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
@@ -191,7 +191,11 @@ export interface PostViewProps {
   /** Optional game cover image URL to use as the backdrop */
   gameCoverImage?: string;
   /** Optional wrapper applied to the main post body */
-  contentWrapper?: (content: ReactNode) => ReactNode;
+  contentWrapper?: (content: ReactNode, primaryColor?: string | null) => ReactNode;
+  /** When true, renders a lock overlay over the TTS player */
+  ttsLocked?: boolean;
+  /** Signals the TTS overlay is fading out. Overlay renders with opacity 0 during transition. */
+  ttsFadingOut?: boolean;
 }
 
 /**
@@ -869,6 +873,8 @@ export function PostView({
   speciesCareCards = {},
   gameCoverImage,
   contentWrapper,
+  ttsLocked = false,
+  ttsFadingOut = false,
 }: PostViewProps) {
   const { setPostCoverUrl } = useDynamicBackdrop();
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
@@ -1335,7 +1341,7 @@ export function PostView({
           )}
 
           {!isScheduledPreview && (
-            <Box sx={{ mb: 4 }}>
+            <Box sx={{ mb: 4, position: 'relative' }}>
               <TtsPlayer
                 slug={post.filename.replace(/\.md$/, '')}
                 type={postType}
@@ -1343,6 +1349,24 @@ export function PostView({
                 onPrimaryColorChange={setTtsPrimaryColor}
                 coverImageUrl={effectiveCoverImageUrl}
               />
+              {(ttsLocked || ttsFadingOut) && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'rgba(19, 10, 30, 0.7)',
+                    backdropFilter: 'blur(4px)',
+                    opacity: ttsFadingOut ? 0 : 1,
+                    transition: 'opacity 0.4s ease',
+                  }}
+                >
+                  <Lock size={20} color="var(--joy-palette-primary-400)" />
+                </Box>
+              )}
             </Box>
           )}
 
@@ -1380,6 +1404,7 @@ export function PostView({
               thinkingGlowColor={thinkingGlowColor}
               thinkingMutedColor={thinkingMutedColor}
             />,
+            ttsPrimaryColor,
           )
         ) : (
           <PostContentSection

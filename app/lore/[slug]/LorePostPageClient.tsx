@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import PasswordGate from '@/components/blog/PasswordGate';
 import { PostView } from '@/components/blog/PostView';
 import { PovPicker } from '@/components/PovPicker';
@@ -32,10 +33,44 @@ export function LorePostPageClient({
 }: LorePostPageClientProps) {
   const router = useRouter();
   const password = post.metadata.password?.trim();
+  const passwordHint = post.metadata.password_hint?.trim();
+  const [isLocked, setIsLocked] = useState(!!password);
+  const [ttsFadingOut, setTtsFadingOut] = useState(false);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    };
+  }, []);
+
+  const handleLockedChange = useCallback((locked: boolean) => {
+    if (locked) {
+      setIsLocked(true);
+      setTtsFadingOut(false);
+      if (fadeTimerRef.current) {
+        clearTimeout(fadeTimerRef.current);
+        fadeTimerRef.current = null;
+      }
+    } else {
+      setTtsFadingOut(true);
+      fadeTimerRef.current = setTimeout(() => {
+        setIsLocked(false);
+        setTtsFadingOut(false);
+      }, 400);
+    }
+  }, []);
+
   const contentWrapper = password
-    ? (content: ReactNode) => {
+    ? (content: ReactNode, primaryColor?: string | null) => {
         return (
-          <PasswordGate key={post.filename} password={password}>
+          <PasswordGate
+            key={post.filename}
+            password={password}
+            hint={passwordHint}
+            primaryColor={primaryColor}
+            onLockedChange={handleLockedChange}
+          >
             {content}
           </PasswordGate>
         );
@@ -75,6 +110,8 @@ export function LorePostPageClient({
         speciesCareCards={speciesCareCards}
         gameCoverImage={gameCoverImage}
         contentWrapper={contentWrapper}
+        ttsLocked={isLocked}
+        ttsFadingOut={ttsFadingOut}
       />
     </>
   );
