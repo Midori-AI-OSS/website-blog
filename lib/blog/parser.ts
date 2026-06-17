@@ -339,6 +339,8 @@ export function parsePost(filename: string, fileContent: string): ParsedPost {
       game: sanitizedData.game,
       story_order: sanitizedData.story_order,
       episode_label: sanitizedData.episode_label,
+      password: sanitizedData.password,
+      password_hint: sanitizedData.password_hint,
       full_story_pov: sanitizedData.full_story_pov,
       full_story_tooltip: sanitizedData.full_story_tooltip,
     };
@@ -402,6 +404,8 @@ export function extractMetadata(filename: string, fileContent: string): PostMeta
       game: sanitizedData.game,
       story_order: sanitizedData.story_order,
       episode_label: sanitizedData.episode_label,
+      password: sanitizedData.password,
+      password_hint: sanitizedData.password_hint,
       full_story_pov: sanitizedData.full_story_pov,
       full_story_tooltip: sanitizedData.full_story_tooltip,
     };
