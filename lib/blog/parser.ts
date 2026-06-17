@@ -27,6 +27,7 @@ export interface PostMetadata {
   story_order?: number;
   episode_label?: string;
   password?: string;
+  password_hint?: string;
   full_story_pov?: string;
   full_story_tooltip?: string;
 }
@@ -267,6 +268,10 @@ function sanitizeMetadata(data: Record<string, unknown>): Partial<PostMetadata> 
 
   if (data.password !== undefined) {
     sanitized.password = String(data.password).trim();
+  }
+
+  if (data.password_hint !== undefined) {
+    sanitized.password_hint = String(data.password_hint).trim();
   }
 
   if (typeof data.full_story_pov === 'string') {

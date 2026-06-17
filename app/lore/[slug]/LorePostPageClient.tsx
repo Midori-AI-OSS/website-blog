@@ -32,10 +32,11 @@ export function LorePostPageClient({
 }: LorePostPageClientProps) {
   const router = useRouter();
   const password = post.metadata.password?.trim();
+  const passwordHint = post.metadata.password_hint?.trim();
   const contentWrapper = password
     ? (content: ReactNode) => {
         return (
-          <PasswordGate key={post.filename} password={password}>
+          <PasswordGate key={post.filename} password={password} hint={passwordHint}>
             {content}
           </PasswordGate>
         );
