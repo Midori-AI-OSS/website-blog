@@ -6,8 +6,8 @@ import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 const typeInKeyframes = keyframes({
-  from: { clipPath: 'inset(0 0 100% 0)' },
-  to: { clipPath: 'inset(0 0 0 0)' },
+  from: { transform: 'scaleY(0)' },
+  to: { transform: 'scaleY(1)' },
 });
 
 export default function PasswordGate({
@@ -58,10 +58,11 @@ export default function PasswordGate({
       <Box
         sx={{
           overflow: 'hidden',
-          animation: `${typeInKeyframes} 0.6s ease-out`,
+          transformOrigin: 'top center',
+          animation: `${typeInKeyframes} 4.8s ease-out`,
           '@media (prefers-reduced-motion: reduce)': {
             animation: 'none',
-            clipPath: 'inset(0 0 0 0)',
+            transform: 'none',
           },
         }}
       >
