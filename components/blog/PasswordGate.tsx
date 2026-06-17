@@ -59,7 +59,7 @@ export default function PasswordGate({
         sx={{
           overflow: 'hidden',
           transformOrigin: 'top center',
-          animation: `${typeInKeyframes} 4.8s ease-out`,
+          animation: `${typeInKeyframes} 1.2s ease-out`,
           '@media (prefers-reduced-motion: reduce)': {
             animation: 'none',
             transform: 'none',
