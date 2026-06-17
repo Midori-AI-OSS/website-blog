@@ -2,7 +2,7 @@
 title: "The Cookie That Sat Through Everything"
 summary: "A Subway lunch becomes a taxonomy of care: what helps, what doesn't, and what it means when an orb of particles files you under 'found family — active record.'"
 tags: [lore, side-moments]
-cover_image: /lore/side-moments-sad.png
+cover_image: /lore/side-moments-cookie.png
 author: Riley Midori
 date: 2026-06-17
 game: side-moments
