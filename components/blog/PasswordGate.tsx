@@ -58,7 +58,7 @@ export default function PasswordGate({
       <Box
         sx={{
           overflow: 'hidden',
-          animation: `${typeInKeyframes} 0.8s steps(12, end)`,
+          animation: `${typeInKeyframes} 0.6s ease-out`,
           '@media (prefers-reduced-motion: reduce)': {
             animation: 'none',
             clipPath: 'inset(0 0 0 0)',
