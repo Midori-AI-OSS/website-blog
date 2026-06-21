@@ -311,6 +311,7 @@ export default function RadioWidget() {
     setStatusText('Stopped');
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: volume is kept in sync by a separate effect; adding volume to deps would destroy and recreate the audio element on every volume change
   React.useEffect(() => {
     const audio = new Audio();
     audio.preload = 'none';
@@ -353,7 +354,7 @@ export default function RadioWidget() {
       audioRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scheduleReconnect, volume]);
+  }, [scheduleReconnect]);
 
   React.useEffect(() => {
     return () => {
