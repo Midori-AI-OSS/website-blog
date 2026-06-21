@@ -166,10 +166,23 @@ export function buildStreamUrl(options: {
 }): string {
   const normalizedChannel = normalizeChannel(options.channel);
   const normalizedQuality = normalizeQuality(options.quality);
-  const url = new URL(
-    options.path ?? '/radio/v1/stream',
-    options.baseUrl ?? MIDORIAI_RADIO_BASE_URL,
-  );
+  const path = options.path ?? '/radio/v1/stream';
+  const baseUrl = options.baseUrl ?? MIDORIAI_RADIO_BASE_URL;
+
+  if (baseUrl === '') {
+    const params = new URLSearchParams();
+    params.set('channel', normalizedChannel);
+    params.set('q', normalizedQuality);
+
+    if (options.cacheBust === true) {
+      params.set('ts', createCacheBustToken());
+    }
+
+    const query = params.toString();
+    return `${path}?${query}`;
+  }
+
+  const url = new URL(path, baseUrl);
   url.searchParams.set('channel', normalizedChannel);
   url.searchParams.set('q', normalizedQuality);
 
