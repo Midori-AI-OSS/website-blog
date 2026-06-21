@@ -409,7 +409,7 @@ describe('RadioWidget', () => {
     );
 
     const src = lastAudio?.src ?? '';
-    expect(src).toContain('https://radio.midori-ai.xyz/radio/v1/stream');
+    expect(src).toContain('/api/radio/stream');
     expect(src).toContain('channel=all');
     expect(src).toContain('q=medium');
   });
@@ -473,11 +473,11 @@ describe('RadioWidget', () => {
       await flushEffects();
     });
 
-    // Should not immediately start new playback (500ms delay)
+    // Should not immediately start new playback (backoff delay)
     expect(lastAudio?.playCalls).toBe(playCallsBefore);
 
-    // After 500ms delay, should reconnect
-    await _runTimeout(500);
+    // After 2s delay (first backoff step), should reconnect
+    await _runTimeout(2000);
 
     expect(lastAudio?.playCalls).toBe(playCallsBefore ? playCallsBefore + 1 : undefined);
   });

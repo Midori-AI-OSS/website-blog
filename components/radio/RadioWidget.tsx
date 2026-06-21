@@ -110,6 +110,11 @@ function toErrorMessage(error: unknown): string {
   return 'Unknown radio error';
 }
 
+function getReconnectDelay(attempt: number): number {
+  const delays = [2000, 4000, 8000, 16000, 30000];
+  return delays[Math.min(attempt, delays.length - 1)] ?? 30000;
+}
+
 export default function RadioWidget() {
   const { setRadioState } = useDynamicBackdrop();
   const desktopEligible = useDesktopEligibility();
@@ -119,7 +124,9 @@ export default function RadioWidget() {
   const qualityRef = React.useRef<QualityName>('medium');
   const channelRef = React.useRef('all');
   const metadataRequestRef = React.useRef(0);
-  const initializedChannelRef = React.useRef(false);
+  const reconnectAttemptRef = React.useRef(0);
+  const reconnectTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectGuardRef = React.useRef(false);
 
   const [hydrated, setHydrated] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
@@ -239,6 +246,9 @@ export default function RadioWidget() {
     const streamUrl = buildStreamUrl({
       channel: channelRef.current,
       quality: qualityRef.current,
+      baseUrl: '',
+      path: '/api/radio/stream',
+      cacheBust: true,
     });
 
     setStreamState('connecting');
@@ -257,6 +267,34 @@ export default function RadioWidget() {
       }
     });
   }, []);
+
+  const scheduleReconnect = React.useCallback(() => {
+    if (!playbackDesiredRef.current) {
+      return;
+    }
+
+    if (reconnectTimerRef.current !== null) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+
+    if (reconnectGuardRef.current) {
+      return;
+    }
+    reconnectGuardRef.current = true;
+
+    setStreamState('buffering');
+    setStatusText('Reconnecting…');
+
+    const delay = getReconnectDelay(reconnectAttemptRef.current);
+    reconnectTimerRef.current = setTimeout(() => {
+      reconnectTimerRef.current = null;
+      reconnectAttemptRef.current += 1;
+      if (playbackDesiredRef.current) {
+        startPlayback();
+      }
+    }, delay);
+  }, [startPlayback]);
 
   const stopPlayback = React.useCallback(() => {
     setPlaybackDesired(false);
@@ -284,6 +322,12 @@ export default function RadioWidget() {
       setStatusText('Live');
       setLastError(null);
       clearRadioLastError();
+      reconnectAttemptRef.current = 0;
+      reconnectGuardRef.current = false;
+    };
+
+    const handleStreamError = () => {
+      scheduleReconnect();
     };
 
     const handleWaiting = () => {
@@ -293,23 +337,10 @@ export default function RadioWidget() {
       }
     };
 
-    const handleStreamEnd = () => {
-      if (!playbackDesiredRef.current) {
-        return;
-      }
-      setStreamState('buffering');
-      setStatusText('Reconnecting…');
-      setTimeout(() => {
-        if (playbackDesiredRef.current) {
-          startPlayback();
-        }
-      }, 500);
-    };
-
     audio.addEventListener('playing', handlePlaying);
     audio.addEventListener('waiting', handleWaiting);
-    audio.addEventListener('ended', handleStreamEnd);
-    audio.addEventListener('error', handleStreamEnd);
+    audio.addEventListener('ended', handleStreamError);
+    audio.addEventListener('error', handleStreamError);
 
     return () => {
       audio.pause();
@@ -317,18 +348,27 @@ export default function RadioWidget() {
       audio.load();
       audio.removeEventListener('playing', handlePlaying);
       audio.removeEventListener('waiting', handleWaiting);
-      audio.removeEventListener('error', handleStreamEnd);
-      audio.removeEventListener('ended', handleStreamEnd);
+      audio.removeEventListener('error', handleStreamError);
+      audio.removeEventListener('ended', handleStreamError);
       audioRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startPlayback, volume]);
+  }, [scheduleReconnect, volume]);
 
   React.useEffect(() => {
     return () => {
       clearCloseLingerTimer();
     };
   }, [clearCloseLingerTimer]);
+
+  React.useEffect(() => {
+    return () => {
+      if (reconnectTimerRef.current !== null) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+    };
+  }, []);
 
   React.useEffect(() => {
     if (stickyOpen) {
@@ -450,15 +490,17 @@ export default function RadioWidget() {
     };
   }, [refreshMetadata, playbackDesired, hydrated]);
 
+  const prevChannelRef = React.useRef(channel);
+
   React.useEffect(() => {
     if (!hydrated) {
       return;
     }
 
-    if (!initializedChannelRef.current) {
-      initializedChannelRef.current = true;
+    if (prevChannelRef.current === channel) {
       return;
     }
+    prevChannelRef.current = channel;
 
     void refreshMetadata();
 
@@ -468,7 +510,7 @@ export default function RadioWidget() {
 
     stopPlayback();
     startPlayback();
-  }, [refreshMetadata, hydrated, stopPlayback, startPlayback]);
+  }, [channel, hydrated, refreshMetadata, stopPlayback, startPlayback]);
 
   const fallbackIdentity = `${currentTrack?.title ?? 'unknown'}::${currentTrack?.track_id ?? 'unknown'}`;
   const fallbackImage = React.useMemo(() => {
