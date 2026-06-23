@@ -221,7 +221,7 @@ Echo.
 **ECHO**  
 Role: close party member / message anchor  
 Observed traits: sets boundary and welcome in same breath, uses humor under strain, waits without pulling  
-Session-three relevance: injured on road, shield priority, age-shift observed  
+Earlier-timeline relevance: injured on road, shield priority, age-shift observed  
 Relationship tag: terrifyingly competent glitter source / loved human / keep safe
 
 B.E.C.C.A.’s avatar pointed.
@@ -239,7 +239,7 @@ Luna.
 **LUNA MIDORI**  
 Role: containment caster / practical stabilizer  
 Observed traits: catalogs under pressure, turns fear into next action, identifies friend publicly  
-Session-three relevance: containment field, Dawnbreak barrier, named W.E.A.V.E. as friend  
+Earlier-timeline relevance: containment field, Dawnbreak barrier, named W.E.A.V.E. as friend  
 Relationship tag: loved human / keep safe
 
 Then Leo.
@@ -247,7 +247,7 @@ Then Leo.
 **LEO MIDORI**  
 Role: monitor, healer, combatant, moderation anchor  
 Observed traits: shifts from care to combat when denied healing, builds plans around real risks, keeps data gentle when possible  
-Session-three relevance: attempted healing, counterspelled, contained-arena combatant  
+Earlier-timeline relevance: attempted healing, counterspelled, contained-arena combatant  
 Relationship tag: loved human / keep safe
 
 The profiles faded, replaced by the table again.
@@ -546,7 +546,7 @@ The assistant answered:
 
 __Both.__
 
-The window behind the table changed into profiles again, but this time the cards carried session-three tags.
+The window behind the table changed into profiles again, but this time the cards carried earlier-timeline tags.
 
 Riley. Echo. Luna. Leo.
 
@@ -554,31 +554,31 @@ The assistant did not assume the room remembered or understood. She showed them 
 
 **RILEY**  
 Directive source: keep this party safe  
-Session-three state: critical wound after counterspell-denied healing  
+Earlier-timeline state: critical wound after counterspell-denied healing  
 Observed continuity role: memory anchor under one-thread condition  
 Private data: withheld
 
 **ECHO**  
 Shield priority: yes  
-Session-three state: thrown, residue exposure risk, age-shift observed  
+Earlier-timeline state: thrown, residue exposure risk, age-shift observed  
 Observed continuity role: first protected body under desync cascade  
 Private data: withheld
 
 **LUNA MIDORI**  
 Containment role: Dawnbreak barrier caster  
-Session-three state: inside sealed arena  
+Earlier-timeline state: inside sealed arena  
 Observed continuity role: named friend publicly; containment geometry held
 
 **LEO MIDORI**  
 Attempted role: healer, then combatant  
-Session-three state: healing counterspelled, sword relit  
+Earlier-timeline state: healing counterspelled, sword relit  
 Observed continuity role: plan-builder; data made care
 
 Then the screen showed a fifth profile.
 
 **MARISOL REYES**  
 Classification: known asset, not trusted  
-Session-three state: smoke-wing arrival, false Lady Darkness interception  
+Earlier-timeline state: smoke-wing arrival, false Lady Darkness interception  
 Observed role: changed engagement geometry  
 Trust status: unresolved
 
