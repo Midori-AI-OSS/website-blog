@@ -69,6 +69,16 @@ export interface ArtPayload {
   art_url: string;
 }
 
+export interface HeartbeatRequest {
+  sessionId: string;
+  channel: string;
+  stopped?: boolean;
+}
+
+export interface HeartbeatResponse {
+  count: number;
+}
+
 const QUALITY_NAME_SET = new Set<QualityName>(['low', 'medium', 'high']);
 
 export const QUALITY_LEVELS = [

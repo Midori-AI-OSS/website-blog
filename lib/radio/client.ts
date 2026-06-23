@@ -3,6 +3,7 @@ import type {
   ChannelsPayload,
   CurrentPayload,
   HealthPayload,
+  HeartbeatResponse,
   QualityName,
   RadioEnvelope,
   TracksPayload,
@@ -238,4 +239,38 @@ export async function fetchTracks(
     {},
     baseUrl,
   );
+}
+
+export async function sendHeartbeat(
+  sessionId: string,
+  channel: string,
+  stopped?: boolean,
+): Promise<HeartbeatResponse> {
+  let response: Response;
+
+  try {
+    response = await fetch('/api/radio/heartbeat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, channel, stopped }),
+      cache: 'no-store',
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown network error';
+    throw new RadioApiError(message, 'RADIO_NETWORK_ERROR', 0);
+  }
+
+  if (!response.ok) {
+    throw new RadioApiError(
+      `Heartbeat request failed: ${response.status}`,
+      'RADIO_HTTP_ERROR',
+      response.status,
+    );
+  }
+
+  try {
+    return (await response.json()) as HeartbeatResponse;
+  } catch {
+    throw new RadioApiError('Invalid heartbeat response', 'RADIO_INVALID_RESPONSE', 502);
+  }
 }

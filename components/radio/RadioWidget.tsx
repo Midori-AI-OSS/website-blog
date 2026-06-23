@@ -17,6 +17,7 @@ import {
   fetchChannels,
   fetchCurrent,
   RadioApiError,
+  sendHeartbeat,
 } from '@/lib/radio/client';
 import type { ArtPayload, ChannelEntry, CurrentPayload, QualityName } from '@/lib/radio/contract';
 import { normalizeChannel, QUALITY_LEVELS } from '@/lib/radio/contract';
@@ -142,6 +143,9 @@ export default function RadioWidget() {
   const [_lastError, setLastError] = React.useState<string | null>(null);
 
   const [channels, setChannels] = React.useState<ChannelEntry[]>([]);
+  const [listenerCount, setListenerCount] = React.useState<number | null>(null);
+  const sessionIdRef = React.useRef<string | null>(null);
+  const heartbeatIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [imageInventory, setImageInventory] = React.useState<RadioImageInventory | null>(null);
@@ -513,6 +517,65 @@ export default function RadioWidget() {
     startPlayback();
   }, [channel, hydrated, refreshMetadata, stopPlayback, startPlayback]);
 
+  React.useEffect(() => {
+    const isPlaying = playbackDesired && streamState === 'playing';
+
+    if (isPlaying) {
+      if (sessionIdRef.current === null) {
+        sessionIdRef.current = crypto.randomUUID();
+      }
+
+      if (heartbeatIntervalRef.current !== null) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+      heartbeatIntervalRef.current = null;
+
+      const sessionId = sessionIdRef.current;
+      const tick = () => {
+        void sendHeartbeat(sessionId, channelRef.current).then((result) => {
+          setListenerCount(result.count);
+        });
+      };
+
+      tick();
+
+      heartbeatIntervalRef.current = setInterval(tick, 30_000);
+    } else {
+      if (heartbeatIntervalRef.current !== null) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+      heartbeatIntervalRef.current = null;
+
+      if (sessionIdRef.current !== null) {
+        void sendHeartbeat(sessionIdRef.current, channelRef.current, true);
+        sessionIdRef.current = null;
+        setListenerCount(null);
+      }
+    }
+
+    return () => {
+      if (heartbeatIntervalRef.current !== null) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+    };
+  }, [playbackDesired, streamState]);
+
+  React.useEffect(() => {
+    return () => {
+      if (sessionIdRef.current !== null) {
+        void sendHeartbeat(sessionIdRef.current, channelRef.current, true);
+        sessionIdRef.current = null;
+        setListenerCount(null);
+      }
+
+      if (heartbeatIntervalRef.current !== null) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+    };
+  }, []);
+
   const fallbackIdentity = `${currentTrack?.title ?? 'unknown'}::${currentTrack?.track_id ?? 'unknown'}`;
   const fallbackImage = React.useMemo(() => {
     const placeholder = imageInventory?.placeholder ?? PLACEHOLDER_IMAGE;
@@ -785,16 +848,23 @@ export default function RadioWidget() {
             </Box>
           </Stack>
 
-          <Button
-            size="sm"
-            variant="soft"
-            color="neutral"
-            startDecorator={stickyOpen ? <PinOff size={14} /> : <Pin size={14} />}
-            onClick={() => setStickyOpen((previous) => !previous)}
-            sx={{ borderRadius: 0, alignSelf: 'flex-start' }}
-          >
-            {stickyOpen ? 'Unpin Open' : 'Pin Open'}
-          </Button>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Button
+              size="sm"
+              variant="soft"
+              color="neutral"
+              startDecorator={stickyOpen ? <PinOff size={14} /> : <Pin size={14} />}
+              onClick={() => setStickyOpen((previous) => !previous)}
+              sx={{ borderRadius: 0 }}
+            >
+              {stickyOpen ? 'Unpin Open' : 'Pin Open'}
+            </Button>
+            {listenerCount !== null && (
+              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+                {listenerCount} listener{listenerCount !== 1 ? 's' : ''}
+              </Typography>
+            )}
+          </Stack>
         </Stack>
       ) : (
         <Box
