@@ -93,7 +93,7 @@ He saw the delay. He saw the way her hands checked the hilt, then checked again,
 
 It had her specifically.
 
-<thinking>Visual artifact observed on Riley: white lightning web across visible eye. Type: hairline, branching, electrical, wrong-pale. Same artifact present on caster, lower intensity. Lacuna targeting visually confirmed on both subjects.</thinking>
+<thinking>Visual artifact observed on Riley: white lightning web across visible eye. Type: hairline, branching, electrical, wrong-pale. Same artifact present on caster. Lacuna targeting visually confirmed on both subjects.</thinking>
 
 Not Echo at the glass.
 
