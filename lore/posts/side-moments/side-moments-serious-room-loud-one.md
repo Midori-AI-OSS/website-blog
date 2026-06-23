@@ -9,8 +9,6 @@ game: side-moments
 story_order: 4
 ---
 
-# Draft 05 — Final Candidate
-
 # The Serious Room and the Loud One
 
 ## I. Table Mode

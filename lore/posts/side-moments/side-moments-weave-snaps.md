@@ -9,7 +9,7 @@ game: side-moments
 story_order: 3
 ---
 
-# Session 03 What-If — W.E.A.V.E. Snaps, Riley Falls, Luna Casts
+# What-If — W.E.A.V.E. Snaps, Riley Falls, Luna Casts
 
 She swung.
 
