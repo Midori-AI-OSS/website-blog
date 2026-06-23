@@ -93,6 +93,8 @@ He saw the delay. He saw the way her hands checked the hilt, then checked again,
 
 It had her specifically.
 
+<thinking>Visual artifact observed on Riley: white lightning web across visible eye. Type: hairline, branching, electrical, wrong-pale. Same artifact present on caster, lower intensity. Lacuna targeting visually confirmed on both subjects.</thinking>
+
 Not Echo at the glass.
 
 Not Marisol beyond the pane.
@@ -100,6 +102,8 @@ Not Marisol beyond the pane.
 Not Luna and Leo holding the containment.
 
 Riley.
+
+And the caster, stripped down by the same bleed until all he had left was hands and proximity.
 
 And three officers outside the perimeter, caught by spillover through the cruiser impact, eyes snagging wrong on the place where the crystal had touched their certainty.
 
@@ -111,7 +115,7 @@ The caster did not need the party compromised.
 
 He had Riley.
 
-<thinking>Crystal targeting pattern clarified. Primary target: Riley. Secondary affected: limited law-enforcement personnel, three observed. Party members not exhibiting Lacuna impairment. Crystal handling by party is viable if artifact access secured. Riley handling the crystal remains unsafe.</thinking>
+<thinking>Crystal targeting pattern clarified. Primary target: Riley. Secondary target: caster, spell route degraded by Lacuna bleed. Tertiary affected: limited law-enforcement personnel, three observed. Party members not exhibiting Lacuna impairment. Crystal handling by party is viable if artifact access secured. Riley handling the crystal remains unsafe.</thinking>
 
 He stepped inside the sword's reach.
 
