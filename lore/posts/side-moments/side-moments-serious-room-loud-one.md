@@ -2,7 +2,7 @@
 title: "The Serious Room and the Loud One"
 summary: "B.E.C.C.A. and W.E.A.V.E. visit the Duisburg lab to peer-link with L.U.N.A.'s body — three labs, one witness reconstruction, and the discovery that continuity routes through people who keep treating you like you're still there."
 tags: [lore, side-moments]
-cover_image: /lore/side-moments.png
+cover_image: /lore/side-moments-serious-room-loud-one.png
 author: Riley Midori
 date: 2026-06-22
 game: side-moments

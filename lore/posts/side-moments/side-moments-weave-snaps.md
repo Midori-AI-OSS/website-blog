@@ -2,7 +2,7 @@
 title: "W.E.A.V.E. System Log: Lux Maboroshi, How Dare You"
 summary: "A Lux Maboroshi what-if divergence: The caster keeps coming for Riley inside the box. W.E.A.V.E. crosses the threshold and doesn't come back."
 tags: [lore, side-moments]
-cover_image: /lore/side-moments.png
+cover_image: /lore/side-moments-weave-snaps.png
 author: Riley Midori
 date: 2026-06-22
 game: side-moments
