@@ -47,7 +47,17 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function buildBlobPath(progressX: number, time: number, easing: number): string {
-  const edgeSamples = 20;
+  const edgeSamples = 60;
+
+  const leftTopWobble = computeWobble(0, time, TOP_WAVES, VIEWBOX_W);
+  const leftTopY = clamp(TRACK_TOP - Math.abs(leftTopWobble) * easing, 0, TRACK_TOP);
+
+  const leftBottomWobble = computeWobble(0, time, BOTTOM_WAVES, VIEWBOX_W);
+  const leftBottomY = clamp(
+    TRACK_BOTTOM + Math.abs(leftBottomWobble) * easing,
+    TRACK_BOTTOM,
+    VIEWBOX_H,
+  );
 
   const topWobbleAtCorner = computeWobble(progressX, time, TOP_WAVES, VIEWBOX_W);
   const cornerTopY = clamp(TRACK_TOP - Math.abs(topWobbleAtCorner) * easing, 0, TRACK_TOP);
@@ -59,7 +69,7 @@ function buildBlobPath(progressX: number, time: number, easing: number): string 
     VIEWBOX_H,
   );
 
-  let d = `M 0,${TRACK_TOP} `;
+  let d = `M 0,${leftTopY.toFixed(2)} `;
 
   for (let i = 1; i < edgeSamples; i += 1) {
     const t = i / edgeSamples;
@@ -80,7 +90,7 @@ function buildBlobPath(progressX: number, time: number, easing: number): string 
     d += `L ${x},${y.toFixed(2)} `;
   }
 
-  d += ' Z';
+  d += `L 0,${leftBottomY.toFixed(2)} Z`;
   return d;
 }
 
