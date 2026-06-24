@@ -50,6 +50,11 @@ const coverSlideIn = keyframes`
   to { transform: translateX(0); opacity: 1; }
 `;
 
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
 type StreamState = 'idle' | 'loading' | 'playing' | 'error';
 
 interface ProbeMetadata {
@@ -178,6 +183,7 @@ export default function RadioPageClient() {
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [artUrl, setArtUrl] = React.useState<string | null>(null);
+  const [displayedArtUrl, setDisplayedArtUrl] = React.useState<string | null>(null);
   const [staleBgUrl, setStaleBgUrl] = React.useState<string | null>(null);
   const [bgFading, setBgFading] = React.useState(false);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
@@ -186,6 +192,12 @@ export default function RadioPageClient() {
   const [durationMs, setDurationMs] = React.useState(0);
   const [lastError, setLastError] = React.useState<string | null>(null);
   const currentTrackId = currentTrack?.track_id ?? null;
+
+  React.useEffect(() => {
+    if (artUrl) {
+      setDisplayedArtUrl(artUrl);
+    }
+  }, [artUrl]);
 
   React.useEffect(() => {
     channelRef.current = channel;
@@ -215,14 +227,20 @@ export default function RadioPageClient() {
       return;
     }
 
-    prevArtUrlRef.current = next;
-
-    if (!current) {
+    if (!next) {
       setStaleBgUrl(null);
       setBgFading(false);
       return;
     }
 
+    if (!current) {
+      prevArtUrlRef.current = next;
+      setStaleBgUrl(null);
+      setBgFading(false);
+      return;
+    }
+
+    prevArtUrlRef.current = next;
     setStaleBgUrl(current);
     requestAnimationFrame(() => {
       setBgFading(true);
@@ -233,7 +251,11 @@ export default function RadioPageClient() {
       setBgFading(false);
     }, 1600);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      setStaleBgUrl(null);
+      setBgFading(false);
+    };
   }, [artUrl]);
 
   React.useEffect(() => {
@@ -487,11 +509,13 @@ export default function RadioPageClient() {
       return;
     }
 
+    setProbeData(null);
+    setProbeLoading(true);
+
     const controller = new AbortController();
     const requestedChannel = normalizeChannel(channel);
     const timeoutId = window.setTimeout(() => {
       const loadProbe = async () => {
-        setProbeLoading(true);
         try {
           const response = await fetch(
             `/api/radio/probe?channel=${encodeURIComponent(requestedChannel)}`,
@@ -712,7 +736,8 @@ export default function RadioPageClient() {
   const streamStateLabel = getStreamStateLabel(streamState);
 
   const staleBackgroundImage = staleBgUrl ?? 'none';
-  const artBackgroundImage = artUrl ? `url(${JSON.stringify(artUrl)})` : 'none';
+  const activeArtUrl = artUrl ?? displayedArtUrl;
+  const artBackgroundImage = activeArtUrl ? `url(${JSON.stringify(activeArtUrl)})` : 'none';
   const staticGradient =
     'radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.34), transparent 30%), radial-gradient(circle at 80% 12%, rgba(45, 212, 191, 0.18), transparent 26%), linear-gradient(135deg, #05040a 0%, #151025 45%, #05040a 100%)';
 
@@ -743,7 +768,7 @@ export default function RadioPageClient() {
           }}
         />
       )}
-      {artUrl ? (
+      {activeArtUrl ? (
         <Box
           aria-hidden
           sx={{
@@ -1051,32 +1076,34 @@ export default function RadioPageClient() {
             >
               <Stack spacing={2}>
                 <Typography level="h4">Track Story</Typography>
-                {probeData?.comment?.trim() ? (
-                  <Typography
-                    level="body-md"
-                    sx={{
-                      color: 'text.secondary',
-                      whiteSpace: 'pre-wrap',
-                      fontSize: { xs: '1rem' },
-                    }}
-                  >
-                    {probeData.comment.trim()}
-                  </Typography>
-                ) : probeLoading ? (
-                  <Stack spacing={1}>
-                    <Skeleton variant="text" width="90%" />
-                    <Skeleton variant="text" width="75%" />
-                    <Skeleton variant="text" width="85%" />
-                    <Skeleton variant="text" width="60%" />
-                  </Stack>
-                ) : (
-                  <Typography
-                    level="body-md"
-                    sx={{ color: 'text.secondary', fontSize: { xs: '1rem' } }}
-                  >
-                    Track story metadata will appear here when the stream publishes it.
-                  </Typography>
-                )}
+                <Box key={currentTrackId ?? 'idle'} sx={{ animation: `${fadeIn} 0.35s ease-out` }}>
+                  {probeData?.comment?.trim() ? (
+                    <Typography
+                      level="body-md"
+                      sx={{
+                        color: 'text.secondary',
+                        whiteSpace: 'pre-wrap',
+                        fontSize: { xs: '1rem' },
+                      }}
+                    >
+                      {probeData.comment.trim()}
+                    </Typography>
+                  ) : probeLoading ? (
+                    <Stack spacing={1}>
+                      <Skeleton variant="text" width="90%" />
+                      <Skeleton variant="text" width="75%" />
+                      <Skeleton variant="text" width="85%" />
+                      <Skeleton variant="text" width="60%" />
+                    </Stack>
+                  ) : (
+                    <Typography
+                      level="body-md"
+                      sx={{ color: 'text.secondary', fontSize: { xs: '1rem' } }}
+                    >
+                      Track story metadata will appear here when the stream publishes it.
+                    </Typography>
+                  )}
+                </Box>
               </Stack>
             </Sheet>
 
