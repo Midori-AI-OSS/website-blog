@@ -760,8 +760,7 @@ export default function RadioPageClient() {
     () =>
       Array.from({ length: 10 }, (_, i) => ({
         id: `vdot${i}`,
-        active: i < Math.round(volume * 10),
-        height: 8 + i * 2.5,
+        active: i <= Math.round(volume * 9),
       })),
     [volume],
   );
@@ -1214,25 +1213,55 @@ export default function RadioPageClient() {
               <Box
                 sx={{
                   display: 'flex',
-                  alignItems: 'flex-end',
-                  gap: '2px',
+                  alignItems: 'center',
+                  gap: '6px',
                   height: 28,
                   opacity: volHovered ? 1 : 0,
-                  transition: 'opacity 0.2s ease, transform 0.2s ease',
-                  transitionDelay: volHovered ? '0.1s' : '0.2s',
-                  transform: volHovered ? 'translateX(0)' : 'translateX(12px)',
+                  transition: 'opacity 0.2s ease, transform 0.25s ease',
+                  transitionDelay: volHovered ? '0.1s' : '0.3s',
+                  transform: volHovered ? 'translateX(0)' : 'translateX(80px)',
                   mr: '10px',
                 }}
               >
-                {volumeDots.map((dot) => (
+                {volumeDots.map((dot, i) => (
                   <Box
                     key={dot.id}
-                    sx={{
-                      width: 3,
-                      height: `${dot.height}px`,
-                      bgcolor: dot.active ? 'primary.400' : 'rgba(255,255,255,0.16)',
+                    onClick={() => {
+                      setVolume(clampVolume(i / 9));
                     }}
-                  />
+                    role="button"
+                    aria-label={`Volume ${Math.round((i / 9) * 100)}%`}
+                    tabIndex={volHovered ? 0 : -1}
+                    sx={{
+                      position: 'relative',
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      bgcolor: dot.active ? 'primary.400' : 'rgba(255,255,255,0.18)',
+                      cursor: 'pointer',
+                      minWidth: 6,
+                      minHeight: 6,
+                    }}
+                  >
+                    {dot.active && (
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: 'absolute',
+                          bottom: '100%',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: 0,
+                          height: 0,
+                          borderLeft: '4px solid transparent',
+                          borderRight: '4px solid transparent',
+                          borderBottom: '5px solid',
+                          borderBottomColor: 'primary.400',
+                          mb: '3px',
+                        }}
+                      />
+                    )}
+                  </Box>
                 ))}
               </Box>
 
