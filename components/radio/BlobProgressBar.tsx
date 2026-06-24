@@ -55,26 +55,47 @@ function clamp(value: number, min: number, max: number): number {
 function buildBlobPath(progressX: number, time: number): string {
   const edgeSamples = 20;
 
+  const rightWobbleTop = computeWobble(TRACK_TOP, time, RIGHT_WAVES, VIEWBOX_H);
+  const rightWobbleBottom = computeWobble(TRACK_BOTTOM, time, RIGHT_WAVES, VIEWBOX_H);
+
+  const cornerTopX = progressX + rightWobbleTop;
+  const cornerBottomX = progressX + rightWobbleBottom;
+
+  const topWobbleAtCorner = computeWobble(progressX, time, TOP_WAVES, VIEWBOX_W);
+  const cornerTopY = clamp(TRACK_TOP - Math.abs(topWobbleAtCorner), 0, TRACK_TOP);
+
+  const bottomWobbleAtCorner = computeWobble(progressX, time, BOTTOM_WAVES, VIEWBOX_W);
+  const cornerBottomY = clamp(
+    TRACK_BOTTOM + Math.abs(bottomWobbleAtCorner),
+    TRACK_BOTTOM,
+    VIEWBOX_H,
+  );
+
   let d = `M 0,${TRACK_TOP} `;
 
-  for (let i = 0; i <= edgeSamples; i += 1) {
-    const x = (i / edgeSamples) * progressX;
-    const wobble = computeWobble(x, time, TOP_WAVES, VIEWBOX_W);
-    const y = clamp(TRACK_TOP - Math.abs(wobble), 0, TRACK_TOP);
+  for (let i = 1; i < edgeSamples; i += 1) {
+    const t = i / edgeSamples;
+    const x = t * cornerTopX;
+    const wob = computeWobble(x, time, TOP_WAVES, VIEWBOX_W);
+    const y = clamp(TRACK_TOP - Math.abs(wob), 0, TRACK_TOP);
     d += `L ${x},${y.toFixed(2)} `;
   }
+  d += `L ${cornerTopX},${cornerTopY.toFixed(2)} `;
 
-  for (let i = 0; i <= edgeSamples; i += 1) {
-    const y = TRACK_TOP + (i / edgeSamples) * TRACK_H;
-    const wobble = computeWobble(y, time, RIGHT_WAVES, VIEWBOX_H);
-    const x = progressX + wobble;
+  for (let i = 1; i < edgeSamples; i += 1) {
+    const t = i / edgeSamples;
+    const y = TRACK_TOP + t * TRACK_H;
+    const wob = computeWobble(y, time, RIGHT_WAVES, VIEWBOX_H);
+    const x = progressX + wob;
     d += `L ${x},${y.toFixed(2)} `;
   }
+  d += `L ${cornerBottomX},${cornerBottomY.toFixed(2)} `;
 
-  for (let i = edgeSamples; i >= 0; i -= 1) {
-    const x = (i / edgeSamples) * progressX;
-    const wobble = computeWobble(x, time, BOTTOM_WAVES, VIEWBOX_W);
-    const y = clamp(TRACK_BOTTOM + Math.abs(wobble), TRACK_BOTTOM, VIEWBOX_H);
+  for (let i = edgeSamples - 1; i >= 1; i -= 1) {
+    const t = i / edgeSamples;
+    const x = t * cornerBottomX;
+    const wob = computeWobble(x, time, BOTTOM_WAVES, VIEWBOX_W);
+    const y = clamp(TRACK_BOTTOM + Math.abs(wob), TRACK_BOTTOM, VIEWBOX_H);
     d += `L ${x},${y.toFixed(2)} `;
   }
 

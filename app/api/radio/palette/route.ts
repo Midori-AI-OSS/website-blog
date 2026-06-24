@@ -4,6 +4,14 @@ import { ensureMinLuminance, rgbToHex } from '@/lib/theme/artPalette';
 
 export const runtime = 'nodejs';
 
+function paletteFallback() {
+  return NextResponse.json({
+    primary: ensureMinLuminance('#8b5cf6'),
+    secondary: ensureMinLuminance('#a78bfa'),
+    tertiary: ensureMinLuminance('#7c3aed'),
+  });
+}
+
 function quantizeChannel(value: number): number {
   return Math.round(value / 32) * 32;
 }
@@ -30,7 +38,7 @@ export async function GET(request: NextRequest) {
     const buffer = Buffer.from(await response.arrayBuffer());
 
     const { data } = await sharp(buffer)
-      .resize(64, 64, { fit: 'inside' })
+      .resize(64, 64, { fit: 'inside', withoutEnlargement: true })
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
@@ -60,14 +68,15 @@ export async function GET(request: NextRequest) {
     const sorted = Array.from(colorMap.values()).sort((a, b) => b.count - a.count);
 
     if (sorted.length === 0) {
-      return NextResponse.json({
-        primary: '#8b5cf6',
-        secondary: '#a78bfa',
-        tertiary: '#7c3aed',
-      });
+      return paletteFallback();
     }
 
-    const picked: typeof sorted = [...sorted.slice(0, 3)];
+    const first = sorted[0];
+    if (!first) {
+      return paletteFallback();
+    }
+
+    const picked: typeof sorted = [first];
     const minDistance = 3000;
 
     for (let i = 1; i < sorted.length && picked.length < 3; i += 1) {
@@ -83,18 +92,14 @@ export async function GET(request: NextRequest) {
 
     while (picked.length < 3) {
       const last = picked.at(-1);
-      if (last && last.count > 0) picked.push(last);
+      if (last) picked.push(last);
+    }
+
+    if (!picked[0] || !picked[1] || !picked[2]) {
+      return paletteFallback();
     }
 
     const toHex = (r: number, g: number, b: number) => rgbToHex(r, g, b);
-
-    if (!picked[0] || !picked[1] || !picked[2]) {
-      return NextResponse.json({
-        primary: '#8b5cf6',
-        secondary: '#a78bfa',
-        tertiary: '#7c3aed',
-      });
-    }
 
     return NextResponse.json({
       primary: ensureMinLuminance(toHex(picked[0].r, picked[0].g, picked[0].b)),
