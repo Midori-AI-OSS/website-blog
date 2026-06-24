@@ -23,12 +23,6 @@ const BOTTOM_WAVES = [
   { amp: 3.5, freq: 7.5, speed: 0.38, phase: 5.1 },
 ];
 
-const RIGHT_WAVES = [
-  { amp: 0.8, freq: 1.3, speed: 0.3, phase: 0 },
-  { amp: 0.5, freq: 2.7, speed: 0.5, phase: 1.2 },
-  { amp: 0.7, freq: 0.6, speed: 0.4, phase: 2.5 },
-];
-
 function darkenHex(hex: string, amount: number): string {
   const [r, g, b] = hexToRgb(hex);
   const keep = 1 - Math.max(0, Math.min(1, amount));
@@ -52,21 +46,15 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-function buildBlobPath(progressX: number, time: number): string {
+function buildBlobPath(progressX: number, time: number, easing: number): string {
   const edgeSamples = 20;
 
-  const rightWobbleTop = computeWobble(TRACK_TOP, time, RIGHT_WAVES, VIEWBOX_H);
-  const rightWobbleBottom = computeWobble(TRACK_BOTTOM, time, RIGHT_WAVES, VIEWBOX_H);
-
-  const cornerTopX = progressX + rightWobbleTop;
-  const cornerBottomX = progressX + rightWobbleBottom;
-
   const topWobbleAtCorner = computeWobble(progressX, time, TOP_WAVES, VIEWBOX_W);
-  const cornerTopY = clamp(TRACK_TOP - Math.abs(topWobbleAtCorner), 0, TRACK_TOP);
+  const cornerTopY = clamp(TRACK_TOP - Math.abs(topWobbleAtCorner) * easing, 0, TRACK_TOP);
 
   const bottomWobbleAtCorner = computeWobble(progressX, time, BOTTOM_WAVES, VIEWBOX_W);
   const cornerBottomY = clamp(
-    TRACK_BOTTOM + Math.abs(bottomWobbleAtCorner),
+    TRACK_BOTTOM + Math.abs(bottomWobbleAtCorner) * easing,
     TRACK_BOTTOM,
     VIEWBOX_H,
   );
@@ -75,27 +63,20 @@ function buildBlobPath(progressX: number, time: number): string {
 
   for (let i = 1; i < edgeSamples; i += 1) {
     const t = i / edgeSamples;
-    const x = t * cornerTopX;
+    const x = t * progressX;
     const wob = computeWobble(x, time, TOP_WAVES, VIEWBOX_W);
-    const y = clamp(TRACK_TOP - Math.abs(wob), 0, TRACK_TOP);
+    const y = clamp(TRACK_TOP - Math.abs(wob) * easing, 0, TRACK_TOP);
     d += `L ${x},${y.toFixed(2)} `;
   }
-  d += `L ${cornerTopX},${cornerTopY.toFixed(2)} `;
+  d += `L ${progressX},${cornerTopY.toFixed(2)} `;
 
-  for (let i = 1; i < edgeSamples; i += 1) {
-    const t = i / edgeSamples;
-    const y = TRACK_TOP + t * TRACK_H;
-    const wob = computeWobble(y, time, RIGHT_WAVES, VIEWBOX_H);
-    const x = progressX + wob;
-    d += `L ${x},${y.toFixed(2)} `;
-  }
-  d += `L ${cornerBottomX},${cornerBottomY.toFixed(2)} `;
+  d += `L ${progressX},${cornerBottomY.toFixed(2)} `;
 
   for (let i = edgeSamples - 1; i >= 1; i -= 1) {
     const t = i / edgeSamples;
-    const x = t * cornerBottomX;
+    const x = t * progressX;
     const wob = computeWobble(x, time, BOTTOM_WAVES, VIEWBOX_W);
-    const y = clamp(TRACK_BOTTOM + Math.abs(wob), TRACK_BOTTOM, VIEWBOX_H);
+    const y = clamp(TRACK_BOTTOM + Math.abs(wob) * easing, TRACK_BOTTOM, VIEWBOX_H);
     d += `L ${x},${y.toFixed(2)} `;
   }
 
@@ -127,7 +108,6 @@ export default function BlobProgressBar({
   const shimmerRef = React.useRef<SVGLinearGradientElement>(null);
   const timeRef = React.useRef(0);
   const lastTimestampRef = React.useRef(0);
-  const frameRef = React.useRef(0);
 
   const fillColors = React.useMemo(() => {
     if (!palette) {
@@ -152,36 +132,39 @@ export default function BlobProgressBar({
     }
   }, []);
 
-  React.useEffect(() => {
-    if (!isPlaying && pathRef.current) {
-      pathRef.current.setAttribute('d', buildStraightPath(progressX));
-    }
-  }, [isPlaying, progressX]);
+  const isPlayingRef = React.useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
+
+  const easingRef = React.useRef(0);
 
   React.useEffect(() => {
-    if (!isPlaying) {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-        frameRef.current = 0;
-      }
-      lastTimestampRef.current = 0;
-      return;
-    }
-
+    let frame = 0;
     lastTimestampRef.current = 0;
 
     const animate = (timestamp: number) => {
       if (lastTimestampRef.current === 0) {
         lastTimestampRef.current = timestamp;
       }
-      const dt = (timestamp - lastTimestampRef.current) / 1000;
+      const dt = Math.min(0.1, (timestamp - lastTimestampRef.current) / 1000);
       lastTimestampRef.current = timestamp;
 
-      timeRef.current += dt;
+      const EASE_SPEED = 0.7;
+      const target = isPlayingRef.current ? 1 : 0;
+      easingRef.current = target + (easingRef.current - target) * Math.exp(-EASE_SPEED * dt);
 
-      const svgPath = pathRef.current;
-      if (svgPath) {
-        svgPath.setAttribute('d', buildBlobPath(progressX, timeRef.current));
+      if (easingRef.current < 0.001 && !isPlayingRef.current) {
+        easingRef.current = 0;
+        const svgPath = pathRef.current;
+        if (svgPath) {
+          svgPath.setAttribute('d', buildStraightPath(progressX));
+        }
+      } else {
+        timeRef.current += dt;
+
+        const svgPath = pathRef.current;
+        if (svgPath) {
+          svgPath.setAttribute('d', buildBlobPath(progressX, timeRef.current, easingRef.current));
+        }
       }
 
       const shimmer = shimmerRef.current;
@@ -193,18 +176,17 @@ export default function BlobProgressBar({
         shimmer.setAttribute('x2', String(center + 6));
       }
 
-      frameRef.current = requestAnimationFrame(animate);
+      frame = requestAnimationFrame(animate);
     };
 
-    frameRef.current = requestAnimationFrame(animate);
+    frame = requestAnimationFrame(animate);
 
     return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-        frameRef.current = 0;
+      if (frame) {
+        cancelAnimationFrame(frame);
       }
     };
-  }, [isPlaying, progressX]);
+  }, [progressX]);
 
   return (
     <Box
