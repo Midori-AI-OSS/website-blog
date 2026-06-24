@@ -168,6 +168,7 @@ export default function RadioPageClient() {
   const artRequestRef = React.useRef(0);
   const sessionIdRef = React.useRef<string | null>(null);
   const heartbeatIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const bgLayerRef = React.useRef<HTMLDivElement | null>(null);
   const prevArtUrlRef = React.useRef<string | null>(null);
 
   const [hydrated, setHydrated] = React.useState(false);
@@ -183,21 +184,12 @@ export default function RadioPageClient() {
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [artUrl, setArtUrl] = React.useState<string | null>(null);
-  const [displayedArtUrl, setDisplayedArtUrl] = React.useState<string | null>(null);
-  const [staleBgUrl, setStaleBgUrl] = React.useState<string | null>(null);
-  const [bgFading, setBgFading] = React.useState(false);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
   const [probeLoading, setProbeLoading] = React.useState(false);
   const [positionMs, setPositionMs] = React.useState(0);
   const [durationMs, setDurationMs] = React.useState(0);
   const [lastError, setLastError] = React.useState<string | null>(null);
   const currentTrackId = currentTrack?.track_id ?? null;
-
-  React.useEffect(() => {
-    if (artUrl) {
-      setDisplayedArtUrl(artUrl);
-    }
-  }, [artUrl]);
 
   React.useEffect(() => {
     channelRef.current = channel;
@@ -220,41 +212,44 @@ export default function RadioPageClient() {
   }, [restartNonce]);
 
   React.useEffect(() => {
-    const next = artUrl ? `url(${JSON.stringify(artUrl)})` : null;
-    const current = prevArtUrlRef.current;
+    const layer = bgLayerRef.current;
+    if (!layer) return;
 
-    if (next === current) {
+    if (artUrl === prevArtUrlRef.current) return;
+
+    if (!artUrl) {
+      if (prevArtUrlRef.current === null) return;
+      layer.style.transition = 'opacity 1.5s ease-in-out';
+      layer.style.opacity = '0';
       return;
     }
 
-    if (!next) {
-      setStaleBgUrl(null);
-      setBgFading(false);
+    if (!prevArtUrlRef.current) {
+      prevArtUrlRef.current = artUrl;
+      layer.style.transition = 'none';
+      layer.style.backgroundImage = `url(${JSON.stringify(artUrl)})`;
+      void layer.offsetHeight;
+      layer.style.transition = 'opacity 1.5s ease-in-out';
+      layer.style.opacity = '1';
       return;
     }
 
-    if (!current) {
-      prevArtUrlRef.current = next;
-      setStaleBgUrl(null);
-      setBgFading(false);
-      return;
-    }
+    prevArtUrlRef.current = artUrl;
 
-    prevArtUrlRef.current = next;
-    setStaleBgUrl(current);
-    requestAnimationFrame(() => {
-      setBgFading(true);
-    });
+    layer.style.transition = 'opacity 1.5s ease-in-out';
+    layer.style.opacity = '0';
 
-    const timer = setTimeout(() => {
-      setStaleBgUrl(null);
-      setBgFading(false);
-    }, 1600);
+    const swapTimer = setTimeout(() => {
+      layer.style.transition = 'none';
+      layer.style.backgroundImage = `url(${JSON.stringify(artUrl)})`;
+      void layer.offsetHeight;
+      layer.style.transition = 'opacity 1.5s ease-in-out';
+      layer.style.opacity = '1';
+    }, 750);
 
     return () => {
-      clearTimeout(timer);
-      setStaleBgUrl(null);
-      setBgFading(false);
+      clearTimeout(swapTimer);
+      layer.style.transition = 'none';
     };
   }, [artUrl]);
 
@@ -735,9 +730,6 @@ export default function RadioPageClient() {
   const title = currentTrack?.title ?? 'Finding current track…';
   const streamStateLabel = getStreamStateLabel(streamState);
 
-  const staleBackgroundImage = staleBgUrl ?? 'none';
-  const activeArtUrl = artUrl ?? displayedArtUrl;
-  const artBackgroundImage = activeArtUrl ? `url(${JSON.stringify(activeArtUrl)})` : 'none';
   const staticGradient =
     'radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.34), transparent 30%), radial-gradient(circle at 80% 12%, rgba(45, 212, 191, 0.18), transparent 26%), linear-gradient(135deg, #05040a 0%, #151025 45%, #05040a 100%)';
 
@@ -750,55 +742,34 @@ export default function RadioPageClient() {
         overflowX: 'clip',
       }}
     >
-      {staleBgUrl && (
-        <Box
-          aria-hidden
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 0,
-            backgroundImage: staleBackgroundImage,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(40px) brightness(0.32) saturate(1.08)',
-            transform: 'scale(1.12)',
-            pointerEvents: 'none',
-            opacity: bgFading ? 0 : 1,
-            transition: 'opacity 1.5s ease-in-out',
-          }}
-        />
-      )}
-      {activeArtUrl ? (
-        <Box
-          aria-hidden
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 0,
-            backgroundImage: artBackgroundImage,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(40px) brightness(0.32) saturate(1.08)',
-            transform: 'scale(1.12)',
-            pointerEvents: 'none',
-            opacity: staleBgUrl ? (bgFading ? 1 : 0) : undefined,
-            transition: staleBgUrl ? 'opacity 1.5s ease-in-out' : 'none',
-          }}
-        />
-      ) : (
-        <Box
-          aria-hidden
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 0,
-            background: staticGradient,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            pointerEvents: 'none',
-          }}
-        />
-      )}
+      <Box
+        aria-hidden
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          background: staticGradient,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        ref={bgLayerRef}
+        aria-hidden
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'blur(40px) brightness(0.32) saturate(1.08)',
+          transform: 'scale(1.12)',
+          pointerEvents: 'none',
+          opacity: 0,
+          transition: 'none',
+        }}
+      />
       <Box
         aria-hidden
         sx={{
