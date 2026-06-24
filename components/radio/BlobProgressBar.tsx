@@ -12,15 +12,15 @@ const TRACK_H = 8;
 const TRACK_BOTTOM = TRACK_TOP + TRACK_H;
 
 const TOP_WAVES = [
-  { amp: 2.5, freq: 0.8, speed: 0.3, phase: 0.5 },
-  { amp: 1.5, freq: 1.6, speed: 0.45, phase: 2.1 },
-  { amp: 2.0, freq: 2.4, speed: 0.35, phase: 4.3 },
+  { amp: 4.0, freq: 3.0, speed: 0.3, phase: 0.5 },
+  { amp: 3.0, freq: 5.5, speed: 0.45, phase: 2.1 },
+  { amp: 3.5, freq: 8.0, speed: 0.35, phase: 4.3 },
 ];
 
 const BOTTOM_WAVES = [
-  { amp: 2.0, freq: 0.9, speed: 0.35, phase: 1.7 },
-  { amp: 1.8, freq: 1.7, speed: 0.4, phase: 3.5 },
-  { amp: 2.2, freq: 2.1, speed: 0.38, phase: 5.1 },
+  { amp: 3.5, freq: 2.5, speed: 0.35, phase: 1.7 },
+  { amp: 3.0, freq: 5.0, speed: 0.4, phase: 3.5 },
+  { amp: 3.5, freq: 7.5, speed: 0.38, phase: 5.1 },
 ];
 
 const RIGHT_WAVES = [
@@ -138,9 +138,9 @@ export default function BlobProgressBar({
       };
     }
     return {
-      left: darkenHex(palette.tertiary, 0.45),
-      mid: darkenHex(palette.secondary, 0.45),
-      right: darkenHex(palette.primary, 0.45),
+      left: darkenHex(palette.tertiary, 0.2),
+      mid: darkenHex(palette.secondary, 0.2),
+      right: darkenHex(palette.primary, 0.2),
     };
   }, [palette]);
 
