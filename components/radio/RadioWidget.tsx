@@ -355,6 +355,29 @@ export default function RadioWidget() {
     }
   }, [hydrated]);
 
+  React.useEffect(() => {
+    if (!hydrated) return;
+
+    if (isRadioPage) {
+      if (playbackDesiredRef.current) {
+        playbackDesiredRef.current = false;
+        const audio = audioRef.current;
+        if (audio !== null) {
+          audio.pause();
+          audio.removeAttribute('src');
+          audio.load();
+        }
+        setStreamState('idle');
+        setStatusText('Stopped');
+      }
+    } else {
+      const restored = loadRadioState();
+      if (restored.playing) {
+        startPlayback();
+      }
+    }
+  }, [isRadioPage, hydrated, startPlayback]);
+
   const scheduleReconnect = React.useCallback(() => {
     if (!playbackDesiredRef.current) {
       return;
