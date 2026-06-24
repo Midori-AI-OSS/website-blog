@@ -137,6 +137,8 @@ export default function BlobProgressBar({
 
   const easingRef = React.useRef(0);
 
+  const smoothProgressXRef = React.useRef(progressX);
+
   React.useEffect(() => {
     let frame = 0;
     lastTimestampRef.current = 0;
@@ -152,18 +154,24 @@ export default function BlobProgressBar({
       const target = isPlayingRef.current ? 1 : 0;
       easingRef.current = target + (easingRef.current - target) * Math.exp(-EASE_SPEED * dt);
 
+      smoothProgressXRef.current +=
+        (progressX - smoothProgressXRef.current) * Math.min(1, dt * 3.0);
+
       if (easingRef.current < 0.001 && !isPlayingRef.current) {
         easingRef.current = 0;
         const svgPath = pathRef.current;
         if (svgPath) {
-          svgPath.setAttribute('d', buildStraightPath(progressX));
+          svgPath.setAttribute('d', buildStraightPath(smoothProgressXRef.current));
         }
       } else {
         timeRef.current += dt;
 
         const svgPath = pathRef.current;
         if (svgPath) {
-          svgPath.setAttribute('d', buildBlobPath(progressX, timeRef.current, easingRef.current));
+          svgPath.setAttribute(
+            'd',
+            buildBlobPath(smoothProgressXRef.current, timeRef.current, easingRef.current),
+          );
         }
       }
 
