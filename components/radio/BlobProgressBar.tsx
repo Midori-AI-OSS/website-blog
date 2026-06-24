@@ -129,8 +129,6 @@ export default function BlobProgressBar({
   const lastTimestampRef = React.useRef(0);
   const frameRef = React.useRef(0);
 
-  const hasPlayedRef = React.useRef(false);
-
   const fillColors = React.useMemo(() => {
     if (!palette) {
       return {
@@ -155,6 +153,12 @@ export default function BlobProgressBar({
   }, []);
 
   React.useEffect(() => {
+    if (!isPlaying && pathRef.current) {
+      pathRef.current.setAttribute('d', buildStraightPath(progressX));
+    }
+  }, [isPlaying, progressX]);
+
+  React.useEffect(() => {
     if (!isPlaying) {
       if (frameRef.current) {
         cancelAnimationFrame(frameRef.current);
@@ -164,7 +168,6 @@ export default function BlobProgressBar({
       return;
     }
 
-    hasPlayedRef.current = true;
     lastTimestampRef.current = 0;
 
     const animate = (timestamp: number) => {
@@ -203,14 +206,6 @@ export default function BlobProgressBar({
     };
   }, [isPlaying, progressX]);
 
-  const initialPath = React.useMemo(
-    () =>
-      hasPlayedRef.current
-        ? buildBlobPath(progressX, timeRef.current)
-        : buildStraightPath(progressX),
-    [progressX],
-  );
-
   return (
     <Box
       component="svg"
@@ -241,7 +236,7 @@ export default function BlobProgressBar({
           <stop offset="100%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
         <clipPath id="fillClip">
-          <path ref={pathRef} d={initialPath} />
+          <path ref={pathRef} />
         </clipPath>
       </defs>
 
@@ -255,7 +250,7 @@ export default function BlobProgressBar({
       />
 
       <g clipPath="url(#fillClip)">
-        <rect x="0" y={TRACK_TOP} width={VIEWBOX_W} height={TRACK_H} fill="url(#fillGrad)" />
+        <rect x="0" y="0" width={VIEWBOX_W} height={VIEWBOX_H} fill="url(#fillGrad)" />
         <rect x="0" y={TRACK_TOP} width={VIEWBOX_W} height={TRACK_H} fill="url(#shimmerGrad)" />
       </g>
     </Box>
