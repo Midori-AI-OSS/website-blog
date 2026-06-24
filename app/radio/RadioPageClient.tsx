@@ -876,8 +876,8 @@ export default function RadioPageClient() {
                 src={artUrl}
                 alt=""
                 sx={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'contain',
                   animation: `${coverSlideIn} 0.4s ease-out`,
                 }}
