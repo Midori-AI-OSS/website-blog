@@ -18,8 +18,8 @@ export default function NavBar() {
   const items = [
     { name: 'Home', icon: <Home size={18} />, path: '/' },
     { name: 'Blog', icon: <BookOpen size={18} />, path: '/blog' },
-    { name: 'Radio', icon: <Radio size={18} />, path: '/radio' },
     { name: 'Lore', icon: <LayoutDashboard size={18} />, path: '/lore' },
+    { name: 'Radio', icon: <Radio size={18} />, path: '/radio' },
   ];
 
   return (

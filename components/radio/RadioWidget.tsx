@@ -8,7 +8,7 @@ import Slider from '@mui/joy/Slider';
 import Stack from '@mui/joy/Stack';
 import Tooltip from '@mui/joy/Tooltip';
 import Typography from '@mui/joy/Typography';
-import { Music, Pin, PinOff, Play, Square } from 'lucide-react';
+import { Headphones, Music, Pin, PinOff, Play, Square } from 'lucide-react';
 import * as React from 'react';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import {
@@ -919,9 +919,12 @@ export default function RadioWidget() {
               {stickyOpen ? 'Unpin Open' : 'Pin Open'}
             </Button>
             {listenerCount !== null && (
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                {listenerCount} listener{listenerCount !== 1 ? 's' : ''}
-              </Typography>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+                  {listenerCount}
+                </Typography>
+                <Headphones size={12} aria-hidden />
+              </Stack>
             )}
           </Stack>
         </Stack>

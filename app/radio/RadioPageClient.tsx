@@ -1,11 +1,13 @@
 'use client';
 
+import { keyframes } from '@emotion/react';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import ButtonGroup from '@mui/joy/ButtonGroup';
 import Chip from '@mui/joy/Chip';
 import LinearProgress from '@mui/joy/LinearProgress';
 import Sheet from '@mui/joy/Sheet';
+import Skeleton from '@mui/joy/Skeleton';
 import Slider from '@mui/joy/Slider';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
@@ -42,6 +44,11 @@ import {
   saveRadioQuality,
   saveRadioVolume,
 } from '@/lib/radio/state';
+
+const coverSlideIn = keyframes`
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+`;
 
 type StreamState = 'idle' | 'loading' | 'playing' | 'error';
 
@@ -156,6 +163,7 @@ export default function RadioPageClient() {
   const artRequestRef = React.useRef(0);
   const sessionIdRef = React.useRef<string | null>(null);
   const heartbeatIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevArtUrlRef = React.useRef<string | null>(null);
 
   const [hydrated, setHydrated] = React.useState(false);
   const [volume, setVolume] = React.useState(0.5);
@@ -170,6 +178,8 @@ export default function RadioPageClient() {
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [artUrl, setArtUrl] = React.useState<string | null>(null);
+  const [staleBgUrl, setStaleBgUrl] = React.useState<string | null>(null);
+  const [bgFading, setBgFading] = React.useState(false);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
   const [probeLoading, setProbeLoading] = React.useState(false);
   const [positionMs, setPositionMs] = React.useState(0);
@@ -196,6 +206,35 @@ export default function RadioPageClient() {
   React.useEffect(() => {
     restartNonceRef.current = restartNonce;
   }, [restartNonce]);
+
+  React.useEffect(() => {
+    const next = artUrl ? `url(${JSON.stringify(artUrl)})` : null;
+    const current = prevArtUrlRef.current;
+
+    if (next === current) {
+      return;
+    }
+
+    prevArtUrlRef.current = next;
+
+    if (!current) {
+      setStaleBgUrl(null);
+      setBgFading(false);
+      return;
+    }
+
+    setStaleBgUrl(current);
+    requestAnimationFrame(() => {
+      setBgFading(true);
+    });
+
+    const timer = setTimeout(() => {
+      setStaleBgUrl(null);
+      setBgFading(false);
+    }, 1600);
+
+    return () => clearTimeout(timer);
+  }, [artUrl]);
 
   React.useEffect(() => {
     const restored = loadRadioState();
@@ -671,9 +710,11 @@ export default function RadioPageClient() {
   const artist = probeData?.artist?.trim() || 'Midori AI';
   const title = currentTrack?.title ?? 'Finding current track…';
   const streamStateLabel = getStreamStateLabel(streamState);
-  const backgroundImage = artUrl
-    ? `url(${JSON.stringify(artUrl)})`
-    : 'radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.34), transparent 30%), radial-gradient(circle at 80% 12%, rgba(45, 212, 191, 0.18), transparent 26%), linear-gradient(135deg, #05040a 0%, #151025 45%, #05040a 100%)';
+
+  const staleBackgroundImage = staleBgUrl ?? 'none';
+  const artBackgroundImage = artUrl ? `url(${JSON.stringify(artUrl)})` : 'none';
+  const staticGradient =
+    'radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.34), transparent 30%), radial-gradient(circle at 80% 12%, rgba(45, 212, 191, 0.18), transparent 26%), linear-gradient(135deg, #05040a 0%, #151025 45%, #05040a 100%)';
 
   return (
     <Box
@@ -684,20 +725,55 @@ export default function RadioPageClient() {
         overflowX: 'clip',
       }}
     >
-      <Box
-        aria-hidden
-        sx={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 0,
-          backgroundImage,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: artUrl ? 'blur(40px) brightness(0.32) saturate(1.08)' : 'none',
-          transform: artUrl ? 'scale(1.12)' : 'none',
-          pointerEvents: 'none',
-        }}
-      />
+      {staleBgUrl && (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 0,
+            backgroundImage: staleBackgroundImage,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(40px) brightness(0.32) saturate(1.08)',
+            transform: 'scale(1.12)',
+            pointerEvents: 'none',
+            opacity: bgFading ? 0 : 1,
+            transition: 'opacity 1.5s ease-in-out',
+          }}
+        />
+      )}
+      {artUrl ? (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 0,
+            backgroundImage: artBackgroundImage,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(40px) brightness(0.32) saturate(1.08)',
+            transform: 'scale(1.12)',
+            pointerEvents: 'none',
+            opacity: bgFading ? 1 : undefined,
+            transition: bgFading ? 'opacity 1.5s ease-in-out' : 'none',
+          }}
+        />
+      ) : (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 0,
+            background: staticGradient,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
       <Box
         aria-hidden
         sx={{
@@ -769,13 +845,19 @@ export default function RadioPageClient() {
               >
                 {artUrl ? (
                   <Box
+                    key={artUrl}
                     component="img"
                     src={artUrl}
                     alt=""
-                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      animation: `${coverSlideIn} 0.4s ease-out`,
+                    }}
                   />
                 ) : (
-                  <Music size={64} aria-hidden />
+                  <Music key="placeholder" size={64} aria-hidden />
                 )}
               </Box>
 
@@ -941,10 +1023,10 @@ export default function RadioPageClient() {
                   alignItems="center"
                   sx={{ color: 'text.tertiary' }}
                 >
-                  <Users size={16} aria-hidden />
                   <Typography level="body-sm" sx={{ color: 'inherit' }}>
-                    {listenerCount} listener{listenerCount !== 1 ? 's' : ''}
+                    {listenerCount}
                   </Typography>
+                  <Users size={16} aria-hidden />
                 </Stack>
               )}
 
@@ -969,15 +1051,32 @@ export default function RadioPageClient() {
             >
               <Stack spacing={2}>
                 <Typography level="h4">Track Story</Typography>
-                <Typography
-                  level="body-md"
-                  sx={{ color: 'text.secondary', whiteSpace: 'pre-wrap', fontSize: { xs: '1rem' } }}
-                >
-                  {probeData?.comment?.trim() ||
-                    (probeLoading
-                      ? 'Listening for the track story embedded in the stream…'
-                      : 'Track story metadata will appear here when the stream publishes it.')}
-                </Typography>
+                {probeData?.comment?.trim() ? (
+                  <Typography
+                    level="body-md"
+                    sx={{
+                      color: 'text.secondary',
+                      whiteSpace: 'pre-wrap',
+                      fontSize: { xs: '1rem' },
+                    }}
+                  >
+                    {probeData.comment.trim()}
+                  </Typography>
+                ) : probeLoading ? (
+                  <Stack spacing={1}>
+                    <Skeleton variant="text" width="90%" />
+                    <Skeleton variant="text" width="75%" />
+                    <Skeleton variant="text" width="85%" />
+                    <Skeleton variant="text" width="60%" />
+                  </Stack>
+                ) : (
+                  <Typography
+                    level="body-md"
+                    sx={{ color: 'text.secondary', fontSize: { xs: '1rem' } }}
+                  >
+                    Track story metadata will appear here when the stream publishes it.
+                  </Typography>
+                )}
               </Stack>
             </Sheet>
 
