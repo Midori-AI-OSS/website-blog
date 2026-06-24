@@ -28,6 +28,7 @@ import {
   clearRadioLastError,
   loadRadioState,
   MIDORIAI_RADIO_CHANNEL_KEY,
+  MIDORIAI_RADIO_PLAYING_KEY,
   MIDORIAI_RADIO_QUALITY_KEY,
   MIDORIAI_RADIO_STATE_EVENT,
   MIDORIAI_RADIO_VOLUME_KEY,
@@ -35,6 +36,7 @@ import {
   saveRadioChannel,
   saveRadioLastError,
   saveRadioOpen,
+  saveRadioPlaying,
   saveRadioQuality,
   saveRadioVolume,
 } from '@/lib/radio/state';
@@ -187,6 +189,7 @@ export default function RadioWidget() {
     setQuality(restored.quality);
     setChannel(normalizeChannel(restored.channel));
     setLastError(restored.lastError);
+    setPlaybackDesired(restored.playing);
     setHydrated(true);
   }, []);
 
@@ -208,6 +211,12 @@ export default function RadioWidget() {
 
       if (detail.key === MIDORIAI_RADIO_CHANNEL_KEY) {
         setChannel(normalizeChannel(detail.value));
+        return;
+      }
+
+      if (detail.key === MIDORIAI_RADIO_PLAYING_KEY) {
+        setPlaybackDesired(detail.value === 'true');
+        return;
       }
     };
 
@@ -266,6 +275,11 @@ export default function RadioWidget() {
     }
     saveRadioVolume(clamped);
   }, [volume, hydrated]);
+
+  React.useEffect(() => {
+    if (!hydrated) return;
+    saveRadioPlaying(playbackDesired);
+  }, [playbackDesired, hydrated]);
 
   const clearCloseLingerTimer = React.useCallback(() => {
     if (closeLingerTimerRef.current !== null) {
@@ -331,6 +345,15 @@ export default function RadioWidget() {
       }
     });
   }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional one-shot hydration effect
+  React.useEffect(() => {
+    if (!hydrated) return;
+    const restored = loadRadioState();
+    if (restored.playing) {
+      startPlayback();
+    }
+  }, [hydrated]);
 
   const scheduleReconnect = React.useCallback(() => {
     if (!playbackDesiredRef.current) {
