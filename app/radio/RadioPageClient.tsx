@@ -843,9 +843,9 @@ export default function RadioPageClient() {
           alignItems="center"
           sx={{
             px: { xs: 2, md: 4 },
-            pt: { xs: 2, md: 3 },
+            pt: { xs: 4, md: 5 },
             pb: 1,
-            minHeight: 48,
+            minHeight: 52,
           }}
         >
           <Radio size={18} />
