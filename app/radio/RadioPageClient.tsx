@@ -142,8 +142,11 @@ function getStreamStateLabel(streamState: StreamState): string {
 export default function RadioPageClient() {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const channelRef = React.useRef('all');
+  const qualityRef = React.useRef<QualityName>('medium');
   const volumeRef = React.useRef(0.5);
   const playbackDesiredRef = React.useRef(false);
+  const restartNonceRef = React.useRef(0);
+  const startPlaybackRef = React.useRef<() => void>(() => {});
   const progressSnapshotRef = React.useRef<ProgressSnapshot>({
     positionMs: 0,
     durationMs: 0,
@@ -185,6 +188,14 @@ export default function RadioPageClient() {
   React.useEffect(() => {
     volumeRef.current = volume;
   }, [volume]);
+
+  React.useEffect(() => {
+    qualityRef.current = quality;
+  }, [quality]);
+
+  React.useEffect(() => {
+    restartNonceRef.current = restartNonce;
+  }, [restartNonce]);
 
   React.useEffect(() => {
     const restored = loadRadioState();
@@ -481,25 +492,57 @@ export default function RadioPageClient() {
     };
   }, [channel, currentTrackId, hydrated]);
 
-  React.useEffect(() => {
-    if (!hydrated) {
+  const startPlayback = React.useCallback(() => {
+    const audio = audioRef.current;
+    if (audio === null) {
       return;
     }
 
-    if (!playbackDesired) {
-      const existingAudio = audioRef.current;
-      if (existingAudio !== null) {
-        existingAudio.pause();
-        existingAudio.removeAttribute('src');
-        existingAudio.load();
-        audioRef.current = null;
+    setPlaybackDesired(true);
+    playbackDesiredRef.current = true;
+
+    const streamUrl = buildStreamUrl({
+      channel: channelRef.current,
+      quality: qualityRef.current,
+      baseUrl: '',
+      path: '/api/radio/stream',
+      cacheBust: true,
+    });
+
+    setStreamState('loading');
+
+    audio.src = `${streamUrl}&restart=${restartNonceRef.current}`;
+    audio.load();
+    audio.play().catch((error: DOMException) => {
+      if (error.name === 'NotAllowedError') {
+        setStreamState('error');
+        setPlaybackDesired(false);
+        playbackDesiredRef.current = false;
+        setLastError('Playback blocked by browser. Press play to retry.');
       }
-      setStreamState((previous) => (previous === 'error' ? 'error' : 'idle'));
-      return;
+    });
+  }, []);
+
+  const stopPlayback = React.useCallback(() => {
+    setPlaybackDesired(false);
+    playbackDesiredRef.current = false;
+
+    const audio = audioRef.current;
+    if (audio !== null) {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
     }
 
+    setStreamState('idle');
+  }, []);
+
+  React.useEffect(() => {
+    startPlaybackRef.current = startPlayback;
+  }, [startPlayback]);
+
+  React.useEffect(() => {
     const audio = new Audio();
-    let cleanedUp = false;
     audio.preload = 'none';
     audio.volume = clampVolume(volumeRef.current);
     audioRef.current = audio;
@@ -529,6 +572,7 @@ export default function RadioPageClient() {
       setStreamState('error');
       setLastError('Stream playback error. Press play to retry.');
       setPlaybackDesired(false);
+      playbackDesiredRef.current = false;
     };
 
     audio.addEventListener('playing', handlePlaying);
@@ -536,33 +580,7 @@ export default function RadioPageClient() {
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
-    const nextStreamUrl = `${buildStreamUrl({
-      channel,
-      quality,
-      baseUrl: '',
-      path: '/api/radio/stream',
-      cacheBust: true,
-    })}&restart=${restartNonce}`;
-
-    setStreamState('loading');
-    audio.src = nextStreamUrl;
-    audio.load();
-    audio.play().catch((error: DOMException) => {
-      if (cleanedUp) {
-        return;
-      }
-
-      setStreamState('error');
-      setPlaybackDesired(false);
-      setLastError(
-        error.name === 'NotAllowedError'
-          ? 'Playback blocked by browser. Press play to retry.'
-          : 'Stream playback failed. Press play to retry.',
-      );
-    });
-
     return () => {
-      cleanedUp = true;
       audio.pause();
       audio.removeAttribute('src');
       audio.load();
@@ -574,7 +592,15 @@ export default function RadioPageClient() {
         audioRef.current = null;
       }
     };
-  }, [channel, hydrated, playbackDesired, quality, restartNonce]);
+  }, []);
+
+  React.useEffect(() => {
+    if (!playbackDesired || restartNonce === 0) {
+      return;
+    }
+
+    startPlaybackRef.current();
+  }, [playbackDesired, restartNonce]);
 
   React.useEffect(() => {
     const isPlaying = playbackDesired && streamState === 'playing';
@@ -632,8 +658,12 @@ export default function RadioPageClient() {
   }, []);
 
   const togglePlayback = React.useCallback(() => {
-    setPlaybackDesired((previous) => !previous);
-  }, []);
+    if (playbackDesiredRef.current) {
+      stopPlayback();
+    } else {
+      startPlayback();
+    }
+  }, [startPlayback, stopPlayback]);
 
   const channelOptions = channels.length > 0 ? channels : DEFAULT_CHANNELS;
   const isPlaying = streamState === 'playing';
@@ -904,19 +934,19 @@ export default function RadioPageClient() {
                 </Stack>
               </Stack>
 
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                sx={{ color: 'text.tertiary' }}
-              >
-                <Users size={16} aria-hidden />
-                <Typography level="body-sm" sx={{ color: 'inherit' }}>
-                  {listenerCount !== null
-                    ? `${listenerCount} listener${listenerCount !== 1 ? 's' : ''}`
-                    : 'Listener count appears while playing'}
-                </Typography>
-              </Stack>
+              {listenerCount !== null && (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  sx={{ color: 'text.tertiary' }}
+                >
+                  <Users size={16} aria-hidden />
+                  <Typography level="body-sm" sx={{ color: 'inherit' }}>
+                    {listenerCount} listener{listenerCount !== 1 ? 's' : ''}
+                  </Typography>
+                </Stack>
+              )}
 
               {lastError && (
                 <Typography level="body-sm" sx={{ color: 'danger.300' }}>
@@ -972,10 +1002,11 @@ export default function RadioPageClient() {
                   {channelOptions.map((entry) => (
                     <Chip
                       key={entry.name}
-                      component="button"
                       variant={entry.name === channel ? 'solid' : 'soft'}
                       color={entry.name === channel ? 'primary' : 'neutral'}
                       onClick={() => setChannel(entry.name)}
+                      role="button"
+                      tabIndex={0}
                       sx={{
                         minHeight: 46,
                         '--Chip-minHeight': '46px',
