@@ -20,12 +20,17 @@ import {
   sendHeartbeat,
 } from '@/lib/radio/client';
 import type { ArtPayload, ChannelEntry, CurrentPayload, QualityName } from '@/lib/radio/contract';
-import { normalizeChannel, QUALITY_LEVELS } from '@/lib/radio/contract';
+import { normalizeChannel, normalizeQuality, QUALITY_LEVELS } from '@/lib/radio/contract';
 import type { RadioImageInventory } from '@/lib/radio/images';
 import { appendTrackCacheKey, pickDeterministicImage, preloadImage } from '@/lib/radio/images';
 import {
   clearRadioLastError,
   loadRadioState,
+  MIDORIAI_RADIO_CHANNEL_KEY,
+  MIDORIAI_RADIO_QUALITY_KEY,
+  MIDORIAI_RADIO_STATE_EVENT,
+  MIDORIAI_RADIO_VOLUME_KEY,
+  type RadioStateChangeDetail,
   saveRadioChannel,
   saveRadioLastError,
   saveRadioOpen,
@@ -111,6 +116,14 @@ function toErrorMessage(error: unknown): string {
   return 'Unknown radio error';
 }
 
+function clampVolume(input: number): number {
+  if (Number.isNaN(input)) {
+    return 0.5;
+  }
+
+  return Math.min(1, Math.max(0, input));
+}
+
 function getReconnectDelay(attempt: number): number {
   const delays = [2000, 4000, 8000, 16000, 30000];
   return delays[Math.min(attempt, delays.length - 1)] ?? 30000;
@@ -172,6 +185,50 @@ export default function RadioWidget() {
     setChannel(normalizeChannel(restored.channel));
     setLastError(restored.lastError);
     setHydrated(true);
+  }, []);
+
+  React.useEffect(() => {
+    const applySharedState = (detail: RadioStateChangeDetail) => {
+      if (detail.value === null) {
+        return;
+      }
+
+      if (detail.key === MIDORIAI_RADIO_VOLUME_KEY) {
+        setVolume(clampVolume(Number(detail.value)));
+        return;
+      }
+
+      if (detail.key === MIDORIAI_RADIO_QUALITY_KEY) {
+        setQuality(normalizeQuality(detail.value));
+        return;
+      }
+
+      if (detail.key === MIDORIAI_RADIO_CHANNEL_KEY) {
+        setChannel(normalizeChannel(detail.value));
+      }
+    };
+
+    const handleStateEvent = (event: Event) => {
+      const detail = (event as CustomEvent<RadioStateChangeDetail>).detail;
+      if (detail) {
+        applySharedState(detail);
+      }
+    };
+
+    const handleStorageEvent = (event: StorageEvent) => {
+      if (event.key === null) {
+        return;
+      }
+      applySharedState({ key: event.key, value: event.newValue });
+    };
+
+    window.addEventListener(MIDORIAI_RADIO_STATE_EVENT, handleStateEvent);
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      window.removeEventListener(MIDORIAI_RADIO_STATE_EVENT, handleStateEvent);
+      window.removeEventListener('storage', handleStorageEvent);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -532,9 +589,11 @@ export default function RadioWidget() {
 
       const sessionId = sessionIdRef.current;
       const tick = () => {
-        void sendHeartbeat(sessionId, channelRef.current).then((result) => {
-          setListenerCount(result.count);
-        });
+        void sendHeartbeat(sessionId, channelRef.current)
+          .then((result) => {
+            setListenerCount(result.count);
+          })
+          .catch(() => undefined);
       };
 
       tick();
@@ -547,7 +606,7 @@ export default function RadioWidget() {
       heartbeatIntervalRef.current = null;
 
       if (sessionIdRef.current !== null) {
-        void sendHeartbeat(sessionIdRef.current, channelRef.current, true);
+        void sendHeartbeat(sessionIdRef.current, channelRef.current, true).catch(() => undefined);
         sessionIdRef.current = null;
         setListenerCount(null);
       }
@@ -564,7 +623,7 @@ export default function RadioWidget() {
   React.useEffect(() => {
     return () => {
       if (sessionIdRef.current !== null) {
-        void sendHeartbeat(sessionIdRef.current, channelRef.current, true);
+        void sendHeartbeat(sessionIdRef.current, channelRef.current, true).catch(() => undefined);
         sessionIdRef.current = null;
         setListenerCount(null);
       }

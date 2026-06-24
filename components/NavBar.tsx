@@ -6,7 +6,7 @@ import ListItem from '@mui/joy/ListItem';
 import ListItemButton from '@mui/joy/ListItemButton';
 import ListItemDecorator from '@mui/joy/ListItemDecorator';
 import Typography from '@mui/joy/Typography';
-import { BookOpen, Home, LayoutDashboard } from 'lucide-react';
+import { BookOpen, Home, LayoutDashboard, Radio } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -18,6 +18,7 @@ export default function NavBar() {
   const items = [
     { name: 'Home', icon: <Home size={18} />, path: '/' },
     { name: 'Blog', icon: <BookOpen size={18} />, path: '/blog' },
+    { name: 'Radio', icon: <Radio size={18} />, path: '/radio' },
     { name: 'Lore', icon: <LayoutDashboard size={18} />, path: '/lore' },
   ];
 
@@ -26,6 +27,8 @@ export default function NavBar() {
       component="nav"
       aria-label="Primary navigation"
       sx={{
+        position: 'relative',
+        zIndex: 10,
         p: { xs: 1, sm: 2 },
         borderBottom: '1px solid',
         borderColor: 'background.level2',
@@ -39,7 +42,7 @@ export default function NavBar() {
           '--List-radius': '0px',
           '--List-padding': '0px',
           display: { xs: 'grid', sm: 'none' },
-          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
           gap: 0,
           width: '100%',
           m: 0,

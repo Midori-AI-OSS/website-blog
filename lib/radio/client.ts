@@ -4,7 +4,6 @@ import type {
   CurrentPayload,
   HealthPayload,
   HeartbeatResponse,
-  QualityName,
   RadioEnvelope,
   TracksPayload,
 } from './contract';
@@ -13,21 +12,14 @@ import {
   MIDORIAI_RADIO_API_VERSION,
   MIDORIAI_RADIO_BASE_URL,
   normalizeChannel,
-  normalizeQuality,
   toAbsoluteRadioUrl,
 } from './contract';
+
+export { buildStreamUrl } from './contract';
 
 const JSON_HEADERS = {
   Accept: 'application/json',
 } as const;
-
-function createCacheBustToken(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.round(Math.random() * 1_000_000_000)}`;
-}
 
 export class RadioApiError extends Error {
   code: string;
@@ -156,42 +148,6 @@ export function buildArtImageUrl(
   baseUrl: string = MIDORIAI_RADIO_BASE_URL,
 ): string {
   return `${baseUrl}${buildChannelQueryPath('/radio/v1/art/image', channel)}`;
-}
-
-export function buildStreamUrl(options: {
-  channel: string | null | undefined;
-  quality: QualityName | string | null | undefined;
-  baseUrl?: string;
-  path?: string;
-  cacheBust?: boolean;
-}): string {
-  const normalizedChannel = normalizeChannel(options.channel);
-  const normalizedQuality = normalizeQuality(options.quality);
-  const path = options.path ?? '/radio/v1/stream';
-  const baseUrl = options.baseUrl ?? MIDORIAI_RADIO_BASE_URL;
-
-  if (baseUrl === '') {
-    const params = new URLSearchParams();
-    params.set('channel', normalizedChannel);
-    params.set('q', normalizedQuality);
-
-    if (options.cacheBust === true) {
-      params.set('ts', createCacheBustToken());
-    }
-
-    const query = params.toString();
-    return `${path}?${query}`;
-  }
-
-  const url = new URL(path, baseUrl);
-  url.searchParams.set('channel', normalizedChannel);
-  url.searchParams.set('q', normalizedQuality);
-
-  if (options.cacheBust === true) {
-    url.searchParams.set('ts', createCacheBustToken());
-  }
-
-  return url.toString();
 }
 
 export async function fetchHealth(
