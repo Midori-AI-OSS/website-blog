@@ -149,6 +149,33 @@ function getStreamStateLabel(streamState: StreamState): string {
   return 'Idle';
 }
 
+function fadeAudioVolume(
+  audio: HTMLAudioElement,
+  from: number,
+  to: number,
+  durationMs: number,
+): Promise<void> {
+  if (durationMs <= 0) {
+    audio.volume = to;
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const step = () => {
+      const elapsed = performance.now() - start;
+      const progress = Math.min(elapsed / durationMs, 1);
+      const eased = 1 - (1 - progress) ** 3;
+      audio.volume = Math.min(1, Math.max(0, from + (to - from) * eased));
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        resolve();
+      }
+    };
+    requestAnimationFrame(step);
+  });
+}
+
 export default function RadioPageClient() {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const channelRef = React.useRef('all');
@@ -176,6 +203,8 @@ export default function RadioPageClient() {
   const [playbackDesired, setPlaybackDesired] = React.useState(false);
   const [streamState, setStreamState] = React.useState<StreamState>('idle');
   const [restartNonce, setRestartNonce] = React.useState(0);
+  const prevChannelRef = React.useRef(channel);
+  const restoreInitialRef = React.useRef(true);
 
   const [channels, setChannels] = React.useState<ChannelEntry[]>([]);
   const [listenerCount, setListenerCount] = React.useState<number | null>(null);
@@ -635,6 +664,43 @@ export default function RadioPageClient() {
   React.useEffect(() => {
     startPlaybackRef.current = startPlayback;
   }, [startPlayback]);
+
+  React.useEffect(() => {
+    if (!hydrated) return;
+    if (prevChannelRef.current === channel) return;
+    prevChannelRef.current = channel;
+
+    if (!playbackDesiredRef.current) return;
+
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const userVolume = volumeRef.current;
+
+    const doChannelSwitch = async () => {
+      await fadeAudioVolume(audio, userVolume, 0, 500);
+      stopPlayback();
+      startPlayback();
+      await new Promise((r) => setTimeout(r, 50));
+      const newAudio = audioRef.current;
+      if (newAudio) {
+        await fadeAudioVolume(newAudio, 0, userVolume, 500);
+      }
+    };
+
+    void doChannelSwitch();
+  }, [channel, hydrated, stopPlayback, startPlayback]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional one-shot hydration effect
+  React.useEffect(() => {
+    if (!hydrated) return;
+    if (!restoreInitialRef.current) return;
+    restoreInitialRef.current = false;
+    const restored = loadRadioState();
+    if (restored.playing) {
+      startPlayback();
+    }
+  }, [hydrated]);
 
   React.useEffect(() => {
     const audio = new Audio();
