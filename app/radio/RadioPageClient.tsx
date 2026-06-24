@@ -943,6 +943,43 @@ export default function RadioPageClient() {
               >
                 {streamStateLabel}
               </Chip>
+              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+                ·
+              </Typography>
+              <Box
+                component="select"
+                aria-label="Radio channel"
+                value={channel}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
+                  setChannel(normalizeChannel(event.target.value));
+                }}
+                sx={{
+                  borderRadius: 0,
+                  width: 'fit-content',
+                  minWidth: 100,
+                  minHeight: 28,
+                  border: '1px solid rgba(255,255,255,0.16)',
+                  background: 'rgba(9, 10, 18, 0.64)',
+                  color: 'text.primary',
+                  px: 0.5,
+                  fontSize: '0.75rem',
+                  outline: 'none',
+                  '&:focus-visible': {
+                    borderColor: 'primary.400',
+                    boxShadow: '0 0 0 2px rgba(139, 92, 246, 0.35)',
+                  },
+                  '& option': {
+                    backgroundColor: '#10111a',
+                    color: '#f2f2f4',
+                  },
+                }}
+              >
+                {channelOptions.map((entry) => (
+                  <option key={entry.name} value={entry.name}>
+                    {entry.name} ({entry.track_count})
+                  </option>
+                ))}
+              </Box>
             </Stack>
 
             {lastError && (
@@ -950,42 +987,6 @@ export default function RadioPageClient() {
                 {lastError}
               </Typography>
             )}
-
-            <Box
-              component="select"
-              aria-label="Radio channel"
-              value={channel}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
-                setChannel(normalizeChannel(event.target.value));
-              }}
-              sx={{
-                borderRadius: 0,
-                width: 'fit-content',
-                minWidth: 140,
-                minHeight: 36,
-                mt: 1,
-                border: '1px solid rgba(255,255,255,0.16)',
-                background: 'rgba(9, 10, 18, 0.64)',
-                color: 'text.primary',
-                px: 1,
-                fontSize: '0.8125rem',
-                outline: 'none',
-                '&:focus-visible': {
-                  borderColor: 'primary.400',
-                  boxShadow: '0 0 0 2px rgba(139, 92, 246, 0.35)',
-                },
-                '& option': {
-                  backgroundColor: '#10111a',
-                  color: '#f2f2f4',
-                },
-              }}
-            >
-              {channelOptions.map((entry) => (
-                <option key={entry.name} value={entry.name}>
-                  {entry.name} ({entry.track_count})
-                </option>
-              ))}
-            </Box>
 
             <Sheet
               variant="outlined"
@@ -1233,35 +1234,15 @@ export default function RadioPageClient() {
                     aria-label={`Volume ${Math.round((i / 9) * 100)}%`}
                     tabIndex={volHovered ? 0 : -1}
                     sx={{
-                      position: 'relative',
-                      width: 6,
-                      height: 6,
+                      width: 10,
+                      height: 10,
                       borderRadius: '50%',
                       bgcolor: dot.active ? 'primary.400' : 'rgba(255,255,255,0.18)',
                       cursor: 'pointer',
-                      minWidth: 6,
-                      minHeight: 6,
+                      minWidth: 10,
+                      minHeight: 10,
                     }}
-                  >
-                    {dot.active && (
-                      <Box
-                        aria-hidden
-                        sx={{
-                          position: 'absolute',
-                          bottom: '100%',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          width: 0,
-                          height: 0,
-                          borderLeft: '4px solid transparent',
-                          borderRight: '4px solid transparent',
-                          borderBottom: '5px solid',
-                          borderBottomColor: 'primary.400',
-                          mb: '3px',
-                        }}
-                      />
-                    )}
-                  </Box>
+                  />
                 ))}
               </Box>
 
