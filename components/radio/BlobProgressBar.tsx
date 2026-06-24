@@ -47,7 +47,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function buildBlobPath(progressX: number, time: number, easing: number): string {
-  const edgeSamples = 60;
+  const edgeSamples = 90;
 
   const leftTopWobble = computeWobble(0, time, TOP_WAVES, VIEWBOX_W);
   const leftTopY = clamp(TRACK_TOP - Math.abs(leftTopWobble) * easing, 0, TRACK_TOP);
