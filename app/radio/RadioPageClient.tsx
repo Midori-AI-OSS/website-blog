@@ -3,15 +3,13 @@
 import { keyframes } from '@emotion/react';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
-import ButtonGroup from '@mui/joy/ButtonGroup';
 import Chip from '@mui/joy/Chip';
 import LinearProgress from '@mui/joy/LinearProgress';
 import Sheet from '@mui/joy/Sheet';
 import Skeleton from '@mui/joy/Skeleton';
-import Slider from '@mui/joy/Slider';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
-import { Music, Pause, Play, Radio, Users, Volume2 } from 'lucide-react';
+import { Music, Pause, Play, Radio, StepBack, StepForward, Users, Volume2 } from 'lucide-react';
 import * as React from 'react';
 import {
   fetchArt,
@@ -27,7 +25,6 @@ import {
   type CurrentPayload,
   normalizeChannel,
   normalizeQuality,
-  QUALITY_LEVELS,
   type QualityName,
 } from '@/lib/radio/contract';
 import { appendTrackCacheKey } from '@/lib/radio/images';
@@ -182,13 +179,15 @@ export default function RadioPageClient() {
   const [channels, setChannels] = React.useState<ChannelEntry[]>([]);
   const [listenerCount, setListenerCount] = React.useState<number | null>(null);
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
-  const [artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
+  const [_artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [artUrl, setArtUrl] = React.useState<string | null>(null);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
   const [probeLoading, setProbeLoading] = React.useState(false);
   const [positionMs, setPositionMs] = React.useState(0);
   const [durationMs, setDurationMs] = React.useState(0);
   const [lastError, setLastError] = React.useState<string | null>(null);
+  const [volHovered, setVolHovered] = React.useState(false);
+  const volLeaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentTrackId = currentTrack?.track_id ?? null;
 
   React.useEffect(() => {
@@ -723,12 +722,49 @@ export default function RadioPageClient() {
     }
   }, [startPlayback, stopPlayback]);
 
+  const cycleQuality = React.useCallback(() => {
+    const levels: QualityName[] = ['low', 'medium', 'high'];
+    const idx = levels.indexOf(quality);
+    const next = levels[(idx + 1) % levels.length];
+    if (next === undefined) return;
+    setQuality(next);
+  }, [quality]);
+
+  const navigateChannel = React.useCallback(
+    (direction: -1 | 1) => {
+      const list = channels.length > 0 ? channels : DEFAULT_CHANNELS;
+      const idx = list.findIndex((c) => c.name === channel);
+      if (idx < 0) return;
+      const next = list[(idx + direction + list.length) % list.length];
+      if (next === undefined) return;
+      setChannel(next.name);
+    },
+    [channel, channels],
+  );
+
+  const clearVolLeaveTimer = React.useCallback(() => {
+    if (volLeaveTimerRef.current !== null) {
+      clearTimeout(volLeaveTimerRef.current);
+      volLeaveTimerRef.current = null;
+    }
+  }, []);
+
   const channelOptions = channels.length > 0 ? channels : DEFAULT_CHANNELS;
   const isPlaying = streamState === 'playing';
   const progressValue = durationMs > 0 ? (positionMs / durationMs) * 100 : 0;
   const artist = probeData?.artist?.trim() || 'Midori AI';
   const title = currentTrack?.title ?? 'Finding current track…';
   const streamStateLabel = getStreamStateLabel(streamState);
+
+  const volumeDots = React.useMemo(
+    () =>
+      Array.from({ length: 10 }, (_, i) => ({
+        id: `vdot${i}`,
+        active: i < Math.round(volume * 10),
+        height: 8 + i * 2.5,
+      })),
+    [volume],
+  );
 
   const staticGradient =
     'radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.34), transparent 30%), radial-gradient(circle at 80% 12%, rgba(45, 212, 191, 0.18), transparent 26%), linear-gradient(135deg, #05040a 0%, #151025 45%, #05040a 100%)';
@@ -737,9 +773,9 @@ export default function RadioPageClient() {
     <Box
       sx={{
         position: 'relative',
-        minHeight: '100vh',
+        height: '100vh',
         width: '100%',
-        overflowX: 'clip',
+        overflow: 'hidden',
       }}
     >
       <Box
@@ -786,346 +822,435 @@ export default function RadioPageClient() {
         sx={{
           position: 'relative',
           zIndex: 1,
-          width: '100%',
-          maxWidth: '1200px',
-          mx: 'auto',
-          px: { xs: 2, sm: 4, md: 6 },
-          py: { xs: 4, md: 8 },
-          pb: { xs: 6, md: 12 },
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          pb: '64px',
         }}
       >
-        <Stack spacing={1.25} sx={{ mb: { xs: 3, md: 4 } }}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Radio size={18} />
-            <Typography
-              level="body-sm"
-              sx={{ color: 'text.secondary', letterSpacing: '0.12em', textTransform: 'uppercase' }}
-            >
-              Midori AI Radio
-            </Typography>
-          </Stack>
-          <Typography level="h1" sx={{ fontSize: { xs: '2.25rem', md: '3.5rem' } }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{
+            px: { xs: 2, md: 4 },
+            pt: { xs: 2, md: 3 },
+            pb: 1,
+            minHeight: 48,
+          }}
+        >
+          <Radio size={18} />
+          <Typography
+            level="body-sm"
+            sx={{ color: 'text.secondary', letterSpacing: '0.12em', textTransform: 'uppercase' }}
+          >
+            Midori AI Radio
+          </Typography>
+          <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
+            ·
+          </Typography>
+          <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
             Listening Room
           </Typography>
         </Stack>
 
         <Stack
           direction={{ xs: 'column', md: 'row' }}
-          spacing={{ xs: 3, md: 4 }}
-          alignItems="stretch"
+          sx={{ flex: 1, overflow: 'hidden', minHeight: 0 }}
         >
-          <Sheet
-            variant="outlined"
+          <Box
             sx={{
-              flex: { md: '0 0 40%' },
-              p: { xs: 2, sm: 3 },
-              bgcolor: 'rgba(10, 12, 18, 0.42)',
-              borderColor: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(18px)',
-              borderRadius: 0,
+              flex: { md: '0 0 50%' },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: { xs: 2, md: 3 },
+              minHeight: 0,
             }}
           >
-            <Stack spacing={3}>
-              <Box
-                sx={{
-                  width: '100%',
-                  aspectRatio: '1 / 1',
-                  bgcolor: 'rgba(10,12,18,0.4)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                  borderRadius: 0,
-                }}
-              >
-                {artUrl ? (
-                  <Box
-                    key={artUrl}
-                    component="img"
-                    src={artUrl}
-                    alt=""
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      animation: `${coverSlideIn} 0.4s ease-out`,
-                    }}
-                  />
-                ) : (
-                  <Music key="placeholder" size={64} aria-hidden />
-                )}
-              </Box>
-
-              <Stack spacing={0.75}>
-                <Typography level="h2" sx={{ fontSize: { xs: '1.8rem', md: '2.15rem' } }}>
-                  {title}
-                </Typography>
-                <Typography level="body-md" sx={{ color: 'text.secondary' }}>
-                  {artist}
-                </Typography>
-                <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                  {streamStateLabel}
-                  {artMetadata?.has_art === false ? ' · art unavailable' : ''}
-                </Typography>
-              </Stack>
-
-              <Stack spacing={1}>
-                <LinearProgress
-                  determinate
-                  value={Math.min(100, Math.max(0, progressValue))}
-                  thickness={8}
+            <Box
+              sx={{
+                width: 'clamp(200px, 45vmin, 480px)',
+                height: 'clamp(200px, 45vmin, 480px)',
+                bgcolor: 'rgba(10,12,18,0.4)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              {artUrl ? (
+                <Box
+                  key={artUrl}
+                  component="img"
+                  src={artUrl}
+                  alt=""
                   sx={{
-                    bgcolor: 'rgba(255,255,255,0.1)',
-                    color: 'primary.400',
-                    borderRadius: 0,
-                    '--LinearProgress-radius': '0px',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    animation: `${coverSlideIn} 0.4s ease-out`,
                   }}
                 />
-                <Stack direction="row" justifyContent="space-between" spacing={2}>
-                  <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
-                    {formatTime(positionMs)}
-                  </Typography>
-                  <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
-                    {formatTime(durationMs)}
-                  </Typography>
-                </Stack>
-              </Stack>
+              ) : (
+                <Music key="placeholder" size={64} aria-hidden />
+              )}
+            </Box>
+          </Box>
 
-              <Stack spacing={2}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center">
-                  <Button
-                    size="lg"
-                    color={isPlaying ? 'success' : 'primary'}
-                    onClick={togglePlayback}
-                    aria-label={playbackDesired ? 'Pause Midori AI Radio' : 'Play Midori AI Radio'}
-                    sx={{
-                      minWidth: { xs: '100%', sm: 56 },
-                      minHeight: 56,
-                      borderRadius: 0,
-                    }}
-                  >
-                    {playbackDesired ? <Pause size={24} /> : <Play size={24} />}
-                  </Button>
-
-                  <Stack
-                    direction="row"
-                    spacing={1.25}
-                    alignItems="center"
-                    sx={{ width: '100%', minHeight: 44 }}
-                  >
-                    <Volume2 size={20} aria-hidden />
-                    <Slider
-                      aria-label="Radio volume"
-                      value={volume}
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      onChange={(_, nextValue) => {
-                        const numeric = Array.isArray(nextValue) ? nextValue[0] : nextValue;
-                        if (typeof numeric === 'number') {
-                          setVolume(clampVolume(numeric));
-                        }
-                      }}
-                      sx={{
-                        minHeight: 44,
-                        '--Slider-thumbRadius': '0px',
-                        '--Slider-trackSize': '4px',
-                        '--Slider-thumbSize': '18px',
-                        borderRadius: 0,
-                        '& input': {
-                          minWidth: 44,
-                          minHeight: 44,
-                        },
-                      }}
-                    />
-                  </Stack>
-                </Stack>
-
-                <Stack spacing={0.75}>
-                  <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                    Channel
-                  </Typography>
-                  <Box
-                    component="select"
-                    aria-label="Radio channel"
-                    value={channel}
-                    onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
-                      setChannel(normalizeChannel(event.target.value));
-                    }}
-                    sx={{
-                      borderRadius: 0,
-                      width: '100%',
-                      minHeight: 44,
-                      border: '1px solid rgba(255,255,255,0.22)',
-                      background: 'rgba(9, 10, 18, 0.74)',
-                      color: 'text.primary',
-                      px: 1.5,
-                      fontSize: '1rem',
-                      outline: 'none',
-                      '&:focus-visible': {
-                        borderColor: 'primary.400',
-                        boxShadow: '0 0 0 2px rgba(139, 92, 246, 0.35)',
-                      },
-                      '& option': {
-                        backgroundColor: '#10111a',
-                        color: '#f2f2f4',
-                      },
-                    }}
-                  >
-                    {channelOptions.map((entry) => (
-                      <option key={entry.name} value={entry.name}>
-                        {entry.name} ({entry.track_count})
-                      </option>
-                    ))}
-                  </Box>
-                </Stack>
-
-                <Stack spacing={0.75}>
-                  <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                    Quality
-                  </Typography>
-                  <ButtonGroup
-                    size="sm"
-                    sx={{
-                      width: '100%',
-                      '--ButtonGroup-radius': '0px',
-                    }}
-                  >
-                    {QUALITY_LEVELS.map((entry) => (
-                      <Button
-                        key={entry.name}
-                        variant={quality === entry.name ? 'solid' : 'outlined'}
-                        color={quality === entry.name ? 'primary' : 'neutral'}
-                        onClick={() => setQuality(entry.name)}
-                        sx={{
-                          flex: 1,
-                          minHeight: 44,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.02em',
-                        }}
-                      >
-                        {entry.name}
-                      </Button>
-                    ))}
-                  </ButtonGroup>
-                </Stack>
-              </Stack>
-
+          <Stack
+            sx={{
+              flex: 1,
+              overflow: 'hidden',
+              p: { xs: 2, md: 3 },
+              pt: { xs: 0, md: 3 },
+              minWidth: 0,
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
               {listenerCount !== null && (
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  alignItems="center"
-                  sx={{ color: 'text.tertiary' }}
-                >
-                  <Typography level="body-sm" sx={{ color: 'inherit' }}>
+                <>
+                  <Users size={14} />
+                  <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
                     {listenerCount}
                   </Typography>
-                  <Users size={16} aria-hidden />
-                </Stack>
-              )}
-
-              {lastError && (
-                <Typography level="body-sm" sx={{ color: 'danger.300' }}>
-                  {lastError}
-                </Typography>
-              )}
-            </Stack>
-          </Sheet>
-
-          <Stack spacing={4} sx={{ flex: 1, minWidth: 0 }}>
-            <Sheet
-              variant="outlined"
-              sx={{
-                bgcolor: 'rgba(10,12,18,0.5)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                p: { xs: 3, md: 4 },
-                borderRadius: 0,
-              }}
-            >
-              <Stack spacing={2}>
-                <Typography level="h4">Track Story</Typography>
-                <Box key={currentTrackId ?? 'idle'} sx={{ animation: `${fadeIn} 0.35s ease-out` }}>
-                  {probeData?.comment?.trim() ? (
-                    <Typography
-                      level="body-md"
-                      sx={{
-                        color: 'text.secondary',
-                        whiteSpace: 'pre-wrap',
-                        fontSize: { xs: '1rem' },
-                      }}
-                    >
-                      {probeData.comment.trim()}
-                    </Typography>
-                  ) : probeLoading ? (
-                    <Stack spacing={1}>
-                      <Skeleton variant="text" width="90%" />
-                      <Skeleton variant="text" width="75%" />
-                      <Skeleton variant="text" width="85%" />
-                      <Skeleton variant="text" width="60%" />
-                    </Stack>
-                  ) : (
-                    <Typography
-                      level="body-md"
-                      sx={{ color: 'text.secondary', fontSize: { xs: '1rem' } }}
-                    >
-                      Track story metadata will appear here when the stream publishes it.
-                    </Typography>
-                  )}
-                </Box>
-              </Stack>
-            </Sheet>
-
-            <Sheet
-              variant="outlined"
-              sx={{
-                bgcolor: 'rgba(10,12,18,0.5)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                p: { xs: 3, md: 4 },
-                borderRadius: 0,
-              }}
-            >
-              <Stack spacing={2.5}>
-                <Stack spacing={0.5}>
-                  <Typography level="h4">Channels</Typography>
-                  <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-                    Browse the station lanes and switch the room instantly.
+                  <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
+                    ·
                   </Typography>
-                </Stack>
-                <Stack direction="row" flexWrap="wrap" gap={1} useFlexGap>
-                  {channelOptions.map((entry) => (
-                    <Chip
-                      key={entry.name}
-                      variant={entry.name === channel ? 'solid' : 'soft'}
-                      color={entry.name === channel ? 'primary' : 'neutral'}
-                      onClick={() => setChannel(entry.name)}
-                      role="button"
-                      tabIndex={0}
-                      sx={{
-                        minHeight: 46,
-                        '--Chip-minHeight': '46px',
-                        px: 1.5,
-                        borderRadius: 0,
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        '&:focus-visible': {
-                          outline: '2px solid',
-                          outlineColor: 'primary.400',
-                          outlineOffset: 2,
-                        },
-                      }}
-                    >
-                      {entry.name} ({entry.track_count})
-                    </Chip>
-                  ))}
-                </Stack>
-              </Stack>
+                </>
+              )}
+              <Typography
+                level="h3"
+                sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' }, lineHeight: 1.3 }}
+              >
+                {title}
+              </Typography>
+              <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
+                ·
+              </Typography>
+              <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+                {artist}
+              </Typography>
+              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+                ·
+              </Typography>
+              <Chip
+                size="sm"
+                variant="soft"
+                color={isPlaying ? 'success' : streamState === 'error' ? 'danger' : 'neutral'}
+                sx={{ borderRadius: 0, '--Chip-minHeight': '22px', minHeight: 22 }}
+              >
+                {streamStateLabel}
+              </Chip>
+            </Stack>
+
+            {lastError && (
+              <Typography level="body-sm" sx={{ color: 'danger.300', mt: 0.5 }}>
+                {lastError}
+              </Typography>
+            )}
+
+            <Box
+              component="select"
+              aria-label="Radio channel"
+              value={channel}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
+                setChannel(normalizeChannel(event.target.value));
+              }}
+              sx={{
+                borderRadius: 0,
+                width: 'fit-content',
+                minWidth: 140,
+                minHeight: 36,
+                mt: 1,
+                border: '1px solid rgba(255,255,255,0.16)',
+                background: 'rgba(9, 10, 18, 0.64)',
+                color: 'text.primary',
+                px: 1,
+                fontSize: '0.8125rem',
+                outline: 'none',
+                '&:focus-visible': {
+                  borderColor: 'primary.400',
+                  boxShadow: '0 0 0 2px rgba(139, 92, 246, 0.35)',
+                },
+                '& option': {
+                  backgroundColor: '#10111a',
+                  color: '#f2f2f4',
+                },
+              }}
+            >
+              {channelOptions.map((entry) => (
+                <option key={entry.name} value={entry.name}>
+                  {entry.name} ({entry.track_count})
+                </option>
+              ))}
+            </Box>
+
+            <Sheet
+              variant="outlined"
+              sx={{
+                display: { xs: 'none', md: 'flex' },
+                flexDirection: 'column',
+                flex: 1,
+                mt: 2,
+                minHeight: 0,
+                bgcolor: 'rgba(10,12,18,0.4)',
+                borderColor: 'rgba(255,255,255,0.08)',
+                borderRadius: 0,
+                overflow: 'hidden',
+              }}
+            >
+              <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
+                <Typography
+                  level="body-sm"
+                  sx={{
+                    color: 'text.tertiary',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  Track Story
+                </Typography>
+              </Box>
+              <Box
+                key={currentTrackId ?? 'idle'}
+                sx={{
+                  flex: 1,
+                  overflow: 'auto',
+                  px: 2,
+                  pb: 2,
+                  minHeight: 0,
+                  animation: `${fadeIn} 0.35s ease-out`,
+                }}
+              >
+                {probeData?.comment?.trim() ? (
+                  <Typography
+                    level="body-sm"
+                    sx={{
+                      color: 'text.secondary',
+                      whiteSpace: 'pre-wrap',
+                      fontSize: { xs: '0.875rem' },
+                    }}
+                  >
+                    {probeData.comment.trim()}
+                  </Typography>
+                ) : probeLoading ? (
+                  <Stack spacing={1}>
+                    <Skeleton variant="text" width="90%" />
+                    <Skeleton variant="text" width="75%" />
+                    <Skeleton variant="text" width="85%" />
+                    <Skeleton variant="text" width="60%" />
+                  </Stack>
+                ) : (
+                  <Typography
+                    level="body-sm"
+                    sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem' } }}
+                  >
+                    Track story metadata will appear here when the stream publishes it.
+                  </Typography>
+                )}
+              </Box>
             </Sheet>
           </Stack>
         </Stack>
       </Box>
+
+      <Sheet
+        variant="outlined"
+        sx={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          borderColor: 'rgba(255,255,255,0.12)',
+          bgcolor: 'rgba(8,8,14,0.92)',
+          backdropFilter: 'blur(24px)',
+          borderWidth: '1px 0 0 0',
+          borderRadius: 0,
+        }}
+      >
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={{ xs: 0.25, md: 2 }}
+          alignItems="center"
+          sx={{ px: { xs: 2, md: 3 }, py: { xs: 0.75, md: 1 } }}
+        >
+          <Box
+            onClick={cycleQuality}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event: React.KeyboardEvent) => {
+              if (event.key === 'Enter' || event.key === ' ') cycleQuality();
+            }}
+            aria-label={`Quality: ${quality}, click to cycle`}
+            sx={{
+              cursor: 'pointer',
+              minWidth: 44,
+              minHeight: 44,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.400',
+                outlineOffset: 2,
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: 20 }}>
+              <Box
+                sx={{
+                  width: 4,
+                  height: 6,
+                  bgcolor:
+                    quality === 'low' || quality === 'medium' || quality === 'high'
+                      ? 'primary.400'
+                      : 'rgba(255,255,255,0.15)',
+                }}
+              />
+              <Box
+                sx={{
+                  width: 4,
+                  height: 12,
+                  bgcolor:
+                    quality === 'medium' || quality === 'high'
+                      ? 'primary.400'
+                      : 'rgba(255,255,255,0.15)',
+                }}
+              />
+              <Box
+                sx={{
+                  width: 4,
+                  height: 18,
+                  bgcolor: quality === 'high' ? 'primary.400' : 'rgba(255,255,255,0.15)',
+                }}
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <LinearProgress
+                determinate
+                value={Math.min(100, Math.max(0, progressValue))}
+                thickness={6}
+                sx={{
+                  flex: 1,
+                  bgcolor: 'rgba(255,255,255,0.08)',
+                  color: 'primary.400',
+                  borderRadius: 0,
+                  '--LinearProgress-radius': '0px',
+                }}
+              />
+              <Typography
+                level="body-xs"
+                sx={{
+                  minWidth: 42,
+                  textAlign: 'right',
+                  color: 'text.secondary',
+                }}
+              >
+                {formatTime(positionMs)}
+              </Typography>
+            </Stack>
+          </Box>
+
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <Button
+              size="sm"
+              variant="plain"
+              color="neutral"
+              onClick={() => navigateChannel(-1)}
+              aria-label="Previous channel"
+              sx={{ minWidth: 44, minHeight: 44, borderRadius: 0 }}
+            >
+              <StepBack size={18} />
+            </Button>
+
+            <Button
+              size="sm"
+              variant="soft"
+              color={isPlaying ? 'success' : 'primary'}
+              onClick={togglePlayback}
+              aria-label={playbackDesired ? 'Pause Midori AI Radio' : 'Play Midori AI Radio'}
+              sx={{ minWidth: 44, minHeight: 44, borderRadius: 0 }}
+            >
+              {playbackDesired ? <Pause size={18} /> : <Play size={18} />}
+            </Button>
+
+            <Button
+              size="sm"
+              variant="plain"
+              color="neutral"
+              onClick={() => navigateChannel(1)}
+              aria-label="Next channel"
+              sx={{ minWidth: 44, minHeight: 44, borderRadius: 0 }}
+            >
+              <StepForward size={18} />
+            </Button>
+
+            <Box
+              onMouseEnter={() => {
+                clearVolLeaveTimer();
+                setVolHovered(true);
+              }}
+              onMouseLeave={() => {
+                clearVolLeaveTimer();
+                volLeaveTimerRef.current = setTimeout(() => setVolHovered(false), 400);
+              }}
+              sx={{
+                position: 'relative',
+                width: 160,
+                height: 44,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                overflow: 'hidden',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  gap: '2px',
+                  height: 28,
+                  opacity: volHovered ? 1 : 0,
+                  transition: 'opacity 0.2s ease, transform 0.2s ease',
+                  transitionDelay: volHovered ? '0.1s' : '0.2s',
+                  transform: volHovered ? 'translateX(0)' : 'translateX(12px)',
+                  mr: '10px',
+                }}
+              >
+                {volumeDots.map((dot) => (
+                  <Box
+                    key={dot.id}
+                    sx={{
+                      width: 3,
+                      height: `${dot.height}px`,
+                      bgcolor: dot.active ? 'primary.400' : 'rgba(255,255,255,0.16)',
+                    }}
+                  />
+                ))}
+              </Box>
+
+              <Volume2
+                size={20}
+                style={{ cursor: 'pointer' }}
+                onClick={() => {
+                  if (volume < 0.1) {
+                    setVolume(0.5);
+                  } else {
+                    setVolume(0);
+                  }
+                }}
+              />
+            </Box>
+          </Stack>
+        </Stack>
+      </Sheet>
     </Box>
   );
 }

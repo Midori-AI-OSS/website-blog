@@ -9,6 +9,7 @@ import Stack from '@mui/joy/Stack';
 import Tooltip from '@mui/joy/Tooltip';
 import Typography from '@mui/joy/Typography';
 import { Headphones, Music, Pin, PinOff, Play, Square } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import {
@@ -132,6 +133,8 @@ function getReconnectDelay(attempt: number): number {
 export default function RadioWidget() {
   const { setRadioState } = useDynamicBackdrop();
   const desktopEligible = useDesktopEligibility();
+  const pathname = usePathname();
+  const isRadioPage = pathname === '/radio';
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const closeLingerTimerRef = React.useRef<number | null>(null);
   const playbackDesiredRef = React.useRef(false);
@@ -699,7 +702,7 @@ export default function RadioWidget() {
 
   const expanded = stickyOpen || hovered || closeLingerActive;
 
-  if (!desktopEligible) {
+  if (!desktopEligible || isRadioPage) {
     return null;
   }
 
