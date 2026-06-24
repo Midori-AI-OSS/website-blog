@@ -772,7 +772,7 @@ export default function RadioPageClient() {
     <Box
       sx={{
         position: 'relative',
-        height: '100vh',
+        height: '100dvh',
         width: '100%',
         overflow: 'hidden',
       }}
@@ -825,7 +825,7 @@ export default function RadioPageClient() {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          pb: '64px',
+          pb: { xs: '130px', md: '72px' },
         }}
       >
         <Stack
@@ -866,37 +866,25 @@ export default function RadioPageClient() {
               justifyContent: 'center',
               p: { xs: 2, md: 3 },
               minHeight: 0,
+              overflow: 'hidden',
             }}
           >
-            <Box
-              sx={{
-                width: 'clamp(200px, 45vmin, 480px)',
-                height: 'clamp(200px, 45vmin, 480px)',
-                bgcolor: 'rgba(10,12,18,0.4)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              {artUrl ? (
-                <Box
-                  key={artUrl}
-                  component="img"
-                  src={artUrl}
-                  alt=""
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    animation: `${coverSlideIn} 0.4s ease-out`,
-                  }}
-                />
-              ) : (
-                <Music key="placeholder" size={64} aria-hidden />
-              )}
-            </Box>
+            {artUrl ? (
+              <Box
+                key={artUrl}
+                component="img"
+                src={artUrl}
+                alt=""
+                sx={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  animation: `${coverSlideIn} 0.4s ease-out`,
+                }}
+              />
+            ) : (
+              <Music key="placeholder" size={64} aria-hidden />
+            )}
           </Box>
 
           <Stack
@@ -1131,7 +1119,7 @@ export default function RadioPageClient() {
             </Box>
           </Box>
 
-          <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+          <Box sx={{ flex: 1, minWidth: 0, maxWidth: '80%' }}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <LinearProgress
                 determinate
@@ -1203,7 +1191,7 @@ export default function RadioPageClient() {
               }}
               sx={{
                 position: 'relative',
-                width: 160,
+                width: 210,
                 height: 44,
                 display: 'flex',
                 alignItems: 'center',
@@ -1220,7 +1208,7 @@ export default function RadioPageClient() {
                   opacity: volHovered ? 1 : 0,
                   transition: 'opacity 0.2s ease, transform 0.25s ease',
                   transitionDelay: volHovered ? '0.1s' : '0.3s',
-                  transform: volHovered ? 'translateX(0)' : 'translateX(80px)',
+                  transform: volHovered ? 'translateX(0)' : 'translateX(110px)',
                   mr: '10px',
                 }}
               >
