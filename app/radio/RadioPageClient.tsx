@@ -781,8 +781,8 @@ export default function RadioPageClient() {
             filter: 'blur(40px) brightness(0.32) saturate(1.08)',
             transform: 'scale(1.12)',
             pointerEvents: 'none',
-            opacity: bgFading ? 1 : undefined,
-            transition: bgFading ? 'opacity 1.5s ease-in-out' : 'none',
+            opacity: staleBgUrl ? (bgFading ? 1 : 0) : undefined,
+            transition: staleBgUrl ? 'opacity 1.5s ease-in-out' : 'none',
           }}
         />
       ) : (
