@@ -42,7 +42,6 @@ import {
   saveRadioVolume,
 } from '@/lib/radio/state';
 import type { ExtractedPalette } from '@/lib/theme/artPalette';
-import { extractPaletteFromImage } from '@/lib/theme/artPalette';
 
 const coverSlideIn = keyframes`
   from { transform: translateX(100%); opacity: 0; }
@@ -514,11 +513,21 @@ export default function RadioPageClient() {
 
     let cancelled = false;
 
-    extractPaletteFromImage(artUrl).then((palette) => {
-      if (!cancelled) {
-        setArtPalette(palette);
-      }
-    });
+    const paletteUrl = `/api/radio/palette?url=${encodeURIComponent(artUrl)}`;
+
+    fetch(paletteUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Palette API returned ${res.status}`);
+        return res.json() as Promise<ExtractedPalette>;
+      })
+      .then((palette) => {
+        if (!cancelled) {
+          setArtPalette(palette);
+        }
+      })
+      .catch(() => {
+        // fallback handled by BlobProgressBar
+      });
 
     return () => {
       cancelled = true;
@@ -1156,7 +1165,7 @@ export default function RadioPageClient() {
                 value={Math.min(100, Math.max(0, progressValue))}
                 isPlaying={isPlaying}
                 palette={artPalette}
-                height={8}
+                height={20}
               />
               <Typography
                 level="body-xs"

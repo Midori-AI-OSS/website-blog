@@ -6,9 +6,24 @@ import type { ExtractedPalette } from '@/lib/theme/artPalette';
 import { hexToRgb, rgbToHex } from '@/lib/theme/artPalette';
 
 const VIEWBOX_W = 100;
-const VIEWBOX_H = 8;
+const VIEWBOX_H = 20;
+const TRACK_TOP = 6;
+const TRACK_H = 8;
+const TRACK_BOTTOM = TRACK_TOP + TRACK_H;
 
-const WAVES = [
+const TOP_WAVES = [
+  { amp: 2.5, freq: 0.8, speed: 0.3, phase: 0.5 },
+  { amp: 1.5, freq: 1.6, speed: 0.45, phase: 2.1 },
+  { amp: 2.0, freq: 2.4, speed: 0.35, phase: 4.3 },
+];
+
+const BOTTOM_WAVES = [
+  { amp: 2.0, freq: 0.9, speed: 0.35, phase: 1.7 },
+  { amp: 1.8, freq: 1.7, speed: 0.4, phase: 3.5 },
+  { amp: 2.2, freq: 2.1, speed: 0.38, phase: 5.1 },
+];
+
+const RIGHT_WAVES = [
   { amp: 0.8, freq: 1.3, speed: 0.3, phase: 0 },
   { amp: 0.5, freq: 2.7, speed: 0.5, phase: 1.2 },
   { amp: 0.7, freq: 0.6, speed: 0.4, phase: 2.5 },
@@ -20,29 +35,55 @@ function darkenHex(hex: string, amount: number): string {
   return rgbToHex(r * keep, g * keep, b * keep);
 }
 
-function computeWobble(y: number, time: number): number {
+function computeWobble(
+  y: number,
+  time: number,
+  waves: { amp: number; freq: number; speed: number; phase: number }[],
+  viewboxDim: number,
+): number {
   let wobble = 0;
-  for (const w of WAVES) {
-    wobble += w.amp * Math.sin(2 * Math.PI * w.freq * (y / VIEWBOX_H) + w.phase + w.speed * time);
+  for (const w of waves) {
+    wobble += w.amp * Math.sin(2 * Math.PI * w.freq * (y / viewboxDim) + w.phase + w.speed * time);
   }
   return wobble;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
 function buildBlobPath(progressX: number, time: number): string {
-  const samples = 11;
-  let d = `M 0,0`;
-  d += ` L ${progressX + computeWobble(0, time)},0`;
-  for (let i = 0; i < samples; i += 1) {
-    const y = (i / (samples - 1)) * VIEWBOX_H;
-    d += ` L ${progressX + computeWobble(y, time)},${y.toFixed(2)}`;
+  const edgeSamples = 20;
+
+  let d = `M 0,${TRACK_TOP} `;
+
+  for (let i = 0; i <= edgeSamples; i += 1) {
+    const x = (i / edgeSamples) * progressX;
+    const wobble = computeWobble(x, time, TOP_WAVES, VIEWBOX_W);
+    const y = clamp(TRACK_TOP - Math.abs(wobble), 0, TRACK_TOP);
+    d += `L ${x},${y.toFixed(2)} `;
   }
-  d += ` L 0,${VIEWBOX_H}`;
+
+  for (let i = 0; i <= edgeSamples; i += 1) {
+    const y = TRACK_TOP + (i / edgeSamples) * TRACK_H;
+    const wobble = computeWobble(y, time, RIGHT_WAVES, VIEWBOX_H);
+    const x = progressX + wobble;
+    d += `L ${x},${y.toFixed(2)} `;
+  }
+
+  for (let i = edgeSamples; i >= 0; i -= 1) {
+    const x = (i / edgeSamples) * progressX;
+    const wobble = computeWobble(x, time, BOTTOM_WAVES, VIEWBOX_W);
+    const y = clamp(TRACK_BOTTOM + Math.abs(wobble), TRACK_BOTTOM, VIEWBOX_H);
+    d += `L ${x},${y.toFixed(2)} `;
+  }
+
   d += ' Z';
   return d;
 }
 
 function buildStraightPath(progressX: number): string {
-  return `M 0,0 L ${progressX},0 L ${progressX},${VIEWBOX_H} L 0,${VIEWBOX_H} Z`;
+  return `M 0,${TRACK_TOP} L ${progressX},${TRACK_TOP} L ${progressX},${TRACK_BOTTOM} L 0,${TRACK_BOTTOM} Z`;
 }
 
 interface BlobProgressBarProps {
@@ -56,7 +97,7 @@ export default function BlobProgressBar({
   value,
   isPlaying,
   palette,
-  height = 8,
+  height = 20,
 }: BlobProgressBarProps) {
   const clamped = Math.max(0, Math.min(100, value));
   const progressX = (clamped / 100) * VIEWBOX_W;
@@ -83,6 +124,14 @@ export default function BlobProgressBar({
       right: darkenHex(palette.primary, 0.45),
     };
   }, [palette]);
+
+  React.useEffect(() => {
+    const shimmer = shimmerRef.current;
+    if (shimmer) {
+      shimmer.setAttribute('x1', '0');
+      shimmer.setAttribute('x2', '12');
+    }
+  }, []);
 
   React.useEffect(() => {
     if (!isPlaying) {
@@ -116,8 +165,8 @@ export default function BlobProgressBar({
         const t = Date.now() / 1000;
         const oscillation = Math.sin(t * 0.6);
         const center = 50 + oscillation * 55;
-        shimmer.setAttribute('x1', String(center - 4));
-        shimmer.setAttribute('x2', String(center + 4));
+        shimmer.setAttribute('x1', String(center - 6));
+        shimmer.setAttribute('x2', String(center + 6));
       }
 
       frameRef.current = requestAnimationFrame(animate);
@@ -150,8 +199,6 @@ export default function BlobProgressBar({
         width: '100%',
         height,
         display: 'block',
-        borderRadius: '4px',
-        overflow: 'hidden',
       }}
     >
       <defs>
@@ -165,17 +212,11 @@ export default function BlobProgressBar({
           <stop offset="50%" stopColor={fillColors.mid} />
           <stop offset="100%" stopColor={fillColors.right} />
         </linearGradient>
-        <linearGradient
-          id="shimmerGrad"
-          gradientUnits="userSpaceOnUse"
-          x1="0"
-          x2="8"
-          ref={shimmerRef}
-        >
+        <linearGradient id="shimmerGrad" gradientUnits="userSpaceOnUse" ref={shimmerRef}>
           <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-          <stop offset="45%" stopColor="rgba(255,255,255,0)" />
-          <stop offset="50%" stopColor="rgba(255,255,255,0.18)" />
-          <stop offset="55%" stopColor="rgba(255,255,255,0)" />
+          <stop offset="40%" stopColor="rgba(255,255,255,0)" />
+          <stop offset="50%" stopColor="rgba(255,255,255,0.22)" />
+          <stop offset="60%" stopColor="rgba(255,255,255,0)" />
           <stop offset="100%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
         <clipPath id="fillClip">
@@ -183,11 +224,18 @@ export default function BlobProgressBar({
         </clipPath>
       </defs>
 
-      <rect x="0" y="0" width={VIEWBOX_W} height={VIEWBOX_H} rx="4" fill="url(#trackDepth)" />
+      <rect
+        x="0"
+        y={TRACK_TOP}
+        width={VIEWBOX_W}
+        height={TRACK_H}
+        rx={TRACK_H / 2}
+        fill="url(#trackDepth)"
+      />
 
       <g clipPath="url(#fillClip)">
-        <rect x="0" y="0" width={VIEWBOX_W} height={VIEWBOX_H} fill="url(#fillGrad)" />
-        <rect x="0" y="0" width={VIEWBOX_W} height={VIEWBOX_H} fill="url(#shimmerGrad)" />
+        <rect x="0" y={TRACK_TOP} width={VIEWBOX_W} height={TRACK_H} fill="url(#fillGrad)" />
+        <rect x="0" y={TRACK_TOP} width={VIEWBOX_W} height={TRACK_H} fill="url(#shimmerGrad)" />
       </g>
     </Box>
   );
