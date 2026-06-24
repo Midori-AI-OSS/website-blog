@@ -191,6 +191,13 @@ export default function RadioPageClient() {
   const currentTrackId = currentTrack?.track_id ?? null;
 
   React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  React.useEffect(() => {
     channelRef.current = channel;
   }, [channel]);
 
@@ -771,9 +778,11 @@ export default function RadioPageClient() {
   return (
     <Box
       sx={{
-        position: 'relative',
-        height: '100dvh',
-        width: '100%',
+        position: 'fixed',
+        top: 56,
+        left: 0,
+        right: 0,
+        bottom: 0,
         overflow: 'hidden',
       }}
     >
