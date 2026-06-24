@@ -4,13 +4,13 @@ import { keyframes } from '@emotion/react';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Chip from '@mui/joy/Chip';
-import LinearProgress from '@mui/joy/LinearProgress';
 import Sheet from '@mui/joy/Sheet';
 import Skeleton from '@mui/joy/Skeleton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import { Music, Pause, Play, Radio, StepBack, StepForward, Users, Volume2 } from 'lucide-react';
 import * as React from 'react';
+import BlobProgressBar from '@/components/radio/BlobProgressBar';
 import {
   fetchArt,
   fetchChannels,
@@ -41,6 +41,8 @@ import {
   saveRadioQuality,
   saveRadioVolume,
 } from '@/lib/radio/state';
+import type { ExtractedPalette } from '@/lib/theme/artPalette';
+import { extractPaletteFromImage } from '@/lib/theme/artPalette';
 
 const coverSlideIn = keyframes`
   from { transform: translateX(100%); opacity: 0; }
@@ -181,6 +183,7 @@ export default function RadioPageClient() {
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [_artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [artUrl, setArtUrl] = React.useState<string | null>(null);
+  const [artPalette, setArtPalette] = React.useState<ExtractedPalette | null>(null);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
   const [probeLoading, setProbeLoading] = React.useState(false);
   const [positionMs, setPositionMs] = React.useState(0);
@@ -502,6 +505,25 @@ export default function RadioPageClient() {
 
     void loadArt();
   }, [channel, currentTrackId, hydrated]);
+
+  React.useEffect(() => {
+    if (!artUrl) {
+      setArtPalette(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    extractPaletteFromImage(artUrl).then((palette) => {
+      if (!cancelled) {
+        setArtPalette(palette);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [artUrl]);
 
   React.useEffect(() => {
     if (!hydrated || currentTrackId === null) {
@@ -1130,17 +1152,11 @@ export default function RadioPageClient() {
 
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: '80%' }}>
             <Stack direction="row" alignItems="center" spacing={1}>
-              <LinearProgress
-                determinate
+              <BlobProgressBar
                 value={Math.min(100, Math.max(0, progressValue))}
-                thickness={6}
-                sx={{
-                  flex: 1,
-                  bgcolor: 'rgba(255,255,255,0.08)',
-                  color: 'primary.400',
-                  borderRadius: 0,
-                  '--LinearProgress-radius': '0px',
-                }}
+                isPlaying={isPlaying}
+                palette={artPalette}
+                height={8}
               />
               <Typography
                 level="body-xs"
