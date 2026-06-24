@@ -5,13 +5,21 @@ export const MIDORIAI_RADIO_OPEN_KEY = 'midoriai.radio.open';
 export const MIDORIAI_RADIO_VOLUME_KEY = 'midoriai.radio.volume';
 export const MIDORIAI_RADIO_QUALITY_KEY = 'midoriai.radio.quality';
 export const MIDORIAI_RADIO_CHANNEL_KEY = 'midoriai.radio.channel';
+export const MIDORIAI_RADIO_PLAYING_KEY = 'midoriai.radio.playing';
 export const MIDORIAI_RADIO_LAST_ERROR_KEY = 'midoriai.radio.last_error';
+export const MIDORIAI_RADIO_STATE_EVENT = 'midoriai.radio.state';
+
+export interface RadioStateChangeDetail {
+  key: string;
+  value: string | null;
+}
 
 export interface RadioPersistedState {
   open: boolean;
   volume: number;
   quality: QualityName;
   channel: string;
+  playing: boolean;
   lastError: string | null;
 }
 
@@ -20,6 +28,7 @@ export const DEFAULT_RADIO_STATE: RadioPersistedState = {
   volume: 0.5,
   quality: 'medium',
   channel: 'all',
+  playing: false,
   lastError: null,
 };
 
@@ -74,6 +83,11 @@ function writeString(key: string, value: string): void {
     return;
   }
   storage.setItem(key, value);
+  window.dispatchEvent(
+    new window.CustomEvent<RadioStateChangeDetail>(MIDORIAI_RADIO_STATE_EVENT, {
+      detail: { key, value },
+    }),
+  );
 }
 
 export function loadRadioState(): RadioPersistedState {
@@ -91,6 +105,7 @@ export function loadRadioState(): RadioPersistedState {
     volume: readVolume(storage),
     quality: normalizeQuality(qualityRaw),
     channel: normalizeChannel(channelRaw),
+    playing: readBoolean(storage, MIDORIAI_RADIO_PLAYING_KEY, DEFAULT_RADIO_STATE.playing),
     lastError,
   };
 }
@@ -109,6 +124,10 @@ export function saveRadioQuality(quality: QualityName): void {
 
 export function saveRadioChannel(channel: string): void {
   writeString(MIDORIAI_RADIO_CHANNEL_KEY, normalizeChannel(channel));
+}
+
+export function saveRadioPlaying(playing: boolean): void {
+  writeString(MIDORIAI_RADIO_PLAYING_KEY, String(playing));
 }
 
 export function saveRadioLastError(message: string): void {

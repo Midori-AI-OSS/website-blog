@@ -8,7 +8,8 @@ import Slider from '@mui/joy/Slider';
 import Stack from '@mui/joy/Stack';
 import Tooltip from '@mui/joy/Tooltip';
 import Typography from '@mui/joy/Typography';
-import { Music, Pin, PinOff, Play, Square } from 'lucide-react';
+import { Headphones, Music, Pin, PinOff, Play, Square } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import {
@@ -17,14 +18,20 @@ import {
   fetchChannels,
   fetchCurrent,
   RadioApiError,
+  sendHeartbeat,
 } from '@/lib/radio/client';
 import type { ArtPayload, ChannelEntry, CurrentPayload, QualityName } from '@/lib/radio/contract';
-import { normalizeChannel, QUALITY_LEVELS } from '@/lib/radio/contract';
+import { normalizeChannel, normalizeQuality, QUALITY_LEVELS } from '@/lib/radio/contract';
 import type { RadioImageInventory } from '@/lib/radio/images';
 import { appendTrackCacheKey, pickDeterministicImage, preloadImage } from '@/lib/radio/images';
 import {
   clearRadioLastError,
   loadRadioState,
+  MIDORIAI_RADIO_CHANNEL_KEY,
+  MIDORIAI_RADIO_QUALITY_KEY,
+  MIDORIAI_RADIO_STATE_EVENT,
+  MIDORIAI_RADIO_VOLUME_KEY,
+  type RadioStateChangeDetail,
   saveRadioChannel,
   saveRadioLastError,
   saveRadioOpen,
@@ -110,6 +117,14 @@ function toErrorMessage(error: unknown): string {
   return 'Unknown radio error';
 }
 
+function clampVolume(input: number): number {
+  if (Number.isNaN(input)) {
+    return 0.5;
+  }
+
+  return Math.min(1, Math.max(0, input));
+}
+
 function getReconnectDelay(attempt: number): number {
   const delays = [2000, 4000, 8000, 16000, 30000];
   return delays[Math.min(attempt, delays.length - 1)] ?? 30000;
@@ -118,6 +133,8 @@ function getReconnectDelay(attempt: number): number {
 export default function RadioWidget() {
   const { setRadioState } = useDynamicBackdrop();
   const desktopEligible = useDesktopEligibility();
+  const pathname = usePathname();
+  const isRadioPage = pathname === '/radio';
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const closeLingerTimerRef = React.useRef<number | null>(null);
   const playbackDesiredRef = React.useRef(false);
@@ -142,6 +159,9 @@ export default function RadioWidget() {
   const [_lastError, setLastError] = React.useState<string | null>(null);
 
   const [channels, setChannels] = React.useState<ChannelEntry[]>([]);
+  const [listenerCount, setListenerCount] = React.useState<number | null>(null);
+  const sessionIdRef = React.useRef<string | null>(null);
+  const heartbeatIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [imageInventory, setImageInventory] = React.useState<RadioImageInventory | null>(null);
@@ -168,6 +188,50 @@ export default function RadioWidget() {
     setChannel(normalizeChannel(restored.channel));
     setLastError(restored.lastError);
     setHydrated(true);
+  }, []);
+
+  React.useEffect(() => {
+    const applySharedState = (detail: RadioStateChangeDetail) => {
+      if (detail.value === null) {
+        return;
+      }
+
+      if (detail.key === MIDORIAI_RADIO_VOLUME_KEY) {
+        setVolume(clampVolume(Number(detail.value)));
+        return;
+      }
+
+      if (detail.key === MIDORIAI_RADIO_QUALITY_KEY) {
+        setQuality(normalizeQuality(detail.value));
+        return;
+      }
+
+      if (detail.key === MIDORIAI_RADIO_CHANNEL_KEY) {
+        setChannel(normalizeChannel(detail.value));
+      }
+    };
+
+    const handleStateEvent = (event: Event) => {
+      const detail = (event as CustomEvent<RadioStateChangeDetail>).detail;
+      if (detail) {
+        applySharedState(detail);
+      }
+    };
+
+    const handleStorageEvent = (event: StorageEvent) => {
+      if (event.key === null) {
+        return;
+      }
+      applySharedState({ key: event.key, value: event.newValue });
+    };
+
+    window.addEventListener(MIDORIAI_RADIO_STATE_EVENT, handleStateEvent);
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      window.removeEventListener(MIDORIAI_RADIO_STATE_EVENT, handleStateEvent);
+      window.removeEventListener('storage', handleStorageEvent);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -513,6 +577,67 @@ export default function RadioWidget() {
     startPlayback();
   }, [channel, hydrated, refreshMetadata, stopPlayback, startPlayback]);
 
+  React.useEffect(() => {
+    const isPlaying = playbackDesired && streamState === 'playing';
+
+    if (isPlaying) {
+      if (sessionIdRef.current === null) {
+        sessionIdRef.current = crypto.randomUUID();
+      }
+
+      if (heartbeatIntervalRef.current !== null) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+      heartbeatIntervalRef.current = null;
+
+      const sessionId = sessionIdRef.current;
+      const tick = () => {
+        void sendHeartbeat(sessionId, channelRef.current)
+          .then((result) => {
+            setListenerCount(result.count);
+          })
+          .catch(() => undefined);
+      };
+
+      tick();
+
+      heartbeatIntervalRef.current = setInterval(tick, 30_000);
+    } else {
+      if (heartbeatIntervalRef.current !== null) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+      heartbeatIntervalRef.current = null;
+
+      if (sessionIdRef.current !== null) {
+        void sendHeartbeat(sessionIdRef.current, channelRef.current, true).catch(() => undefined);
+        sessionIdRef.current = null;
+        setListenerCount(null);
+      }
+    }
+
+    return () => {
+      if (heartbeatIntervalRef.current !== null) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+    };
+  }, [playbackDesired, streamState]);
+
+  React.useEffect(() => {
+    return () => {
+      if (sessionIdRef.current !== null) {
+        void sendHeartbeat(sessionIdRef.current, channelRef.current, true).catch(() => undefined);
+        sessionIdRef.current = null;
+        setListenerCount(null);
+      }
+
+      if (heartbeatIntervalRef.current !== null) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+    };
+  }, []);
+
   const fallbackIdentity = `${currentTrack?.title ?? 'unknown'}::${currentTrack?.track_id ?? 'unknown'}`;
   const fallbackImage = React.useMemo(() => {
     const placeholder = imageInventory?.placeholder ?? PLACEHOLDER_IMAGE;
@@ -577,7 +702,7 @@ export default function RadioWidget() {
 
   const expanded = stickyOpen || hovered || closeLingerActive;
 
-  if (!desktopEligible) {
+  if (!desktopEligible || isRadioPage) {
     return null;
   }
 
@@ -785,16 +910,26 @@ export default function RadioWidget() {
             </Box>
           </Stack>
 
-          <Button
-            size="sm"
-            variant="soft"
-            color="neutral"
-            startDecorator={stickyOpen ? <PinOff size={14} /> : <Pin size={14} />}
-            onClick={() => setStickyOpen((previous) => !previous)}
-            sx={{ borderRadius: 0, alignSelf: 'flex-start' }}
-          >
-            {stickyOpen ? 'Unpin Open' : 'Pin Open'}
-          </Button>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Button
+              size="sm"
+              variant="soft"
+              color="neutral"
+              startDecorator={stickyOpen ? <PinOff size={14} /> : <Pin size={14} />}
+              onClick={() => setStickyOpen((previous) => !previous)}
+              sx={{ borderRadius: 0 }}
+            >
+              {stickyOpen ? 'Unpin Open' : 'Pin Open'}
+            </Button>
+            {listenerCount !== null && (
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+                  {listenerCount}
+                </Typography>
+                <Headphones size={12} aria-hidden />
+              </Stack>
+            )}
+          </Stack>
         </Stack>
       ) : (
         <Box

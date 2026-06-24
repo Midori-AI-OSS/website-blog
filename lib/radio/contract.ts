@@ -69,6 +69,16 @@ export interface ArtPayload {
   art_url: string;
 }
 
+export interface HeartbeatRequest {
+  sessionId: string;
+  channel: string;
+  stopped?: boolean;
+}
+
+export interface HeartbeatResponse {
+  count: number;
+}
+
 const QUALITY_NAME_SET = new Set<QualityName>(['low', 'medium', 'high']);
 
 export const QUALITY_LEVELS = [
@@ -92,6 +102,50 @@ export function normalizeQuality(input: string | null | undefined): QualityName 
     return normalized;
   }
   return 'medium';
+}
+
+function createCacheBustToken(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.round(Math.random() * 1_000_000_000)}`;
+}
+
+export function buildStreamUrl(options: {
+  channel: string | null | undefined;
+  quality: QualityName | string | null | undefined;
+  baseUrl?: string;
+  path?: string;
+  cacheBust?: boolean;
+}): string {
+  const normalizedChannel = normalizeChannel(options.channel);
+  const normalizedQuality = normalizeQuality(options.quality);
+  const path = options.path ?? '/radio/v1/stream';
+  const baseUrl = options.baseUrl ?? MIDORIAI_RADIO_BASE_URL;
+
+  if (baseUrl === '') {
+    const params = new URLSearchParams();
+    params.set('channel', normalizedChannel);
+    params.set('q', normalizedQuality);
+
+    if (options.cacheBust === true) {
+      params.set('ts', createCacheBustToken());
+    }
+
+    const query = params.toString();
+    return `${path}?${query}`;
+  }
+
+  const url = new URL(path, baseUrl);
+  url.searchParams.set('channel', normalizedChannel);
+  url.searchParams.set('q', normalizedQuality);
+
+  if (options.cacheBust === true) {
+    url.searchParams.set('ts', createCacheBustToken());
+  }
+
+  return url.toString();
 }
 
 export function isRadioEnvelope<TData = unknown>(value: unknown): value is RadioEnvelope<TData> {
