@@ -265,6 +265,13 @@ function replaceLoreImageTokens(markdown: string): string {
   );
 }
 
+function normalizeThinkingTagFormatting(markdown: string): string {
+  return markdown.replace(
+    /<thinking>\s*\n((?:(?!\n\n)[\s\S])*?)\n\s*<\/thinking>/g,
+    '<thinking>$1</thinking>',
+  );
+}
+
 function replaceFictionalLangTagTokens(markdown: string): string {
   return markdown
     .replace(/<celestial:R>/gi, '<celestial reveal>')
@@ -343,6 +350,7 @@ function PostContentSection({
   const markdownContent = useMemo(() => {
     let cleaned = post.content;
     cleaned = replaceLoreImageTokens(cleaned);
+    cleaned = normalizeThinkingTagFormatting(cleaned);
     cleaned = replaceFictionalLangTagTokens(cleaned);
     return cleaned;
   }, [post.content]);
