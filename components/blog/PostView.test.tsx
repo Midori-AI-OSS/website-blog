@@ -151,6 +151,7 @@ describe('PostView', () => {
 
     expect(countThinkingNodes(html)).toBe(1);
     expect(html).toContain('data-thinking="inline"');
+    expect(html).toContain('<span data-thinking="inline">fuck</span>');
     expect(html).toContain('fuck');
     expect(html).not.toContain('&lt;thinking&gt;');
     expect(html).not.toContain('&lt;/thinking&gt;');
@@ -181,6 +182,19 @@ describe('PostView', () => {
     expect(html).toContain('data-thinking="block"');
     expect(html).toContain('<p>First thought.</p>');
     expect(html).toContain('<p>Second thought.</p>');
+  });
+
+  test('keeps block-format thinking content when the closing tag is nested', () => {
+    const html = renderPostContent(
+      '<thinking>\nFirst thought.\n\nSecond thought.\n\nThird thought.\n</thinking>',
+    );
+    const thinkingBlock = html.match(/<span data-thinking="block">[\s\S]*?<\/span>/)?.[0] ?? '';
+
+    expect(countThinkingNodes(html)).toBe(1);
+    expect(thinkingBlock).toContain('<p>First thought.</p>');
+    expect(thinkingBlock).toContain('<p>Second thought.</p>');
+    expect(thinkingBlock).toContain('<p>Third thought.');
+    expect((html.match(/First thought\.|Second thought\.|Third thought\./g) ?? []).length).toBe(3);
   });
 
   test('drops mismatched thinking tags while keeping readable text', () => {
