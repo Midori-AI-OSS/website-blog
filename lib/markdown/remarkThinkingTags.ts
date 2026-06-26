@@ -1,8 +1,11 @@
 import type { Content, Html, Parent, Root } from 'mdast';
-import type { Plugin } from 'unified';
+import remarkParse from 'remark-parse';
+import { type Plugin, unified } from 'unified';
 
 const OPENING_THINKING_TAG = /^<thinking\s*>$/i;
 const CLOSING_THINKING_TAG = /^<\/thinking\s*>$/i;
+
+const COMBINED_THINKING_BLOCK = /^<thinking\s*>([\s\S]*?)<\/thinking\s*>$/i;
 
 interface ThinkingNode extends Parent {
   type: 'thinking';
@@ -85,6 +88,25 @@ function transformParent(parent: Parent | Root): void {
 
     if (!child) {
       continue;
+    }
+
+    if (isHtml(child)) {
+      const combinedMatch = COMBINED_THINKING_BLOCK.exec(child.value.trim());
+      if (combinedMatch) {
+        const innerContent = combinedMatch[1] ?? '';
+        if (!innerContent.trim()) {
+          continue;
+        }
+        const innerTree = unified().use(remarkParse).parse(innerContent);
+        const innerChildren = innerTree.children as Content[];
+        for (const innerChild of innerChildren) {
+          if (isParentContent(innerChild)) {
+            transformParent(innerChild as Parent);
+          }
+        }
+        transformedChildren.push(createThinkingNode('block', innerChildren));
+        continue;
+      }
     }
 
     if (isOpeningThinkingTag(child)) {
