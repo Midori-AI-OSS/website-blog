@@ -614,7 +614,7 @@ The words ran underneath everything: *what the fuck Riley, why, why, why*. Not q
 
 Marisol's voice cut through. Quiet. Direct. The same even register she'd used for the timeline — steady and factual and warm underneath in a way she never asked to be thanked for. A Private Message. Just for me.
 
-Marisol's message arrived simple and direct: <celestial:R>let it out.</celestial:R>
+Marisol's message arrived simple and direct: <celestial:R>let it out.</celestial>
 
 She'd been holding the door for four days and now she was telling me I didn't have to hold anything.
 

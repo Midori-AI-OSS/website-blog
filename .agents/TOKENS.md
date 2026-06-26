@@ -114,7 +114,7 @@ that spans multiple lines.
 
 **Reveal variant:**
 ```markdown
-<celestial:R>Hidden text that reveals on hover</celestial:R>
+<celestial:R>Hidden text that reveals on hover</celestial>
 ```
 
 **Behavior:** Renders enclosed text in a custom Celestial font (a fictional sans-serif typeface). The reveal variant starts in Celestial, then on hover backspaces the fictional text, swaps to the inherited readable font, and types the text back in. On mouseleave, it waits 5 seconds before reversing back to Celestial. The cursor appears only while the typewriter animation is active.
@@ -139,7 +139,7 @@ that spans multiple lines.
 
 **Reveal variant:**
 ```markdown
-<abyssal:R>Hidden text that reveals on hover</abyssal:R>
+<abyssal:R>Hidden text that reveals on hover</abyssal>
 ```
 
 **Behavior:** Renders enclosed text with a fictional Abyssal font treatment. The reveal variant starts in Abyssal, then on hover backspaces the fictional text, swaps to the inherited readable font, and types the text back in. On mouseleave, it waits 5 seconds before reversing back to Abyssal. The cursor appears only while the typewriter animation is active.
