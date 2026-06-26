@@ -71,6 +71,30 @@ function createFictionalLangNode(
   };
 }
 
+function getCombinedText(children: Content[]): string {
+  let result = '';
+  for (const child of children) {
+    if (child.type === 'text') result += child.value;
+    else if ('children' in child) result += getCombinedText(child.children as Content[]);
+  }
+  return result;
+}
+
+function shouldAddQuotes(children: Content[]): boolean {
+  const text = getCombinedText(children).trim();
+  if (text.length === 0) return true;
+  return !(text.startsWith('"') && text.endsWith('"'));
+}
+
+function wrapInQuotes(children: Content[]): Content[] {
+  if (!shouldAddQuotes(children)) return children;
+  return [
+    { type: 'text', value: '"' } as Content,
+    ...children,
+    { type: 'text', value: '"' } as Content,
+  ];
+}
+
 function findClosingTag(children: Content[], startIndex: number, lang: string): number {
   for (let index = startIndex + 1; index < children.length; index += 1) {
     const child = children[index];
@@ -114,7 +138,7 @@ function transformParent(parent: Parent | Root): void {
         createFictionalLangNode(
           parsed.lang as 'celestial' | 'abyssal',
           parsed.reveal,
-          innerChildren,
+          wrapInQuotes(innerChildren),
         ),
       );
       index = closingIndex;
