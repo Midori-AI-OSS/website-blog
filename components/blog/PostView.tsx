@@ -487,6 +487,7 @@ function PostContentSection({
                   objectFit: 'contain',
                   width: '60%',
                   maxWidth: '100%',
+                  maxHeight: '95vh',
                   height: 'auto',
                   display: 'block',
                   my: 0,
