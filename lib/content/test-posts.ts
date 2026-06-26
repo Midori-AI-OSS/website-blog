@@ -69,6 +69,18 @@ Text can include <thinking>short inline thinking</thinking> without breaking the
 This standalone thinking block should render as a larger styled block.
 </thinking>
 
+## Fictional Language Tokens
+
+<celestial>text</celestial>
+
+<celestial:R>A tag that should hover reveal</celestial:R>
+
+<abyssal>text</abyssal>
+
+<abyssal:R>A tag that should hover reveal</abyssal:R>
+
+When tags are mismatched or dropped, readers should still see the <celestial>text just fine.
+
 ## Final Paragraph
 
 The last paragraph checks bottom spacing and confirms the post can end normally after rich content.
@@ -146,6 +158,14 @@ The line can hold <thinking>inline private-style thought</thinking> inside prose
 <thinking>
 This standalone thinking block should remain visually distinct from normal narration.
 </thinking>
+
+## Fictional Language Tokens
+
+In a lore post we can also use <celestial>celestial script</celestial> and <abyssal>abyssal text</abyssal> inline.
+
+The reveal variants work too: <celestial:R>hover me</celestial:R> and <abyssal:R>hover me too</abyssal:R>.
+
+Mismatched text like <celestial>opened but not closed and the stray <abyssal>text continues is readable.
 
 ## Closing Check
 

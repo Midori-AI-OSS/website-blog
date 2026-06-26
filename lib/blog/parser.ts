@@ -155,6 +155,8 @@ function parseFrontMatter(fileContent: string) {
   return matter(fileContent, { delimiters });
 }
 
+// Only <thinking> tags are supported in post titles.
+// <celestial> and <abyssal> tags render as literal text in title fields.
 const THINKING_TITLE_SPAN_REGEX = /<thinking\b[^>]*>([\s\S]*?)<\/thinking>/gi;
 
 function normalizeTitleSegmentText(text: string): string {

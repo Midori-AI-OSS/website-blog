@@ -11,6 +11,8 @@ This document is the canonical authoring guide for all custom tokens, shortcodes
 | `{{image: <path>}}` | Lore only | Embeds a lore image with fallback chain |
 | `{{speciescard: lore/<slug>}}` | Lore only | Injects a species care card embed |
 | `<thinking>...</thinking>` | Blog + Lore | Renders text with animated gradient styling |
+| `<celestial>...</celestial>` | Blog + Lore | Renders text in a fictional Celestial font (sans-serif) |
+| `<abyssal>...</abyssal>` | Blog + Lore | Renders text with a glitchy fictional Abyssal font switch |
 | `"dialogue quotes"` | Blog + Lore | Applies automatic dialogue coloring to quoted text |
 | Front matter fields | Blog + Lore | Post metadata: title, summary, tags, dates, passwords, etc. |
 
@@ -98,6 +100,56 @@ that spans multiple lines.
 **Usage rules:**
 - Tags must be properly closed; unclosed `<thinking>` is treated as literal text.
 - Nesting other tokens inside `<thinking>` is not supported.
+
+---
+
+## `<celestial>...</celestial>`
+
+**Scope:** Blog + Lore
+
+**Syntax:**
+```markdown
+<celestial>Fictional celestial text</celestial>
+```
+
+**Reveal variant:**
+```markdown
+<celestial:R>Hidden text that reveals on hover</celestial:R>
+```
+
+**Behavior:** Renders enclosed text in a custom Celestial font (a fictional sans-serif typeface). The reveal variant hides the Celestial font and only shows it when the user hovers over the text.
+
+**Usage rules:**
+- Inline only — always renders as `<span>`, never as a block element.
+- Tags must be properly opened and closed with matching language ID. `</celestial>` only closes `<celestial>`; `</abyssal>` only closes `<abyssal>`.
+- The `:R` flag goes on the opening tag only, not the closing tag.
+- Not supported in post titles — `<celestial>` / `<abyssal>` render as literal text in title fields.
+- Stray or unmatched tags are silently dropped; the enclosed text remains visible.
+
+---
+
+## `<abyssal>...</abyssal>`
+
+**Scope:** Blog + Lore
+
+**Syntax:**
+```markdown
+<abyssal>Fictional abyssal text</abyssal>
+```
+
+**Reveal variant:**
+```markdown
+<abyssal:R>Hidden text that reveals on hover</abyssal:R>
+```
+
+**Behavior:** Renders enclosed text with a glitchy alternating font effect, rapidly switching between a primary font (Glitch Goblin, monospace) and a secondary font (Infernal, serif) at 120ms intervals. The reveal variant hides the abyssal font and only shows it when the user hovers over the text.
+
+**Usage rules:**
+- Inline only — always renders as `<span>`, never as a block element.
+- Tags must be properly opened and closed with matching language ID. `</abyssal>` only closes `<abyssal>`; `</celestial>` only closes `<celestial>`.
+- The `:R` flag goes on the opening tag only, not the closing tag.
+- Not supported in post titles — `<celestial>` / `<abyssal>` render as literal text in title fields.
+- Stray or unmatched tags are silently dropped; the enclosed text remains visible.
 
 ---
 

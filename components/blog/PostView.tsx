@@ -14,7 +14,7 @@
  * - Follows MUI Joy patterns from Big-AGI
  */
 
-import { keyframes } from '@emotion/react';
+import { Global, keyframes } from '@emotion/react';
 import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Lock, Tag, User } from 'lucide-react';
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -38,6 +38,7 @@ import {
   normalizeIsoDateString,
 } from '@/lib/content/publish';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
+import remarkFictionalLangTags from '@/lib/markdown/remarkFictionalLangTags';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import { splitMarkdownSpeciesCareTokens } from '@/lib/species-care/tokens';
 import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
@@ -215,7 +216,13 @@ const markdownSanitizeSchema = {
   ...defaultSchema,
   attributes: {
     ...defaultSchema.attributes,
-    span: [...(defaultSchema.attributes?.span ?? []), ['data-thinking', 'inline', 'block']],
+    span: [
+      ...(defaultSchema.attributes?.span ?? []),
+      ['data-thinking', 'inline', 'block'],
+      ['data-lang'],
+      ['data-reveal'],
+      ['data-abyssal-font'],
+    ],
     div: [...(defaultSchema.attributes?.div ?? []), ['data-thinking', 'inline', 'block']],
   },
 };
@@ -464,8 +471,45 @@ function PostContentSection({
     });
   }, []);
 
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+    const abyssalEls = root.querySelectorAll<HTMLElement>('[data-lang="abyssal"]');
+    abyssalEls.forEach((el) => {
+      el.setAttribute('data-abyssal-font', 'primary');
+    });
+    const interval = setInterval(() => {
+      abyssalEls.forEach((el) => {
+        const current = el.getAttribute('data-abyssal-font');
+        el.setAttribute('data-abyssal-font', current === 'primary' ? 'secondary' : 'primary');
+      });
+    }, 120);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <>
+      <Global
+        styles={{
+          '@font-face': [
+            {
+              fontFamily: "'Celestial'",
+              src: "url('/fonts/Celestial.ttf')",
+              fontDisplay: 'swap',
+            },
+            {
+              fontFamily: "'Glitch Goblin'",
+              src: "url('/fonts/GlitchGoblin.ttf')",
+              fontDisplay: 'swap',
+            },
+            {
+              fontFamily: "'Infernal'",
+              src: "url('/fonts/Infernal.ttf')",
+              fontDisplay: 'swap',
+            },
+          ],
+        }}
+      />
       <Divider sx={{ mb: 6, bgcolor: 'rgba(255,255,255,0.1)' }} />
 
       {isScheduledPreview ? (
@@ -701,6 +745,18 @@ function PostContentSection({
               '& p': { my: 0 },
               '& p + p': { mt: 2 },
             },
+            '& [data-lang="celestial"]': { fontFamily: '"Celestial", serif' },
+            '& [data-lang="celestial"][data-reveal="true"]:hover': { fontFamily: 'inherit' },
+            '& [data-lang="abyssal"]': { fontFamily: '"Glitch Goblin", monospace' },
+            '& [data-lang="abyssal"][data-abyssal-font="primary"]': {
+              fontFamily: '"Glitch Goblin", monospace',
+            },
+            '& [data-lang="abyssal"][data-abyssal-font="secondary"]': {
+              fontFamily: '"Infernal", serif',
+            },
+            '& [data-lang="abyssal"][data-reveal="true"]:hover': {
+              fontFamily: 'inherit !important',
+            },
             '@media (prefers-reduced-motion: reduce)': {
               '& [data-thinking]': {
                 animation: 'none',
@@ -719,6 +775,8 @@ function PostContentSection({
                 textShadow: 'none',
                 color: '#7fffe0',
               },
+              '& [data-lang="celestial"][data-reveal="true"]': { fontFamily: 'inherit' },
+              '& [data-lang="abyssal"][data-reveal="true"]': { fontFamily: 'inherit !important' },
             },
             '& img': {
               maxWidth: '100%',
@@ -830,7 +888,7 @@ function PostContentSection({
               return (
                 <ReactMarkdown
                   key={part.id}
-                  remarkPlugins={[remarkGfm, remarkThinkingTags]}
+                  remarkPlugins={[remarkGfm, remarkThinkingTags, remarkFictionalLangTags]}
                   rehypePlugins={[
                     [rehypeSanitize, markdownSanitizeSchema],
                     rehypeHighlight,
