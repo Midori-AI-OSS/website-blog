@@ -897,13 +897,22 @@ function PostContentSection({
             },
             '& [data-reveal="true"]': {
               position: 'relative',
-              display: 'inline-block',
-              verticalAlign: 'bottom',
+              display: 'inline',
+              verticalAlign: 'baseline',
+              fontFamily: 'inherit',
               '& > [data-reveal-content="true"]': {
                 display: 'inline-block',
+                lineHeight: 1,
+                verticalAlign: 'text-bottom',
                 clipPath: 'inset(0 0% 0 0)',
                 overflow: 'hidden',
                 willChange: 'clip-path',
+              },
+              '&[data-lang="celestial"] > [data-reveal-content="true"]': {
+                fontFamily: '"Celestial", serif',
+              },
+              '&[data-lang="abyssal"] > [data-reveal-content="true"]': {
+                fontFamily: '"Infernal", serif',
               },
               '&::after': {
                 content: '"\\007C"',
@@ -913,7 +922,7 @@ function PostContentSection({
                 pointerEvents: 'none',
                 opacity: 0,
               },
-              '&[data-reveal-translated="true"], &[data-reveal-phase="type"], &[data-reveal-phase="reverse-backspace"]':
+              '&[data-reveal-translated="true"] > [data-reveal-content="true"], &[data-reveal-phase="type"] > [data-reveal-content="true"], &[data-reveal-phase="reverse-backspace"] > [data-reveal-content="true"]':
                 {
                   fontFamily: 'inherit !important',
                 },
@@ -954,6 +963,7 @@ function PostContentSection({
                 '& > [data-reveal-content="true"]': {
                   animation: 'none',
                   clipPath: 'none',
+                  fontFamily: 'inherit !important',
                   overflow: 'visible',
                 },
                 '&::after': { content: '""' },
