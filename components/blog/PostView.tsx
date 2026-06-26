@@ -771,18 +771,18 @@ function PostContentSection({
               transition: 'font-family 0s step-end 5s',
               '&::after': {
                 content: '"\\007C"',
-                animation: `${revealCursorKeyframes} 0.8s steps(1) infinite`,
+                opacity: 0,
               },
               '&:hover': {
                 fontFamily: 'inherit !important',
-                transition: 'font-family 0s step-end 0s',
+                transition: 'font-family 0s step-end var(--reveal-half)',
                 animation: [
                   `${revealBackspaceKeyframes} var(--reveal-half) steps(var(--reveal-chars), end) forwards`,
                   `${revealTypeKeyframes} var(--reveal-half) steps(var(--reveal-chars), end) var(--reveal-half) forwards`,
                 ].join(', '),
               },
               '&:hover::after': {
-                content: '"\\007C"',
+                opacity: 1,
                 animation: `${revealCursorKeyframes} 0.8s steps(1) infinite`,
               },
             },
