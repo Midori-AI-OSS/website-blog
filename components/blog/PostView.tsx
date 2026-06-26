@@ -246,6 +246,14 @@ function replaceLoreImageTokens(markdown: string): string {
   );
 }
 
+function replaceFictionalLangTagTokens(markdown: string): string {
+  return markdown
+    .replace(/<celestial:R>/gi, '<celestial reveal>')
+    .replace(/<abyssal:R>/gi, '<abyssal reveal>')
+    .replace(/<\/celestial:R>/gi, '</celestial>')
+    .replace(/<\/abyssal:R>/gi, '</abyssal>');
+}
+
 function lightenHexColor(hex: string, ratio: number): string {
   const normalized = hex.trim().replace(/^#/, '');
   if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
@@ -313,7 +321,12 @@ function PostContentSection({
 }: PostContentSectionProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const markdownContent = useMemo(() => replaceLoreImageTokens(post.content), [post.content]);
+  const markdownContent = useMemo(() => {
+    let cleaned = post.content;
+    cleaned = replaceLoreImageTokens(cleaned);
+    cleaned = replaceFictionalLangTagTokens(cleaned);
+    return cleaned;
+  }, [post.content]);
   const markdownParts = useMemo(
     () => splitMarkdownSpeciesCareTokens(markdownContent),
     [markdownContent],

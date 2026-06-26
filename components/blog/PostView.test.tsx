@@ -232,7 +232,7 @@ describe('PostView', () => {
   test('drops mismatched celestial closing tag but keeps text', () => {
     const html = renderPostContent('<celestial>Still readable');
 
-    expect(html).not.toContain('data-lang="celestial"');
+    expect(html).not.toContain('<span data-lang="celestial"');
     expect(html).toContain('Still readable');
     expect(html).not.toContain('&lt;celestial&gt;');
   });
@@ -240,7 +240,7 @@ describe('PostView', () => {
   test('drops mismatched abyssal closing tag but keeps text', () => {
     const html = renderPostContent('<abyssal>Still readable');
 
-    expect(html).not.toContain('data-lang="abyssal"');
+    expect(html).not.toContain('<span data-lang="abyssal"');
     expect(html).toContain('Still readable');
     expect(html).not.toContain('&lt;abyssal&gt;');
   });

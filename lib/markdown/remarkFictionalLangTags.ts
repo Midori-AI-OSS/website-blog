@@ -1,7 +1,7 @@
 import type { Content, Html, Parent, Root } from 'mdast';
 import type { Plugin } from 'unified';
 
-const OPENING_LANG_TAG = /^<(celestial|abyssal)(\s*:R)?\s*>$/i;
+const OPENING_LANG_TAG = /^<(celestial|abyssal)(\s+reveal)?\s*>$/i;
 const CLOSING_CELESTIAL_TAG = /^<\/celestial\s*>$/i;
 const CLOSING_ABYSSAL_TAG = /^<\/abyssal\s*>$/i;
 
@@ -41,14 +41,13 @@ function parseOpeningTag(node: Content): { lang: string; reveal: boolean } | nul
   if (!match) return null;
   return {
     lang: match[1] ?? '',
-    reveal: typeof match[2] === 'string' && match[2].trim().toUpperCase() === ':R',
+    reveal: typeof match[2] === 'string' && /\breveal\b/i.test(match[2]),
   };
 }
 
 function isMatchingClosingTag(node: Content, lang: string): boolean {
   if (!isHtml(node)) return false;
-  const cleanValue = node.value.trim().replace(/\s*:R\s*/i, '');
-  return getClosingRegex(lang).test(cleanValue);
+  return getClosingRegex(lang).test(node.value.trim());
 }
 
 function createFictionalLangNode(
@@ -125,8 +124,8 @@ function transformParent(parent: Parent | Root): void {
     // Drop stray closing tags (any lang)
     if (
       isHtml(child) &&
-      (CLOSING_CELESTIAL_TAG.test(child.value.trim().replace(/\s*:R\s*/i, '')) ||
-        CLOSING_ABYSSAL_TAG.test(child.value.trim().replace(/\s*:R\s*/i, '')))
+      (CLOSING_CELESTIAL_TAG.test(child.value.trim()) ||
+        CLOSING_ABYSSAL_TAG.test(child.value.trim()))
     ) {
       continue;
     }
