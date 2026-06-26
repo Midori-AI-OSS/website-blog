@@ -49,6 +49,14 @@ function createThinkingNode(variant: 'inline' | 'block', children: Content[]): T
   };
 }
 
+function transformContentChildren(children: Content[]): void {
+  for (const child of children) {
+    if (isParentContent(child)) {
+      transformParent(child);
+    }
+  }
+}
+
 function isOnlyContentInParent(
   parent: Parent,
   openingIndex: number,
@@ -91,15 +99,37 @@ function findClosingTag(children: Content[], startIndex: number): number | Neste
   return -1;
 }
 
+function splitNestedClosingTag(
+  parent: Parent | Root,
+  openingIndex: number,
+  closingTag: NestedClosingTag,
+): {
+  innerChildren: Content[];
+  remainingOuterNode: (Content & Parent) | null;
+} {
+  const { outerIndex, innerIndex } = closingTag;
+  const outerNode = parent.children[outerIndex] as Content & Parent;
+  const childrenBeforeClosing = outerNode.children.slice(0, innerIndex);
+  const innerOuterNode =
+    childrenBeforeClosing.length > 0
+      ? ({ ...outerNode, children: childrenBeforeClosing } as Content)
+      : null;
+  const innerChildren = [
+    ...(parent.children as Content[]).slice(openingIndex + 1, outerIndex),
+    ...(innerOuterNode ? [innerOuterNode] : []),
+  ];
+
+  outerNode.children = outerNode.children.slice(innerIndex + 1);
+
+  return {
+    innerChildren,
+    remainingOuterNode: outerNode.children.length > 0 ? outerNode : null,
+  };
+}
+
 function transformParent(parent: Parent | Root): void {
   const transformedChildren: Array<Content | ThinkingNode> = [];
   const parentIsParagraph = parent.type === 'paragraph';
-
-  for (const child of parent.children as Content[]) {
-    if (isParentContent(child)) {
-      transformParent(child);
-    }
-  }
 
   for (let index = 0; index < parent.children.length; index += 1) {
     const child = parent.children[index] as Content | undefined;
@@ -117,72 +147,50 @@ function transformParent(parent: Parent | Root): void {
         }
         const innerTree = unified().use(remarkParse).parse(innerContent);
         const innerChildren = innerTree.children as Content[];
-        for (const innerChild of innerChildren) {
-          if (isParentContent(innerChild)) {
-            transformParent(innerChild as Parent);
-          }
-        }
+        transformContentChildren(innerChildren);
         transformedChildren.push(createThinkingNode('block', innerChildren));
         continue;
       }
 
       const prefixMatch = OPENING_THINKING_PREFIX.exec(child.value.trim());
-      if (prefixMatch) {
-        const trailingContent = prefixMatch[1]?.trim();
+      const trailingContent = prefixMatch?.[1]?.trim();
+      if (prefixMatch && trailingContent) {
         const closingResult = findClosingTag(parent.children as Content[], index);
 
         if (closingResult === -1) {
-          if (trailingContent) {
-            const innerTree = unified().use(remarkParse).parse(trailingContent);
-            const innerChildren = innerTree.children as Content[];
-            for (const innerChild of innerChildren) {
-              if (isParentContent(innerChild)) {
-                transformParent(innerChild as Parent);
-              }
-            }
-            transformedChildren.push(createThinkingNode('block', innerChildren));
-          }
+          const innerTree = unified().use(remarkParse).parse(trailingContent);
+          const innerChildren = innerTree.children as Content[];
+          transformContentChildren(innerChildren);
+          transformedChildren.push(createThinkingNode('block', innerChildren));
           continue;
         }
 
         let innerChildren: Content[];
         let skipTo: number;
+        let remainingOuterNode: (Content & Parent) | null = null;
 
         if (typeof closingResult === 'number') {
           innerChildren = (parent.children as Content[]).slice(index + 1, closingResult);
           skipTo = closingResult;
         } else {
-          const { outerIndex, innerIndex } = closingResult;
-          const outerNode = parent.children[outerIndex] as Content & Parent;
-          innerChildren = [
-            ...(parent.children as Content[]).slice(index + 1, outerIndex),
-            ...outerNode.children.slice(0, innerIndex),
-          ];
-          outerNode.children.splice(innerIndex, 1);
-          if (outerNode.children.length > 0) {
-            transformedChildren.push(outerNode as unknown as Content);
-          }
-          skipTo = outerIndex;
+          const splitResult = splitNestedClosingTag(parent, index, closingResult);
+          innerChildren = splitResult.innerChildren;
+          remainingOuterNode = splitResult.remainingOuterNode;
+          skipTo = closingResult.outerIndex;
         }
 
-        if (trailingContent) {
-          const innerTree = unified().use(remarkParse).parse(trailingContent);
-          const parsedTrailing = innerTree.children as Content[];
-          for (const innerChild of parsedTrailing) {
-            if (isParentContent(innerChild)) {
-              transformParent(innerChild as Parent);
-            }
-          }
-          innerChildren = [...parsedTrailing, ...innerChildren];
-        }
+        const innerTree = unified().use(remarkParse).parse(trailingContent);
+        const parsedTrailing = innerTree.children as Content[];
+        transformContentChildren(parsedTrailing);
+        innerChildren = [...parsedTrailing, ...innerChildren];
 
-        for (const innerChild of innerChildren) {
-          if (isParentContent(innerChild)) {
-            transformParent(innerChild as Parent);
-          }
-        }
+        transformContentChildren(innerChildren);
 
         transformedChildren.push(createThinkingNode('block', innerChildren));
+        if (remainingOuterNode) {
+          transformParent(remainingOuterNode);
+          transformedChildren.push(remainingOuterNode as unknown as Content);
+        }
         index = skipTo;
         continue;
       }
@@ -200,27 +208,26 @@ function transformParent(parent: Parent | Root): void {
         const isStandalone =
           parentIsParagraph && isOnlyContentInParent(parent, index, closingResult);
         const variant = !parentIsParagraph || isStandalone ? 'block' : 'inline';
+        transformContentChildren(innerChildren);
         transformedChildren.push(createThinkingNode(variant, innerChildren));
         index = closingResult;
         continue;
       }
 
       const { outerIndex, innerIndex } = closingResult;
-      const outerNode = parent.children[outerIndex] as Content & Parent;
-
-      const innerChildren: Content[] = [
-        ...(parent.children as Content[]).slice(index + 1, outerIndex),
-        ...outerNode.children.slice(0, innerIndex),
-      ];
-
-      outerNode.children.splice(innerIndex, 1);
-      if (outerNode.children.length > 0) {
-        transformedChildren.push(outerNode as unknown as Content);
-      }
-
       const isStandalone = parentIsParagraph && isOnlyContentInParent(parent, index, outerIndex);
       const variant = !parentIsParagraph || isStandalone ? 'block' : 'inline';
+      const { innerChildren, remainingOuterNode } = splitNestedClosingTag(parent, index, {
+        outerIndex,
+        innerIndex,
+      });
+
+      transformContentChildren(innerChildren);
       transformedChildren.push(createThinkingNode(variant, innerChildren));
+      if (remainingOuterNode) {
+        transformParent(remainingOuterNode);
+        transformedChildren.push(remainingOuterNode as unknown as Content);
+      }
       index = outerIndex;
       continue;
     }
@@ -229,6 +236,9 @@ function transformParent(parent: Parent | Root): void {
       continue;
     }
 
+    if (isParentContent(child)) {
+      transformParent(child);
+    }
     transformedChildren.push(child);
   }
 
