@@ -25,11 +25,14 @@
 - In `blog/posts/*.md` and `lore/posts/*.md`, curly double quotes are banned.
 - Use straight double quotes (`"`) instead of `“` and `”`.
 
+- Token Reference: See `.agents/TOKENS.md` for the canonical reference of all content tokens, shortcodes, and front matter fields available in blog and lore posts. This file must be kept up to date when token systems change.
+
 ## Content System Test Pages
 - Hidden renderer test pages live at `/blog/test` and `/lore/test`.
 - When adding or changing any user-facing blog/lore content behavior, update the relevant test page in the same change.
 - Blog test fixtures must not use lore-only `{{...}}` token systems.
 - Test pages must stay unlinked from normal navigation and content lists, and must cover representative edge cases for the affected system.
+- When token systems documented in `.agents/TOKENS.md` change, update the relevant test page and the token reference together.
 
 ## Agent Directory Integrity
 - The `.agents/` directory and all of its subdirectories are permanent infrastructure. Do not delete, move, or restructure them.

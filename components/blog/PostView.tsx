@@ -14,7 +14,7 @@
  * - Follows MUI Joy patterns from Big-AGI
  */
 
-import { keyframes } from '@emotion/react';
+import { Global, keyframes } from '@emotion/react';
 import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Lock, Tag, User } from 'lucide-react';
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -38,6 +38,7 @@ import {
   normalizeIsoDateString,
 } from '@/lib/content/publish';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
+import remarkFictionalLangTags from '@/lib/markdown/remarkFictionalLangTags';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import { splitMarkdownSpeciesCareTokens } from '@/lib/species-care/tokens';
 import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
@@ -150,6 +151,25 @@ const thinkingTitleSliceKeyframes = keyframes({
   },
 });
 
+const revealBackspaceKeyframes = keyframes({
+  from: { clipPath: 'inset(0 0% 0 0)' },
+  to: { clipPath: 'inset(0 100% 0 0)' },
+});
+
+const revealTypeKeyframes = keyframes({
+  from: { clipPath: 'inset(0 100% 0 0)' },
+  to: { clipPath: 'inset(0 0% 0 0)' },
+});
+
+const revealCursorKeyframes = keyframes({
+  '0%, 100%': { opacity: 1 },
+  '50%': { opacity: 0 },
+});
+
+const REVEAL_REVERSE_DELAY_MS = 5000;
+const REVEAL_HALF_MS_PER_CHARACTER = 40;
+const REVEAL_MIN_HALF_MS = 160;
+
 /**
  * Props for PostView component
  */
@@ -215,7 +235,12 @@ const markdownSanitizeSchema = {
   ...defaultSchema,
   attributes: {
     ...defaultSchema.attributes,
-    span: [...(defaultSchema.attributes?.span ?? []), ['data-thinking', 'inline', 'block']],
+    span: [
+      ...(defaultSchema.attributes?.span ?? []),
+      ['data-thinking', 'inline', 'block'],
+      ['data-lang'],
+      ['data-reveal'],
+    ],
     div: [...(defaultSchema.attributes?.div ?? []), ['data-thinking', 'inline', 'block']],
   },
 };
@@ -238,6 +263,14 @@ function replaceLoreImageTokens(markdown: string): string {
       return `\n\n![${alt}](${url} "${LORE_IMAGE_TOKEN_TITLE}")\n\n`;
     },
   );
+}
+
+function replaceFictionalLangTagTokens(markdown: string): string {
+  return markdown
+    .replace(/<celestial:R>/gi, '<celestial reveal>')
+    .replace(/<abyssal:R>/gi, '<abyssal reveal>')
+    .replace(/<\/celestial:R>/gi, '</celestial>')
+    .replace(/<\/abyssal:R>/gi, '</abyssal>');
 }
 
 function lightenHexColor(hex: string, ratio: number): string {
@@ -307,7 +340,12 @@ function PostContentSection({
 }: PostContentSectionProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const markdownContent = useMemo(() => replaceLoreImageTokens(post.content), [post.content]);
+  const markdownContent = useMemo(() => {
+    let cleaned = post.content;
+    cleaned = replaceLoreImageTokens(cleaned);
+    cleaned = replaceFictionalLangTagTokens(cleaned);
+    return cleaned;
+  }, [post.content]);
   const markdownParts = useMemo(
     () => splitMarkdownSpeciesCareTokens(markdownContent),
     [markdownContent],
@@ -347,6 +385,22 @@ function PostContentSection({
   }, [markdownParts]);
   const markdownComponents = useMemo<Components>(
     () => ({
+      span: (props) => {
+        const { node: _node, children, ...spanProps } = props;
+        const dataAttributes = spanProps as Record<string, unknown>;
+        const isReveal = dataAttributes['data-reveal'] === 'true';
+        const dataLang = dataAttributes['data-lang'];
+
+        if (isReveal && (dataLang === 'celestial' || dataLang === 'abyssal')) {
+          return (
+            <span {...spanProps}>
+              <span data-reveal-content="true">{children}</span>
+            </span>
+          );
+        }
+
+        return <span {...spanProps}>{children}</span>;
+      },
       img: (props) => {
         const { node: _node, ...imgProps } = props;
         const { src, alt, title } = imgProps;
@@ -462,10 +516,145 @@ function PostContentSection({
     root.querySelectorAll<HTMLElement>('code.language-layerone').forEach((el) => {
       el.style.animationDelay = `${-Math.random() * 10}s`;
     });
+
+    const revealCleanups: Array<() => void> = [];
+
+    root.querySelectorAll<HTMLElement>('[data-reveal="true"]').forEach((el) => {
+      const text = el.textContent ?? '';
+      const characterCount = Math.max(1, Array.from(text).length);
+      const revealHalfMs = Math.max(
+        REVEAL_MIN_HALF_MS,
+        characterCount * REVEAL_HALF_MS_PER_CHARACTER,
+      );
+
+      el.style.setProperty('--reveal-chars', String(characterCount));
+      el.style.setProperty('--reveal-duration', `${(revealHalfMs * 2) / 1000}s`);
+      el.style.setProperty('--reveal-half', `${revealHalfMs / 1000}s`);
+      el.style.setProperty('--reveal-steps', `steps(${characterCount}, end)`);
+
+      const forwardTimers: number[] = [];
+      const reverseTimers: number[] = [];
+      let reverseDelayTimer: number | null = null;
+
+      const clearTimerList = (timers: number[]) => {
+        timers.forEach((timer) => {
+          window.clearTimeout(timer);
+        });
+        timers.length = 0;
+      };
+
+      const clearForwardTimers = () => clearTimerList(forwardTimers);
+      const clearReverseTimers = () => {
+        clearTimerList(reverseTimers);
+        if (reverseDelayTimer !== null) {
+          window.clearTimeout(reverseDelayTimer);
+          reverseDelayTimer = null;
+        }
+      };
+
+      const restartPhase = (phase: string) => {
+        const revealContent = el.querySelector<HTMLElement>('[data-reveal-content="true"]');
+        el.removeAttribute('data-reveal-phase');
+        if (revealContent) {
+          revealContent.style.animation = 'none';
+          revealContent.getBoundingClientRect();
+          revealContent.style.animation = '';
+        }
+        el.setAttribute('data-reveal-phase', phase);
+      };
+
+      const completeForward = () => {
+        el.removeAttribute('data-reveal-phase');
+        el.setAttribute('data-reveal-translated', 'true');
+      };
+
+      const completeReverse = () => {
+        el.removeAttribute('data-reveal-phase');
+        el.removeAttribute('data-reveal-translated');
+      };
+
+      const startForward = () => {
+        clearForwardTimers();
+        clearReverseTimers();
+
+        if (
+          el.getAttribute('data-reveal-translated') === 'true' &&
+          !el.hasAttribute('data-reveal-phase')
+        ) {
+          return;
+        }
+
+        el.removeAttribute('data-reveal-translated');
+        restartPhase('backspace');
+
+        forwardTimers.push(
+          window.setTimeout(() => {
+            el.setAttribute('data-reveal-translated', 'true');
+            restartPhase('type');
+          }, revealHalfMs),
+        );
+        forwardTimers.push(window.setTimeout(completeForward, revealHalfMs * 2));
+      };
+
+      const startReverse = () => {
+        clearForwardTimers();
+        clearReverseTimers();
+        el.setAttribute('data-reveal-translated', 'true');
+        restartPhase('reverse-backspace');
+
+        reverseTimers.push(
+          window.setTimeout(() => {
+            el.removeAttribute('data-reveal-translated');
+            restartPhase('reverse-type');
+          }, revealHalfMs),
+        );
+        reverseTimers.push(window.setTimeout(completeReverse, revealHalfMs * 2));
+      };
+
+      const handleMouseEnter = () => startForward();
+      const handleMouseLeave = () => {
+        clearReverseTimers();
+        reverseDelayTimer = window.setTimeout(startReverse, REVEAL_REVERSE_DELAY_MS);
+      };
+
+      el.addEventListener('mouseenter', handleMouseEnter);
+      el.addEventListener('mouseleave', handleMouseLeave);
+
+      revealCleanups.push(() => {
+        el.removeEventListener('mouseenter', handleMouseEnter);
+        el.removeEventListener('mouseleave', handleMouseLeave);
+        clearForwardTimers();
+        clearReverseTimers();
+      });
+    });
+
+    return () => {
+      revealCleanups.forEach((cleanup) => {
+        cleanup();
+      });
+    };
   }, []);
 
   return (
     <>
+      <Global
+        styles={`
+          @font-face {
+            font-family: 'Celestial';
+            src: url('/fonts/Celestial.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Infernal';
+            src: url('/fonts/Infernal.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+          }
+        `}
+      />
       <Divider sx={{ mb: 6, bgcolor: 'rgba(255,255,255,0.1)' }} />
 
       {isScheduledPreview ? (
@@ -701,6 +890,55 @@ function PostContentSection({
               '& p': { my: 0 },
               '& p + p': { mt: 2 },
             },
+            '& [data-lang="celestial"]': { fontFamily: '"Celestial", serif' },
+            '& [data-lang="abyssal"]': {
+              fontFamily: '"Infernal", serif',
+              fontSize: '0.95em',
+            },
+            '& [data-reveal="true"]': {
+              position: 'relative',
+              display: 'inline',
+              verticalAlign: 'baseline',
+              fontFamily: 'inherit',
+              '& > [data-reveal-content="true"]': {
+                display: 'inline-block',
+                lineHeight: 1,
+                verticalAlign: 'text-bottom',
+                clipPath: 'inset(0 0% 0 0)',
+                overflow: 'hidden',
+                willChange: 'clip-path',
+              },
+              '&[data-lang="celestial"] > [data-reveal-content="true"]': {
+                fontFamily: '"Celestial", serif',
+              },
+              '&[data-lang="abyssal"] > [data-reveal-content="true"]': {
+                fontFamily: '"Infernal", serif',
+              },
+              '&::after': {
+                content: '"\\007C"',
+                position: 'absolute',
+                left: '100%',
+                top: 0,
+                pointerEvents: 'none',
+                opacity: 0,
+              },
+              '&[data-reveal-translated="true"] > [data-reveal-content="true"], &[data-reveal-phase="type"] > [data-reveal-content="true"], &[data-reveal-phase="reverse-backspace"] > [data-reveal-content="true"]':
+                {
+                  fontFamily: 'inherit !important',
+                },
+              '&[data-reveal-phase="backspace"] > [data-reveal-content="true"], &[data-reveal-phase="reverse-backspace"] > [data-reveal-content="true"]':
+                {
+                  animation: `${revealBackspaceKeyframes} var(--reveal-half) var(--reveal-steps) forwards`,
+                },
+              '&[data-reveal-phase="type"] > [data-reveal-content="true"], &[data-reveal-phase="reverse-type"] > [data-reveal-content="true"]':
+                {
+                  animation: `${revealTypeKeyframes} var(--reveal-half) var(--reveal-steps) forwards`,
+                },
+              '&[data-reveal-phase]::after': {
+                opacity: 1,
+                animation: `${revealCursorKeyframes} 0.8s steps(1) infinite`,
+              },
+            },
             '@media (prefers-reduced-motion: reduce)': {
               '& [data-thinking]': {
                 animation: 'none',
@@ -718,6 +956,17 @@ function PostContentSection({
                 animation: 'none',
                 textShadow: 'none',
                 color: '#7fffe0',
+              },
+              // Always reveal fictional lang text under reduced motion (no animation)
+              '& [data-reveal="true"]': {
+                fontFamily: 'inherit !important',
+                '& > [data-reveal-content="true"]': {
+                  animation: 'none',
+                  clipPath: 'none',
+                  fontFamily: 'inherit !important',
+                  overflow: 'visible',
+                },
+                '&::after': { content: '""' },
               },
             },
             '& img': {
@@ -830,7 +1079,7 @@ function PostContentSection({
               return (
                 <ReactMarkdown
                   key={part.id}
-                  remarkPlugins={[remarkGfm, remarkThinkingTags]}
+                  remarkPlugins={[remarkGfm, remarkThinkingTags, remarkFictionalLangTags]}
                   rehypePlugins={[
                     [rehypeSanitize, markdownSanitizeSchema],
                     rehypeHighlight,

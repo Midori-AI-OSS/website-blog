@@ -190,4 +190,89 @@ describe('PostView', () => {
     expect(html).toContain('Still readable.');
     expect(html).not.toContain('&lt;thinking&gt;');
   });
+
+  test('renders basic celestial tag as styled span', () => {
+    const html = renderPostContent('<celestial>Hello</celestial>');
+
+    expect(html).toContain('data-lang="celestial"');
+    expect(html).toContain('Hello');
+    expect(html).not.toContain('&lt;celestial&gt;');
+    expect(html).not.toContain('&lt;/celestial&gt;');
+  });
+
+  test('renders celestial reveal variant with data-reveal', () => {
+    const html = renderPostContent('<celestial:R>Hover text</celestial:R>');
+
+    expect(html).toContain('data-lang="celestial"');
+    expect(html).toContain('data-reveal="true"');
+    expect(html).toContain('data-reveal-content="true"');
+    expect(html).toContain('Hover text');
+    expect(html).not.toContain('&lt;celestial:R&gt;');
+    expect(html).not.toContain('&lt;/celestial:R&gt;');
+  });
+
+  test('renders reveal typewriter animation CSS without font-family transitions', () => {
+    const html = renderPostContent('<celestial:R>Hover text</celestial:R>');
+
+    expect(html).toContain('[data-reveal-phase="backspace"]');
+    expect(html).toContain('[data-reveal-phase="type"]');
+    expect(html).toContain('[data-reveal-phase="reverse-backspace"]');
+    expect(html).toContain('[data-reveal-phase="reverse-type"]');
+    expect(html).toContain('var(--reveal-half) var(--reveal-steps) forwards');
+    expect(html).toContain('[data-reveal-phase]::after');
+    expect(html).not.toContain('transition:font-family');
+  });
+
+  test('renders basic abyssal tag as styled span', () => {
+    const html = renderPostContent('<abyssal>Glitch</abyssal>');
+
+    expect(html).toContain('data-lang="abyssal"');
+    expect(html).toContain('Glitch');
+    expect(html).not.toContain('&lt;abyssal&gt;');
+    expect(html).not.toContain('&lt;/abyssal&gt;');
+  });
+
+  test('renders abyssal reveal variant with data-reveal', () => {
+    const html = renderPostContent('<abyssal:R>Hover glitch</abyssal:R>');
+
+    expect(html).toContain('data-lang="abyssal"');
+    expect(html).toContain('data-reveal="true"');
+    expect(html).toContain('data-reveal-content="true"');
+    expect(html).toContain('Hover glitch');
+    expect(html).not.toContain('&lt;abyssal:R&gt;');
+    expect(html).not.toContain('&lt;/abyssal:R&gt;');
+  });
+
+  test('drops mismatched celestial closing tag but keeps text', () => {
+    const html = renderPostContent('<celestial>Still readable');
+
+    expect(html).not.toContain('<span data-lang="celestial"');
+    expect(html).toContain('Still readable');
+    expect(html).not.toContain('&lt;celestial&gt;');
+  });
+
+  test('drops mismatched abyssal closing tag but keeps text', () => {
+    const html = renderPostContent('<abyssal>Still readable');
+
+    expect(html).not.toContain('<span data-lang="abyssal"');
+    expect(html).toContain('Still readable');
+    expect(html).not.toContain('&lt;abyssal&gt;');
+  });
+
+  test('renders mixed celestial and abyssal in same paragraph', () => {
+    const html = renderPostContent('<celestial>First</celestial> and <abyssal>Second</abyssal>');
+
+    expect(html).toContain('data-lang="celestial"');
+    expect(html).toContain('data-lang="abyssal"');
+    expect(html).toContain('First');
+    expect(html).toContain('Second');
+  });
+
+  test('preserves markdown formatting inside language tags', () => {
+    const html = renderPostContent('<celestial>**bold** [link](https://example.com)</celestial>');
+
+    expect(html).toContain('data-lang="celestial"');
+    expect(html).toContain('<strong>bold</strong>');
+    expect(html).toContain('<a href="https://example.com">link</a>');
+  });
 });
