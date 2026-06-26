@@ -162,8 +162,13 @@ const revealTypeKeyframes = keyframes({
 });
 
 const revealCursorKeyframes = keyframes({
+  '0%, 100%': { opacity: 1 },
   '50%': { opacity: 0 },
 });
+
+const REVEAL_REVERSE_DELAY_MS = 5000;
+const REVEAL_HALF_MS_PER_CHARACTER = 40;
+const REVEAL_MIN_HALF_MS = 160;
 
 /**
  * Props for PostView component
@@ -380,6 +385,22 @@ function PostContentSection({
   }, [markdownParts]);
   const markdownComponents = useMemo<Components>(
     () => ({
+      span: (props) => {
+        const { node: _node, children, ...spanProps } = props;
+        const dataAttributes = spanProps as Record<string, unknown>;
+        const isReveal = dataAttributes['data-reveal'] === 'true';
+        const dataLang = dataAttributes['data-lang'];
+
+        if (isReveal && (dataLang === 'celestial' || dataLang === 'abyssal')) {
+          return (
+            <span {...spanProps}>
+              <span data-reveal-content="true">{children}</span>
+            </span>
+          );
+        }
+
+        return <span {...spanProps}>{children}</span>;
+      },
       img: (props) => {
         const { node: _node, ...imgProps } = props;
         const { src, alt, title } = imgProps;
@@ -495,12 +516,123 @@ function PostContentSection({
     root.querySelectorAll<HTMLElement>('code.language-layerone').forEach((el) => {
       el.style.animationDelay = `${-Math.random() * 10}s`;
     });
+
+    const revealCleanups: Array<() => void> = [];
+
     root.querySelectorAll<HTMLElement>('[data-reveal="true"]').forEach((el) => {
       const text = el.textContent ?? '';
-      el.style.setProperty('--reveal-chars', String(text.length));
-      el.style.setProperty('--reveal-duration', `${text.length * 0.08}s`);
-      el.style.setProperty('--reveal-half', `${text.length * 0.04}s`);
+      const characterCount = Math.max(1, Array.from(text).length);
+      const revealHalfMs = Math.max(
+        REVEAL_MIN_HALF_MS,
+        characterCount * REVEAL_HALF_MS_PER_CHARACTER,
+      );
+
+      el.style.setProperty('--reveal-chars', String(characterCount));
+      el.style.setProperty('--reveal-duration', `${(revealHalfMs * 2) / 1000}s`);
+      el.style.setProperty('--reveal-half', `${revealHalfMs / 1000}s`);
+      el.style.setProperty('--reveal-steps', `steps(${characterCount}, end)`);
+
+      const forwardTimers: number[] = [];
+      const reverseTimers: number[] = [];
+      let reverseDelayTimer: number | null = null;
+
+      const clearTimerList = (timers: number[]) => {
+        timers.forEach((timer) => {
+          window.clearTimeout(timer);
+        });
+        timers.length = 0;
+      };
+
+      const clearForwardTimers = () => clearTimerList(forwardTimers);
+      const clearReverseTimers = () => {
+        clearTimerList(reverseTimers);
+        if (reverseDelayTimer !== null) {
+          window.clearTimeout(reverseDelayTimer);
+          reverseDelayTimer = null;
+        }
+      };
+
+      const restartPhase = (phase: string) => {
+        const revealContent = el.querySelector<HTMLElement>('[data-reveal-content="true"]');
+        el.removeAttribute('data-reveal-phase');
+        if (revealContent) {
+          revealContent.style.animation = 'none';
+          revealContent.getBoundingClientRect();
+          revealContent.style.animation = '';
+        }
+        el.setAttribute('data-reveal-phase', phase);
+      };
+
+      const completeForward = () => {
+        el.removeAttribute('data-reveal-phase');
+        el.setAttribute('data-reveal-translated', 'true');
+      };
+
+      const completeReverse = () => {
+        el.removeAttribute('data-reveal-phase');
+        el.removeAttribute('data-reveal-translated');
+      };
+
+      const startForward = () => {
+        clearForwardTimers();
+        clearReverseTimers();
+
+        if (
+          el.getAttribute('data-reveal-translated') === 'true' &&
+          !el.hasAttribute('data-reveal-phase')
+        ) {
+          return;
+        }
+
+        el.removeAttribute('data-reveal-translated');
+        restartPhase('backspace');
+
+        forwardTimers.push(
+          window.setTimeout(() => {
+            el.setAttribute('data-reveal-translated', 'true');
+            restartPhase('type');
+          }, revealHalfMs),
+        );
+        forwardTimers.push(window.setTimeout(completeForward, revealHalfMs * 2));
+      };
+
+      const startReverse = () => {
+        clearForwardTimers();
+        clearReverseTimers();
+        el.setAttribute('data-reveal-translated', 'true');
+        restartPhase('reverse-backspace');
+
+        reverseTimers.push(
+          window.setTimeout(() => {
+            el.removeAttribute('data-reveal-translated');
+            restartPhase('reverse-type');
+          }, revealHalfMs),
+        );
+        reverseTimers.push(window.setTimeout(completeReverse, revealHalfMs * 2));
+      };
+
+      const handleMouseEnter = () => startForward();
+      const handleMouseLeave = () => {
+        clearReverseTimers();
+        reverseDelayTimer = window.setTimeout(startReverse, REVEAL_REVERSE_DELAY_MS);
+      };
+
+      el.addEventListener('mouseenter', handleMouseEnter);
+      el.addEventListener('mouseleave', handleMouseLeave);
+
+      revealCleanups.push(() => {
+        el.removeEventListener('mouseenter', handleMouseEnter);
+        el.removeEventListener('mouseleave', handleMouseLeave);
+        clearForwardTimers();
+        clearReverseTimers();
+      });
     });
+
+    return () => {
+      revealCleanups.forEach((cleanup) => {
+        cleanup();
+      });
+    };
   }, []);
 
   return (
@@ -766,22 +898,34 @@ function PostContentSection({
             '& [data-reveal="true"]': {
               position: 'relative',
               display: 'inline-block',
-              overflow: 'hidden',
               verticalAlign: 'bottom',
-              transition: 'font-family 0s step-end 5s',
+              '& > [data-reveal-content="true"]': {
+                display: 'inline-block',
+                clipPath: 'inset(0 0% 0 0)',
+                overflow: 'hidden',
+                willChange: 'clip-path',
+              },
               '&::after': {
                 content: '"\\007C"',
+                position: 'absolute',
+                left: '100%',
+                top: 0,
+                pointerEvents: 'none',
                 opacity: 0,
               },
-              '&:hover': {
-                fontFamily: 'inherit !important',
-                transition: 'font-family 0s step-end var(--reveal-half)',
-                animation: [
-                  `${revealBackspaceKeyframes} var(--reveal-half) steps(var(--reveal-chars), end) forwards`,
-                  `${revealTypeKeyframes} var(--reveal-half) steps(var(--reveal-chars), end) var(--reveal-half) forwards`,
-                ].join(', '),
-              },
-              '&:hover::after': {
+              '&[data-reveal-translated="true"], &[data-reveal-phase="type"], &[data-reveal-phase="reverse-backspace"]':
+                {
+                  fontFamily: 'inherit !important',
+                },
+              '&[data-reveal-phase="backspace"] > [data-reveal-content="true"], &[data-reveal-phase="reverse-backspace"] > [data-reveal-content="true"]':
+                {
+                  animation: `${revealBackspaceKeyframes} var(--reveal-half) var(--reveal-steps) forwards`,
+                },
+              '&[data-reveal-phase="type"] > [data-reveal-content="true"], &[data-reveal-phase="reverse-type"] > [data-reveal-content="true"]':
+                {
+                  animation: `${revealTypeKeyframes} var(--reveal-half) var(--reveal-steps) forwards`,
+                },
+              '&[data-reveal-phase]::after': {
                 opacity: 1,
                 animation: `${revealCursorKeyframes} 0.8s steps(1) infinite`,
               },
@@ -807,7 +951,11 @@ function PostContentSection({
               // Always reveal fictional lang text under reduced motion (no animation)
               '& [data-reveal="true"]': {
                 fontFamily: 'inherit !important',
-                overflow: 'visible',
+                '& > [data-reveal-content="true"]': {
+                  animation: 'none',
+                  clipPath: 'none',
+                  overflow: 'visible',
+                },
                 '&::after': { content: '""' },
               },
             },

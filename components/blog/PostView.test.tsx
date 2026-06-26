@@ -205,9 +205,22 @@ describe('PostView', () => {
 
     expect(html).toContain('data-lang="celestial"');
     expect(html).toContain('data-reveal="true"');
+    expect(html).toContain('data-reveal-content="true"');
     expect(html).toContain('Hover text');
     expect(html).not.toContain('&lt;celestial:R&gt;');
     expect(html).not.toContain('&lt;/celestial:R&gt;');
+  });
+
+  test('renders reveal typewriter animation CSS without font-family transitions', () => {
+    const html = renderPostContent('<celestial:R>Hover text</celestial:R>');
+
+    expect(html).toContain('[data-reveal-phase="backspace"]');
+    expect(html).toContain('[data-reveal-phase="type"]');
+    expect(html).toContain('[data-reveal-phase="reverse-backspace"]');
+    expect(html).toContain('[data-reveal-phase="reverse-type"]');
+    expect(html).toContain('var(--reveal-half) var(--reveal-steps) forwards');
+    expect(html).toContain('[data-reveal-phase]::after');
+    expect(html).not.toContain('transition:font-family');
   });
 
   test('renders basic abyssal tag as styled span', () => {
@@ -224,6 +237,7 @@ describe('PostView', () => {
 
     expect(html).toContain('data-lang="abyssal"');
     expect(html).toContain('data-reveal="true"');
+    expect(html).toContain('data-reveal-content="true"');
     expect(html).toContain('Hover glitch');
     expect(html).not.toContain('&lt;abyssal:R&gt;');
     expect(html).not.toContain('&lt;/abyssal:R&gt;');

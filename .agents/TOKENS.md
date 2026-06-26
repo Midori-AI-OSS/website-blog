@@ -117,7 +117,7 @@ that spans multiple lines.
 <celestial:R>Hidden text that reveals on hover</celestial:R>
 ```
 
-**Behavior:** Renders enclosed text in a custom Celestial font (a fictional sans-serif typeface). The reveal variant hides the Celestial font and only shows it when the user hovers over the text.
+**Behavior:** Renders enclosed text in a custom Celestial font (a fictional sans-serif typeface). The reveal variant starts in Celestial, then on hover backspaces the fictional text, swaps to the inherited readable font, and types the text back in. On mouseleave, it waits 5 seconds before reversing back to Celestial. The cursor appears only while the typewriter animation is active.
 
 **Usage rules:**
 - Inline only — always renders as `<span>`, never as a block element.
@@ -142,7 +142,7 @@ that spans multiple lines.
 <abyssal:R>Hidden text that reveals on hover</abyssal:R>
 ```
 
-**Behavior:** Renders enclosed text with a glitchy alternating font effect, rapidly switching between a primary font (Glitch Goblin, monospace) and a secondary font (Infernal, serif) at 120ms intervals. The reveal variant hides the abyssal font and only shows it when the user hovers over the text.
+**Behavior:** Renders enclosed text with a fictional Abyssal font treatment. The reveal variant starts in Abyssal, then on hover backspaces the fictional text, swaps to the inherited readable font, and types the text back in. On mouseleave, it waits 5 seconds before reversing back to Abyssal. The cursor appears only while the typewriter animation is active.
 
 **Usage rules:**
 - Inline only — always renders as `<span>`, never as a block element.

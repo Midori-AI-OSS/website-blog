@@ -73,11 +73,11 @@ This standalone thinking block should render as a larger styled block.
 
 <celestial>text</celestial>
 
-<celestial:R>A tag that should hover reveal</celestial:R>
+<celestial:R>A tag that should typewriter translate on hover</celestial:R>
 
 <abyssal>text</abyssal>
 
-<abyssal:R>A tag that should hover reveal</abyssal:R>
+<abyssal:R>A tag that should typewriter translate on hover</abyssal:R>
 
 When tags are mismatched or dropped, readers should still see the <celestial>text just fine.
 
@@ -163,7 +163,7 @@ This standalone thinking block should remain visually distinct from normal narra
 
 In a lore post we can also use <celestial>celestial script</celestial> and <abyssal>abyssal text</abyssal> inline.
 
-The reveal variants work too: <celestial:R>hover me</celestial:R> and <abyssal:R>hover me too</abyssal:R>.
+The reveal variants typewriter translate too: <celestial:R>hover me</celestial:R> and <abyssal:R>hover me too</abyssal:R>.
 
 Mismatched text like <celestial>opened but not closed and the stray <abyssal>text continues is readable.
 
