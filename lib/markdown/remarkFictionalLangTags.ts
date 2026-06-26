@@ -86,15 +86,6 @@ function shouldAddQuotes(children: Content[]): boolean {
   return !(text.startsWith('"') && text.endsWith('"'));
 }
 
-function wrapInQuotes(children: Content[]): Content[] {
-  if (!shouldAddQuotes(children)) return children;
-  return [
-    { type: 'text', value: '"' } as Content,
-    ...children,
-    { type: 'text', value: '"' } as Content,
-  ];
-}
-
 function findClosingTag(children: Content[], startIndex: number, lang: string): number {
   for (let index = startIndex + 1; index < children.length; index += 1) {
     const child = children[index];
@@ -134,13 +125,20 @@ function transformParent(parent: Parent | Root): void {
       }
 
       const innerChildren = (parent.children as Content[]).slice(index + 1, closingIndex);
+      const addQuotes = shouldAddQuotes(innerChildren);
+      if (addQuotes) {
+        transformedChildren.push({ type: 'text', value: '"' } as Content);
+      }
       transformedChildren.push(
         createFictionalLangNode(
           parsed.lang as 'celestial' | 'abyssal',
           parsed.reveal,
-          wrapInQuotes(innerChildren),
+          innerChildren,
         ),
       );
+      if (addQuotes) {
+        transformedChildren.push({ type: 'text', value: '"' } as Content);
+      }
       index = closingIndex;
       continue;
     }

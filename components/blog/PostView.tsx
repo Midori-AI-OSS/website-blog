@@ -151,6 +151,20 @@ const thinkingTitleSliceKeyframes = keyframes({
   },
 });
 
+const revealBackspaceKeyframes = keyframes({
+  from: { clipPath: 'inset(0 0% 0 0)' },
+  to: { clipPath: 'inset(0 100% 0 0)' },
+});
+
+const revealTypeKeyframes = keyframes({
+  from: { clipPath: 'inset(0 100% 0 0)' },
+  to: { clipPath: 'inset(0 0% 0 0)' },
+});
+
+const revealCursorKeyframes = keyframes({
+  '50%': { opacity: 0 },
+});
+
 /**
  * Props for PostView component
  */
@@ -481,6 +495,12 @@ function PostContentSection({
     root.querySelectorAll<HTMLElement>('code.language-layerone').forEach((el) => {
       el.style.animationDelay = `${-Math.random() * 10}s`;
     });
+    root.querySelectorAll<HTMLElement>('[data-reveal="true"]').forEach((el) => {
+      const text = el.textContent ?? '';
+      el.style.setProperty('--reveal-chars', String(text.length));
+      el.style.setProperty('--reveal-duration', `${text.length * 0.08}s`);
+      el.style.setProperty('--reveal-half', `${text.length * 0.04}s`);
+    });
   }, []);
 
   return (
@@ -739,12 +759,33 @@ function PostContentSection({
               '& p + p': { mt: 2 },
             },
             '& [data-lang="celestial"]': { fontFamily: '"Celestial", serif' },
-            '& [data-lang="celestial"][data-reveal="true"]:hover': { fontFamily: 'inherit' },
             '& [data-lang="abyssal"]': {
               fontFamily: '"Infernal", serif',
               fontSize: '0.95em',
             },
-            '& [data-lang="abyssal"][data-reveal="true"]:hover': { fontFamily: 'inherit' },
+            '& [data-reveal="true"]': {
+              position: 'relative',
+              display: 'inline-block',
+              overflow: 'hidden',
+              verticalAlign: 'bottom',
+              transition: 'font-family 0s step-end 5s',
+              '&::after': {
+                content: '"\\007C"',
+                animation: `${revealCursorKeyframes} 0.8s steps(1) infinite`,
+              },
+              '&:hover': {
+                fontFamily: 'inherit !important',
+                transition: 'font-family 0s step-end 0s',
+                animation: [
+                  `${revealBackspaceKeyframes} var(--reveal-half) steps(var(--reveal-chars), end) forwards`,
+                  `${revealTypeKeyframes} var(--reveal-half) steps(var(--reveal-chars), end) var(--reveal-half) forwards`,
+                ].join(', '),
+              },
+              '&:hover::after': {
+                content: '"\\007C"',
+                animation: `${revealCursorKeyframes} 0.8s steps(1) infinite`,
+              },
+            },
             '@media (prefers-reduced-motion: reduce)': {
               '& [data-thinking]': {
                 animation: 'none',
@@ -763,8 +804,12 @@ function PostContentSection({
                 textShadow: 'none',
                 color: '#7fffe0',
               },
-              '& [data-lang="celestial"][data-reveal="true"]': { fontFamily: 'inherit' },
-              '& [data-lang="abyssal"][data-reveal="true"]': { fontFamily: 'inherit' },
+              // Always reveal fictional lang text under reduced motion (no animation)
+              '& [data-reveal="true"]': {
+                fontFamily: 'inherit !important',
+                overflow: 'visible',
+                '&::after': { content: '""' },
+              },
             },
             '& img': {
               maxWidth: '100%',
