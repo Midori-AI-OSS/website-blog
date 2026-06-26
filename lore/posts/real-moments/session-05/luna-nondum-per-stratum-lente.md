@@ -496,7 +496,7 @@ My stomach dropped — the same sick feeling from the bar. Clear ice in Leo's wa
 
 My knees folded — everything leaving at once — and I went down. Leo caught me. Stillglass told us him being close made it worse. I could feel it through the bond. Rough. Wordless.
 
-The box was a few inches from my hand. Sealed. Riley had been carrying it this whole time. Every day since the bar. The church. Thorncrown Road. Days in this room. Next to her phone.
+The box was a few inches from my hand. Sealed. Riley had been carrying it this whole time. The church. Thorncrown Road. Days in this room. Next to her phone.
 
 I turned the last box.
 
