@@ -450,7 +450,7 @@ The thought hollowed my stomach before I had words for it.
 
 *What were you carrying alone?*
 
-Two months ago. Her voice at the door of my house, keys already in her hand. *"Sorry I'll be right back... need to... go get something."* The hesitations. The flicker on her face I couldn't name. I'd thought soda, or something else mundane. Let it go.
+Two months ago. Her voice at the door of my house, reaching for her bag on the hook by the door. *"Sorry I'll be right back... need to... go get something."* The hesitations. The flicker on her face I couldn't name. I'd thought soda, or something else mundane. Let it go.
 
 *Why didn't you tell us?*
 
