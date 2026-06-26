@@ -47,7 +47,8 @@ function parseOpeningTag(node: Content): { lang: string; reveal: boolean } | nul
 
 function isMatchingClosingTag(node: Content, lang: string): boolean {
   if (!isHtml(node)) return false;
-  return getClosingRegex(lang).test(node.value.trim());
+  const cleanValue = node.value.trim().replace(/\s*:R\s*/i, '');
+  return getClosingRegex(lang).test(cleanValue);
 }
 
 function createFictionalLangNode(
@@ -124,8 +125,8 @@ function transformParent(parent: Parent | Root): void {
     // Drop stray closing tags (any lang)
     if (
       isHtml(child) &&
-      (CLOSING_CELESTIAL_TAG.test(child.value.trim()) ||
-        CLOSING_ABYSSAL_TAG.test(child.value.trim()))
+      (CLOSING_CELESTIAL_TAG.test(child.value.trim().replace(/\s*:R\s*/i, '')) ||
+        CLOSING_ABYSSAL_TAG.test(child.value.trim().replace(/\s*:R\s*/i, '')))
     ) {
       continue;
     }

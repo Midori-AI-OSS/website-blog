@@ -221,7 +221,6 @@ const markdownSanitizeSchema = {
       ['data-thinking', 'inline', 'block'],
       ['data-lang'],
       ['data-reveal'],
-      ['data-abyssal-font'],
     ],
     div: [...(defaultSchema.attributes?.div ?? []), ['data-thinking', 'inline', 'block']],
   },
@@ -475,40 +474,81 @@ function PostContentSection({
     const root = contentRef.current;
     if (!root) return;
     const abyssalEls = root.querySelectorAll<HTMLElement>('[data-lang="abyssal"]');
+    if (abyssalEls.length === 0) return;
+
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    const PRIMARY = 0;
+    const SECONDARY = 1;
+
     abyssalEls.forEach((el) => {
-      el.setAttribute('data-abyssal-font', 'primary');
-    });
-    const interval = setInterval(() => {
-      abyssalEls.forEach((el) => {
-        const current = el.getAttribute('data-abyssal-font');
-        el.setAttribute('data-abyssal-font', current === 'primary' ? 'secondary' : 'primary');
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const textNodes: Text[] = [];
+      let node = walker.nextNode() as Text | null;
+      while (node) {
+        textNodes.push(node);
+        node = walker.nextNode() as Text | null;
+      }
+
+      textNodes.forEach((textNode) => {
+        const fragment = document.createDocumentFragment();
+        let charState = Math.random() < 0.5 ? PRIMARY : SECONDARY;
+        for (const ch of textNode.textContent ?? '') {
+          const span = document.createElement('span');
+          span.setAttribute('data-abyssal-char', '');
+          span.setAttribute(
+            'data-abyssal-char-font',
+            charState === PRIMARY ? 'primary' : 'secondary',
+          );
+          span.textContent = ch;
+          fragment.appendChild(span);
+
+          const scheduleToggle = () => {
+            const delay = 800 + Math.random() * 1200;
+            const t = setTimeout(() => {
+              charState = charState === PRIMARY ? SECONDARY : PRIMARY;
+              span.setAttribute(
+                'data-abyssal-char-font',
+                charState === PRIMARY ? 'primary' : 'secondary',
+              );
+              scheduleToggle();
+            }, delay);
+            timeouts.push(t);
+          };
+          scheduleToggle();
+        }
+        textNode.replaceWith(fragment);
       });
-    }, 120);
-    return () => clearInterval(interval);
+    });
+
+    return () => timeouts.forEach(clearTimeout);
   }, []);
 
   return (
     <>
       <Global
-        styles={{
-          '@font-face': [
-            {
-              fontFamily: "'Celestial'",
-              src: "url('/fonts/Celestial.ttf')",
-              fontDisplay: 'swap',
-            },
-            {
-              fontFamily: "'Glitch Goblin'",
-              src: "url('/fonts/GlitchGoblin.ttf')",
-              fontDisplay: 'swap',
-            },
-            {
-              fontFamily: "'Infernal'",
-              src: "url('/fonts/Infernal.ttf')",
-              fontDisplay: 'swap',
-            },
-          ],
-        }}
+        styles={`
+          @font-face {
+            font-family: 'Celestial';
+            src: url('/fonts/Celestial.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Glitch Goblin';
+            src: url('/fonts/GlitchGoblin.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Infernal';
+            src: url('/fonts/Infernal.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+          }
+        `}
       />
       <Divider sx={{ mb: 6, bgcolor: 'rgba(255,255,255,0.1)' }} />
 
@@ -747,14 +787,13 @@ function PostContentSection({
             },
             '& [data-lang="celestial"]': { fontFamily: '"Celestial", serif' },
             '& [data-lang="celestial"][data-reveal="true"]:hover': { fontFamily: 'inherit' },
-            '& [data-lang="abyssal"]': { fontFamily: '"Glitch Goblin", monospace' },
-            '& [data-lang="abyssal"][data-abyssal-font="primary"]': {
+            '& [data-abyssal-char][data-abyssal-char-font="primary"]': {
               fontFamily: '"Glitch Goblin", monospace',
             },
-            '& [data-lang="abyssal"][data-abyssal-font="secondary"]': {
+            '& [data-abyssal-char][data-abyssal-char-font="secondary"]': {
               fontFamily: '"Infernal", serif',
             },
-            '& [data-lang="abyssal"][data-reveal="true"]:hover': {
+            '& [data-lang="abyssal"][data-reveal="true"]:hover [data-abyssal-char]': {
               fontFamily: 'inherit !important',
             },
             '@media (prefers-reduced-motion: reduce)': {
@@ -776,7 +815,9 @@ function PostContentSection({
                 color: '#7fffe0',
               },
               '& [data-lang="celestial"][data-reveal="true"]': { fontFamily: 'inherit' },
-              '& [data-lang="abyssal"][data-reveal="true"]': { fontFamily: 'inherit !important' },
+              '& [data-lang="abyssal"][data-reveal="true"] [data-abyssal-char]': {
+                fontFamily: 'inherit !important',
+              },
             },
             '& img': {
               maxWidth: '100%',
