@@ -547,8 +547,6 @@ Riley's breathing hitched under the blanket, shallow where the rhythm had been f
 
 Luna was still at the tray table. Her hand was flat on the surface beside Riley's wallet. Her jaw was set.
 
-{{image: /lore/real-moments/nondum-per-stratum-lente/room/room-nondum-per-stratum-lente-13.png}}
-
 She was crying. Loud enough that the room heard it. Her hand slid off the tray table.
 
 Marisol's crystal rods were clear at rest. The left one took a brief lavender glow. The spell resolved toward Luna. Content unknown.
