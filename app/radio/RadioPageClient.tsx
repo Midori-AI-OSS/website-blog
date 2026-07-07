@@ -59,6 +59,7 @@ interface ProbeMetadata {
   ok: boolean;
   artist?: string | null;
   comment?: string | null;
+  lyricsEng?: string | null;
   sample_rate?: number | null;
   channels?: number | null;
   bit_rate?: number | null;
