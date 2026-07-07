@@ -82,6 +82,17 @@ interface ProgressSnapshot {
   updatedAtMs: number;
 }
 
+interface LoreMatchData {
+  slug: string;
+  href: string;
+  title: string;
+  summary: string;
+  coverImageUrl: string;
+  tags: string[];
+  game: string;
+  episodeLabel: string;
+}
+
 const DEFAULT_CHANNELS: ChannelEntry[] = [{ name: 'all', track_count: 0 }];
 const CURRENT_REFRESH_MS = 10_000;
 const HEARTBEAT_MS = 30_000;
@@ -215,6 +226,8 @@ export default function RadioPageClient() {
   const [artPalette, setArtPalette] = React.useState<ExtractedPalette | null>(null);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
   const [probeLoading, setProbeLoading] = React.useState(false);
+  const [_loreMatch, setLoreMatch] = React.useState<LoreMatchData | null>(null);
+  const [_loreLoading, setLoreLoading] = React.useState(false);
   const [positionMs, setPositionMs] = React.useState(0);
   const [durationMs, setDurationMs] = React.useState(0);
   const [lastError, setLastError] = React.useState<string | null>(null);
@@ -616,6 +629,64 @@ export default function RadioPageClient() {
       controller.abort();
     };
   }, [channel, currentTrackId, hydrated]);
+
+  React.useEffect(() => {
+    if (!hydrated || currentTrackId === null) {
+      setLoreMatch(null);
+      setLoreLoading(false);
+      return;
+    }
+
+    setLoreMatch(null);
+    setLoreLoading(true);
+
+    const controller = new AbortController();
+
+    const fetchLore = async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set('title', currentTrack?.title ?? '');
+        params.set('channel', normalizeChannel(channel));
+        if (probeData?.comment) {
+          params.set('comment', probeData.comment);
+        }
+        if (probeData?.midori_ai_backstory) {
+          params.set('backstory', probeData.midori_ai_backstory);
+        }
+        if (probeData?.midori_ai_music_theme) {
+          params.set('theme', probeData.midori_ai_music_theme);
+        }
+
+        const response = await fetch(`/api/radio/lore-match?${params.toString()}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Lore match request failed: ${response.status}`);
+        }
+
+        const data = (await response.json()) as { ok: boolean; match: LoreMatchData | null };
+        if (controller.signal.aborted) return;
+
+        setLoreMatch(data.ok ? data.match : null);
+      } catch {
+        if (!controller.signal.aborted) {
+          setLoreMatch(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoreLoading(false);
+        }
+      }
+    };
+
+    void fetchLore();
+
+    return () => {
+      controller.abort();
+    };
+  }, [currentTrackId, currentTrack, channel, probeData, hydrated]);
 
   const startPlayback = React.useCallback(() => {
     const audio = audioRef.current;
