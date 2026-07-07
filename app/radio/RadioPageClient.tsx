@@ -1041,6 +1041,9 @@ export default function RadioPageClient() {
           sx={{ flex: 1, overflow: 'hidden', minHeight: 0 }}
         >
           <Box
+            component="button"
+            onClick={togglePlayback}
+            aria-label={playbackDesired ? 'Pause Midori AI Radio' : 'Play Midori AI Radio'}
             sx={{
               flex: { md: '0 0 50%' },
               display: 'flex',
@@ -1049,6 +1052,16 @@ export default function RadioPageClient() {
               p: { xs: 2, md: 3 },
               minHeight: 0,
               overflow: 'hidden',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              width: '100%',
+              height: '100%',
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.400',
+                outlineOffset: 2,
+              },
             }}
           >
             {artUrl ? (
