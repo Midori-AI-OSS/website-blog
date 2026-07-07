@@ -225,6 +225,7 @@ export default function RadioPageClient() {
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [_artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [artUrl, setArtUrl] = React.useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = React.useState(false);
   const [artPalette, setArtPalette] = React.useState<ExtractedPalette | null>(null);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
   const [probeLoading, setProbeLoading] = React.useState(false);
@@ -553,13 +554,17 @@ export default function RadioPageClient() {
           payload.has_art && payload.track_id === requestedTrackId
             ? appendTrackCacheKey(payload.art_url.trim(), payload.track_id)
             : null;
-        setArtUrl(nextArtUrl && nextArtUrl.length > 0 ? nextArtUrl : null);
+        // Only set artUrl when we have a valid new URL ready; keep existing
+        // art during transient channel/track mismatches instead of blanking.
+        if (nextArtUrl && nextArtUrl.length > 0) {
+          setImageLoadError(false);
+          setArtUrl(nextArtUrl);
+        }
       } catch {
         if (artRequestRef.current !== requestId) {
           return;
         }
-        setArtMetadata(null);
-        setArtUrl(null);
+        // Keep existing art on fetch errors — do not clear.
       }
     };
 
@@ -1101,12 +1106,13 @@ export default function RadioPageClient() {
               },
             }}
           >
-            {artUrl ? (
+            {artUrl && !imageLoadError ? (
               <Box
                 key={artUrl}
                 component="img"
                 src={artUrl}
                 alt=""
+                onError={() => setImageLoadError(true)}
                 sx={{
                   width: '100%',
                   height: '100%',
@@ -1440,7 +1446,7 @@ export default function RadioPageClient() {
                   display: { xs: 'none', md: 'flex' },
                   flexDirection: 'column',
                   mt: 1,
-                  maxHeight: '40%',
+                  maxHeight: '80%',
                   overflow: 'auto',
                   px: 2,
                   py: 1.5,

@@ -239,22 +239,47 @@ export function detectPovFromAliases(
 }
 
 /**
- * Scans an array of texts for a "session X" pattern and returns the first
- * normalized session number, or `null` if none is found.
+ * Scans an array of texts for session number patterns and returns the
+ * highest normalized session number, or `null` if none is found.
+ *
+ * Handles both singular ("session 3") and plural ("sessions 3 and 4",
+ * "sessions 1, 2, and 3") forms. When multiple session numbers appear
+ * across any texts, the largest valid number is returned.
  *
  * - Null/undefined entries are skipped.
- * - Matching is case-insensitive and trims surrounding whitespace.
- * - Only the first match across all texts is returned.
+ * - Matching is case-insensitive.
  */
 export function detectSessionFromTexts(texts: (string | null | undefined)[]): number | null {
+  const allNumbers: number[] = [];
+
   for (const text of texts) {
     if (!text) continue;
-    const match = text.match(/session\s*(\d+)/i);
-    if (match) {
-      return normalizeSessionNumber(match[1]);
+
+    // Singular: "session X", "sessionX" (case-insensitive, optional whitespace)
+    const singularMatches = text.matchAll(/session\s*(\d+)/gi);
+    for (const m of singularMatches) {
+      const n = normalizeSessionNumber(m[1]);
+      if (n !== null) allNumbers.push(n);
+    }
+
+    // Plural: "sessions 3 and 4", "sessions 1, 2, and 3"
+    // Captures the full number list after "sessions", then extracts each digit sequence
+    const pluralMatches = text.matchAll(/sessions\s+(\d+(?:\s*(?:,?\s*(?:and\s+)?)\d+)*)/gi);
+    for (const m of pluralMatches) {
+      const capture = m[1];
+      if (!capture) continue;
+      const nums = capture.match(/\d+/g);
+      if (nums) {
+        for (const nStr of nums) {
+          const n = normalizeSessionNumber(nStr);
+          if (n !== null) allNumbers.push(n);
+        }
+      }
     }
   }
-  return null;
+
+  if (allNumbers.length === 0) return null;
+  return Math.max(...allNumbers);
 }
 
 /**

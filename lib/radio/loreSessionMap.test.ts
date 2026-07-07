@@ -302,8 +302,8 @@ describe('detectSessionFromTexts', () => {
     expect(detectSessionFromTexts(['session  42 entry'])).toBe(42);
   });
 
-  test('returns first match across multiple texts', () => {
-    expect(detectSessionFromTexts(['session 2 early', 'session 5 later'])).toBe(2);
+  test('returns highest session across multiple texts', () => {
+    expect(detectSessionFromTexts(['session 2 early', 'session 5 later'])).toBe(5);
   });
 
   test('skips null entries and matches in second text', () => {
@@ -312,6 +312,22 @@ describe('detectSessionFromTexts', () => {
 
   test('skips empty strings', () => {
     expect(detectSessionFromTexts(['', '   ', 'session 3'])).toBe(3);
+  });
+
+  test('detects plural "sessions 3 and 4" and picks highest', () => {
+    expect(detectSessionFromTexts(['Real Moments sessions 3 and 4'])).toBe(4);
+  });
+
+  test('detects plural "sessions 1, 2, and 3" and picks highest', () => {
+    expect(detectSessionFromTexts(['sessions 1, 2, and 3'])).toBe(3);
+  });
+
+  test('detects plural "sessions 4" (single number)', () => {
+    expect(detectSessionFromTexts(['sessions 4 data'])).toBe(4);
+  });
+
+  test('picks highest across mixed singular + plural forms', () => {
+    expect(detectSessionFromTexts(['session 2 early', 'sessions 4 and 5 later'])).toBe(5);
   });
 
   test('returns null if session number is negative', () => {
