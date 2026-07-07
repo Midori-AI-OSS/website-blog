@@ -642,21 +642,27 @@ export default function RadioPageClient() {
     setLoreMatch(null);
     setLoreLoading(true);
 
+    const loreTitle = currentTrack?.title ?? '';
+    const loreChannel = normalizeChannel(channel);
+    const loreComment = probeData?.comment;
+    const loreBackstory = probeData?.midori_ai_backstory;
+    const loreTheme = probeData?.midori_ai_music_theme;
+
     const controller = new AbortController();
 
     const fetchLore = async () => {
       try {
         const params = new URLSearchParams();
-        params.set('title', currentTrack?.title ?? '');
-        params.set('channel', normalizeChannel(channel));
-        if (probeData?.comment) {
-          params.set('comment', probeData.comment);
+        params.set('title', loreTitle);
+        params.set('channel', loreChannel);
+        if (loreComment) {
+          params.set('comment', loreComment);
         }
-        if (probeData?.midori_ai_backstory) {
-          params.set('backstory', probeData.midori_ai_backstory);
+        if (loreBackstory) {
+          params.set('backstory', loreBackstory);
         }
-        if (probeData?.midori_ai_music_theme) {
-          params.set('theme', probeData.midori_ai_music_theme);
+        if (loreTheme) {
+          params.set('theme', loreTheme);
         }
 
         const response = await fetch(`/api/radio/lore-match?${params.toString()}`, {
@@ -688,7 +694,15 @@ export default function RadioPageClient() {
     return () => {
       controller.abort();
     };
-  }, [currentTrackId, currentTrack, channel, probeData, hydrated]);
+  }, [
+    currentTrackId,
+    currentTrack?.title,
+    channel,
+    probeData?.comment,
+    probeData?.midori_ai_backstory,
+    probeData?.midori_ai_music_theme,
+    hydrated,
+  ]);
 
   const startPlayback = React.useCallback(() => {
     const audio = audioRef.current;

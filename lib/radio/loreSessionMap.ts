@@ -239,6 +239,25 @@ export function detectPovFromAliases(
 }
 
 /**
+ * Scans an array of texts for a "session X" pattern and returns the first
+ * normalized session number, or `null` if none is found.
+ *
+ * - Null/undefined entries are skipped.
+ * - Matching is case-insensitive and trims surrounding whitespace.
+ * - Only the first match across all texts is returned.
+ */
+export function detectSessionFromTexts(texts: (string | null | undefined)[]): number | null {
+  for (const text of texts) {
+    if (!text) continue;
+    const match = text.match(/session\s*(\d+)/i);
+    if (match) {
+      return normalizeSessionNumber(match[1]);
+    }
+  }
+  return null;
+}
+
+/**
  * Helper: derive the slug from a ParsedPost (strips `.md` from filename).
  */
 function postSlug(post: ParsedPost): string {

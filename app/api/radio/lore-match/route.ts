@@ -3,10 +3,9 @@ import { getPublishState } from '@/lib/content/publish';
 import { loadAllLorePosts } from '@/lib/lore/loader';
 import { normalizeChannel } from '@/lib/radio/contract';
 import {
-  detectHighestSession,
   detectPovFromAliases,
   detectPovFromChannel,
-  normalizeSessionNumber,
+  detectSessionFromTexts,
   resolveLoreMatch,
 } from '@/lib/radio/loreSessionMap';
 
@@ -26,7 +25,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: false }, { headers: NO_STORE_HEADERS });
     }
 
-    const title = rawTitle;
     const channel = normalizeChannel(rawChannel);
     const comment = searchParams.get('comment');
     const backstory = searchParams.get('backstory');
@@ -42,14 +40,11 @@ export async function GET(request: NextRequest) {
       return true;
     });
 
-    // Detect session from title
-    const sessionMatch = title.match(/session\s*(\d+)/i);
-    let session: number | null = null;
-    if (sessionMatch) {
-      session = normalizeSessionNumber(sessionMatch[1]);
-    }
+    // Detect session from comment or backstory (approved metadata only)
+    // No session trigger in approved metadata → no lore match
+    const session = detectSessionFromTexts([comment, backstory]);
     if (session === null) {
-      session = detectHighestSession(filteredPosts);
+      return NextResponse.json({ ok: true, match: null }, { headers: NO_STORE_HEADERS });
     }
 
     // Detect POV

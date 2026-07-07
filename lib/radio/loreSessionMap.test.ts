@@ -5,6 +5,7 @@ import {
   detectHighestSession,
   detectPovFromAliases,
   detectPovFromChannel,
+  detectSessionFromTexts,
   normalizeSessionNumber,
   resolveLoreMatch,
 } from './loreSessionMap';
@@ -265,6 +266,61 @@ describe('detectPovFromAliases', () => {
   test('detects w.e.a.v.e variant in session 4', () => {
     // 'w.e.a.v.e' (without trailing dot) is only in session 4 map
     expect(detectPovFromAliases(['w.e.a.v.e'], 4)).toBe('weave');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// detectSessionFromTexts
+// ---------------------------------------------------------------------------
+
+describe('detectSessionFromTexts', () => {
+  test('returns null for empty array', () => {
+    expect(detectSessionFromTexts([])).toBeNull();
+  });
+
+  test('returns null when no session pattern exists', () => {
+    expect(detectSessionFromTexts(['just some lore text', 'more text'])).toBeNull();
+  });
+
+  test('detects "session 5" pattern', () => {
+    expect(detectSessionFromTexts(['session 5 in progress'])).toBe(5);
+  });
+
+  test('detects "Session 3" (case-insensitive)', () => {
+    expect(detectSessionFromTexts(['Session 3 data'])).toBe(3);
+  });
+
+  test('detects "SESSION 0" (uppercase)', () => {
+    expect(detectSessionFromTexts(['SESSION 0 begins'])).toBe(0);
+  });
+
+  test('detects "session1" (no space)', () => {
+    expect(detectSessionFromTexts(['session1 lore entry'])).toBe(1);
+  });
+
+  test('detects "session  42" (multiple spaces)', () => {
+    expect(detectSessionFromTexts(['session  42 entry'])).toBe(42);
+  });
+
+  test('returns first match across multiple texts', () => {
+    expect(detectSessionFromTexts(['session 2 early', 'session 5 later'])).toBe(2);
+  });
+
+  test('skips null entries and matches in second text', () => {
+    expect(detectSessionFromTexts([null, undefined, 'session 4 data'])).toBe(4);
+  });
+
+  test('skips empty strings', () => {
+    expect(detectSessionFromTexts(['', '   ', 'session 3'])).toBe(3);
+  });
+
+  test('returns null if session number is negative', () => {
+    // normalizeSessionNumber returns null for negative
+    expect(detectSessionFromTexts(['session -1'])).toBeNull();
+  });
+
+  test('returns null for non-numeric session text', () => {
+    expect(detectSessionFromTexts(['session abc'])).toBeNull();
   });
 });
 
