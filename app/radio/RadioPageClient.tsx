@@ -233,6 +233,7 @@ export default function RadioPageClient() {
   const [durationMs, setDurationMs] = React.useState(0);
   const [lastError, setLastError] = React.useState<string | null>(null);
   const [volHovered, setVolHovered] = React.useState(false);
+  const [volOverlayOpen, setVolOverlayOpen] = React.useState(false);
   const volLeaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentTrackId = currentTrack?.track_id ?? null;
 
@@ -1007,7 +1008,7 @@ export default function RadioPageClient() {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          pb: { xs: '130px', md: '72px' },
+          pb: { xs: '60px', md: '72px' },
         }}
       >
         <Stack
@@ -1093,7 +1094,7 @@ export default function RadioPageClient() {
           >
             <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
               {listenerCount !== null && (
-                <>
+                <Box component="span" sx={{ display: { xs: 'none', md: 'contents' } }}>
                   <Users size={14} />
                   <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
                     {listenerCount}
@@ -1101,7 +1102,7 @@ export default function RadioPageClient() {
                   <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
                     ·
                   </Typography>
-                </>
+                </Box>
               )}
               <Typography
                 level="h3"
@@ -1109,24 +1110,41 @@ export default function RadioPageClient() {
               >
                 {title}
               </Typography>
-              <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
+              <Typography
+                level="body-sm"
+                sx={{ color: 'text.tertiary', display: { xs: 'none', md: 'inline' } }}
+              >
                 ·
               </Typography>
-              <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+              <Typography
+                level="body-sm"
+                sx={{ color: 'text.secondary', display: { xs: 'none', md: 'inline' } }}
+              >
                 {artist}
               </Typography>
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+              <Typography
+                level="body-xs"
+                sx={{ color: 'text.tertiary', display: { xs: 'none', md: 'inline' } }}
+              >
                 ·
               </Typography>
               <Chip
                 size="sm"
                 variant="soft"
                 color={isPlaying ? 'success' : streamState === 'error' ? 'danger' : 'neutral'}
-                sx={{ borderRadius: 0, '--Chip-minHeight': '22px', minHeight: 22 }}
+                sx={{
+                  borderRadius: 0,
+                  '--Chip-minHeight': '22px',
+                  minHeight: 22,
+                  display: { xs: 'none', md: 'inline-flex' },
+                }}
               >
                 {streamStateLabel}
               </Chip>
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+              <Typography
+                level="body-xs"
+                sx={{ color: 'text.tertiary', display: { xs: 'none', md: 'inline' } }}
+              >
                 ·
               </Typography>
               <Box
@@ -1137,6 +1155,7 @@ export default function RadioPageClient() {
                   setChannel(normalizeChannel(event.target.value));
                 }}
                 sx={{
+                  display: { xs: 'none', md: 'inline' },
                   borderRadius: 0,
                   width: 'fit-content',
                   minWidth: 100,
@@ -1432,10 +1451,10 @@ export default function RadioPageClient() {
         }}
       >
         <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={{ xs: 0.25, md: 2 }}
+          direction="row"
+          spacing={{ xs: 0.5, md: 2 }}
           alignItems="center"
-          sx={{ px: { xs: 2, md: 3 }, py: { xs: 0.75, md: 1 } }}
+          sx={{ px: { xs: 2, md: 3 }, py: { xs: 1, md: 1 } }}
         >
           <Box
             onClick={cycleQuality}
@@ -1518,7 +1537,12 @@ export default function RadioPageClient() {
               color="neutral"
               onClick={() => navigateChannel(-1)}
               aria-label="Previous channel"
-              sx={{ minWidth: 44, minHeight: 44, borderRadius: 0 }}
+              sx={{
+                minWidth: 44,
+                minHeight: 44,
+                borderRadius: 0,
+                display: { xs: 'none', md: 'inline-flex' },
+              }}
             >
               <StepBack size={18} />
             </Button>
@@ -1540,11 +1564,17 @@ export default function RadioPageClient() {
               color="neutral"
               onClick={() => navigateChannel(1)}
               aria-label="Next channel"
-              sx={{ minWidth: 44, minHeight: 44, borderRadius: 0 }}
+              sx={{
+                minWidth: 44,
+                minHeight: 44,
+                borderRadius: 0,
+                display: { xs: 'none', md: 'inline-flex' },
+              }}
             >
               <StepForward size={18} />
             </Button>
 
+            {/* Desktop volume: hover rail */}
             <Box
               onMouseEnter={() => {
                 clearVolLeaveTimer();
@@ -1555,10 +1585,10 @@ export default function RadioPageClient() {
                 volLeaveTimerRef.current = setTimeout(() => setVolHovered(false), 400);
               }}
               sx={{
+                display: { xs: 'none', md: 'flex' },
                 position: 'relative',
                 width: 210,
                 height: 44,
-                display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-end',
                 overflow: 'hidden',
@@ -1610,6 +1640,79 @@ export default function RadioPageClient() {
                   }
                 }}
               />
+            </Box>
+
+            {/* Mobile volume: overlay vertical rail */}
+            <Box
+              sx={{
+                display: { xs: 'flex', md: 'none' },
+                position: 'relative',
+                minWidth: 44,
+                minHeight: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Volume2
+                size={20}
+                style={{ cursor: 'pointer' }}
+                onClick={() => setVolOverlayOpen((prev) => !prev)}
+              />
+              {volOverlayOpen && (
+                <>
+                  <Box
+                    onClick={() => setVolOverlayOpen(false)}
+                    sx={{
+                      position: 'fixed',
+                      inset: 0,
+                      zIndex: 99,
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: '100%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      zIndex: 101,
+                      mb: 0.5,
+                      bgcolor: 'rgba(8,8,14,0.92)',
+                      backdropFilter: 'blur(12px)',
+                      px: 1,
+                      py: 1,
+                      borderRadius: 1,
+                      display: 'flex',
+                      flexDirection: 'column-reverse',
+                      gap: '2px',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {volumeDots.map((dot, i) => (
+                      <Box
+                        key={dot.id}
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          setVolume(clampVolume(i / 9));
+                        }}
+                        role="button"
+                        aria-label={`Volume ${Math.round((i / 9) * 100)}%`}
+                        sx={{
+                          width: 28,
+                          height: 10,
+                          borderRadius: '50%',
+                          bgcolor: dot.active ? 'primary.400' : 'rgba(255,255,255,0.18)',
+                          cursor: 'pointer',
+                          minWidth: 44,
+                          minHeight: 24,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </>
+              )}
             </Box>
           </Stack>
         </Stack>
