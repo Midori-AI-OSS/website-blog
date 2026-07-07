@@ -9,6 +9,7 @@ import Skeleton from '@mui/joy/Skeleton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import { Music, Pause, Play, Radio, StepBack, StepForward, Users, Volume2 } from 'lucide-react';
+import Link from 'next/link';
 import * as React from 'react';
 import BlobProgressBar from '@/components/radio/BlobProgressBar';
 import {
@@ -226,8 +227,8 @@ export default function RadioPageClient() {
   const [artPalette, setArtPalette] = React.useState<ExtractedPalette | null>(null);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
   const [probeLoading, setProbeLoading] = React.useState(false);
-  const [_loreMatch, setLoreMatch] = React.useState<LoreMatchData | null>(null);
-  const [_loreLoading, setLoreLoading] = React.useState(false);
+  const [loreMatch, setLoreMatch] = React.useState<LoreMatchData | null>(null);
+  const [loreLoading, setLoreLoading] = React.useState(false);
   const [positionMs, setPositionMs] = React.useState(0);
   const [durationMs, setDurationMs] = React.useState(0);
   const [lastError, setLastError] = React.useState<string | null>(null);
@@ -1154,71 +1155,199 @@ export default function RadioPageClient() {
               </Typography>
             )}
 
-            <Sheet
-              variant="outlined"
-              sx={{
-                display: { xs: 'none', md: 'flex' },
-                flexDirection: 'column',
-                flex: 1,
-                mt: 2,
-                minHeight: 0,
-                bgcolor: 'rgba(10,12,18,0.4)',
-                borderColor: 'rgba(255,255,255,0.08)',
-                borderRadius: 0,
-                overflow: 'hidden',
-              }}
-            >
-              <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
-                <Typography
-                  level="body-sm"
-                  sx={{
-                    color: 'text.tertiary',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                  }}
-                >
-                  Track Story
-                </Typography>
-              </Box>
-              <Box
-                key={currentTrackId ?? 'idle'}
+            {loreLoading && !loreMatch ? (
+              <Sheet
+                variant="outlined"
                 sx={{
+                  display: { xs: 'none', md: 'flex' },
+                  flexDirection: 'column',
                   flex: 1,
-                  overflow: 'auto',
-                  px: 2,
-                  pb: 2,
+                  mt: 2,
                   minHeight: 0,
-                  animation: `${fadeIn} 0.35s ease-out`,
+                  bgcolor: 'rgba(10,12,18,0.4)',
+                  borderColor: 'rgba(255,255,255,0.08)',
+                  borderRadius: 0,
+                  overflow: 'hidden',
                 }}
               >
-                {probeData?.comment?.trim() ? (
+                <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
                   <Typography
                     level="body-sm"
                     sx={{
-                      color: 'text.secondary',
-                      whiteSpace: 'pre-wrap',
-                      fontSize: { xs: '0.875rem' },
+                      color: 'text.tertiary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
                     }}
                   >
-                    {probeData.comment.trim()}
+                    Connected Lore
                   </Typography>
-                ) : probeLoading ? (
+                </Box>
+                <Box
+                  sx={{
+                    flex: 1,
+                    overflow: 'auto',
+                    px: 2,
+                    pb: 2,
+                    minHeight: 0,
+                    animation: `${fadeIn} 0.3s ease-out`,
+                  }}
+                >
                   <Stack spacing={1}>
                     <Skeleton variant="text" width="90%" />
                     <Skeleton variant="text" width="75%" />
                     <Skeleton variant="text" width="85%" />
                     <Skeleton variant="text" width="60%" />
                   </Stack>
-                ) : (
+                </Box>
+              </Sheet>
+            ) : loreMatch ? (
+              <Sheet
+                variant="outlined"
+                sx={{
+                  display: { xs: 'none', md: 'flex' },
+                  flexDirection: 'column',
+                  flex: 1,
+                  mt: 2,
+                  minHeight: 0,
+                  bgcolor: 'rgba(10,12,18,0.4)',
+                  borderColor: 'rgba(255,255,255,0.08)',
+                  borderRadius: 0,
+                  overflow: 'hidden',
+                  position: 'relative',
+                }}
+              >
+                {loreMatch.coverImageUrl ? (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      backgroundImage: `url(${loreMatch.coverImageUrl})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      filter: 'blur(20px) brightness(0.15)',
+                      opacity: 0.35,
+                      zIndex: 0,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                ) : null}
+                <Box sx={{ px: 2, pt: 1.5, pb: 0.5, position: 'relative', zIndex: 1 }}>
                   <Typography
                     level="body-sm"
-                    sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem' } }}
+                    sx={{
+                      color: 'text.tertiary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                    }}
                   >
-                    Track story metadata will appear here when the stream publishes it.
+                    Connected Lore
                   </Typography>
-                )}
-              </Box>
-            </Sheet>
+                </Box>
+                <Box
+                  key={loreMatch.slug}
+                  sx={{
+                    flex: 1,
+                    overflow: 'auto',
+                    px: 2,
+                    pb: 2,
+                    minHeight: 0,
+                    position: 'relative',
+                    zIndex: 1,
+                    animation: `${fadeIn} 0.3s ease-out`,
+                  }}
+                >
+                  <Typography level="title-md" sx={{ color: 'text.primary' }}>
+                    {loreMatch.title}
+                  </Typography>
+                  {loreMatch.episodeLabel ? (
+                    <Typography level="body-xs" sx={{ color: 'text.tertiary', mt: 0.5 }}>
+                      {loreMatch.episodeLabel}
+                    </Typography>
+                  ) : null}
+                  <Typography level="body-sm" sx={{ mt: 1, color: 'text.secondary' }}>
+                    {loreMatch.summary || 'No summary available.'}
+                  </Typography>
+                  <Link
+                    href={loreMatch.href}
+                    style={{
+                      display: 'inline-block',
+                      marginTop: 12,
+                      color: 'inherit',
+                      textDecoration: 'underline',
+                      textUnderlineOffset: 2,
+                    }}
+                  >
+                    <Typography level="body-sm">View full lore post</Typography>
+                  </Link>
+                </Box>
+              </Sheet>
+            ) : (
+              <Sheet
+                variant="outlined"
+                sx={{
+                  display: { xs: 'none', md: 'flex' },
+                  flexDirection: 'column',
+                  flex: 1,
+                  mt: 2,
+                  minHeight: 0,
+                  bgcolor: 'rgba(10,12,18,0.4)',
+                  borderColor: 'rgba(255,255,255,0.08)',
+                  borderRadius: 0,
+                  overflow: 'hidden',
+                }}
+              >
+                <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
+                  <Typography
+                    level="body-sm"
+                    sx={{
+                      color: 'text.tertiary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    Track Story
+                  </Typography>
+                </Box>
+                <Box
+                  key={currentTrackId ?? 'idle'}
+                  sx={{
+                    flex: 1,
+                    overflow: 'auto',
+                    px: 2,
+                    pb: 2,
+                    minHeight: 0,
+                    animation: `${fadeIn} 0.35s ease-out`,
+                  }}
+                >
+                  {probeData?.comment?.trim() ? (
+                    <Typography
+                      level="body-sm"
+                      sx={{
+                        color: 'text.secondary',
+                        whiteSpace: 'pre-wrap',
+                        fontSize: { xs: '0.875rem' },
+                      }}
+                    >
+                      {probeData.comment.trim()}
+                    </Typography>
+                  ) : probeLoading ? (
+                    <Stack spacing={1}>
+                      <Skeleton variant="text" width="90%" />
+                      <Skeleton variant="text" width="75%" />
+                      <Skeleton variant="text" width="85%" />
+                      <Skeleton variant="text" width="60%" />
+                    </Stack>
+                  ) : (
+                    <Typography
+                      level="body-sm"
+                      sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem' } }}
+                    >
+                      Track story metadata will appear here when the stream publishes it.
+                    </Typography>
+                  )}
+                </Box>
+              </Sheet>
+            )}
           </Stack>
         </Stack>
       </Box>
