@@ -12,15 +12,15 @@ const TRACK_H = 8;
 const TRACK_BOTTOM = TRACK_TOP + TRACK_H;
 
 const TOP_WAVES = [
-  { amp: 4.0, freq: 3.0, speed: 0.3, phase: 0.5 },
-  { amp: 3.0, freq: 5.5, speed: 0.45, phase: 2.1 },
-  { amp: 3.5, freq: 8.0, speed: 0.35, phase: 4.3 },
+  { amp: 2.5, freq: 3.0, speed: 0.25, phase: 0.5 },
+  { amp: 2.0, freq: 5.5, speed: 0.38, phase: 2.1 },
+  { amp: 2.5, freq: 8.0, speed: 0.3, phase: 4.3 },
 ];
 
 const BOTTOM_WAVES = [
-  { amp: 3.5, freq: 2.5, speed: 0.35, phase: 1.7 },
-  { amp: 3.0, freq: 5.0, speed: 0.4, phase: 3.5 },
-  { amp: 3.5, freq: 7.5, speed: 0.38, phase: 5.1 },
+  { amp: 2.5, freq: 2.5, speed: 0.3, phase: 1.7 },
+  { amp: 2.0, freq: 5.0, speed: 0.35, phase: 3.5 },
+  { amp: 2.5, freq: 7.5, speed: 0.32, phase: 5.1 },
 ];
 
 function darkenHex(hex: string, amount: number): string {
@@ -118,6 +118,7 @@ export default function BlobProgressBar({
   const shimmerRef = React.useRef<SVGLinearGradientElement>(null);
   const timeRef = React.useRef(0);
   const lastTimestampRef = React.useRef(0);
+  const prefersReducedMotionRef = React.useRef(false);
 
   const fillColors = React.useMemo(() => {
     if (!palette) {
@@ -140,6 +141,14 @@ export default function BlobProgressBar({
       shimmer.setAttribute('x1', '0');
       shimmer.setAttribute('x2', '12');
     }
+
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    prefersReducedMotionRef.current = mql.matches;
+    const handler = (e: MediaQueryListEvent) => {
+      prefersReducedMotionRef.current = e.matches;
+    };
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
   }, []);
 
   const isPlayingRef = React.useRef(isPlaying);
@@ -160,33 +169,45 @@ export default function BlobProgressBar({
       const dt = Math.min(0.1, (timestamp - lastTimestampRef.current) / 1000);
       lastTimestampRef.current = timestamp;
 
-      const EASE_SPEED = 0.7;
-      const target = isPlayingRef.current ? 1 : 0;
-      easingRef.current = target + (easingRef.current - target) * Math.exp(-EASE_SPEED * dt);
+      const reducedMotion = prefersReducedMotionRef.current;
 
-      smoothProgressXRef.current +=
-        (progressX - smoothProgressXRef.current) * Math.min(1, dt * 3.0);
+      if (reducedMotion) {
+        smoothProgressXRef.current +=
+          (progressX - smoothProgressXRef.current) * Math.min(1, dt * 3.0);
 
-      if (easingRef.current < 0.001 && !isPlayingRef.current) {
-        easingRef.current = 0;
         const svgPath = pathRef.current;
         if (svgPath) {
           svgPath.setAttribute('d', buildStraightPath(smoothProgressXRef.current));
         }
       } else {
-        timeRef.current += dt;
+        const EASE_SPEED = 0.7;
+        const target = isPlayingRef.current ? 1 : 0;
+        easingRef.current = target + (easingRef.current - target) * Math.exp(-EASE_SPEED * dt);
 
-        const svgPath = pathRef.current;
-        if (svgPath) {
-          svgPath.setAttribute(
-            'd',
-            buildBlobPath(smoothProgressXRef.current, timeRef.current, easingRef.current),
-          );
+        smoothProgressXRef.current +=
+          (progressX - smoothProgressXRef.current) * Math.min(1, dt * 3.0);
+
+        if (easingRef.current < 0.001 && !isPlayingRef.current) {
+          easingRef.current = 0;
+          const svgPath = pathRef.current;
+          if (svgPath) {
+            svgPath.setAttribute('d', buildStraightPath(smoothProgressXRef.current));
+          }
+        } else {
+          timeRef.current += dt;
+
+          const svgPath = pathRef.current;
+          if (svgPath) {
+            svgPath.setAttribute(
+              'd',
+              buildBlobPath(smoothProgressXRef.current, timeRef.current, easingRef.current),
+            );
+          }
         }
       }
 
       const shimmer = shimmerRef.current;
-      if (shimmer) {
+      if (shimmer && !reducedMotion) {
         const t = Date.now() / 1000;
         const oscillation = Math.sin(t * 0.6);
         const center = 50 + oscillation * 55;

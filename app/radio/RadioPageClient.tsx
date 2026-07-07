@@ -208,6 +208,7 @@ export default function RadioPageClient() {
   const heartbeatIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const bgLayerRef = React.useRef<HTMLDivElement | null>(null);
   const prevArtUrlRef = React.useRef<string | null>(null);
+  const prefReducedMotionRef = React.useRef(false);
 
   const [hydrated, setHydrated] = React.useState(false);
   const [volume, setVolume] = React.useState(0.5);
@@ -239,8 +240,17 @@ export default function RadioPageClient() {
 
   React.useEffect(() => {
     document.body.style.overflow = 'hidden';
+
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    prefReducedMotionRef.current = mql.matches;
+    const handler = (e: MediaQueryListEvent) => {
+      prefReducedMotionRef.current = e.matches;
+    };
+    mql.addEventListener('change', handler);
+
     return () => {
       document.body.style.overflow = '';
+      mql.removeEventListener('change', handler);
     };
   }, []);
 
@@ -270,9 +280,13 @@ export default function RadioPageClient() {
 
     if (artUrl === prevArtUrlRef.current) return;
 
+    const transitionDur = prefReducedMotionRef.current
+      ? 'opacity 0.01s linear'
+      : 'opacity 1.5s ease-in-out';
+
     if (!artUrl) {
       if (prevArtUrlRef.current === null) return;
-      layer.style.transition = 'opacity 1.5s ease-in-out';
+      layer.style.transition = transitionDur;
       layer.style.opacity = '0';
       return;
     }
@@ -282,23 +296,25 @@ export default function RadioPageClient() {
       layer.style.transition = 'none';
       layer.style.backgroundImage = `url(${JSON.stringify(artUrl)})`;
       void layer.offsetHeight;
-      layer.style.transition = 'opacity 1.5s ease-in-out';
+      layer.style.transition = transitionDur;
       layer.style.opacity = '1';
       return;
     }
 
     prevArtUrlRef.current = artUrl;
 
-    layer.style.transition = 'opacity 1.5s ease-in-out';
+    layer.style.transition = transitionDur;
     layer.style.opacity = '0';
+
+    const swapDelay = prefReducedMotionRef.current ? 16 : 750;
 
     const swapTimer = setTimeout(() => {
       layer.style.transition = 'none';
       layer.style.backgroundImage = `url(${JSON.stringify(artUrl)})`;
       void layer.offsetHeight;
-      layer.style.transition = 'opacity 1.5s ease-in-out';
+      layer.style.transition = transitionDur;
       layer.style.opacity = '1';
-    }, 750);
+    }, swapDelay);
 
     return () => {
       clearTimeout(swapTimer);
@@ -974,6 +990,12 @@ export default function RadioPageClient() {
         overflow: 'hidden',
       }}
     >
+      <style
+        // biome-ignore lint: trusted static CSS for reduced-motion
+        dangerouslySetInnerHTML={{
+          __html: `@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}}`,
+        }}
+      />
       <Box
         aria-hidden
         sx={{
@@ -1090,6 +1112,11 @@ export default function RadioPageClient() {
                   height: '100%',
                   objectFit: 'contain',
                   animation: `${coverSlideIn} 0.4s ease-out`,
+                  '@media (prefers-reduced-motion: reduce)': {
+                    animation: 'none',
+                    opacity: 1,
+                    transform: 'none',
+                  },
                 }}
               />
             ) : (
@@ -1239,6 +1266,9 @@ export default function RadioPageClient() {
                     pb: 2,
                     minHeight: 0,
                     animation: `${fadeIn} 0.3s ease-out`,
+                    '@media (prefers-reduced-motion: reduce)': {
+                      animation: 'none',
+                    },
                   }}
                 >
                   <Stack spacing={1}>
@@ -1303,6 +1333,9 @@ export default function RadioPageClient() {
                     position: 'relative',
                     zIndex: 1,
                     animation: `${fadeIn} 0.3s ease-out`,
+                    '@media (prefers-reduced-motion: reduce)': {
+                      animation: 'none',
+                    },
                   }}
                 >
                   <Typography level="title-md" sx={{ color: 'text.primary' }}>
@@ -1366,6 +1399,9 @@ export default function RadioPageClient() {
                     pb: 2,
                     minHeight: 0,
                     animation: `${fadeIn} 0.35s ease-out`,
+                    '@media (prefers-reduced-motion: reduce)': {
+                      animation: 'none',
+                    },
                   }}
                 >
                   {probeData?.comment?.trim() ? (
@@ -1425,7 +1461,13 @@ export default function RadioPageClient() {
                 </Typography>
                 <Box
                   key={currentTrackId ?? 'idle'}
-                  sx={{ mt: 1, animation: `${fadeIn} 0.35s ease-out` }}
+                  sx={{
+                    mt: 1,
+                    animation: `${fadeIn} 0.35s ease-out`,
+                    '@media (prefers-reduced-motion: reduce)': {
+                      animation: 'none',
+                    },
+                  }}
                 >
                   {lyricsText ? (
                     <Typography
@@ -1556,6 +1598,14 @@ export default function RadioPageClient() {
                 minHeight: 44,
                 borderRadius: 0,
                 display: { xs: 'none', md: 'inline-flex' },
+                transition: 'transform 0.15s ease',
+                '&:hover': { transform: 'scale(1.05)' },
+                '&:active': { transform: 'scale(0.95)', transition: 'transform 0.1s ease' },
+                '@media (prefers-reduced-motion: reduce)': {
+                  transition: 'none',
+                  '&:hover': { transform: 'none' },
+                  '&:active': { transform: 'none' },
+                },
               }}
             >
               <StepBack size={18} />
@@ -1567,7 +1617,19 @@ export default function RadioPageClient() {
               color={isPlaying ? 'success' : 'primary'}
               onClick={togglePlayback}
               aria-label={playbackDesired ? 'Pause Midori AI Radio' : 'Play Midori AI Radio'}
-              sx={{ minWidth: 44, minHeight: 44, borderRadius: 0 }}
+              sx={{
+                minWidth: 44,
+                minHeight: 44,
+                borderRadius: 0,
+                transition: 'transform 0.15s ease',
+                '&:hover': { transform: 'scale(1.05)' },
+                '&:active': { transform: 'scale(0.95)', transition: 'transform 0.1s ease' },
+                '@media (prefers-reduced-motion: reduce)': {
+                  transition: 'none',
+                  '&:hover': { transform: 'none' },
+                  '&:active': { transform: 'none' },
+                },
+              }}
             >
               {playbackDesired ? <Pause size={18} /> : <Play size={18} />}
             </Button>
@@ -1583,6 +1645,14 @@ export default function RadioPageClient() {
                 minHeight: 44,
                 borderRadius: 0,
                 display: { xs: 'none', md: 'inline-flex' },
+                transition: 'transform 0.15s ease',
+                '&:hover': { transform: 'scale(1.05)' },
+                '&:active': { transform: 'scale(0.95)', transition: 'transform 0.1s ease' },
+                '@media (prefers-reduced-motion: reduce)': {
+                  transition: 'none',
+                  '&:hover': { transform: 'none' },
+                  '&:active': { transform: 'none' },
+                },
               }}
             >
               <StepForward size={18} />
