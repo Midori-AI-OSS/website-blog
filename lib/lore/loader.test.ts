@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -314,6 +314,41 @@ story_order: 2
       expect((duplicateError as Error).message).toContain('Duplicate lore filename "shared.md"');
     } finally {
       await rm(duplicateRootDir, { recursive: true, force: true });
+    }
+  });
+
+  test('loadAllLorePosts rejects symlinks to sibling directories with shared prefixes', async () => {
+    const symlinkRootDir = await mkdtemp(join(tmpdir(), 'website-lore-symlink-'));
+    const safePostsDir = join(symlinkRootDir, 'lore', 'posts');
+    const siblingPostsDir = join(symlinkRootDir, 'lore', 'posts-evil');
+    const siblingPostPath = join(siblingPostsDir, 'evil-lore.md');
+
+    try {
+      await mkdir(safePostsDir, { recursive: true });
+      await mkdir(siblingPostsDir, { recursive: true });
+      await writeFile(
+        siblingPostPath,
+        `---
+title: Evil Lore
+date: 2026-01-18
+tags: [lore, security, riley]
+game: security
+story_order: 1
+---
+
+# This should not load`,
+        'utf-8',
+      );
+      await symlink(siblingPostPath, join(safePostsDir, 'evil-lore.md'));
+
+      const posts = await loadAllLorePosts(
+        { includeScheduled: true, now: '2026-01-18T18:00:00Z' },
+        safePostsDir,
+      );
+
+      expect(posts.map((post) => post.filename)).not.toContain('evil-lore.md');
+    } finally {
+      await rm(symlinkRootDir, { recursive: true, force: true });
     }
   });
 });

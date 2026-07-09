@@ -14,7 +14,7 @@
  */
 
 import { readdir, readFile, realpath } from 'node:fs/promises';
-import { join } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 import { extractIsoDateFromBlogFilename, getPublishState } from '@/lib/content/publish';
 import { type ParsedPost, parsePost } from './parser';
 
@@ -46,6 +46,11 @@ export interface LoadAllPostsOptions {
  */
 function isValidFilename(filename: string): boolean {
   return /^\d{4}-\d{2}-\d{2}\.md$/.test(filename);
+}
+
+function isPathInsideDirectory(parentDir: string, childPath: string): boolean {
+  const relativePath = relative(parentDir, childPath);
+  return relativePath !== '' && !relativePath.startsWith('..') && !isAbsolute(relativePath);
 }
 
 /**
@@ -107,7 +112,7 @@ export async function loadAllPosts(
 
           // Security: ensure path is within POSTS_DIR (prevent path traversal)
           const realFilePath = await realpath(filepath);
-          if (!realFilePath.startsWith(realPostsDir)) {
+          if (!isPathInsideDirectory(realPostsDir, realFilePath)) {
             console.error(`Security: Path traversal attempt detected for ${filename}`);
             return null;
           }

@@ -4,7 +4,7 @@
  */
 
 import { readdir, readFile, realpath, stat } from 'node:fs/promises';
-import { basename, join } from 'node:path';
+import { basename, isAbsolute, join, relative } from 'node:path';
 
 import { type ParsedPost, parsePost } from '@/lib/blog/parser';
 import { getPublishState } from '@/lib/content/publish';
@@ -71,6 +71,11 @@ export interface LorePostNeighbors {
 
 function isValidFilename(filename: string): boolean {
   return /^[a-z0-9][a-z0-9-]*\.md$/i.test(basename(filename));
+}
+
+function isPathInsideDirectory(parentDir: string, childPath: string): boolean {
+  const relativePath = relative(parentDir, childPath);
+  return relativePath !== '' && !relativePath.startsWith('..') && !isAbsolute(relativePath);
 }
 
 function isValidSlug(value: string): boolean {
@@ -436,7 +441,7 @@ export async function loadAllLorePosts(
         try {
           const filepath = join(postsDir, relativePath);
           const realFilePath = await realpath(filepath);
-          if (!realFilePath.startsWith(realPostsDir)) {
+          if (!isPathInsideDirectory(realPostsDir, realFilePath)) {
             console.error(`Security: Path traversal attempt detected for ${relativePath}`);
             return null;
           }

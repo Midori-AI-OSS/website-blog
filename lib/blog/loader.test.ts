@@ -3,7 +3,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -265,5 +265,37 @@ Content`,
     const posts = await loadAllPosts(testPostsDir);
     const malicious = posts.find((p) => p.filename.includes('..'));
     expect(malicious).toBeUndefined();
+  });
+
+  test('realpath validation rejects symlinks to sibling directories with shared prefixes', async () => {
+    const symlinkRootDir = await mkdtemp(join(tmpdir(), 'website-blog-symlink-'));
+    const safePostsDir = join(symlinkRootDir, 'blog', 'posts');
+    const siblingPostsDir = join(symlinkRootDir, 'blog', 'posts-evil');
+    const siblingPostPath = join(siblingPostsDir, '2026-01-18.md');
+
+    try {
+      await mkdir(safePostsDir, { recursive: true });
+      await mkdir(siblingPostsDir, { recursive: true });
+      await writeFile(
+        siblingPostPath,
+        `---
+title: Evil Sibling Post
+tags: [security]
+---
+
+# This should not load`,
+        'utf-8',
+      );
+      await symlink(siblingPostPath, join(safePostsDir, '2026-01-18.md'));
+
+      const posts = await loadAllPosts(safePostsDir, {
+        includeScheduled: true,
+        now: '2026-01-18T18:00:00Z',
+      });
+
+      expect(posts.map((post) => post.filename)).not.toContain('2026-01-18.md');
+    } finally {
+      await rm(symlinkRootDir, { recursive: true, force: true });
+    }
   });
 });
