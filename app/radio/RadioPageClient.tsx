@@ -1008,6 +1008,7 @@ export default function RadioPageClient() {
                 sx={{
                   width: '100%',
                   height: '100%',
+                  maxHeight: { xs: 'min(70vh)', md: 'none' },
                   objectFit: 'contain',
                   animation: `${coverSlideIn} 0.4s ease-out`,
                 }}
