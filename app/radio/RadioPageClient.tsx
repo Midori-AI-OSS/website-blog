@@ -218,7 +218,9 @@ export default function RadioPageClient() {
   const [durationMs, setDurationMs] = React.useState(0);
   const [lastError, setLastError] = React.useState<string | null>(null);
   const [volHovered, setVolHovered] = React.useState(false);
+  const [mobileVolOpen, setMobileVolOpen] = React.useState(false);
   const volLeaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mobileVolRef = React.useRef<HTMLDivElement | null>(null);
   const currentTrackId = currentTrack?.track_id ?? null;
 
   React.useEffect(() => {
@@ -756,6 +758,24 @@ export default function RadioPageClient() {
   }, []);
 
   React.useEffect(() => {
+    if (!mobileVolOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && mobileVolRef.current?.contains(target)) {
+        return;
+      }
+      setMobileVolOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [mobileVolOpen]);
+
+  React.useEffect(() => {
     if (!playbackDesired || restartNonce === 0) {
       return;
     }
@@ -931,7 +951,7 @@ export default function RadioPageClient() {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          pb: { xs: '130px', md: '72px' },
+          pb: { xs: '68px', md: '72px' },
         }}
       >
         <Stack
@@ -943,6 +963,7 @@ export default function RadioPageClient() {
             pt: { xs: 4, md: 5 },
             pb: 1,
             minHeight: 52,
+            display: { xs: 'none', md: 'flex' },
           }}
         >
           <Radio size={18} />
@@ -955,7 +976,10 @@ export default function RadioPageClient() {
           <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
             ·
           </Typography>
-          <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+          <Typography
+            level="body-sm"
+            sx={{ color: 'text.secondary', display: { xs: 'none', md: 'block' } }}
+          >
             Listening Room
           </Typography>
         </Stack>
@@ -966,11 +990,11 @@ export default function RadioPageClient() {
         >
           <Box
             sx={{
-              flex: { md: '0 0 50%' },
+              flex: { xs: '1 1 auto', md: '0 0 50%' },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              p: { xs: 2, md: 3 },
+              p: { xs: 1.5, md: 3 },
               minHeight: 0,
               overflow: 'hidden',
             }}
@@ -999,45 +1023,82 @@ export default function RadioPageClient() {
               overflow: 'hidden',
               p: { xs: 2, md: 3 },
               pt: { xs: 0, md: 3 },
+              pb: { xs: 1, md: 3 },
+              justifyContent: { xs: 'center', md: 'flex-start' },
               minWidth: 0,
             }}
           >
-            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent={{ xs: 'center', md: 'flex-start' }}
+              spacing={1}
+              flexWrap="wrap"
+            >
               {listenerCount !== null && (
                 <>
-                  <Users size={14} />
-                  <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
+                  <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+                    <Users size={14} />
+                  </Box>
+                  <Typography
+                    level="body-sm"
+                    sx={{ color: 'text.tertiary', display: { xs: 'none', md: 'block' } }}
+                  >
                     {listenerCount}
                   </Typography>
-                  <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
+                  <Typography
+                    level="body-sm"
+                    sx={{ color: 'text.tertiary', display: { xs: 'none', md: 'block' } }}
+                  >
                     ·
                   </Typography>
                 </>
               )}
               <Typography
                 level="h3"
-                sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' }, lineHeight: 1.3 }}
+                sx={{
+                  fontSize: { xs: '1.25rem', md: '1.5rem' },
+                  lineHeight: 1.3,
+                  textAlign: { xs: 'center', md: 'left' },
+                }}
               >
                 {title}
               </Typography>
-              <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
+              <Typography
+                level="body-sm"
+                sx={{ color: 'text.tertiary', display: { xs: 'none', md: 'block' } }}
+              >
                 ·
               </Typography>
-              <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+              <Typography
+                level="body-sm"
+                sx={{ color: 'text.secondary', display: { xs: 'none', md: 'block' } }}
+              >
                 {artist}
               </Typography>
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+              <Typography
+                level="body-xs"
+                sx={{ color: 'text.tertiary', display: { xs: 'none', md: 'block' } }}
+              >
                 ·
               </Typography>
               <Chip
                 size="sm"
                 variant="soft"
                 color={isPlaying ? 'success' : streamState === 'error' ? 'danger' : 'neutral'}
-                sx={{ borderRadius: 0, '--Chip-minHeight': '22px', minHeight: 22 }}
+                sx={{
+                  borderRadius: 0,
+                  '--Chip-minHeight': '22px',
+                  minHeight: 22,
+                  display: { xs: 'none', md: 'inline-flex' },
+                }}
               >
                 {streamStateLabel}
               </Chip>
-              <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
+              <Typography
+                level="body-xs"
+                sx={{ color: 'text.tertiary', display: { xs: 'none', md: 'block' } }}
+              >
                 ·
               </Typography>
               <Box
@@ -1057,6 +1118,7 @@ export default function RadioPageClient() {
                   color: 'text.primary',
                   px: 0.5,
                   fontSize: '0.75rem',
+                  display: { xs: 'none', md: 'block' },
                   outline: 'none',
                   '&:focus-visible': {
                     borderColor: 'primary.400',
@@ -1077,7 +1139,10 @@ export default function RadioPageClient() {
             </Stack>
 
             {lastError && (
-              <Typography level="body-sm" sx={{ color: 'danger.300', mt: 0.5 }}>
+              <Typography
+                level="body-sm"
+                sx={{ color: 'danger.300', mt: 0.5, display: { xs: 'none', md: 'block' } }}
+              >
                 {lastError}
               </Typography>
             )}
@@ -1167,8 +1232,8 @@ export default function RadioPageClient() {
         }}
       >
         <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={{ xs: 0.25, md: 2 }}
+          direction="row"
+          spacing={{ xs: 0.5, md: 2 }}
           alignItems="center"
           sx={{ px: { xs: 2, md: 3 }, py: { xs: 0.75, md: 1 } }}
         >
@@ -1225,7 +1290,7 @@ export default function RadioPageClient() {
             </Box>
           </Box>
 
-          <Box sx={{ flex: 1, minWidth: 0, maxWidth: '80%' }}>
+          <Box sx={{ flex: 1, minWidth: 0, maxWidth: { xs: 'none', md: '80%' } }}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <BlobProgressBar
                 value={Math.min(100, Math.max(0, progressValue))}
@@ -1253,7 +1318,12 @@ export default function RadioPageClient() {
               color="neutral"
               onClick={() => navigateChannel(-1)}
               aria-label="Previous channel"
-              sx={{ minWidth: 44, minHeight: 44, borderRadius: 0 }}
+              sx={{
+                minWidth: 44,
+                minHeight: 44,
+                borderRadius: 0,
+                display: { xs: 'none', md: 'inline-flex' },
+              }}
             >
               <StepBack size={18} />
             </Button>
@@ -1275,7 +1345,12 @@ export default function RadioPageClient() {
               color="neutral"
               onClick={() => navigateChannel(1)}
               aria-label="Next channel"
-              sx={{ minWidth: 44, minHeight: 44, borderRadius: 0 }}
+              sx={{
+                minWidth: 44,
+                minHeight: 44,
+                borderRadius: 0,
+                display: { xs: 'none', md: 'inline-flex' },
+              }}
             >
               <StepForward size={18} />
             </Button>
@@ -1293,7 +1368,7 @@ export default function RadioPageClient() {
                 position: 'relative',
                 width: 210,
                 height: 44,
-                display: 'flex',
+                display: { xs: 'none', md: 'flex' },
                 alignItems: 'center',
                 justifyContent: 'flex-end',
                 overflow: 'hidden',
@@ -1345,6 +1420,101 @@ export default function RadioPageClient() {
                   }
                 }}
               />
+            </Box>
+
+            <Box
+              ref={mobileVolRef}
+              sx={{
+                position: 'relative',
+                display: { xs: 'flex', md: 'none' },
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: 44,
+                minHeight: 44,
+              }}
+            >
+              {mobileVolOpen && (
+                <Stack
+                  aria-label="Mobile volume"
+                  sx={{
+                    position: 'absolute',
+                    bottom: 'calc(100% + 8px)',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    alignItems: 'center',
+                    p: 0.5,
+                    bgcolor: 'rgba(8,8,14,0.94)',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    backdropFilter: 'blur(18px)',
+                    boxShadow: '0 16px 36px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  {[...volumeDots].reverse().map((dot, reverseIndex) => {
+                    const volumeIndex = volumeDots.length - 1 - reverseIndex;
+                    return (
+                      <Box
+                        key={`mobile-${dot.id}`}
+                        component="button"
+                        type="button"
+                        onClick={() => {
+                          setVolume(clampVolume(volumeIndex / 9));
+                          setMobileVolOpen(false);
+                        }}
+                        aria-label={`Volume ${Math.round((volumeIndex / 9) * 100)}%`}
+                        sx={{
+                          width: 44,
+                          height: 44,
+                          p: 0,
+                          border: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: 'transparent',
+                          cursor: 'pointer',
+                          '&::before': {
+                            content: '""',
+                            width: 24,
+                            height: 8,
+                            bgcolor: dot.active ? 'primary.400' : 'rgba(255,255,255,0.2)',
+                          },
+                          '&:focus-visible': {
+                            outline: '2px solid',
+                            outlineColor: 'primary.400',
+                            outlineOffset: -2,
+                          },
+                        }}
+                      />
+                    );
+                  })}
+                </Stack>
+              )}
+
+              <Box
+                component="button"
+                type="button"
+                onClick={() => setMobileVolOpen((open) => !open)}
+                aria-label="Toggle volume"
+                aria-expanded={mobileVolOpen}
+                sx={{
+                  minWidth: 44,
+                  minHeight: 44,
+                  border: 0,
+                  p: 0,
+                  color: 'inherit',
+                  bgcolor: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  '&:focus-visible': {
+                    outline: '2px solid',
+                    outlineColor: 'primary.400',
+                    outlineOffset: 2,
+                  },
+                }}
+              >
+                <Volume2 size={20} />
+              </Box>
             </Box>
           </Stack>
         </Stack>
