@@ -1236,7 +1236,7 @@ export default function RadioPageClient() {
           direction="row"
           spacing={{ xs: 0.5, md: 2 }}
           alignItems="center"
-          sx={{ px: { xs: 2, md: 3 }, py: { xs: 0.75, md: 1 } }}
+          sx={{ px: { xs: 1, md: 3 }, py: { xs: 0.75, md: 1 } }}
         >
           <Box
             onClick={cycleQuality}
@@ -1323,7 +1323,7 @@ export default function RadioPageClient() {
                 minWidth: 44,
                 minHeight: 44,
                 borderRadius: 0,
-                display: { xs: 'none', md: 'inline-flex' },
+                display: 'inline-flex',
               }}
             >
               <StepBack size={18} />
@@ -1350,7 +1350,7 @@ export default function RadioPageClient() {
                 minWidth: 44,
                 minHeight: 44,
                 borderRadius: 0,
-                display: { xs: 'none', md: 'inline-flex' },
+                display: 'inline-flex',
               }}
             >
               <StepForward size={18} />
