@@ -6,6 +6,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TTS_DIR="${REPO_ROOT}/tts"
 TTS_HOST="127.0.0.1"
 TTS_PORT="8888"
+TTS_VENV="${UV_PROJECT_ENVIRONMENT:-${TTS_DIR}/.venv}"
 TTS_LOG="/tmp/tts-server.log"
 TTS_PID_FILE="/tmp/tts-server.pid"
 STARTUP_TIMEOUT_SECONDS="${TTS_STARTUP_TIMEOUT_SECONDS:-180}"
@@ -69,15 +70,15 @@ start_tts() {
     rm -f "${TTS_PID_FILE}"
   fi
 
-  if [[ ! -x "${TTS_DIR}/.venv/bin/uvicorn" ]]; then
-    echo "TTS launcher missing executable: ${TTS_DIR}/.venv/bin/uvicorn" >&2
+  if [[ ! -x "${TTS_VENV}/bin/uvicorn" ]]; then
+    echo "TTS launcher missing executable: ${TTS_VENV}/bin/uvicorn" >&2
     echo "Run the setup step that prepares the TTS virtualenv first." >&2
     return 1
   fi
 
   (
     cd "${TTS_DIR}"
-    nohup "${TTS_DIR}/.venv/bin/uvicorn" server:app --host "${TTS_HOST}" --port "${TTS_PORT}" \
+    nohup "${TTS_VENV}/bin/uvicorn" server:app --host "${TTS_HOST}" --port "${TTS_PORT}" \
       >>"${TTS_LOG}" 2>&1 &
     echo $! > "${TTS_PID_FILE}"
   )
