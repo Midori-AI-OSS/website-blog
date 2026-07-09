@@ -22,6 +22,11 @@ interface FictionalLangNode extends Parent {
   children: Content[];
 }
 
+interface NestedClosingTag {
+  outerIndex: number;
+  innerIndex: number;
+}
+
 function isParentContent(node: Content): node is Content & Parent {
   return Array.isArray((node as Parent).children);
 }
@@ -86,24 +91,70 @@ function shouldAddQuotes(children: Content[]): boolean {
   return !(text.startsWith('"') && text.endsWith('"'));
 }
 
-function findClosingTag(children: Content[], startIndex: number, lang: string): number {
-  for (let index = startIndex + 1; index < children.length; index += 1) {
-    const child = children[index];
-    if (child && isMatchingClosingTag(child, lang)) {
-      return index;
-    }
-  }
-  return -1;
-}
-
-function transformParent(parent: Parent | Root): void {
-  const transformedChildren: Array<Content | FictionalLangNode> = [];
-
-  for (const child of parent.children as Content[]) {
+function transformContentChildren(children: Content[]): void {
+  for (const child of children) {
     if (isParentContent(child)) {
       transformParent(child);
     }
   }
+}
+
+function findClosingTag(
+  children: Content[],
+  startIndex: number,
+  lang: string,
+): number | NestedClosingTag {
+  for (let index = startIndex + 1; index < children.length; index += 1) {
+    const child = children[index] as Content | undefined;
+    if (!child) continue;
+
+    if (isMatchingClosingTag(child, lang)) {
+      return index;
+    }
+
+    if (isParentContent(child)) {
+      for (let j = 0; j < child.children.length; j += 1) {
+        const nested = child.children[j] as Content | undefined;
+        if (nested && isMatchingClosingTag(nested, lang)) {
+          return { outerIndex: index, innerIndex: j };
+        }
+      }
+    }
+  }
+
+  return -1;
+}
+
+function splitNestedClosingTag(
+  parent: Parent | Root,
+  openingIndex: number,
+  closingTag: NestedClosingTag,
+): {
+  innerChildren: Content[];
+  remainingOuterNode: (Content & Parent) | null;
+} {
+  const { outerIndex, innerIndex } = closingTag;
+  const outerNode = parent.children[outerIndex] as Content & Parent;
+  const childrenBeforeClosing = outerNode.children.slice(0, innerIndex);
+  const innerOuterNode =
+    childrenBeforeClosing.length > 0
+      ? ({ ...outerNode, children: childrenBeforeClosing } as Content)
+      : null;
+  const innerChildren = [
+    ...(parent.children as Content[]).slice(openingIndex + 1, outerIndex),
+    ...(innerOuterNode ? [innerOuterNode] : []),
+  ];
+
+  outerNode.children = outerNode.children.slice(innerIndex + 1);
+
+  return {
+    innerChildren,
+    remainingOuterNode: outerNode.children.length > 0 ? outerNode : null,
+  };
+}
+
+function transformParent(parent: Parent | Root): void {
+  const transformedChildren: Array<Content | FictionalLangNode> = [];
 
   for (let index = 0; index < parent.children.length; index += 1) {
     const child = parent.children[index] as Content | undefined;
@@ -118,13 +169,40 @@ function transformParent(parent: Parent | Root): void {
         continue;
       }
 
-      const closingIndex = findClosingTag(parent.children as Content[], index, parsed.lang);
+      const closingResult = findClosingTag(parent.children as Content[], index, parsed.lang);
 
-      if (closingIndex === -1) {
+      if (closingResult === -1) {
         continue;
       }
 
-      const innerChildren = (parent.children as Content[]).slice(index + 1, closingIndex);
+      if (typeof closingResult === 'number') {
+        const innerChildren = (parent.children as Content[]).slice(index + 1, closingResult);
+        transformContentChildren(innerChildren);
+        const addQuotes = shouldAddQuotes(innerChildren);
+        if (addQuotes) {
+          transformedChildren.push({ type: 'text', value: '"' } as Content);
+        }
+        transformedChildren.push(
+          createFictionalLangNode(
+            parsed.lang as 'celestial' | 'abyssal',
+            parsed.reveal,
+            innerChildren,
+          ),
+        );
+        if (addQuotes) {
+          transformedChildren.push({ type: 'text', value: '"' } as Content);
+        }
+        index = closingResult;
+        continue;
+      }
+
+      const { innerChildren, remainingOuterNode } = splitNestedClosingTag(
+        parent,
+        index,
+        closingResult,
+      );
+
+      transformContentChildren(innerChildren);
       const addQuotes = shouldAddQuotes(innerChildren);
       if (addQuotes) {
         transformedChildren.push({ type: 'text', value: '"' } as Content);
@@ -139,11 +217,14 @@ function transformParent(parent: Parent | Root): void {
       if (addQuotes) {
         transformedChildren.push({ type: 'text', value: '"' } as Content);
       }
-      index = closingIndex;
+      if (remainingOuterNode) {
+        transformParent(remainingOuterNode);
+        transformedChildren.push(remainingOuterNode as Content);
+      }
+      index = closingResult.outerIndex;
       continue;
     }
 
-    // Drop stray closing tags (any lang)
     if (
       isHtml(child) &&
       (CLOSING_CELESTIAL_TAG.test(child.value.trim()) ||
@@ -152,6 +233,9 @@ function transformParent(parent: Parent | Root): void {
       continue;
     }
 
+    if (isParentContent(child)) {
+      transformParent(child);
+    }
     transformedChildren.push(child);
   }
 
