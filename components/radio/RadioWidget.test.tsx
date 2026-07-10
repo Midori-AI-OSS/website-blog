@@ -448,7 +448,7 @@ describe('RadioWidget', () => {
     const initialPlayCalls = lastAudio?.playCalls;
 
     currentTrackId = 'track-2';
-    await runInterval(10000);
+    await runInterval(2_000);
 
     await act(async () => {
       await flushEffects();

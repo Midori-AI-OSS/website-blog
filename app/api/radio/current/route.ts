@@ -69,6 +69,14 @@ export async function GET(request: NextRequest) {
     const rawChannel = request.nextUrl.searchParams.get('channel');
     const channel = normalizeChannel(rawChannel);
     const now = Date.now();
+
+    // Evict expired entries to prevent unbounded map growth from unused channels
+    for (const [ch, entry] of currentCache) {
+      if (!isValidCacheEntry(entry, now)) {
+        currentCache.delete(ch);
+      }
+    }
+
     const cached = currentCache.get(channel);
 
     if (isValidCacheEntry(cached, now)) {
