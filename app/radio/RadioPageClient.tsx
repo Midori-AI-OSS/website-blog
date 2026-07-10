@@ -1453,7 +1453,7 @@ export default function RadioPageClient() {
               <Box
                 sx={{
                   display: { xs: 'none', md: 'block' },
-                  maxHeight: lyricsExpanded ? '40vh' : '0px',
+                  maxHeight: lyricsExpanded ? '70vh' : '0px',
                   overflow: 'hidden',
                   transition: `max-height ${reducedMotion ? LYRICS_ANIM_REDUCED_MS : LYRICS_ANIM_MS}ms ease-out`,
                   mt: 1,
@@ -1464,7 +1464,7 @@ export default function RadioPageClient() {
                   sx={{
                     display: 'flex',
                     flexDirection: 'column',
-                    height: '40vh',
+                    height: '70vh',
                     bgcolor: 'rgba(10,12,18,0.4)',
                     borderColor: 'rgba(255,255,255,0.08)',
                     borderRadius: 0,
