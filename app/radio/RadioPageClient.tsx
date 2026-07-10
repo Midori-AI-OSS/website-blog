@@ -1548,7 +1548,10 @@ export default function RadioPageClient() {
                             const glowColor = `${pickPaletteHex(labelIdx + 1, artPalette)}40`;
                             return (
                               <Typography
-                                key={i}
+                                key={
+                                  // biome-ignore lint/suspicious/noArrayIndexKey: static lyrics list won't be reordered
+                                  i
+                                }
                                 level="body-sm"
                                 sx={{
                                   color: labelColor,
@@ -1566,10 +1569,14 @@ export default function RadioPageClient() {
                             );
                           }
                           return line === '' ? (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: static lyrics list won't be reordered
                             <Box key={i} sx={{ height: '0.7em' }} />
                           ) : (
                             <Typography
-                              key={i}
+                              key={
+                                // biome-ignore lint/suspicious/noArrayIndexKey: static lyrics list won't be reordered
+                                i
+                              }
                               level="body-sm"
                               sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}
                             >
