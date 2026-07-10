@@ -34,6 +34,18 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["app/radio/RadioPageClient.tsx"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noArrayIndexKey": "off"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "single",

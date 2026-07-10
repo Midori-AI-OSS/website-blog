@@ -43,6 +43,41 @@ import {
 } from '@/lib/radio/state';
 import type { ExtractedPalette } from '@/lib/theme/artPalette';
 
+// ── Lyric section label helpers ──
+
+const SECTION_LABEL_RE = /^\[([^\]]+)\]$/;
+const SECTION_LABEL_FALLBACKS = ['#c4b5fd', '#a78bfa', '#818cf8'] as const;
+
+/**
+ * Converts text to Title Case, preserving digits and hyphenated segments.
+ * e.g. "pre-chorus" → "Pre-Chorus", "verse 1" → "Verse 1"
+ */
+function toTitleCase(text: string): string {
+  return text.toLowerCase().replace(/(?:^|\s|-)\S/g, (match) => match.toUpperCase());
+}
+
+/**
+ * Deterministic string hash mapping a label to an index 0-2.
+ */
+function hashLabelToIndex(label: string): number {
+  let hash = 0;
+  for (let i = 0; i < label.length; i++) {
+    hash = (hash << 5) - hash + label.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash) % 3;
+}
+
+function pickPaletteHex(index: number, palette: ExtractedPalette | null): string {
+  const idx = ((index % 3) + 3) % 3;
+  if (!palette) {
+    return SECTION_LABEL_FALLBACKS[idx] ?? SECTION_LABEL_FALLBACKS[0];
+  }
+  if (idx === 0) return palette.primary;
+  if (idx === 1) return palette.secondary;
+  return palette.tertiary;
+}
+
 const coverSlideIn = keyframes`
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
@@ -1446,9 +1481,10 @@ export default function RadioPageClient() {
                     <Typography
                       level="body-sm"
                       sx={{
-                        color: 'text.tertiary',
+                        color: artPalette?.primary ?? 'primary.400',
                         textTransform: 'uppercase',
                         letterSpacing: '0.06em',
+                        transition: 'color 350ms ease',
                       }}
                     >
                       Lyrics
@@ -1503,12 +1539,44 @@ export default function RadioPageClient() {
                                 : 'none',
                         }}
                       >
-                        <Typography
-                          level="body-sm"
-                          sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}
-                        >
-                          {lyricsContent}
-                        </Typography>
+                        {(lyricsContent ?? '').split('\n').map((line, i) => {
+                          const sectionLabelMatch = line.match(SECTION_LABEL_RE);
+                          if (sectionLabelMatch?.[1]) {
+                            const labelText = toTitleCase(sectionLabelMatch[1]);
+                            const labelIdx = hashLabelToIndex(labelText);
+                            const labelColor = pickPaletteHex(labelIdx, artPalette);
+                            const glowColor = `${pickPaletteHex(labelIdx + 1, artPalette)}40`;
+                            return (
+                              <Typography
+                                key={i}
+                                level="body-sm"
+                                sx={{
+                                  color: labelColor,
+                                  textShadow: `0 0 6px ${glowColor}`,
+                                  transition: 'color 350ms ease',
+                                  fontWeight: 600,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.04em',
+                                  mt: i > 0 ? 1.5 : 0,
+                                  mb: 0.5,
+                                }}
+                              >
+                                {labelText}
+                              </Typography>
+                            );
+                          }
+                          return line === '' ? (
+                            <Box key={i} sx={{ height: '0.7em' }} />
+                          ) : (
+                            <Typography
+                              key={i}
+                              level="body-sm"
+                              sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}
+                            >
+                              {line}
+                            </Typography>
+                          );
+                        })}
                       </Box>
                     </Box>
                     {lyricsScrollBottom && (
