@@ -882,7 +882,7 @@ export default function RadioPageClient() {
   const streamStateLabel = getStreamStateLabel(streamState);
 
   const lyricsText = (probeData?.lyricsEng ?? '').trim();
-  const showLyrics = !!(probeData?.ok && lyricsText && !lyricsText.includes('[Instrumental]'));
+  const showLyrics = !!(probeData?.ok && lyricsText && lyricsText !== '[Instrumental]');
 
   const volumeDots = React.useMemo(
     () =>
