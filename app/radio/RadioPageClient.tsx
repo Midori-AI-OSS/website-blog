@@ -881,6 +881,9 @@ export default function RadioPageClient() {
   const title = currentTrack?.title ?? 'Finding current track…';
   const streamStateLabel = getStreamStateLabel(streamState);
 
+  const lyricsText = (probeData?.lyricsEng ?? '').trim();
+  const showLyrics = !!(probeData?.ok && lyricsText && !lyricsText.includes('[Instrumental]'));
+
   const volumeDots = React.useMemo(
     () =>
       Array.from({ length: 10 }, (_, i) => ({
@@ -1214,6 +1217,54 @@ export default function RadioPageClient() {
                 )}
               </Box>
             </Sheet>
+            {showLyrics ? (
+              <Sheet
+                variant="outlined"
+                sx={{
+                  display: { xs: 'none', md: 'flex' },
+                  flexDirection: 'column',
+                  mt: 1,
+                  maxHeight: '40%',
+                  overflow: 'auto',
+                  px: 2,
+                  py: 1.5,
+                  bgcolor: 'rgba(10,12,18,0.4)',
+                  borderColor: 'rgba(255,255,255,0.08)',
+                  borderRadius: 0,
+                }}
+              >
+                <Typography
+                  level="body-sm"
+                  sx={{
+                    color: 'text.tertiary',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  Lyrics
+                </Typography>
+                <Box
+                  key={currentTrackId ?? 'idle'}
+                  sx={{ mt: 1, animation: `${fadeIn} 0.35s ease-out` }}
+                >
+                  {lyricsText ? (
+                    <Typography
+                      level="body-sm"
+                      sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}
+                    >
+                      {lyricsText}
+                    </Typography>
+                  ) : probeLoading ? (
+                    <Stack spacing={1}>
+                      <Skeleton variant="text" width="90%" />
+                      <Skeleton variant="text" width="75%" />
+                      <Skeleton variant="text" width="85%" />
+                      <Skeleton variant="text" width="60%" />
+                    </Stack>
+                  ) : null}
+                </Box>
+              </Sheet>
+            ) : null}
           </Stack>
         </Stack>
       </Box>
