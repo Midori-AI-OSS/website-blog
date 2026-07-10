@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { type NextRequest, NextResponse } from 'next/server';
 import { normalizeChannel } from '@/lib/radio/contract';
+import { extractLyricsEng } from '@/lib/radio/probeHelpers';
 
 export const runtime = 'nodejs';
 
@@ -16,6 +17,7 @@ const execFileAsync = promisify(execFile);
 const TAG_KEYS = [
   'artist',
   'comment',
+  'lyrics-eng',
   'midori_ai_vibe_summary',
   'midori_ai_listener_takeaway',
   'midori_ai_why_made',
@@ -113,11 +115,13 @@ export async function GET(request: NextRequest) {
     const parsed = JSON.parse(stdout) as FfprobeOutput;
     const firstStream = parsed.streams?.[0];
     const tags = extractTags(parsed.format?.tags);
+    const lyricsEng = extractLyricsEng(parsed.format?.tags ?? {});
 
     return NextResponse.json(
       {
         ok: true,
         ...tags,
+        lyricsEng,
         sample_rate: parseNullableNumber(firstStream?.sample_rate),
         channels: parseNullableNumber(firstStream?.channels),
         bit_rate:
