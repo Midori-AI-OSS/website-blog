@@ -591,7 +591,7 @@ export default function RadioWidget() {
 
     void refreshMetadata();
 
-    const intervalMs = playbackDesired ? 10_000 : 20_000;
+    const intervalMs = 2_000;
     const intervalId = window.setInterval(() => {
       void refreshMetadata();
     }, intervalMs);
@@ -599,7 +599,7 @@ export default function RadioWidget() {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [refreshMetadata, playbackDesired, hydrated]);
+  }, [refreshMetadata, hydrated]);
 
   const prevChannelRef = React.useRef(channel);
 

@@ -145,7 +145,7 @@ interface ProgressSnapshot {
 }
 
 const DEFAULT_CHANNELS: ChannelEntry[] = [{ name: 'all', track_count: 0 }];
-const CURRENT_REFRESH_MS = 10_000;
+const CURRENT_REFRESH_MS = 2_000;
 const HEARTBEAT_MS = 30_000;
 const PROBE_DEBOUNCE_MS = 350;
 
