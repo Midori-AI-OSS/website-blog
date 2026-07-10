@@ -43,6 +43,41 @@ import {
 } from '@/lib/radio/state';
 import type { ExtractedPalette } from '@/lib/theme/artPalette';
 
+// ── Lyric section label helpers ──
+
+const SECTION_LABEL_RE = /^\[([^\]]+)\]$/;
+const SECTION_LABEL_FALLBACKS = ['#c4b5fd', '#a78bfa', '#818cf8'] as const;
+
+/**
+ * Converts text to Title Case, preserving digits and hyphenated segments.
+ * e.g. "pre-chorus" → "Pre-Chorus", "verse 1" → "Verse 1"
+ */
+function toTitleCase(text: string): string {
+  return text.toLowerCase().replace(/(?:^|\s|-)\S/g, (match) => match.toUpperCase());
+}
+
+/**
+ * Deterministic string hash mapping a label to an index 0-2.
+ */
+function hashLabelToIndex(label: string): number {
+  let hash = 0;
+  for (let i = 0; i < label.length; i++) {
+    hash = (hash << 5) - hash + label.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash) % 3;
+}
+
+function pickPaletteHex(index: number, palette: ExtractedPalette | null): string {
+  const idx = ((index % 3) + 3) % 3;
+  if (!palette) {
+    return SECTION_LABEL_FALLBACKS[idx] ?? SECTION_LABEL_FALLBACKS[0];
+  }
+  if (idx === 0) return palette.primary;
+  if (idx === 1) return palette.secondary;
+  return palette.tertiary;
+}
+
 const coverSlideIn = keyframes`
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
@@ -51,6 +86,33 @@ const coverSlideIn = keyframes`
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
+`;
+
+const lyricsEnterRise = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const lyricsExitDrop = keyframes`
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+`;
+
+const lyricsFadeOnly = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const lyricsFadeOutOnly = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0; }
+`;
+
+const borderGlow = keyframes`
+  0% { border-color: rgba(139, 92, 246, 0.45); }
+  20% { border-color: rgba(139, 92, 246, 0.28); }
+  55% { border-color: rgba(139, 92, 246, 0.10); }
+  100% { border-color: rgba(255, 255, 255, 0.08); }
 `;
 
 type StreamState = 'idle' | 'loading' | 'playing' | 'error';
@@ -222,13 +284,42 @@ export default function RadioPageClient() {
   const [mobileVolOpen, setMobileVolOpen] = React.useState(false);
   const volLeaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileVolRef = React.useRef<HTMLDivElement | null>(null);
+
+  // ── Lyrics panel animation state ──
+  const LYRICS_ANIM_MS = 350;
+  const LYRICS_ANIM_REDUCED_MS = 150;
+  const [reducedMotion, setReducedMotion] = React.useState(false);
+  const [lyricsMounted, setLyricsMounted] = React.useState(false);
+  const [lyricsExpanded, setLyricsExpanded] = React.useState(false);
+  const [lyricsEnterKey, setLyricsEnterKey] = React.useState(0);
+  const [lyricsContent, setLyricsContent] = React.useState<string | null>(null);
+  const [lyricsScrollTop, setLyricsScrollTop] = React.useState(false);
+  const [lyricsScrollBottom, setLyricsScrollBottom] = React.useState(false);
+  const lyricsPhaseRef = React.useRef<'hidden' | 'entering' | 'visible' | 'exiting'>('hidden');
+  const lyricsTrackIdRef = React.useRef<string | null>(null);
+  const lyricsTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingLyricsRef = React.useRef<{ content: string; trackId: string } | null>(null);
+  const lyricsScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const currentLyricsTargetRef = React.useRef<string | null>(null);
+
   const currentTrackId = currentTrack?.track_id ?? null;
+  // Keep target ref in sync for lyrics timer callbacks
+  currentLyricsTargetRef.current = currentTrackId;
 
   React.useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
     };
+  }, []);
+
+  // ── Reduced motion detection ──
+  React.useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
   }, []);
 
   React.useEffect(() => {
@@ -618,6 +709,150 @@ export default function RadioPageClient() {
       controller.abort();
     };
   }, [channel, currentTrackId, hydrated]);
+
+  // ── Cleanup lyrics timer on unmount ──
+  React.useEffect(() => {
+    return () => {
+      if (lyricsTimerRef.current !== null) {
+        clearTimeout(lyricsTimerRef.current);
+      }
+    };
+  }, []);
+
+  // ── Lyrics panel lifecycle ──
+  React.useEffect(() => {
+    const trackId = currentTrackId;
+    const animDuration = reducedMotion ? LYRICS_ANIM_REDUCED_MS : LYRICS_ANIM_MS;
+
+    const clearTimer = () => {
+      if (lyricsTimerRef.current !== null) {
+        clearTimeout(lyricsTimerRef.current);
+        lyricsTimerRef.current = null;
+      }
+    };
+
+    const performEnter = (content: string, tid: string) => {
+      lyricsPhaseRef.current = 'entering';
+      lyricsTrackIdRef.current = tid;
+      pendingLyricsRef.current = null;
+      setLyricsContent(content);
+      setLyricsMounted(true);
+      setLyricsExpanded(false);
+
+      clearTimer();
+      // rAF delay so the initial collapsed render paints before expansion
+      lyricsTimerRef.current = setTimeout(() => {
+        setLyricsExpanded(true);
+        setLyricsEnterKey((k) => k + 1);
+
+        lyricsTimerRef.current = setTimeout(() => {
+          lyricsPhaseRef.current = 'visible';
+        }, animDuration);
+      }, 16);
+    };
+
+    const performExit = () => {
+      lyricsPhaseRef.current = 'exiting';
+      clearTimer();
+      setLyricsExpanded(false);
+
+      lyricsTimerRef.current = setTimeout(() => {
+        lyricsPhaseRef.current = 'hidden';
+        lyricsTrackIdRef.current = null;
+        setLyricsMounted(false);
+        setLyricsContent(null);
+
+        const pending = pendingLyricsRef.current;
+        if (pending !== null && pending.trackId === currentLyricsTargetRef.current) {
+          lyricsTimerRef.current = setTimeout(() => {
+            performEnter(pending.content, pending.trackId);
+          }, 30);
+        }
+      }, animDuration);
+    };
+
+    // No track — reset everything
+    if (trackId === null) {
+      if (lyricsPhaseRef.current !== 'hidden') {
+        performExit();
+      }
+      return;
+    }
+
+    const hasValidLyrics = !!(
+      probeData?.ok &&
+      (probeData?.lyricsEng ?? '').trim() &&
+      (probeData?.lyricsEng ?? '').trim() !== '[Instrumental]'
+    );
+    const newContent = hasValidLyrics ? (probeData?.lyricsEng ?? '').trim() : null;
+
+    const phase = lyricsPhaseRef.current;
+    const currentLyricsTrack = lyricsTrackIdRef.current;
+
+    // Track changed away from our currently displayed lyrics
+    if (currentLyricsTrack !== null && currentLyricsTrack !== trackId) {
+      if (phase === 'visible' || phase === 'entering') {
+        pendingLyricsRef.current = null;
+        performExit();
+      }
+      return;
+    }
+
+    // Same track — only react if lyrics became invalid (e.g. switched to instrumental)
+    if (currentLyricsTrack === trackId) {
+      if (!probeLoading && newContent === null && phase === 'visible') {
+        performExit();
+      }
+      return;
+    }
+
+    // No lyrics currently displayed for this track
+    if (!probeLoading) {
+      if (newContent === null) {
+        if (phase === 'visible' || phase === 'entering') {
+          performExit();
+        }
+        return;
+      }
+
+      // Valid lyrics — if currently exiting, store as pending
+      if (phase === 'exiting') {
+        pendingLyricsRef.current = { content: newContent, trackId };
+        return;
+      }
+
+      if (phase === 'hidden') {
+        performEnter(newContent, trackId);
+      }
+    }
+  }, [currentTrackId, probeData, probeLoading, reducedMotion]);
+
+  // ── Scroll edge-fade detection ──
+  React.useEffect(() => {
+    if (!lyricsMounted) return;
+    const el = lyricsScrollRef.current;
+    if (!el) return;
+
+    const check = () => {
+      if (!lyricsScrollRef.current) return;
+      const s = lyricsScrollRef.current;
+      setLyricsScrollTop(s.scrollTop > 2);
+      setLyricsScrollBottom(s.scrollTop + s.clientHeight < s.scrollHeight - 2);
+    };
+
+    check();
+    // Re-check after enter animation settles; lyricsEnterKey bump drives the retrigger
+    void lyricsEnterKey;
+    const timer = setTimeout(check, 400);
+    return () => clearTimeout(timer);
+  }, [lyricsEnterKey, lyricsMounted]);
+
+  const handleLyricsScroll = React.useCallback(() => {
+    const el = lyricsScrollRef.current;
+    if (!el) return;
+    setLyricsScrollTop(el.scrollTop > 2);
+    setLyricsScrollBottom(el.scrollTop + el.clientHeight < el.scrollHeight - 2);
+  }, []);
 
   const startPlayback = React.useCallback(() => {
     const audio = audioRef.current;
@@ -1214,6 +1449,162 @@ export default function RadioPageClient() {
                 )}
               </Box>
             </Sheet>
+            {lyricsMounted ? (
+              <Box
+                sx={{
+                  display: { xs: 'none', md: 'block' },
+                  maxHeight: lyricsExpanded ? '60vh' : '0px',
+                  overflow: 'hidden',
+                  transition: `max-height ${reducedMotion ? LYRICS_ANIM_REDUCED_MS : LYRICS_ANIM_MS}ms ease-out`,
+                  mt: 1,
+                }}
+              >
+                <Sheet
+                  variant="outlined"
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '60vh',
+                    bgcolor: 'rgba(10,12,18,0.4)',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    borderRadius: 0,
+                    position: 'relative',
+                    animation:
+                      lyricsExpanded && lyricsEnterKey > 0
+                        ? reducedMotion
+                          ? 'none'
+                          : `${borderGlow} 1.2s ease-out`
+                        : 'none',
+                  }}
+                >
+                  <Box sx={{ px: 2, pt: 1.5, pb: 0.5, flexShrink: 0 }}>
+                    <Typography
+                      level="body-sm"
+                      sx={{
+                        color: artPalette?.primary ?? 'primary.400',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        transition: 'color 350ms ease',
+                      }}
+                    >
+                      Lyrics
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      flex: 1,
+                      minHeight: 0,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {lyricsScrollTop && (
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 28,
+                          zIndex: 1,
+                          background:
+                            'linear-gradient(to bottom, rgba(10,12,18,0.95), transparent)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    )}
+                    <Box
+                      ref={lyricsScrollRef}
+                      onScroll={handleLyricsScroll}
+                      sx={{
+                        overflow: 'auto',
+                        height: '100%',
+                        px: 2,
+                        pb: 2,
+                      }}
+                    >
+                      <Box
+                        key={lyricsEnterKey}
+                        sx={{
+                          animation:
+                            lyricsMounted && !lyricsExpanded
+                              ? reducedMotion
+                                ? `${lyricsFadeOutOnly} ${LYRICS_ANIM_REDUCED_MS}ms ease-out`
+                                : `${lyricsExitDrop} ${LYRICS_ANIM_MS}ms ease-out`
+                              : lyricsExpanded && lyricsEnterKey > 0
+                                ? reducedMotion
+                                  ? `${lyricsFadeOnly} ${LYRICS_ANIM_REDUCED_MS}ms ease-out`
+                                  : `${lyricsEnterRise} ${LYRICS_ANIM_MS}ms ease-out`
+                                : 'none',
+                        }}
+                      >
+                        {(lyricsContent ?? '').split('\n').map((line, i) => {
+                          const sectionLabelMatch = line.match(SECTION_LABEL_RE);
+                          if (sectionLabelMatch?.[1]) {
+                            const labelText = toTitleCase(sectionLabelMatch[1]);
+                            const labelIdx = hashLabelToIndex(labelText);
+                            const labelColor = pickPaletteHex(labelIdx, artPalette);
+                            const glowColor = `${pickPaletteHex(labelIdx + 1, artPalette)}40`;
+                            return (
+                              <Typography
+                                key={
+                                  // biome-ignore lint/suspicious/noArrayIndexKey: static lyrics list won't be reordered
+                                  i
+                                }
+                                level="body-sm"
+                                sx={{
+                                  color: labelColor,
+                                  textShadow: `0 0 6px ${glowColor}`,
+                                  transition: 'color 350ms ease',
+                                  fontWeight: 600,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.04em',
+                                  mt: i > 0 ? 1.5 : 0,
+                                  mb: 0.5,
+                                }}
+                              >
+                                {labelText}
+                              </Typography>
+                            );
+                          }
+                          return line === '' ? (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: static lyrics list won't be reordered
+                            <Box key={i} sx={{ height: '0.7em' }} />
+                          ) : (
+                            <Typography
+                              key={
+                                // biome-ignore lint/suspicious/noArrayIndexKey: static lyrics list won't be reordered
+                                i
+                              }
+                              level="body-sm"
+                              sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}
+                            >
+                              {line}
+                            </Typography>
+                          );
+                        })}
+                      </Box>
+                    </Box>
+                    {lyricsScrollBottom && (
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 28,
+                          zIndex: 1,
+                          background: 'linear-gradient(to top, rgba(10,12,18,0.95), transparent)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Sheet>
+              </Box>
+            ) : null}
           </Stack>
         </Stack>
       </Box>
