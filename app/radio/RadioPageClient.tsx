@@ -53,6 +53,33 @@ const fadeIn = keyframes`
   to { opacity: 1; }
 `;
 
+const lyricsEnterRise = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const lyricsExitDrop = keyframes`
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+`;
+
+const lyricsFadeOnly = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const lyricsFadeOutOnly = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0; }
+`;
+
+const borderGlow = keyframes`
+  0% { border-color: rgba(139, 92, 246, 0.45); }
+  20% { border-color: rgba(139, 92, 246, 0.28); }
+  55% { border-color: rgba(139, 92, 246, 0.10); }
+  100% { border-color: rgba(255, 255, 255, 0.08); }
+`;
+
 type StreamState = 'idle' | 'loading' | 'playing' | 'error';
 
 interface ProbeMetadata {
@@ -222,13 +249,42 @@ export default function RadioPageClient() {
   const [mobileVolOpen, setMobileVolOpen] = React.useState(false);
   const volLeaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileVolRef = React.useRef<HTMLDivElement | null>(null);
+
+  // ── Lyrics panel animation state ──
+  const LYRICS_ANIM_MS = 350;
+  const LYRICS_ANIM_REDUCED_MS = 150;
+  const [reducedMotion, setReducedMotion] = React.useState(false);
+  const [lyricsMounted, setLyricsMounted] = React.useState(false);
+  const [lyricsExpanded, setLyricsExpanded] = React.useState(false);
+  const [lyricsEnterKey, setLyricsEnterKey] = React.useState(0);
+  const [lyricsContent, setLyricsContent] = React.useState<string | null>(null);
+  const [lyricsScrollTop, setLyricsScrollTop] = React.useState(false);
+  const [lyricsScrollBottom, setLyricsScrollBottom] = React.useState(false);
+  const lyricsPhaseRef = React.useRef<'hidden' | 'entering' | 'visible' | 'exiting'>('hidden');
+  const lyricsTrackIdRef = React.useRef<string | null>(null);
+  const lyricsTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingLyricsRef = React.useRef<{ content: string; trackId: string } | null>(null);
+  const lyricsScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const currentLyricsTargetRef = React.useRef<string | null>(null);
+
   const currentTrackId = currentTrack?.track_id ?? null;
+  // Keep target ref in sync for lyrics timer callbacks
+  currentLyricsTargetRef.current = currentTrackId;
 
   React.useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
     };
+  }, []);
+
+  // ── Reduced motion detection ──
+  React.useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
   }, []);
 
   React.useEffect(() => {
@@ -619,6 +675,150 @@ export default function RadioPageClient() {
     };
   }, [channel, currentTrackId, hydrated]);
 
+  // ── Cleanup lyrics timer on unmount ──
+  React.useEffect(() => {
+    return () => {
+      if (lyricsTimerRef.current !== null) {
+        clearTimeout(lyricsTimerRef.current);
+      }
+    };
+  }, []);
+
+  // ── Lyrics panel lifecycle ──
+  React.useEffect(() => {
+    const trackId = currentTrackId;
+    const animDuration = reducedMotion ? LYRICS_ANIM_REDUCED_MS : LYRICS_ANIM_MS;
+
+    const clearTimer = () => {
+      if (lyricsTimerRef.current !== null) {
+        clearTimeout(lyricsTimerRef.current);
+        lyricsTimerRef.current = null;
+      }
+    };
+
+    const performEnter = (content: string, tid: string) => {
+      lyricsPhaseRef.current = 'entering';
+      lyricsTrackIdRef.current = tid;
+      pendingLyricsRef.current = null;
+      setLyricsContent(content);
+      setLyricsMounted(true);
+      setLyricsExpanded(false);
+
+      clearTimer();
+      // rAF delay so the initial collapsed render paints before expansion
+      lyricsTimerRef.current = setTimeout(() => {
+        setLyricsExpanded(true);
+        setLyricsEnterKey((k) => k + 1);
+
+        lyricsTimerRef.current = setTimeout(() => {
+          lyricsPhaseRef.current = 'visible';
+        }, animDuration);
+      }, 16);
+    };
+
+    const performExit = () => {
+      lyricsPhaseRef.current = 'exiting';
+      clearTimer();
+      setLyricsExpanded(false);
+
+      lyricsTimerRef.current = setTimeout(() => {
+        lyricsPhaseRef.current = 'hidden';
+        lyricsTrackIdRef.current = null;
+        setLyricsMounted(false);
+        setLyricsContent(null);
+
+        const pending = pendingLyricsRef.current;
+        if (pending !== null && pending.trackId === currentLyricsTargetRef.current) {
+          lyricsTimerRef.current = setTimeout(() => {
+            performEnter(pending.content, pending.trackId);
+          }, 30);
+        }
+      }, animDuration);
+    };
+
+    // No track — reset everything
+    if (trackId === null) {
+      if (lyricsPhaseRef.current !== 'hidden') {
+        performExit();
+      }
+      return;
+    }
+
+    const hasValidLyrics = !!(
+      probeData?.ok &&
+      (probeData?.lyricsEng ?? '').trim() &&
+      (probeData?.lyricsEng ?? '').trim() !== '[Instrumental]'
+    );
+    const newContent = hasValidLyrics ? (probeData?.lyricsEng ?? '').trim() : null;
+
+    const phase = lyricsPhaseRef.current;
+    const currentLyricsTrack = lyricsTrackIdRef.current;
+
+    // Track changed away from our currently displayed lyrics
+    if (currentLyricsTrack !== null && currentLyricsTrack !== trackId) {
+      if (phase === 'visible' || phase === 'entering') {
+        pendingLyricsRef.current = null;
+        performExit();
+      }
+      return;
+    }
+
+    // Same track — only react if lyrics became invalid (e.g. switched to instrumental)
+    if (currentLyricsTrack === trackId) {
+      if (!probeLoading && newContent === null && phase === 'visible') {
+        performExit();
+      }
+      return;
+    }
+
+    // No lyrics currently displayed for this track
+    if (!probeLoading) {
+      if (newContent === null) {
+        if (phase === 'visible' || phase === 'entering') {
+          performExit();
+        }
+        return;
+      }
+
+      // Valid lyrics — if currently exiting, store as pending
+      if (phase === 'exiting') {
+        pendingLyricsRef.current = { content: newContent, trackId };
+        return;
+      }
+
+      if (phase === 'hidden') {
+        performEnter(newContent, trackId);
+      }
+    }
+  }, [currentTrackId, probeData, probeLoading, reducedMotion]);
+
+  // ── Scroll edge-fade detection ──
+  React.useEffect(() => {
+    if (!lyricsMounted) return;
+    const el = lyricsScrollRef.current;
+    if (!el) return;
+
+    const check = () => {
+      if (!lyricsScrollRef.current) return;
+      const s = lyricsScrollRef.current;
+      setLyricsScrollTop(s.scrollTop > 2);
+      setLyricsScrollBottom(s.scrollTop + s.clientHeight < s.scrollHeight - 2);
+    };
+
+    check();
+    // Re-check after enter animation settles; lyricsEnterKey bump drives the retrigger
+    void lyricsEnterKey;
+    const timer = setTimeout(check, 400);
+    return () => clearTimeout(timer);
+  }, [lyricsEnterKey, lyricsMounted]);
+
+  const handleLyricsScroll = React.useCallback(() => {
+    const el = lyricsScrollRef.current;
+    if (!el) return;
+    setLyricsScrollTop(el.scrollTop > 2);
+    setLyricsScrollBottom(el.scrollTop + el.clientHeight < el.scrollHeight - 2);
+  }, []);
+
   const startPlayback = React.useCallback(() => {
     const audio = audioRef.current;
     if (audio === null) {
@@ -880,9 +1080,6 @@ export default function RadioPageClient() {
   const artist = probeData?.artist?.trim() || 'Midori AI';
   const title = currentTrack?.title ?? 'Finding current track…';
   const streamStateLabel = getStreamStateLabel(streamState);
-
-  const lyricsText = (probeData?.lyricsEng ?? '').trim();
-  const showLyrics = !!(probeData?.ok && lyricsText && lyricsText !== '[Instrumental]');
 
   const volumeDots = React.useMemo(
     () =>
@@ -1217,53 +1414,121 @@ export default function RadioPageClient() {
                 )}
               </Box>
             </Sheet>
-            {showLyrics ? (
-              <Sheet
-                variant="outlined"
+            {lyricsMounted ? (
+              <Box
                 sx={{
-                  display: { xs: 'none', md: 'flex' },
-                  flexDirection: 'column',
+                  display: { xs: 'none', md: 'block' },
+                  maxHeight: lyricsExpanded ? '40vh' : '0px',
+                  overflow: 'hidden',
+                  transition: `max-height ${reducedMotion ? LYRICS_ANIM_REDUCED_MS : LYRICS_ANIM_MS}ms ease-out`,
                   mt: 1,
-                  maxHeight: '40%',
-                  overflow: 'auto',
-                  px: 2,
-                  py: 1.5,
-                  bgcolor: 'rgba(10,12,18,0.4)',
-                  borderColor: 'rgba(255,255,255,0.08)',
-                  borderRadius: 0,
                 }}
               >
-                <Typography
-                  level="body-sm"
+                <Sheet
+                  variant="outlined"
                   sx={{
-                    color: 'text.tertiary',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '40vh',
+                    bgcolor: 'rgba(10,12,18,0.4)',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    borderRadius: 0,
+                    position: 'relative',
+                    animation:
+                      lyricsExpanded && lyricsEnterKey > 0
+                        ? reducedMotion
+                          ? 'none'
+                          : `${borderGlow} 1.2s ease-out`
+                        : 'none',
                   }}
                 >
-                  Lyrics
-                </Typography>
-                <Box
-                  key={currentTrackId ?? 'idle'}
-                  sx={{ mt: 1, animation: `${fadeIn} 0.35s ease-out` }}
-                >
-                  {lyricsText ? (
+                  <Box sx={{ px: 2, pt: 1.5, pb: 0.5, flexShrink: 0 }}>
                     <Typography
                       level="body-sm"
-                      sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}
+                      sx={{
+                        color: 'text.tertiary',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                      }}
                     >
-                      {lyricsText}
+                      Lyrics
                     </Typography>
-                  ) : probeLoading ? (
-                    <Stack spacing={1}>
-                      <Skeleton variant="text" width="90%" />
-                      <Skeleton variant="text" width="75%" />
-                      <Skeleton variant="text" width="85%" />
-                      <Skeleton variant="text" width="60%" />
-                    </Stack>
-                  ) : null}
-                </Box>
-              </Sheet>
+                  </Box>
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      flex: 1,
+                      minHeight: 0,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {lyricsScrollTop && (
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 28,
+                          zIndex: 1,
+                          background:
+                            'linear-gradient(to bottom, rgba(10,12,18,0.95), transparent)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    )}
+                    <Box
+                      ref={lyricsScrollRef}
+                      onScroll={handleLyricsScroll}
+                      sx={{
+                        overflow: 'auto',
+                        height: '100%',
+                        px: 2,
+                        pb: 2,
+                      }}
+                    >
+                      <Box
+                        key={lyricsEnterKey}
+                        sx={{
+                          animation:
+                            lyricsMounted && !lyricsExpanded
+                              ? reducedMotion
+                                ? `${lyricsFadeOutOnly} ${LYRICS_ANIM_REDUCED_MS}ms ease-out`
+                                : `${lyricsExitDrop} ${LYRICS_ANIM_MS}ms ease-out`
+                              : lyricsExpanded && lyricsEnterKey > 0
+                                ? reducedMotion
+                                  ? `${lyricsFadeOnly} ${LYRICS_ANIM_REDUCED_MS}ms ease-out`
+                                  : `${lyricsEnterRise} ${LYRICS_ANIM_MS}ms ease-out`
+                                : 'none',
+                        }}
+                      >
+                        <Typography
+                          level="body-sm"
+                          sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}
+                        >
+                          {lyricsContent}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    {lyricsScrollBottom && (
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 28,
+                          zIndex: 1,
+                          background: 'linear-gradient(to top, rgba(10,12,18,0.95), transparent)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Sheet>
+              </Box>
             ) : null}
           </Stack>
         </Stack>
