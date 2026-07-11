@@ -4,25 +4,15 @@ import { normalizeChannel } from '@/lib/radio/contract';
 export const runtime = 'nodejs';
 
 const RADIO_BASE_URL = 'https://radio.midori-ai.xyz';
-const CURRENT_CACHE_TTL_MS = 2_000;
 const UPSTREAM_TIMEOUT_MS = 3_000;
 
 interface CurrentCacheEntry {
   body: string;
   contentType: string;
   status: number;
-  createdAt: number;
 }
 
-const currentCache = new Map<string, CurrentCacheEntry>();
 const pendingCurrentRequests = new Map<string, Promise<CurrentCacheEntry>>();
-
-function isValidCacheEntry(
-  entry: CurrentCacheEntry | undefined,
-  now: number,
-): entry is CurrentCacheEntry {
-  return entry !== undefined && now - entry.createdAt < CURRENT_CACHE_TTL_MS;
-}
 
 function createCurrentResponse(entry: CurrentCacheEntry): NextResponse {
   return new NextResponse(entry.body, {
@@ -57,7 +47,6 @@ async function fetchCurrentFromUpstream(channel: string): Promise<CurrentCacheEn
       body,
       contentType,
       status: upstream.status,
-      createdAt: Date.now(),
     };
   } finally {
     clearTimeout(timeoutId);
@@ -68,21 +57,6 @@ export async function GET(request: NextRequest) {
   try {
     const rawChannel = request.nextUrl.searchParams.get('channel');
     const channel = normalizeChannel(rawChannel);
-    const now = Date.now();
-
-    // Evict expired entries to prevent unbounded map growth from unused channels
-    for (const [ch, entry] of currentCache) {
-      if (!isValidCacheEntry(entry, now)) {
-        currentCache.delete(ch);
-      }
-    }
-
-    const cached = currentCache.get(channel);
-
-    if (isValidCacheEntry(cached, now)) {
-      return createCurrentResponse(cached);
-    }
-
     const pending = pendingCurrentRequests.get(channel);
     if (pending !== undefined) {
       return createCurrentResponse(await pending);
@@ -92,13 +66,7 @@ export async function GET(request: NextRequest) {
     pendingCurrentRequests.set(channel, upstreamRequest);
 
     try {
-      const upstreamEntry = await upstreamRequest;
-
-      if (upstreamEntry.status >= 200 && upstreamEntry.status < 300) {
-        currentCache.set(channel, upstreamEntry);
-      }
-
-      return createCurrentResponse(upstreamEntry);
+      return createCurrentResponse(await upstreamRequest);
     } finally {
       if (pendingCurrentRequests.get(channel) === upstreamRequest) {
         pendingCurrentRequests.delete(channel);
