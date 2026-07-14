@@ -16,3 +16,8 @@ Check all runtime and dev dependencies for known CVEs, outdated versions, and un
 - A markdown table listing each vulnerable/outdated package, current version, latest version, severity, and recommended action.
 - If no issues found, state that explicitly.
 - Save the report to `/tmp/agents-artifacts/tasks/audit-dependency-vulnerabilities-report.md`.
+
+---
+
+**Auditor Review — FAILED MOVED BACK FROM DONE**
+The required output report (`/tmp/agents-artifacts/tasks/audit-dependency-vulnerabilities-report.md`) was never generated. Run the full audit per the steps above, produce the report, and save it to the expected path before marking done.
