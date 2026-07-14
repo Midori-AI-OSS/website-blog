@@ -2,6 +2,7 @@
 title: "The Bright Part of the Air"
 summary: "An uncleaned draft about Riley, Echo, Luna, and Leo at a trade hall where a magical crystal-dust accident turns a routine outing into chaos."
 tags: [lore, side-moments, draft]
+cover_image: /lore/side-moments-the-bright-part-of-the-air-draft.png
 author: "Riley Midori"
 date: 2026-07-14
 game: side-moments
