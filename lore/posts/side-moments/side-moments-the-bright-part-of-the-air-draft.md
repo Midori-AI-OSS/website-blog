@@ -155,7 +155,7 @@ Leo put his palm against his open book. Darkness climbed around his forearm and 
 
 The winged woman turned toward him. Her face changed when she saw Luna across the aisle. The wings folded forward around the people behind her, and the outer feathers hardened into bright blades.
 
-“Leo,” Luna said.
+<celestial:R>Leo,</celestial> Luna said.
 
 He looked over.
 
@@ -267,15 +267,15 @@ The trapped people began pounding from within.
 
 Luna turned.
 
-“Open the back.”
+<celestial:R>Open the back.</celestial>
 
-Leo kept his hand against the page. “She’ll move.”
+Leo kept his hand against the page. <celestial:R>She’ll move.</celestial>
 
-“They’re inside with the dust.”
+<celestial:R>They’re inside with the dust.</celestial>
 
-“The officer is in front of her.”
+<celestial:R>The officer is in front of her.</celestial>
 
-“Open the back, Leo.”
+<celestial:R>Open the back, Leo.</celestial>
 
 Another strike lit the enclosure.
 
@@ -297,13 +297,13 @@ Leo looked directly at Luna.
 
 Both had edged toward the luminous wall while Riley was watching the aisle behind them. Now their bodies pitched toward each other across it. Their halos had gone painfully bright, the solid rings throwing gold across their green hair and the hard set of their faces.
 
-“Close it,” Leo said.
+<celestial:R>Close it,</celestial> Leo said.
 
-“They’re clear.”
+<celestial:R>They’re clear.</celestial>
 
-“She isn’t.”
+<celestial:R>She isn’t.</celestial>
 
-“She’s following them because you sealed her family in a box.”
+<celestial:R>She’s following them because you sealed her family in a box.</celestial>
 
 The winged woman hit the opening shoulder-first. The split widened.
 
@@ -347,13 +347,13 @@ The sound of the hall dropped to a deep muffled pressure. Gold dust glittered in
 
 His face was visible through the dark curve. He stood with his book open, jaw tight, the gold in his eyes almost white.
 
-“Stay there.”
+<celestial:R>Stay there.</celestial>
 
-“There are people behind me.”
+<celestial:R>There are people behind me.</celestial>
 
-“I have them.”
+<celestial:R>I have them.</celestial>
 
-“You have me in the powder.”
+<celestial:R>You have me in the fucking powder.</celestial>
 
 Riley drove her shoulder into the same section Luna was working.
 
@@ -373,13 +373,13 @@ Black lines spread from his palm.
 
 The gold sheet bowed toward Luna.
 
-“Back up,” Luna said.
+<celestial:R>Back up,</celestial> Luna said.
 
-“You first.”
+<celestial:R>You first.</celestial>
 
-“Leo.”
+<celestial:R>Leo.</celestial>
 
-“Move.”
+<celestial:R>Move.</celestial>
 
 Riley looked past them.
 
@@ -403,9 +403,9 @@ The curtain tore loose.
 
 Luna hit the booth table with her hip. Sample jars jumped and rolled. She shoved her forearm across Leo’s collarbone and turned sideways, trying to keep the book between them.
 
-“Let go,” she said.
+<celestial:R>Let go,</celestial> she said.
 
-“You first.”
+<celestial:R>You first.</celestial>
 
 She caught the spine of his brown book where it hung open against his side.
 
@@ -489,7 +489,7 @@ Luna pulled Riley with her.
 
 Riley’s glasses slipped down her nose. She had one arm across Luna’s upper chest and the other locked around her waist. Luna was slight under the cardigan and terrifyingly hard to stop because every part of her was moving toward one point.
 
-“Leo!” Luna shouted.
+<celestial:R>Leo!</celestial> Luna shouted.
 
 He answered her name.
 
