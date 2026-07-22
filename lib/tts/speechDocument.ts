@@ -7,7 +7,7 @@ import remarkFictionalLangTags from '@/lib/markdown/remarkFictionalLangTags';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import { splitMarkdownSpeciesCareTokens } from '@/lib/species-care/tokens';
 
-export const TTS_CACHE_VERSION = '2';
+export { TTS_CACHE_VERSION } from '@/lib/tts/contract';
 
 export type SpeechParagraphKind = 'prose' | 'layerone';
 
