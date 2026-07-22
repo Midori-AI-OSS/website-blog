@@ -44,6 +44,13 @@ export async function GET(
       return NextResponse.json({ error: 'Audio not found' }, { status: 404 });
     }
 
+    if (upstream.status === 416) {
+      return new NextResponse(upstream.body, {
+        status: upstream.status,
+        headers: new Headers(upstream.headers),
+      });
+    }
+
     if (!upstream.ok) {
       return NextResponse.json({ error: 'Upstream error' }, { status: upstream.status });
     }
