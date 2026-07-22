@@ -17,7 +17,15 @@
 import { Global, keyframes } from '@emotion/react';
 import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Lock, Tag, User } from 'lucide-react';
-import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -27,16 +35,13 @@ import { AMBIENT_PULSE_KEYFRAMES, AmbientCoverArt } from '@/components/blog/Ambi
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import { SpeciesCareCardEmbed } from '@/components/species-care/SpeciesCareCardEmbed';
 import { shouldInsertSpaceBetweenTitleSegments } from '@/lib/blog/titleSegments';
-import {
-  POST_COVER_PLACEHOLDER_IMAGE_URL,
-  resolvePostCoverImageUrl,
-  toLoreImageApiUrl,
-} from '@/lib/content/imageUrl';
+import { POST_COVER_PLACEHOLDER_IMAGE_URL, resolvePostCoverImageUrl } from '@/lib/content/imageUrl';
 import {
   extractIsoDateFromBlogFilename,
   formatLongDate,
   normalizeIsoDateString,
 } from '@/lib/content/publish';
+import { LORE_IMAGE_TOKEN_TITLE, preparePostMarkdown } from '@/lib/markdown/postMarkdown';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
 import remarkFictionalLangTags from '@/lib/markdown/remarkFictionalLangTags';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
@@ -47,6 +52,8 @@ import {
   type ExtractedPalette,
   extractPaletteFromImage,
 } from '@/lib/theme/artPalette';
+import type { TtsHighlightRange } from '@/lib/tts/contract';
+import { deriveSpeechDocument, type SpeechDocument } from '@/lib/tts/speechDocument';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
@@ -229,8 +236,6 @@ function getPostDateString(post: ParsedPost): string | undefined {
   );
 }
 
-const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
-
 const markdownSanitizeSchema = {
   ...defaultSchema,
   attributes: {
@@ -244,41 +249,6 @@ const markdownSanitizeSchema = {
     div: [...(defaultSchema.attributes?.div ?? []), ['data-thinking', 'inline', 'block']],
   },
 };
-
-function replaceLoreImageTokens(markdown: string): string {
-  return markdown.replace(
-    /\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi,
-    (fullMatch, tokenValue: string) => {
-      const url = toLoreImageApiUrl(tokenValue);
-      if (!url) return fullMatch;
-
-      const raw = tokenValue.trim();
-      const basename = raw.split('/').filter(Boolean).pop() ?? 'image';
-      const alt =
-        basename
-          .replace(/\.[a-z0-9]+$/i, '')
-          .replace(/[_-]+/g, ' ')
-          .trim() || 'Lore image';
-
-      return `\n\n![${alt}](${url} "${LORE_IMAGE_TOKEN_TITLE}")\n\n`;
-    },
-  );
-}
-
-function normalizeThinkingTagFormatting(markdown: string): string {
-  return markdown.replace(
-    /<thinking>\s*\n((?:(?!\n\n)[\s\S])*?)\n\s*<\/thinking>/g,
-    '<thinking>$1</thinking>',
-  );
-}
-
-function replaceFictionalLangTagTokens(markdown: string): string {
-  return markdown
-    .replace(/<celestial:R>/gi, '<celestial reveal>')
-    .replace(/<abyssal:R>/gi, '<abyssal reveal>')
-    .replace(/<\/celestial:R>/gi, '</celestial>')
-    .replace(/<\/abyssal:R>/gi, '</abyssal>');
-}
 
 function lightenHexColor(hex: string, ratio: number): string {
   const normalized = hex.trim().replace(/^#/, '');
@@ -320,6 +290,143 @@ function buildTooltipText(
   return `${prefix}: ${story.title} - ${snippet}`;
 }
 
+interface NormalizedDomText {
+  text: string;
+  starts: Array<{ node: Text; offset: number }>;
+  ends: Array<{ node: Text; offset: number }>;
+}
+
+function normalizeSpeechDomText(
+  root: Element,
+  excludedDescendants: Set<Element>,
+): NormalizedDomText {
+  const textNodes: Text[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let current = walker.nextNode();
+  while (current) {
+    const textNode = current as Text;
+    const parent = textNode.parentElement;
+    if (
+      parent &&
+      !Array.from(excludedDescendants).some(
+        (excluded) => excluded === parent || excluded.contains(parent),
+      )
+    ) {
+      textNodes.push(textNode);
+    }
+    current = walker.nextNode();
+  }
+
+  let text = '';
+  const starts: NormalizedDomText['starts'] = [];
+  const ends: NormalizedDomText['ends'] = [];
+  let pendingWhitespaceStart: { node: Text; offset: number } | null = null;
+  let pendingWhitespaceEnd: { node: Text; offset: number } | null = null;
+
+  for (const node of textNodes) {
+    for (let offset = 0; offset < node.data.length; offset += 1) {
+      const character = node.data[offset] ?? '';
+      if (/\s/u.test(character)) {
+        pendingWhitespaceStart ??= { node, offset };
+        pendingWhitespaceEnd = { node, offset: offset + 1 };
+        continue;
+      }
+
+      if (pendingWhitespaceStart && pendingWhitespaceEnd && text.length > 0) {
+        text += ' ';
+        starts.push(pendingWhitespaceStart);
+        ends.push(pendingWhitespaceEnd);
+      }
+      pendingWhitespaceStart = null;
+      pendingWhitespaceEnd = null;
+      text += character;
+      starts.push({ node, offset });
+      ends.push({ node, offset: offset + 1 });
+    }
+  }
+
+  return { text, starts, ends };
+}
+
+function getSpeechDomCandidates(root: HTMLElement): NormalizedDomText[] {
+  const candidates: NormalizedDomText[] = [];
+  for (const element of root.querySelectorAll('p, li, pre')) {
+    if (element.closest('h1, h2, h3, h4, h5, h6, table')) continue;
+
+    if (element.tagName === 'PRE') {
+      const layerone = element.querySelector('code.language-layerone');
+      if (!layerone) continue;
+      candidates.push(normalizeSpeechDomText(layerone, new Set()));
+      continue;
+    }
+
+    if (
+      element.tagName === 'LI' &&
+      Array.from(element.children).some((child) => child.tagName === 'P')
+    ) {
+      continue;
+    }
+
+    const excluded = new Set<Element>();
+    for (const descendant of element.querySelectorAll('code, pre, img, table, ul, ol')) {
+      if (
+        element.tagName === 'LI' &&
+        (descendant.tagName === 'UL' || descendant.tagName === 'OL')
+      ) {
+        excluded.add(descendant);
+      } else if (descendant.tagName === 'CODE' || descendant.tagName === 'PRE') {
+        excluded.add(descendant);
+      }
+    }
+    candidates.push(normalizeSpeechDomText(element, excluded));
+  }
+  return candidates.filter((candidate) => candidate.text.length > 0);
+}
+
+function createSpeechHighlightRanges(
+  root: HTMLElement,
+  speechDocument: SpeechDocument,
+  activeRange: TtsHighlightRange,
+): Range[] {
+  const candidates = getSpeechDomCandidates(root);
+  const paragraphMappings: Array<NormalizedDomText | null> = [];
+  let candidateIndex = 0;
+
+  for (const paragraph of speechDocument.paragraphs) {
+    const expected = speechDocument.text.slice(paragraph.start, paragraph.end);
+    let mapping: NormalizedDomText | null = null;
+    while (candidateIndex < candidates.length) {
+      const candidate = candidates[candidateIndex] ?? null;
+      candidateIndex += 1;
+      if (candidate?.text === expected) {
+        mapping = candidate;
+        break;
+      }
+    }
+    paragraphMappings.push(mapping);
+  }
+
+  const ranges: Range[] = [];
+  speechDocument.paragraphs.forEach((paragraph, index) => {
+    const start = Math.max(activeRange.start, paragraph.start);
+    const end = Math.min(activeRange.end, paragraph.end);
+    const mapping = paragraphMappings[index];
+    if (!mapping || end <= start) return;
+
+    const relativeStart = start - paragraph.start;
+    const relativeEnd = end - paragraph.start;
+    const rangeStart = mapping.starts[relativeStart];
+    const rangeEnd = mapping.ends[relativeEnd - 1];
+    if (!rangeStart || !rangeEnd) return;
+
+    const range = document.createRange();
+    range.setStart(rangeStart.node, rangeStart.offset);
+    range.setEnd(rangeEnd.node, rangeEnd.offset);
+    ranges.push(range);
+  });
+  return ranges;
+}
+
 interface PostContentSectionProps {
   post: ParsedPost;
   isScheduledPreview: boolean;
@@ -331,6 +438,8 @@ interface PostContentSectionProps {
   thinkingColor: string;
   thinkingGlowColor: string;
   thinkingMutedColor: string;
+  speechDocument: SpeechDocument;
+  ttsHighlightRange: TtsHighlightRange | null;
 }
 
 function PostContentSection({
@@ -344,15 +453,19 @@ function PostContentSection({
   thinkingColor,
   thinkingGlowColor,
   thinkingMutedColor,
+  speechDocument,
+  ttsHighlightRange,
 }: PostContentSectionProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const highlightNameBase = useMemo(
+    () => `tts-${post.filename.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}`,
+    [post.filename],
+  );
+  const statementHighlightName = `${highlightNameBase}-statement`;
+  const chunkHighlightName = `${highlightNameBase}-chunk`;
 
   const markdownContent = useMemo(() => {
-    let cleaned = post.content;
-    cleaned = replaceLoreImageTokens(cleaned);
-    cleaned = normalizeThinkingTagFormatting(cleaned);
-    cleaned = replaceFictionalLangTagTokens(cleaned);
-    return cleaned;
+    return preparePostMarkdown(post.content);
   }, [post.content]);
   const markdownParts = useMemo(
     () => splitMarkdownSpeciesCareTokens(markdownContent),
@@ -644,6 +757,36 @@ function PostContentSection({
     };
   }, []);
 
+  useLayoutEffect(() => {
+    const root = contentRef.current;
+    if (typeof CSS === 'undefined') return;
+    const registry = (
+      CSS as unknown as {
+        highlights?: {
+          delete: (name: string) => void;
+          set: (name: string, value: unknown) => void;
+        };
+      }
+    ).highlights;
+    const HighlightConstructor = (
+      window as unknown as { Highlight?: new (...ranges: Range[]) => unknown }
+    ).Highlight;
+    const names = [statementHighlightName, chunkHighlightName];
+    names.forEach((name) => {
+      registry?.delete(name);
+    });
+
+    if (!root || !registry || !HighlightConstructor || !ttsHighlightRange) return;
+    const ranges = createSpeechHighlightRanges(root, speechDocument, ttsHighlightRange);
+    if (ranges.length === 0) return;
+    const name =
+      ttsHighlightRange.precision === 'statement' ? statementHighlightName : chunkHighlightName;
+    registry.set(name, new HighlightConstructor(...ranges));
+    return () => {
+      registry.delete(name);
+    };
+  }, [chunkHighlightName, speechDocument, statementHighlightName, ttsHighlightRange]);
+
   return (
     <>
       <Global
@@ -661,6 +804,14 @@ function PostContentSection({
             font-weight: normal;
             font-style: normal;
             font-display: swap;
+          }
+          ::highlight(${statementHighlightName}) {
+            background-color: rgba(250, 204, 21, 0.3);
+            color: inherit;
+          }
+          ::highlight(${chunkHighlightName}) {
+            background-color: rgba(125, 211, 252, 0.16);
+            color: inherit;
           }
         `}
       />
@@ -1138,6 +1289,11 @@ export function PostView({
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
   const [titlePalette, setTitlePalette] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
+  const [ttsHighlightRange, setTtsHighlightRange] = useState<TtsHighlightRange | null>(null);
+  const speechDocument = useMemo(() => deriveSpeechDocument(post.content), [post.content]);
+  const handleTtsHighlightChange = useCallback((range: TtsHighlightRange | null) => {
+    setTtsHighlightRange(range);
+  }, []);
 
   const dateString = useMemo(
     () => getPostDateString(post),
@@ -1298,6 +1454,10 @@ export function PostView({
   useEffect(() => {
     setEffectiveCoverImageUrl(transformedCoverImageUrl);
   }, [transformedCoverImageUrl]);
+
+  useEffect(() => {
+    if (ttsLocked || ttsFadingOut) setTtsHighlightRange(null);
+  }, [ttsFadingOut, ttsLocked]);
 
   useEffect(() => {
     if (!hasThinkingTitleFx) {
@@ -1600,19 +1760,20 @@ export function PostView({
 
           {!isScheduledPreview && (
             <Box sx={{ mb: 4, position: 'relative' }}>
-              <TtsPlayer
-                slug={post.filename.replace(/\.md$/, '')}
-                type={postType}
-                text={post.content}
-                onPrimaryColorChange={setTtsPrimaryColor}
-                coverImageUrl={effectiveCoverImageUrl}
-              />
-              {(ttsLocked || ttsFadingOut) && (
+              {!ttsLocked && !ttsFadingOut ? (
+                <TtsPlayer
+                  slug={post.filename.replace(/\.md$/, '')}
+                  type={postType}
+                  document={speechDocument}
+                  onPrimaryColorChange={setTtsPrimaryColor}
+                  onHighlightChange={handleTtsHighlightChange}
+                  coverImageUrl={effectiveCoverImageUrl}
+                />
+              ) : (
                 <Box
+                  aria-label="Audio unlocks with this post"
                   sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 1,
+                    height: 44,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1661,6 +1822,8 @@ export function PostView({
               thinkingColor={thinkingColor}
               thinkingGlowColor={thinkingGlowColor}
               thinkingMutedColor={thinkingMutedColor}
+              speechDocument={speechDocument}
+              ttsHighlightRange={ttsHighlightRange}
             />,
             ttsPrimaryColor,
           )
@@ -1676,6 +1839,8 @@ export function PostView({
             thinkingColor={thinkingColor}
             thinkingGlowColor={thinkingGlowColor}
             thinkingMutedColor={thinkingMutedColor}
+            speechDocument={speechDocument}
+            ttsHighlightRange={ttsHighlightRange}
           />
         )}
       </Box>

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { blogRendererTestPost, loreRendererTestPost } from '@/lib/content/test-posts';
 import {
   deriveSpeechDocument,
   hashSpeechDocument,
@@ -80,5 +81,24 @@ ONLINE
     );
     expect(await hashSpeechDocument(prose)).toMatch(/^[a-f0-9]{64}$/);
     expect(await hashSpeechDocument(prose)).toBe(await hashSpeechDocument(prose));
+  });
+
+  test('covers both hidden renderer fixtures with the same prose-first rules', () => {
+    const blog = deriveSpeechDocument(blogRendererTestPost.content);
+    const lore = deriveSpeechDocument(loreRendererTestPost.content);
+
+    for (const document of [blog, lore]) {
+      expect(document.text).not.toContain('opening fixture disclaimer');
+      expect(document.text).not.toContain('Markdown Coverage');
+      expect(document.text).not.toContain('THIS ORDINARY CODE MUST NOT BE SPOKEN');
+      expect(document.paragraphs.some((paragraph) => paragraph.kind === 'layerone')).toBe(true);
+    }
+
+    expect(blog.text).toContain('This blockquote should keep its contrast');
+    expect(blog.text).toContain('short inline thinking');
+    expect(blog.text).toContain('"text"');
+    expect(lore.text).toContain('Dialogue should receive the lore dialogue treatment');
+    expect(lore.text).toContain('inline private-style thought');
+    expect(lore.text).not.toContain('speciescard');
   });
 });

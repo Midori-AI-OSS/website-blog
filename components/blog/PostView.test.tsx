@@ -94,6 +94,15 @@ describe('PostView', () => {
     expect(html).toContain('Go to next story');
   });
 
+  test('does not mount TTS requests before password-gated lore is unlocked', () => {
+    const html = renderToStaticMarkup(
+      <PostView post={mockPost} onClose={() => {}} postType="lore" ttsLocked />,
+    );
+
+    expect(html).toContain('Audio unlocks with this post');
+    expect(html).not.toContain('Generate audio for this post');
+  });
+
   test('styles balanced dialogue in prose', () => {
     const html = renderPostContent('She said "Hello there." and waved.');
 
