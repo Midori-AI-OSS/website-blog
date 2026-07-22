@@ -20,7 +20,7 @@ from starlette.datastructures import MutableHeaders
 VOICE = "af_heart,af_bella"
 SAMPLE_RATE = 24000
 TTS_DIR = Path("/tmp/tts")
-CACHE_VERSION = "3"
+CACHE_VERSION = "1-4"
 CACHE_DIRNAME = f"cache-v{CACHE_VERSION}"
 LOCK_TIMEOUT = 300
 MIN_PLAYABLE_CHUNKS = 3
@@ -31,7 +31,7 @@ PARAGRAPH_GAP_SAMPLES = SAMPLE_RATE * PARAGRAPH_GAP_MS // 1000
 VALID_TYPES = {"blog", "lore"}
 CONTENT_HASH_RE = re.compile(r"^[a-f0-9]{64}$")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$", flags=re.IGNORECASE)
-VERSION_DIR_RE = re.compile(r"^cache-v\d+$")
+VERSION_DIR_RE = re.compile(r"^cache-v\d+(?:-\d+)*$")
 # The public TTS protocol uses JavaScript String/DOM offsets, not Python str
 # indices. UTF-16 code units preserve the frontend's DOM Range mapping.
 OFFSET_UNIT = "utf16_code_units"
@@ -587,20 +587,135 @@ def _synthesize_statement(text: str) -> np.ndarray:
     return np.concatenate(parts)
 
 
+def _fade_audio_fragment(fragment: np.ndarray, fade_ms: int = 4) -> np.ndarray:
+    faded = fragment.astype(np.float32, copy=True)
+    fade_samples = min(
+        int(SAMPLE_RATE * fade_ms / 1000),
+        faded.size // 3,
+    )
+    if fade_samples > 0:
+        ramp = np.linspace(0.0, 1.0, fade_samples, dtype=np.float32)
+        faded[:fade_samples] *= ramp
+        faded[-fade_samples:] *= ramp[::-1]
+    return faded
+
+
+def _insert_audio_fragment(
+    source: np.ndarray, position: int, fragment: np.ndarray
+) -> np.ndarray:
+    if fragment.size == 0:
+        return source
+    return np.concatenate(
+        (source[:position], _fade_audio_fragment(fragment), source[position:])
+    )
+
+
+def _active_audio_bounds(source: np.ndarray) -> tuple[int, int]:
+    if source.size == 0:
+        return 0, 0
+    window_size = min(source.size, max(1, int(SAMPLE_RATE * 0.012)))
+    kernel = np.ones(window_size, dtype=np.float32) / window_size
+    energy = np.convolve(np.abs(source), kernel, mode="same")
+    threshold = max(0.012, float(energy.max()) * 0.08)
+    active = np.flatnonzero(energy > threshold)
+    if active.size == 0:
+        return 0, source.size
+    padding = int(SAMPLE_RATE * 0.025)
+    return (
+        max(0, int(active[0]) - padding),
+        min(source.size, int(active[-1]) + padding),
+    )
+
+
 def _apply_layerone_effect(audio: np.ndarray) -> np.ndarray:
     if audio.size == 0:
         return audio.astype(np.float32, copy=True)
+
     source = audio.astype(np.float32, copy=False)
-    quantized = np.round(source * 96.0) / 96.0
-    sample_positions = np.arange(source.size, dtype=np.float32)
-    modulation = 1.0 + 0.025 * np.sin(
-        2.0 * np.pi * 31.0 * sample_positions / SAMPLE_RATE
+    held = np.repeat(source[::5], 5)[: source.size]
+    crushed = np.round(held * 16.0) / 16.0
+    sample_positions = np.arange(source.size, dtype=np.float32) / SAMPLE_RATE
+    chopped = source * (
+        0.68
+        + 0.32
+        * (np.sin(2.0 * np.pi * 43.0 * sample_positions) >= 0.0)
     )
-    delayed = np.zeros_like(source)
-    delay_samples = max(1, int(SAMPLE_RATE * 0.006))
-    delayed[delay_samples:] = quantized[:-delay_samples]
-    effected = 0.88 * source + 0.09 * quantized * modulation + 0.03 * delayed
-    return np.clip(effected, -1.0, 1.0).astype(np.float32, copy=False)
+    ringed = source * np.sin(2.0 * np.pi * 71.0 * sample_positions)
+
+    echo = np.zeros_like(source)
+    delay_a = int(SAMPLE_RATE * 0.009)
+    delay_b = int(SAMPLE_RATE * 0.021)
+    if source.size > delay_a:
+        echo[delay_a:] += 0.65 * source[:-delay_a]
+    if source.size > delay_b:
+        echo[delay_b:] += 0.35 * source[:-delay_b]
+
+    effected = (
+        0.34 * source
+        + 0.28 * crushed
+        + 0.18 * chopped
+        + 0.12 * echo
+        + 0.08 * ringed
+    )
+
+    active_start, active_end = _active_audio_bounds(effected)
+    active_span = max(1, active_end - active_start)
+    first_position = active_start + int(active_span * 0.34)
+    first_size = min(
+        int(SAMPLE_RATE * 0.055),
+        max(int(SAMPLE_RATE * 0.032), active_span // 7),
+    )
+    first_start = max(active_start, first_position - first_size)
+    effected = _insert_audio_fragment(
+        effected,
+        first_position,
+        effected[first_start:first_position],
+    )
+
+    active_start, active_end = _active_audio_bounds(effected)
+    active_span = max(1, active_end - active_start)
+    second_position = active_start + int(active_span * 0.67)
+    second_size = min(
+        int(SAMPLE_RATE * 0.038),
+        max(int(SAMPLE_RATE * 0.022), active_span // 11),
+    )
+    second_start = max(active_start, second_position - second_size)
+    reversed_fragment = effected[second_start:second_position][::-1]
+    effected = _insert_audio_fragment(effected, second_position, reversed_fragment)
+
+    active_start, active_end = _active_audio_bounds(effected)
+    active_span = max(1, active_end - active_start)
+    envelope = np.ones(effected.size, dtype=np.float32)
+    for fraction, duration_ms, floor in (
+        (0.23, 16, 0.06),
+        (0.51, 22, 0.10),
+        (0.79, 14, 0.04),
+    ):
+        center = active_start + int(active_span * fraction)
+        dip_size = min(
+            active_span,
+            max(1, int(SAMPLE_RATE * duration_ms / 1000)),
+        )
+        dip_start = max(
+            active_start,
+            min(active_end - dip_size, center - dip_size // 2),
+        )
+        dip_end = dip_start + dip_size
+        edge = min(int(SAMPLE_RATE * 0.003), dip_size // 2)
+        envelope[dip_start:dip_end] = floor
+        if edge > 0:
+            envelope[dip_start : dip_start + edge] = np.linspace(
+                1.0, floor, edge, dtype=np.float32
+            )
+            envelope[dip_end - edge : dip_end] = np.linspace(
+                floor, 1.0, edge, dtype=np.float32
+            )
+    effected *= envelope
+
+    peak = float(np.max(np.abs(effected)))
+    if peak > 0.98:
+        effected *= 0.98 / peak
+    return effected.astype(np.float32, copy=False)
 
 
 def _generate_chunks_worker(

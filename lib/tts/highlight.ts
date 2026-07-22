@@ -93,6 +93,7 @@ function normalizeSpeechDomText(
         pendingWhitespaceEnd = { node, offset: offset + 1 };
         continue;
       }
+      if (character === '*') continue;
 
       if (pendingWhitespaceStart && pendingWhitespaceEnd && text.length > 0) {
         text += ' ';

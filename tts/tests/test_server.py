@@ -101,6 +101,12 @@ class TtsServerTest(unittest.TestCase):
         )
         content_hash = _calculate_document_hash(document)
         plans = _chunk_plans(_statement_ranges(document))
+        synthesized = np.full(SAMPLE_RATE // 10, 0.25, dtype=np.float32)
+        expected_layerone = _apply_layerone_effect(synthesized)
+        expected_end_ms = round(
+            600 + expected_layerone.size * 1000 / SAMPLE_RATE,
+            3,
+        )
 
         with tempfile.TemporaryDirectory() as temporary:
             with (
@@ -108,7 +114,7 @@ class TtsServerTest(unittest.TestCase):
                 patch.object(
                     server,
                     "_synthesize_statement",
-                    return_value=np.full(SAMPLE_RATE // 10, 0.25, dtype=np.float32),
+                    return_value=synthesized,
                 ),
             ):
                 _generate_chunks_worker(
@@ -130,9 +136,12 @@ class TtsServerTest(unittest.TestCase):
         self.assertEqual(manifest["statements"][0]["start_ms"], 0)
         self.assertEqual(manifest["statements"][0]["end_ms"], 100)
         self.assertEqual(manifest["statements"][1]["start_ms"], 600)
-        self.assertEqual(manifest["statements"][1]["end_ms"], 700)
-        self.assertEqual(manifest["duration_ms"], 700)
-        self.assertEqual(len(audio), int(SAMPLE_RATE * 0.7))
+        self.assertEqual(manifest["statements"][1]["end_ms"], expected_end_ms)
+        self.assertEqual(manifest["duration_ms"], expected_end_ms)
+        self.assertEqual(
+            len(audio),
+            SAMPLE_RATE // 10 + SAMPLE_RATE // 2 + expected_layerone.size,
+        )
         gap = audio[SAMPLE_RATE // 10 : SAMPLE_RATE // 10 + SAMPLE_RATE // 2]
         self.assertTrue(np.allclose(gap, 0.0))
 
@@ -181,16 +190,41 @@ class TtsServerTest(unittest.TestCase):
             )
         self.assertEqual(invalid_offsets.exception.status_code, 400)
 
-    def test_layerone_effect_is_deterministic_subtle_and_non_identity(self):
-        source = np.linspace(-0.8, 0.8, SAMPLE_RATE // 4, dtype=np.float32)
+    def test_layerone_effect_is_deterministic_glitchy_and_peak_limited(self):
+        sample_positions = np.arange(SAMPLE_RATE, dtype=np.float32) / SAMPLE_RATE
+        envelope = np.zeros(SAMPLE_RATE, dtype=np.float32)
+        envelope[SAMPLE_RATE // 10 : -SAMPLE_RATE // 10] = np.hanning(
+            SAMPLE_RATE - SAMPLE_RATE // 5
+        )
+        source = (
+            0.65 * np.sin(2.0 * np.pi * 220.0 * sample_positions) * envelope
+        ).astype(np.float32)
+        original = source.copy()
 
         first = _apply_layerone_effect(source)
         second = _apply_layerone_effect(source)
 
         self.assertTrue(np.array_equal(first, second))
-        self.assertFalse(np.array_equal(first, source))
-        self.assertLess(float(np.mean(np.abs(first - source))), 0.03)
-        self.assertLessEqual(float(np.max(np.abs(first))), 1.0)
+        self.assertTrue(np.array_equal(source, original))
+        self.assertGreater(first.size, source.size)
+        self.assertFalse(np.allclose(first[: source.size], source))
+        self.assertEqual(first.dtype, np.float32)
+        self.assertTrue(np.all(np.isfinite(first)))
+        self.assertLessEqual(float(np.max(np.abs(first))), 0.9801)
+
+    def test_layerone_effect_handles_empty_silent_and_tiny_audio(self):
+        for source in (
+            np.array([], dtype=np.float32),
+            np.zeros(1, dtype=np.float32),
+            np.zeros(80, dtype=np.float32),
+            np.full(200, 0.2, dtype=np.float32),
+        ):
+            effected = _apply_layerone_effect(source)
+
+            self.assertEqual(effected.dtype, np.float32)
+            self.assertTrue(np.all(np.isfinite(effected)))
+            if effected.size:
+                self.assertLessEqual(float(np.max(np.abs(effected))), 0.9801)
 
     def test_startup_removes_only_legacy_and_old_version_directories(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -198,7 +232,8 @@ class TtsServerTest(unittest.TestCase):
             for name in (
                 "blog",
                 "lore",
-                "cache-v1",
+                "cache-v3",
+                "cache-v1-3",
                 "cache-v9",
                 CACHE_DIRNAME,
                 "keep-me",
@@ -210,7 +245,8 @@ class TtsServerTest(unittest.TestCase):
 
             self.assertFalse((root / "blog").exists())
             self.assertFalse((root / "lore").exists())
-            self.assertFalse((root / "cache-v1").exists())
+            self.assertFalse((root / "cache-v3").exists())
+            self.assertFalse((root / "cache-v1-3").exists())
             self.assertFalse((root / "cache-v9").exists())
             self.assertTrue((root / CACHE_DIRNAME).exists())
             self.assertTrue((root / "keep-me").exists())
@@ -235,8 +271,8 @@ class TtsServerTest(unittest.TestCase):
                 self.assertTrue(other_slug.exists())
 
     def test_cache_version_is_explicit(self):
-        self.assertEqual(CACHE_VERSION, "3")
-        self.assertEqual(CACHE_DIRNAME, "cache-v3")
+        self.assertEqual(CACHE_VERSION, "1-4")
+        self.assertEqual(CACHE_DIRNAME, "cache-v1-4")
 
     def test_audio_range_responses_include_range_contract_headers(self):
         content_hash = "a" * 64

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
+import { TTS_CACHE_VERSION } from '@/lib/tts/contract';
 import { GET } from './route';
 
 const originalFetch = globalThis.fetch;
@@ -9,7 +10,7 @@ function createRequest(range: string) {
   return {
     headers: new Headers({ range }),
     nextUrl: new URL(
-      `https://example.test/api/tts/audio/blog/shared-post?content_hash=${contentHash}&cache_version=3`,
+      `https://example.test/api/tts/audio/blog/shared-post?content_hash=${contentHash}&cache_version=${TTS_CACHE_VERSION}`,
     ),
   } as Parameters<typeof GET>[0];
 }

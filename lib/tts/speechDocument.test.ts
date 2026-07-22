@@ -31,7 +31,7 @@ const hidden = true;
 \`\`\`
 
 \`\`\`layerone
-DIGITAL   SIGNAL
+*DIGITAL*   SIGNAL
 ONLINE
 \`\`\`
 
@@ -52,6 +52,19 @@ ONLINE
       'Second list item with .',
       'DIGITAL SIGNAL ONLINE',
     ]);
+    expect(document.paragraphs.at(-1)?.kind).toBe('layerone');
+  });
+
+  test('removes every asterisk from spoken prose and Layer One text', () => {
+    const document = deriveSpeechDocument(
+      'Prose \\*signal\\* and 2 \\* 3.\n\n```layerone\n*stay* *not yet*\n```',
+    );
+
+    expect(document.text).toBe('Prose signal and 2 3. stay not yet');
+    expect(document.text).not.toContain('*');
+    expect(
+      document.paragraphs.map((paragraph) => document.text.slice(paragraph.start, paragraph.end)),
+    ).toEqual(['Prose signal and 2 3.', 'stay not yet']);
     expect(document.paragraphs.at(-1)?.kind).toBe('layerone');
   });
 
@@ -106,6 +119,7 @@ ONLINE
       expect(document.text).not.toContain('opening fixture disclaimer');
       expect(document.text).not.toContain('Markdown Coverage');
       expect(document.text).not.toContain('THIS ORDINARY CODE MUST NOT BE SPOKEN');
+      expect(document.text).not.toContain('*');
       expect(document.paragraphs.some((paragraph) => paragraph.kind === 'layerone')).toBe(true);
     }
 

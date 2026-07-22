@@ -27,15 +27,21 @@ export interface SpeechDocument {
 }
 
 const EXCLUDED_CONTAINER_TYPES = new Set(['heading', 'table', 'tableRow', 'tableCell']);
+const ASTERISK = /\*/g;
 const CURLY_DOUBLE_QUOTES = /[“”]/g;
 const EM_DASH = /—/g;
 
 function normalizeRenderedProse(value: string): string {
-  return value.replace(CURLY_DOUBLE_QUOTES, '"').replace(EM_DASH, '-').replace(/\s+/gu, ' ').trim();
+  return value
+    .replace(ASTERISK, '')
+    .replace(CURLY_DOUBLE_QUOTES, '"')
+    .replace(EM_DASH, '-')
+    .replace(/\s+/gu, ' ')
+    .trim();
 }
 
 function normalizeLayerone(value: string): string {
-  return value.replace(/\s+/gu, ' ').trim();
+  return value.replace(ASTERISK, '').replace(/\s+/gu, ' ').trim();
 }
 
 function isParent(node: Content | Root): node is (Content | Root) & Parent {

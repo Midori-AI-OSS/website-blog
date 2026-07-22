@@ -54,7 +54,7 @@ const shouldStayStandardMarkdownOnly = true;
 \`\`\`
 
 \`\`\`layerone
-BLOG TEST SIGNAL :: STANDARD MARKDOWN ONLY
+*BLOG TEST SIGNAL* :: STANDARD MARKDOWN ONLY
 \`\`\`
 
 ## Image
@@ -133,7 +133,7 @@ THIS ORDINARY CODE MUST NOT BE SPOKEN
 \`\`\`
 
 \`\`\`layerone
-LORE TEST SIGNAL :: TOKEN SYSTEMS ACTIVE
+*LORE TEST SIGNAL* :: TOKEN SYSTEMS ACTIVE
 \`\`\`
 
 ## Standard Markdown Image

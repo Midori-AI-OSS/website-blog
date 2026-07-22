@@ -112,6 +112,7 @@ describe('TTS DOM highlights', () => {
     );
     const layerone = document.paragraphs.find((paragraph) => paragraph.kind === 'layerone');
     if (!layerone) throw new Error('Expected Layer One paragraph');
+    expect(document.text).not.toContain('*');
 
     applyTtsHighlight(root, document, {
       start: layerone.start,
@@ -129,6 +130,21 @@ describe('TTS DOM highlights', () => {
     clearTtsHighlights(root);
     expect(block?.className).toBe('');
     expect(block?.textContent).toBe('*signal* — now\n');
+  });
+
+  test('ignores visible prose asterisks while retaining highlight alignment', () => {
+    const document = deriveSpeechDocument('Before \\*signal\\* after.');
+    const { root } = createRoot('<p>Before *signal* after.</p>');
+    const original = root.innerHTML;
+
+    applyTtsHighlight(root, document, rangeFor(document.text, 'signal'));
+
+    expect(document.text).toBe('Before signal after.');
+    expect(root.querySelector('.tts-highlight')?.textContent).toBe('signal');
+    expect(root.textContent).toBe('Before *signal* after.');
+
+    clearTtsHighlights(root);
+    expect(root.innerHTML).toBe(original);
   });
 
   test('lets multiple Layer One blocks linger and cancels a linger on reactivation', () => {

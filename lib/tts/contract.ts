@@ -1,4 +1,4 @@
-export const TTS_CACHE_VERSION = '3';
+export const TTS_CACHE_VERSION = '1-4';
 /**
  * All TTS document and manifest offsets use JavaScript UTF-16 code units: the
  * same unit used by String#length, String#slice, and DOM Text/Range offsets.
