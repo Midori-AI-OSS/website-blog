@@ -7,6 +7,7 @@ from unittest.mock import patch
 import numpy as np
 import soundfile as sf
 from fastapi import HTTPException
+from fastapi.testclient import TestClient
 
 import server
 from server import (
@@ -236,6 +237,40 @@ class TtsServerTest(unittest.TestCase):
     def test_cache_version_is_explicit(self):
         self.assertEqual(CACHE_VERSION, "3")
         self.assertEqual(CACHE_DIRNAME, "cache-v3")
+
+    def test_audio_range_responses_include_range_contract_headers(self):
+        content_hash = "a" * 64
+
+        with tempfile.TemporaryDirectory() as temporary:
+            with patch.object(server, "TTS_DIR", Path(temporary)):
+                audio_path = server._cache_path("blog", "range-post", content_hash)
+                audio_path.parent.mkdir(parents=True)
+                audio_path.write_bytes(b"0123456789")
+
+                client = TestClient(server.app)
+                request_params = {
+                    "content_hash": content_hash,
+                    "cache_version": CACHE_VERSION,
+                }
+
+                partial = client.get(
+                    "/audio/blog/range-post",
+                    params=request_params,
+                    headers={"Range": "bytes=0-2"},
+                )
+                unsatisfiable = client.get(
+                    "/audio/blog/range-post",
+                    params=request_params,
+                    headers={"Range": "bytes=10-"},
+                )
+
+        self.assertEqual(partial.status_code, 206)
+        self.assertEqual(partial.headers["accept-ranges"], "bytes")
+        self.assertEqual(partial.headers["content-range"], "bytes 0-2/10")
+        self.assertEqual(partial.content, b"012")
+        self.assertEqual(unsatisfiable.status_code, 416)
+        self.assertEqual(unsatisfiable.headers["accept-ranges"], "bytes")
+        self.assertEqual(unsatisfiable.headers["content-range"], "bytes */10")
 
 
 if __name__ == "__main__":

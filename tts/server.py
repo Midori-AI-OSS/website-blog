@@ -15,6 +15,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from kokoro import KModel, KPipeline
 from pydantic import BaseModel
+from starlette.datastructures import MutableHeaders
 
 VOICE = "af_heart,af_bella"
 SAMPLE_RATE = 24000
@@ -62,6 +63,19 @@ class GenerateRequest(BaseModel):
     type: str
     content_hash: str
     cache_version: str
+
+
+class RangeFileResponse(FileResponse):
+    async def __call__(self, scope, receive, send):
+        async def send_with_range_headers(message):
+            if message["type"] == "http.response.start" and message["status"] == 416:
+                message = dict(message)
+                headers = MutableHeaders(raw=list(message["headers"]))
+                headers["accept-ranges"] = "bytes"
+                message["headers"] = headers.raw
+            await send(message)
+
+        await super().__call__(scope, receive, send_with_range_headers)
 
 
 def _validate_type_and_slug(type_: str, slug: str) -> None:
@@ -850,7 +864,7 @@ async def audio(
     cache = _cache_path(type_, slug, content_hash)
     if not cache.exists():
         raise HTTPException(status_code=404, detail="Audio not found")
-    return FileResponse(
+    return RangeFileResponse(
         cache,
         media_type="audio/wav",
         filename=f"{slug}-{content_hash[:12]}.wav",
