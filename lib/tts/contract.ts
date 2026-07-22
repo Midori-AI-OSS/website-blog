@@ -1,4 +1,10 @@
-export const TTS_CACHE_VERSION = '2';
+export const TTS_CACHE_VERSION = '3';
+/**
+ * All TTS document and manifest offsets use JavaScript UTF-16 code units: the
+ * same unit used by String#length, String#slice, and DOM Text/Range offsets.
+ */
+export const TTS_OFFSET_UNIT = 'utf16_code_units' as const;
+export type TtsOffsetUnit = typeof TTS_OFFSET_UNIT;
 export const TTS_CONTENT_HASH_PATTERN = /^[a-f0-9]{64}$/;
 
 export type TtsState = 'not_generated' | 'generating' | 'ready';
@@ -24,6 +30,7 @@ export interface TtsManifestChunk {
 export interface TtsManifest {
   cache_version: string;
   content_hash: string;
+  offset_unit: TtsOffsetUnit;
   text_length: number;
   paragraph_gap_ms: number;
   duration_ms: number;

@@ -11,6 +11,7 @@ import {
 } from '@/lib/theme/artPalette';
 import {
   TTS_CACHE_VERSION,
+  TTS_OFFSET_UNIT,
   type TtsHighlightRange,
   type TtsManifest,
   type TtsState,
@@ -41,6 +42,7 @@ function parseManifest(raw: unknown, contentHash: string): TtsManifest | undefin
   if (
     value.cache_version !== TTS_CACHE_VERSION ||
     value.content_hash !== contentHash ||
+    value.offset_unit !== TTS_OFFSET_UNIT ||
     !Array.isArray(value.chunks) ||
     !Array.isArray(value.statements)
   ) {

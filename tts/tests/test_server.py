@@ -13,6 +13,7 @@ from server import (
     CACHE_DIRNAME,
     CACHE_VERSION,
     MAX_CHUNK_CHARS,
+    OFFSET_UNIT,
     PARAGRAPH_GAP_MS,
     SAMPLE_RATE,
     SpeechDocument,
@@ -32,6 +33,7 @@ from server import (
 def make_document(text: str, paragraphs: list[tuple[int, int, str]]) -> SpeechDocument:
     return SpeechDocument(
         text=text,
+        offset_unit=OFFSET_UNIT,
         paragraphs=[
             SpeechParagraph(start=start, end=end, kind=kind)
             for start, end, kind in paragraphs
@@ -133,6 +135,51 @@ class TtsServerTest(unittest.TestCase):
         gap = audio[SAMPLE_RATE // 10 : SAMPLE_RATE // 10 + SAMPLE_RATE // 2]
         self.assertTrue(np.allclose(gap, 0.0))
 
+    def test_astral_utf16_offsets_validate_and_round_trip_through_manifest(self):
+        document = make_document(
+            "Launch 🚀 now. Second 🧡 paragraph.",
+            [(0, 14, "prose"), (15, 35, "layerone")],
+        )
+        content_hash = _calculate_document_hash(document)
+        _validate_document(document, content_hash)
+        plans = _chunk_plans(_statement_ranges(document))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            with (
+                patch.object(server, "TTS_DIR", Path(temporary)),
+                patch.object(
+                    server,
+                    "_synthesize_statement",
+                    return_value=np.full(SAMPLE_RATE // 10, 0.25, dtype=np.float32),
+                ),
+            ):
+                _generate_chunks_worker(
+                    "blog", "astral-post", content_hash, document, plans
+                )
+                manifest = json.loads(
+                    _manifest_path("blog", "astral-post", content_hash).read_text(
+                        encoding="utf-8"
+                    )
+                )
+
+        self.assertEqual(manifest["offset_unit"], OFFSET_UNIT)
+        self.assertEqual(manifest["text_length"], 35)
+        self.assertEqual(manifest["paragraphs"], [
+            {"start": 0, "end": 14, "kind": "prose"},
+            {"start": 15, "end": 35, "kind": "layerone"},
+        ])
+        self.assertEqual(
+            [(statement["start"], statement["end"]) for statement in manifest["statements"]],
+            [(0, 14), (15, 35)],
+        )
+
+        split_surrogate_pair = make_document("🚀 text", [(0, 1, "prose")])
+        with self.assertRaises(HTTPException) as invalid_offsets:
+            _validate_document(
+                split_surrogate_pair, _calculate_document_hash(split_surrogate_pair)
+            )
+        self.assertEqual(invalid_offsets.exception.status_code, 400)
+
     def test_layerone_effect_is_deterministic_subtle_and_non_identity(self):
         source = np.linspace(-0.8, 0.8, SAMPLE_RATE // 4, dtype=np.float32)
 
@@ -187,8 +234,8 @@ class TtsServerTest(unittest.TestCase):
                 self.assertTrue(other_slug.exists())
 
     def test_cache_version_is_explicit(self):
-        self.assertEqual(CACHE_VERSION, "2")
-        self.assertEqual(CACHE_DIRNAME, "cache-v2")
+        self.assertEqual(CACHE_VERSION, "3")
+        self.assertEqual(CACHE_DIRNAME, "cache-v3")
 
 
 if __name__ == "__main__":

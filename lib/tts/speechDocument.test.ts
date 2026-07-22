@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { blogRendererTestPost, loreRendererTestPost } from '@/lib/content/test-posts';
+import { TTS_OFFSET_UNIT } from './contract';
 import {
   deriveSpeechDocument,
   hashSpeechDocument,
@@ -62,6 +63,20 @@ ONLINE
       { start: 0, end: 31, kind: 'prose' },
       { start: 32, end: 42, kind: 'prose' },
     ]);
+  });
+
+  test('uses UTF-16 code-unit paragraph offsets for astral Unicode', () => {
+    const document = deriveSpeechDocument('Launch 🚀 now.\n\nSecond 🧡 paragraph.');
+
+    expect(document.offset_unit).toBe(TTS_OFFSET_UNIT);
+    expect(document.text).toBe('Launch 🚀 now. Second 🧡 paragraph.');
+    expect(document.paragraphs).toEqual([
+      { start: 0, end: 14, kind: 'prose' },
+      { start: 15, end: 35, kind: 'prose' },
+    ]);
+    expect(
+      document.paragraphs.map((paragraph) => document.text.slice(paragraph.start, paragraph.end)),
+    ).toEqual(['Launch 🚀 now.', 'Second 🧡 paragraph.']);
   });
 
   test('only removes a disclaimer when it is the opening substantive block', () => {

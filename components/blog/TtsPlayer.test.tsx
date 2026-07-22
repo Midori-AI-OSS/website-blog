@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { TTS_CACHE_VERSION, type TtsManifest } from '@/lib/tts/contract';
+import { TTS_CACHE_VERSION, TTS_OFFSET_UNIT, type TtsManifest } from '@/lib/tts/contract';
 import { deriveSpeechDocument, hashSpeechDocument } from '@/lib/tts/speechDocument';
 
 import { TtsPlayer } from './TtsPlayer';
@@ -302,6 +302,7 @@ function manifest(options: { timed: boolean }): TtsManifest {
   return {
     cache_version: TTS_CACHE_VERSION,
     content_hash: TEST_CONTENT_HASH,
+    offset_unit: TTS_OFFSET_UNIT,
     text_length: TEST_DOCUMENT.text.length,
     paragraph_gap_ms: 500,
     duration_ms: 1000,

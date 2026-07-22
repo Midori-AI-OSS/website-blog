@@ -6,19 +6,23 @@ import { preparePostMarkdown } from '@/lib/markdown/postMarkdown';
 import remarkFictionalLangTags from '@/lib/markdown/remarkFictionalLangTags';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
 import { splitMarkdownSpeciesCareTokens } from '@/lib/species-care/tokens';
+import { TTS_OFFSET_UNIT, type TtsOffsetUnit } from '@/lib/tts/contract';
 
-export { TTS_CACHE_VERSION } from '@/lib/tts/contract';
+export { TTS_CACHE_VERSION, TTS_OFFSET_UNIT } from '@/lib/tts/contract';
 
 export type SpeechParagraphKind = 'prose' | 'layerone';
 
 export interface SpeechParagraph {
+  /** UTF-16 code-unit index, matching String#slice and DOM Text offsets. */
   start: number;
+  /** UTF-16 code-unit index, matching String#slice and DOM Text offsets. */
   end: number;
   kind: SpeechParagraphKind;
 }
 
 export interface SpeechDocument {
   text: string;
+  offset_unit: TtsOffsetUnit;
   paragraphs: SpeechParagraph[];
 }
 
@@ -128,7 +132,7 @@ export function deriveSpeechDocument(markdown: string): SpeechDocument {
     paragraphs.push({ start, end: text.length, kind: paragraph.kind });
   }
 
-  return { text, paragraphs };
+  return { text, offset_unit: TTS_OFFSET_UNIT, paragraphs };
 }
 
 export function serializeSpeechDocumentForHash(document: SpeechDocument): string {

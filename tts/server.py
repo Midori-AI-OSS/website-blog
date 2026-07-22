@@ -19,7 +19,7 @@ from pydantic import BaseModel
 VOICE = "af_heart,af_bella"
 SAMPLE_RATE = 24000
 TTS_DIR = Path("/tmp/tts")
-CACHE_VERSION = "2"
+CACHE_VERSION = "3"
 CACHE_DIRNAME = f"cache-v{CACHE_VERSION}"
 LOCK_TIMEOUT = 300
 MIN_PLAYABLE_CHUNKS = 3
@@ -31,6 +31,9 @@ VALID_TYPES = {"blog", "lore"}
 CONTENT_HASH_RE = re.compile(r"^[a-f0-9]{64}$")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$", flags=re.IGNORECASE)
 VERSION_DIR_RE = re.compile(r"^cache-v\d+$")
+# The public TTS protocol uses JavaScript String/DOM offsets, not Python str
+# indices. UTF-16 code units preserve the frontend's DOM Range mapping.
+OFFSET_UNIT = "utf16_code_units"
 
 active_locks: dict[str, tuple[str, float]] = {}
 generation_status: dict[str, dict[str, Any]] = {}
@@ -49,6 +52,7 @@ class SpeechParagraph(BaseModel):
 
 class SpeechDocument(BaseModel):
     text: str
+    offset_unit: Literal["utf16_code_units"]
     paragraphs: list[SpeechParagraph]
 
 
@@ -91,6 +95,30 @@ def _calculate_document_hash(document: SpeechDocument) -> str:
     return hashlib.sha256(_document_hash_input(document).encode("utf-8")).hexdigest()
 
 
+class Utf16OffsetMap:
+    """Translate validated protocol offsets to Python code-point indices."""
+
+    def __init__(self, text: str):
+        self.codepoint_to_utf16 = [0]
+        utf16_offset = 0
+        for character in text:
+            utf16_offset += 2 if ord(character) > 0xFFFF else 1
+            self.codepoint_to_utf16.append(utf16_offset)
+        self.utf16_to_codepoint = {
+            offset: index for index, offset in enumerate(self.codepoint_to_utf16)
+        }
+
+    @property
+    def utf16_length(self) -> int:
+        return self.codepoint_to_utf16[-1]
+
+    def to_codepoint(self, utf16_offset: int) -> int | None:
+        return self.utf16_to_codepoint.get(utf16_offset)
+
+    def to_utf16(self, codepoint_offset: int) -> int:
+        return self.codepoint_to_utf16[codepoint_offset]
+
+
 def _validate_document(document: SpeechDocument, content_hash: str) -> None:
     text = document.text
     if not text or text != text.strip() or re.search(r"\s", text.replace(" ", "")):
@@ -102,19 +130,27 @@ def _validate_document(document: SpeechDocument, content_hash: str) -> None:
     if not document.paragraphs:
         raise HTTPException(status_code=400, detail="No readable text to synthesize")
 
+    offsets = Utf16OffsetMap(text)
     expected_start = 0
     for index, paragraph in enumerate(document.paragraphs):
         if paragraph.start != expected_start or paragraph.end <= paragraph.start:
             raise HTTPException(status_code=400, detail="Invalid paragraph offsets")
-        if index > 0 and text[paragraph.start - 1] != " ":
+        start = offsets.to_codepoint(paragraph.start)
+        end = offsets.to_codepoint(paragraph.end)
+        if start is None or end is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Paragraph offsets must align to UTF-16 code-point boundaries",
+            )
+        if index > 0 and text[start - 1] != " ":
             raise HTTPException(
                 status_code=400, detail="Paragraphs must be separated by one space"
             )
-        if paragraph.end > len(text):
+        if paragraph.end > offsets.utf16_length:
             raise HTTPException(
                 status_code=400, detail="Paragraph offset exceeds text length"
             )
-        paragraph_text = text[paragraph.start : paragraph.end]
+        paragraph_text = text[start:end]
         if paragraph_text != paragraph_text.strip():
             raise HTTPException(
                 status_code=400, detail="Paragraph text is not canonical"
@@ -123,7 +159,7 @@ def _validate_document(document: SpeechDocument, content_hash: str) -> None:
             1 if index < len(document.paragraphs) - 1 else 0
         )
 
-    if document.paragraphs[-1].end != len(text):
+    if document.paragraphs[-1].end != offsets.utf16_length:
         raise HTTPException(
             status_code=400, detail="Paragraph offsets do not cover speech text"
         )
@@ -432,8 +468,13 @@ def _split_long_range(text: str, start: int, end: int) -> list[tuple[int, int]]:
 
 def _statement_ranges(document: SpeechDocument) -> list[dict[str, Any]]:
     statements: list[dict[str, Any]] = []
+    offsets = Utf16OffsetMap(document.text)
     for paragraph_index, paragraph in enumerate(document.paragraphs):
-        paragraph_text = document.text[paragraph.start : paragraph.end]
+        paragraph_start = offsets.to_codepoint(paragraph.start)
+        paragraph_end = offsets.to_codepoint(paragraph.end)
+        if paragraph_start is None or paragraph_end is None:
+            raise ValueError("Validated document offsets must align to code-point boundaries")
+        paragraph_text = document.text[paragraph_start:paragraph_end]
         relative_start = 0
         boundaries = list(re.finditer(r"[.!?](?:[\"')\]]*)\s+", paragraph_text))
         relative_ranges: list[tuple[int, int]] = []
@@ -444,8 +485,8 @@ def _statement_ranges(document: SpeechDocument) -> list[dict[str, Any]]:
         relative_ranges.append((relative_start, len(paragraph_text)))
 
         for relative_range in relative_ranges:
-            start = paragraph.start + relative_range[0]
-            end = paragraph.start + relative_range[1]
+            start = paragraph_start + relative_range[0]
+            end = paragraph_start + relative_range[1]
             while start < end and document.text[start] == " ":
                 start += 1
             while end > start and document.text[end - 1] == " ":
@@ -496,18 +537,20 @@ def _chunk_plans(statements: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def _initial_manifest(
     document: SpeechDocument, content_hash: str, plans: list[dict[str, Any]]
 ) -> dict[str, Any]:
+    offsets = Utf16OffsetMap(document.text)
     return {
         "cache_version": CACHE_VERSION,
         "content_hash": content_hash,
-        "text_length": len(document.text),
+        "offset_unit": OFFSET_UNIT,
+        "text_length": offsets.utf16_length,
         "paragraphs": [paragraph.model_dump() for paragraph in document.paragraphs],
         "paragraph_gap_ms": PARAGRAPH_GAP_MS,
         "duration_ms": 0,
         "chunks": [
             {
                 "index": plan["index"],
-                "start": plan["start"],
-                "end": plan["end"],
+                "start": offsets.to_utf16(plan["start"]),
+                "end": offsets.to_utf16(plan["end"]),
                 "generated": False,
             }
             for plan in plans
@@ -554,6 +597,7 @@ def _generate_chunks_worker(
     plans: list[dict[str, Any]],
 ) -> None:
     status_key = _status_key(type_, slug, content_hash)
+    offsets = Utf16OffsetMap(document.text)
     try:
         manifest = _initial_manifest(document, content_hash, plans)
         _atomic_json_write(_manifest_path(type_, slug, content_hash), manifest)
@@ -598,8 +642,8 @@ def _generate_chunks_worker(
                 global_sample += statement_audio.size
                 generated_statements.append(
                     {
-                        "start": statement["start"],
-                        "end": statement["end"],
+                        "start": offsets.to_utf16(statement["start"]),
+                        "end": offsets.to_utf16(statement["end"]),
                         "paragraph": paragraph_index,
                         "chunk": plan["index"],
                         "start_ms": round(start_sample * 1000 / SAMPLE_RATE, 3),
