@@ -26,6 +26,19 @@ type StatusSource = 'poll' | 'generate' | 'init';
 const STATUS_POLL_INTERVAL_MS = 3000;
 const CHUNK_RETRY_DELAY_MS = 800;
 const MIN_PLAYABLE_CHUNKS = 3;
+const COARSE_HIGHLIGHT_HANDOFF_MS = 350;
+const MIN_STATEMENT_HANDOFF_MS = 250;
+const MAX_STATEMENT_HANDOFF_MS = 3000;
+
+function getStatementHandoffMs(startMs: number, endMs: number): number {
+  const duration = Number.isFinite(startMs) && Number.isFinite(endMs) ? endMs - startMs : 0;
+  return Math.round(
+    Math.min(
+      MAX_STATEMENT_HANDOFF_MS,
+      Math.max(MIN_STATEMENT_HANDOFF_MS, Math.max(0, duration) * 0.1),
+    ),
+  );
+}
 
 interface TtsPlayerProps {
   slug: string;
@@ -259,7 +272,12 @@ export function TtsPlayer({
         (candidate) => currentMs >= candidate.start_ms && currentMs < candidate.end_ms,
       );
       if (statement) {
-        emitHighlight({ start: statement.start, end: statement.end, precision: 'statement' });
+        emitHighlight({
+          start: statement.start,
+          end: statement.end,
+          precision: 'statement',
+          handoff_ms: getStatementHandoffMs(statement.start_ms, statement.end_ms),
+        });
         return;
       }
 
@@ -268,7 +286,12 @@ export function TtsPlayer({
           ? null
           : manifest.chunks.find((candidate) => candidate.index === chunkIndex);
       if (chunk) {
-        emitHighlight({ start: chunk.start, end: chunk.end, precision: 'chunk' });
+        emitHighlight({
+          start: chunk.start,
+          end: chunk.end,
+          precision: 'chunk',
+          handoff_ms: COARSE_HIGHLIGHT_HANDOFF_MS,
+        });
         return;
       }
       emitHighlight(null);

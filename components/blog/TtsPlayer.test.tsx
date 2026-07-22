@@ -2,7 +2,12 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { TTS_CACHE_VERSION, TTS_OFFSET_UNIT, type TtsManifest } from '@/lib/tts/contract';
+import {
+  TTS_CACHE_VERSION,
+  TTS_OFFSET_UNIT,
+  type TtsHighlightRange,
+  type TtsManifest,
+} from '@/lib/tts/contract';
 import { deriveSpeechDocument, hashSpeechDocument } from '@/lib/tts/speechDocument';
 
 import { TtsPlayer } from './TtsPlayer';
@@ -254,7 +259,7 @@ function getVisibleListenButton() {
   );
 }
 
-function getVisibleReadyButton(label: 'Play' | 'Pause') {
+function getVisibleReadyButton(label: 'Play' | 'Pause' | 'Stop') {
   const activeContainer = getAllElements(container).find(
     (element) => element.getAttribute('aria-hidden') === 'false',
   );
@@ -298,14 +303,15 @@ function payload(status: TtsState, partial?: Omit<StatusPayload, 'status'>): Sta
   };
 }
 
-function manifest(options: { timed: boolean }): TtsManifest {
+function manifest(options: { timed: boolean; statementDurationMs?: number }): TtsManifest {
+  const statementDurationMs = options.statementDurationMs ?? 1000;
   return {
     cache_version: TTS_CACHE_VERSION,
     content_hash: TEST_CONTENT_HASH,
     offset_unit: TTS_OFFSET_UNIT,
     text_length: TEST_DOCUMENT.text.length,
     paragraph_gap_ms: 500,
-    duration_ms: 1000,
+    duration_ms: statementDurationMs,
     chunks: [
       {
         index: 0,
@@ -313,7 +319,7 @@ function manifest(options: { timed: boolean }): TtsManifest {
         end: TEST_DOCUMENT.text.length,
         generated: true,
         start_ms: 0,
-        end_ms: 1000,
+        end_ms: statementDurationMs,
       },
     ],
     statements: options.timed
@@ -324,7 +330,7 @@ function manifest(options: { timed: boolean }): TtsManifest {
             paragraph: 0,
             chunk: 0,
             start_ms: 0,
-            end_ms: 1000,
+            end_ms: statementDurationMs,
           },
         ]
       : [],
@@ -604,7 +610,120 @@ describe('TtsPlayer', () => {
       await flushEffects();
     });
 
-    expect(highlights.at(-1)).toEqual({ start: 0, end: 5, precision: 'statement' });
+    expect(highlights.at(-1)).toEqual({
+      start: 0,
+      end: 5,
+      precision: 'statement',
+      handoff_ms: 250,
+    });
+  });
+
+  test('uses ten percent of statement duration for the visual handoff', async () => {
+    const highlights: Array<TtsHighlightRange | null> = [];
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(
+          payload('ready', {
+            generated_chunks: 1,
+            total_chunks: 1,
+            playable: true,
+            manifest: manifest({ timed: true, statementDurationMs: 10_000 }),
+          }),
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const playButton = await waitForElement(
+      () => getVisibleReadyButton('Play'),
+      'Expected ready Play button',
+    );
+
+    await act(async () => {
+      playButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    expect(highlights.at(-1)?.handoff_ms).toBe(1000);
+  });
+
+  test('caps the statement handoff at three seconds', async () => {
+    const highlights: Array<TtsHighlightRange | null> = [];
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(
+          payload('ready', {
+            generated_chunks: 1,
+            total_chunks: 1,
+            playable: true,
+            manifest: manifest({ timed: true, statementDurationMs: 60_000 }),
+          }),
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const playButton = await waitForElement(
+      () => getVisibleReadyButton('Play'),
+      'Expected ready Play button',
+    );
+
+    await act(async () => {
+      playButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    expect(highlights.at(-1)?.handoff_ms).toBe(3000);
+  });
+
+  test('keeps the current highlight paused and clears it on stop', async () => {
+    const highlights: Array<TtsHighlightRange | null> = [];
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(
+          payload('ready', {
+            generated_chunks: 1,
+            total_chunks: 1,
+            playable: true,
+            manifest: manifest({ timed: true }),
+          }),
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const playButton = await waitForElement(
+      () => getVisibleReadyButton('Play'),
+      'Expected ready Play button',
+    );
+
+    await act(async () => {
+      playButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      if (!lastAudio) throw new Error('Expected audio instance');
+      lastAudio.currentTime = 0.5;
+      lastAudio.dispatch('timeupdate');
+      await flushEffects();
+    });
+    const activeHighlight = highlights.at(-1);
+
+    const pauseButton = getVisibleReadyButton('Pause');
+    if (!pauseButton) throw new Error('Expected Pause button');
+    await act(async () => {
+      pauseButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+    expect(highlights.at(-1)).toEqual(activeHighlight);
+
+    const stopButton = getVisibleReadyButton('Stop');
+    if (!stopButton) throw new Error('Expected Stop button');
+    await act(async () => {
+      stopButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+    expect(highlights.at(-1)).toBeNull();
   });
 
   test('reports the chunk range while progressive timing is not available yet', async () => {
@@ -643,6 +762,7 @@ describe('TtsPlayer', () => {
       start: 0,
       end: TEST_DOCUMENT.text.length,
       precision: 'chunk',
+      handoff_ms: 350,
     });
   });
 

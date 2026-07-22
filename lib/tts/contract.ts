@@ -52,6 +52,8 @@ export interface TtsHighlightRange {
   start: number;
   end: number;
   precision: 'statement' | 'chunk';
+  /** Duration used for the visual handoff into and out of this range. */
+  handoff_ms: number;
 }
 
 export function isValidTtsIdentity(contentHash: string | null, cacheVersion: string | null) {
