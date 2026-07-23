@@ -373,6 +373,100 @@ afterEach(async () => {
 });
 
 describe('TtsPlayer', () => {
+  test('waits for delayed hashing before polling a non-playable generation to ready', async () => {
+    const originalDigest = crypto.subtle.digest;
+    const digestBytes = new Uint8Array(
+      TEST_CONTENT_HASH.match(/.{2}/g)?.map((byte) => Number.parseInt(byte, 16)) ?? [],
+    );
+    let resolveDigest: (() => void) | null = null;
+    let statusRequests = 0;
+
+    crypto.subtle.digest = (() =>
+      new Promise<ArrayBuffer>((resolve) => {
+        resolveDigest = () => resolve(digestBytes.buffer);
+      })) as typeof crypto.subtle.digest;
+
+    try {
+      setFetchMock(async (url) => {
+        if (url.includes('/api/tts/status')) {
+          statusRequests += 1;
+          if (statusRequests === 1) return jsonResponse(payload('not_generated'));
+          if (statusRequests === 2) {
+            return jsonResponse(
+              payload('generating', {
+                generated_chunks: 2,
+                total_chunks: 10,
+                playable: false,
+              }),
+            );
+          }
+          return jsonResponse(
+            payload('ready', { generated_chunks: 10, total_chunks: 10, playable: true }),
+          );
+        }
+
+        if (url.includes('/api/tts/generate?')) {
+          return jsonResponse(
+            payload('generating', {
+              generated_chunks: 1,
+              total_chunks: 10,
+              playable: false,
+            }),
+            202,
+          );
+        }
+
+        throw new Error(`Unexpected fetch: ${url}`);
+      });
+
+      await renderPlayer();
+
+      expect(intervalCallback).toBeNull();
+      expect(statusRequests).toBe(0);
+
+      await act(async () => {
+        resolveDigest?.();
+        await flushEffects();
+      });
+
+      await waitForCondition(() => statusRequests === 1, 'Expected initial hashed status request');
+
+      const listenButton = getVisibleListenButton();
+      if (!(listenButton instanceof testWindow.HTMLElement)) {
+        throw new Error('Expected visible listen button');
+      }
+
+      await act(async () => {
+        listenButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+        await flushEffects();
+      });
+
+      expect(
+        await waitForElement(getVisibleGeneratingBar, 'Expected generating bar'),
+      ).not.toBeNull();
+
+      await act(async () => {
+        intervalCallback?.();
+        await flushEffects();
+      });
+
+      expect(statusRequests).toBe(2);
+      expect(getVisibleGeneratingBar()).not.toBeNull();
+
+      await act(async () => {
+        intervalCallback?.();
+        await flushEffects();
+      });
+
+      expect(
+        await waitForElement(() => getVisibleReadyButton('Play'), 'Expected ready Play button'),
+      ).not.toBeNull();
+      expect(statusRequests).toBe(3);
+    } finally {
+      crypto.subtle.digest = originalDigest;
+    }
+  });
+
   test('shows the generating bar immediately when another visitor already started generation', async () => {
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {

@@ -825,6 +825,11 @@ export function TtsPlayer({
   ]);
 
   useEffect(() => {
+    if (!contentHash) {
+      stopPolling();
+      return;
+    }
+
     let isActive = true;
 
     const syncInitialStatus = async () => {
@@ -837,8 +842,9 @@ export function TtsPlayer({
 
     return () => {
       isActive = false;
+      stopPolling();
     };
-  }, [checkStatus, startPolling]);
+  }, [checkStatus, contentHash, startPolling, stopPolling]);
 
   const gradientBg = useMemo(
     () =>
