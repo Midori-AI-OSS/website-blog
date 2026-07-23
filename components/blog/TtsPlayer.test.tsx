@@ -2,6 +2,13 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import {
+  TTS_CACHE_VERSION,
+  TTS_OFFSET_UNIT,
+  type TtsHighlightRange,
+  type TtsManifest,
+} from '@/lib/tts/contract';
+import { deriveSpeechDocument, hashSpeechDocument } from '@/lib/tts/speechDocument';
 
 import { TtsPlayer } from './TtsPlayer';
 
@@ -12,7 +19,13 @@ interface StatusPayload {
   generated_chunks?: number;
   total_chunks?: number;
   playable?: boolean;
+  cache_version?: string;
+  content_hash?: string;
+  manifest?: TtsManifest;
 }
+
+const TEST_DOCUMENT = deriveSpeechDocument('Hello world');
+const TEST_CONTENT_HASH = await hashSpeechDocument(TEST_DOCUMENT);
 
 let testWindow: Window;
 let container: HTMLDivElement;
@@ -180,9 +193,18 @@ async function flushEffects() {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-async function renderPlayer() {
+async function renderPlayer(
+  onHighlightChange?: React.ComponentProps<typeof TtsPlayer>['onHighlightChange'],
+) {
   await act(async () => {
-    root.render(<TtsPlayer slug="shared-post" type="blog" text="Hello world" />);
+    root.render(
+      <TtsPlayer
+        slug="shared-post"
+        type="blog"
+        document={TEST_DOCUMENT}
+        onHighlightChange={onHighlightChange}
+      />,
+    );
     await flushEffects();
   });
 }
@@ -237,7 +259,7 @@ function getVisibleListenButton() {
   );
 }
 
-function getVisibleReadyButton(label: 'Play' | 'Pause') {
+function getVisibleReadyButton(label: 'Play' | 'Pause' | 'Stop') {
   const activeContainer = getAllElements(container).find(
     (element) => element.getAttribute('aria-hidden') === 'false',
   );
@@ -275,7 +297,43 @@ function payload(status: TtsState, partial?: Omit<StatusPayload, 'status'>): Sta
     generated_chunks: 0,
     total_chunks: 0,
     playable: false,
+    cache_version: TTS_CACHE_VERSION,
+    content_hash: TEST_CONTENT_HASH,
     ...partial,
+  };
+}
+
+function manifest(options: { timed: boolean; statementDurationMs?: number }): TtsManifest {
+  const statementDurationMs = options.statementDurationMs ?? 1000;
+  return {
+    cache_version: TTS_CACHE_VERSION,
+    content_hash: TEST_CONTENT_HASH,
+    offset_unit: TTS_OFFSET_UNIT,
+    text_length: TEST_DOCUMENT.text.length,
+    paragraph_gap_ms: 500,
+    duration_ms: statementDurationMs,
+    chunks: [
+      {
+        index: 0,
+        start: 0,
+        end: TEST_DOCUMENT.text.length,
+        generated: true,
+        start_ms: 0,
+        end_ms: statementDurationMs,
+      },
+    ],
+    statements: options.timed
+      ? [
+          {
+            start: 0,
+            end: 5,
+            paragraph: 0,
+            chunk: 0,
+            start_ms: 0,
+            end_ms: statementDurationMs,
+          },
+        ]
+      : [],
   };
 }
 
@@ -315,6 +373,100 @@ afterEach(async () => {
 });
 
 describe('TtsPlayer', () => {
+  test('waits for delayed hashing before polling a non-playable generation to ready', async () => {
+    const originalDigest = crypto.subtle.digest;
+    const digestBytes = new Uint8Array(
+      TEST_CONTENT_HASH.match(/.{2}/g)?.map((byte) => Number.parseInt(byte, 16)) ?? [],
+    );
+    let resolveDigest: (() => void) | null = null;
+    let statusRequests = 0;
+
+    crypto.subtle.digest = (() =>
+      new Promise<ArrayBuffer>((resolve) => {
+        resolveDigest = () => resolve(digestBytes.buffer);
+      })) as typeof crypto.subtle.digest;
+
+    try {
+      setFetchMock(async (url) => {
+        if (url.includes('/api/tts/status')) {
+          statusRequests += 1;
+          if (statusRequests === 1) return jsonResponse(payload('not_generated'));
+          if (statusRequests === 2) {
+            return jsonResponse(
+              payload('generating', {
+                generated_chunks: 2,
+                total_chunks: 10,
+                playable: false,
+              }),
+            );
+          }
+          return jsonResponse(
+            payload('ready', { generated_chunks: 10, total_chunks: 10, playable: true }),
+          );
+        }
+
+        if (url.includes('/api/tts/generate?')) {
+          return jsonResponse(
+            payload('generating', {
+              generated_chunks: 1,
+              total_chunks: 10,
+              playable: false,
+            }),
+            202,
+          );
+        }
+
+        throw new Error(`Unexpected fetch: ${url}`);
+      });
+
+      await renderPlayer();
+
+      expect(intervalCallback).toBeNull();
+      expect(statusRequests).toBe(0);
+
+      await act(async () => {
+        resolveDigest?.();
+        await flushEffects();
+      });
+
+      await waitForCondition(() => statusRequests === 1, 'Expected initial hashed status request');
+
+      const listenButton = getVisibleListenButton();
+      if (!(listenButton instanceof testWindow.HTMLElement)) {
+        throw new Error('Expected visible listen button');
+      }
+
+      await act(async () => {
+        listenButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+        await flushEffects();
+      });
+
+      expect(
+        await waitForElement(getVisibleGeneratingBar, 'Expected generating bar'),
+      ).not.toBeNull();
+
+      await act(async () => {
+        intervalCallback?.();
+        await flushEffects();
+      });
+
+      expect(statusRequests).toBe(2);
+      expect(getVisibleGeneratingBar()).not.toBeNull();
+
+      await act(async () => {
+        intervalCallback?.();
+        await flushEffects();
+      });
+
+      expect(
+        await waitForElement(() => getVisibleReadyButton('Play'), 'Expected ready Play button'),
+      ).not.toBeNull();
+      expect(statusRequests).toBe(3);
+    } finally {
+      crypto.subtle.digest = originalDigest;
+    }
+  });
+
   test('shows the generating bar immediately when another visitor already started generation', async () => {
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {
@@ -352,18 +504,26 @@ describe('TtsPlayer', () => {
     expect(
       await waitForElement(() => getVisibleReadyButton('Play'), 'Expected visible Play button'),
     ).not.toBeNull();
-    expect(lastAudio?.src.endsWith('/api/tts/audio/blog/shared-post')).toBe(true);
+    expect(lastAudio?.src).toContain('/api/tts/audio/blog/shared-post?');
+    expect(lastAudio?.src).toContain(`content_hash=${TEST_CONTENT_HASH}`);
+    expect(lastAudio?.src).toContain(`cache_version=${TTS_CACHE_VERSION}`);
     expect(lastAudio?.playCalls).toBe(0);
     expect(clearIntervalCalls).toBeGreaterThan(0);
   });
 
   test('starts streaming playback after listen when generation is playable', async () => {
-    setFetchMock(async (url) => {
+    setFetchMock(async (url, init) => {
       if (url.includes('/api/tts/status')) {
         return jsonResponse(payload('not_generated'));
       }
 
-      if (url.endsWith('/api/tts/generate')) {
+      if (url.includes('/api/tts/generate?')) {
+        expect(url).toContain(`content_hash=${TEST_CONTENT_HASH}`);
+        expect(url).toContain(`cache_version=${TTS_CACHE_VERSION}`);
+        const requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        expect(requestBody.content_hash).toBe(TEST_CONTENT_HASH);
+        expect(requestBody.cache_version).toBe(TTS_CACHE_VERSION);
+        expect(requestBody.document).toEqual(TEST_DOCUMENT);
         return jsonResponse(
           payload('generating', {
             generated_chunks: 3,
@@ -453,7 +613,7 @@ describe('TtsPlayer', () => {
         return jsonResponse(statuses.shift() ?? payload('not_generated'));
       }
 
-      if (url.endsWith('/api/tts/generate')) {
+      if (url.includes('/api/tts/generate?')) {
         return new Promise<Response>((resolve) => {
           resolveGenerate = resolve;
         });
@@ -515,6 +675,189 @@ describe('TtsPlayer', () => {
     ).not.toBeNull();
     expect(getVisibleReadyButton('Pause')).toBeNull();
     expect(lastAudio?.playCalls).toBe(0);
+  });
+
+  test('reports exact statement offsets from a completed timing manifest', async () => {
+    const highlights: Array<{ start: number; end: number; precision: string } | null> = [];
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(
+          payload('ready', {
+            generated_chunks: 1,
+            total_chunks: 1,
+            playable: true,
+            manifest: manifest({ timed: true }),
+          }),
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const playButton = await waitForElement(
+      () => getVisibleReadyButton('Play'),
+      'Expected ready Play button',
+    );
+
+    await act(async () => {
+      playButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    expect(highlights.at(-1)).toEqual({
+      start: 0,
+      end: 5,
+      precision: 'statement',
+      handoff_ms: 250,
+    });
+  });
+
+  test('uses ten percent of statement duration for the visual handoff', async () => {
+    const highlights: Array<TtsHighlightRange | null> = [];
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(
+          payload('ready', {
+            generated_chunks: 1,
+            total_chunks: 1,
+            playable: true,
+            manifest: manifest({ timed: true, statementDurationMs: 10_000 }),
+          }),
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const playButton = await waitForElement(
+      () => getVisibleReadyButton('Play'),
+      'Expected ready Play button',
+    );
+
+    await act(async () => {
+      playButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    expect(highlights.at(-1)?.handoff_ms).toBe(1000);
+  });
+
+  test('caps the statement handoff at three seconds', async () => {
+    const highlights: Array<TtsHighlightRange | null> = [];
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(
+          payload('ready', {
+            generated_chunks: 1,
+            total_chunks: 1,
+            playable: true,
+            manifest: manifest({ timed: true, statementDurationMs: 60_000 }),
+          }),
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const playButton = await waitForElement(
+      () => getVisibleReadyButton('Play'),
+      'Expected ready Play button',
+    );
+
+    await act(async () => {
+      playButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    expect(highlights.at(-1)?.handoff_ms).toBe(3000);
+  });
+
+  test('keeps the current highlight paused and clears it on stop', async () => {
+    const highlights: Array<TtsHighlightRange | null> = [];
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(
+          payload('ready', {
+            generated_chunks: 1,
+            total_chunks: 1,
+            playable: true,
+            manifest: manifest({ timed: true }),
+          }),
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const playButton = await waitForElement(
+      () => getVisibleReadyButton('Play'),
+      'Expected ready Play button',
+    );
+
+    await act(async () => {
+      playButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      if (!lastAudio) throw new Error('Expected audio instance');
+      lastAudio.currentTime = 0.5;
+      lastAudio.dispatch('timeupdate');
+      await flushEffects();
+    });
+    const activeHighlight = highlights.at(-1);
+
+    const pauseButton = getVisibleReadyButton('Pause');
+    if (!pauseButton) throw new Error('Expected Pause button');
+    await act(async () => {
+      pauseButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+    expect(highlights.at(-1)).toEqual(activeHighlight);
+
+    const stopButton = getVisibleReadyButton('Stop');
+    if (!stopButton) throw new Error('Expected Stop button');
+    await act(async () => {
+      stopButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+    expect(highlights.at(-1)).toBeNull();
+  });
+
+  test('reports the chunk range while progressive timing is not available yet', async () => {
+    const highlights: Array<{ start: number; end: number; precision: string } | null> = [];
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) return jsonResponse(payload('not_generated'));
+      if (url.includes('/api/tts/generate?')) {
+        return jsonResponse(
+          payload('generating', {
+            generated_chunks: 3,
+            total_chunks: 3,
+            playable: true,
+            manifest: manifest({ timed: false }),
+          }),
+          202,
+        );
+      }
+      if (url.includes('/api/tts/chunk/blog/shared-post/0')) return wavResponse();
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const listenButton = getVisibleListenButton();
+    if (!listenButton) throw new Error('Expected visible listen button');
+
+    await act(async () => {
+      listenButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    await waitForCondition(
+      () => highlights.some((range) => range?.precision === 'chunk'),
+      'Expected chunk fallback highlight',
+    );
+    expect(highlights.at(-1)).toEqual({
+      start: 0,
+      end: TEST_DOCUMENT.text.length,
+      precision: 'chunk',
+      handoff_ms: 350,
+    });
   });
 
   test('renders safe time labels when audio metadata is non-finite', async () => {

@@ -17,7 +17,15 @@
 import { Global, keyframes } from '@emotion/react';
 import { Box, Button, Card, Chip, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/joy';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Lock, Tag, User } from 'lucide-react';
-import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -27,16 +35,13 @@ import { AMBIENT_PULSE_KEYFRAMES, AmbientCoverArt } from '@/components/blog/Ambi
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
 import { SpeciesCareCardEmbed } from '@/components/species-care/SpeciesCareCardEmbed';
 import { shouldInsertSpaceBetweenTitleSegments } from '@/lib/blog/titleSegments';
-import {
-  POST_COVER_PLACEHOLDER_IMAGE_URL,
-  resolvePostCoverImageUrl,
-  toLoreImageApiUrl,
-} from '@/lib/content/imageUrl';
+import { POST_COVER_PLACEHOLDER_IMAGE_URL, resolvePostCoverImageUrl } from '@/lib/content/imageUrl';
 import {
   extractIsoDateFromBlogFilename,
   formatLongDate,
   normalizeIsoDateString,
 } from '@/lib/content/publish';
+import { LORE_IMAGE_TOKEN_TITLE, preparePostMarkdown } from '@/lib/markdown/postMarkdown';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
 import remarkFictionalLangTags from '@/lib/markdown/remarkFictionalLangTags';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
@@ -47,6 +52,9 @@ import {
   type ExtractedPalette,
   extractPaletteFromImage,
 } from '@/lib/theme/artPalette';
+import type { TtsHighlightRange } from '@/lib/tts/contract';
+import { applyTtsHighlight, clearTtsHighlights } from '@/lib/tts/highlight';
+import { deriveSpeechDocument, type SpeechDocument } from '@/lib/tts/speechDocument';
 import type { ParsedPost } from '../../lib/blog/parser';
 import { TtsPlayer } from './TtsPlayer';
 
@@ -229,8 +237,6 @@ function getPostDateString(post: ParsedPost): string | undefined {
   );
 }
 
-const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
-
 const markdownSanitizeSchema = {
   ...defaultSchema,
   attributes: {
@@ -244,41 +250,6 @@ const markdownSanitizeSchema = {
     div: [...(defaultSchema.attributes?.div ?? []), ['data-thinking', 'inline', 'block']],
   },
 };
-
-function replaceLoreImageTokens(markdown: string): string {
-  return markdown.replace(
-    /\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi,
-    (fullMatch, tokenValue: string) => {
-      const url = toLoreImageApiUrl(tokenValue);
-      if (!url) return fullMatch;
-
-      const raw = tokenValue.trim();
-      const basename = raw.split('/').filter(Boolean).pop() ?? 'image';
-      const alt =
-        basename
-          .replace(/\.[a-z0-9]+$/i, '')
-          .replace(/[_-]+/g, ' ')
-          .trim() || 'Lore image';
-
-      return `\n\n![${alt}](${url} "${LORE_IMAGE_TOKEN_TITLE}")\n\n`;
-    },
-  );
-}
-
-function normalizeThinkingTagFormatting(markdown: string): string {
-  return markdown.replace(
-    /<thinking>\s*\n((?:(?!\n\n)[\s\S])*?)\n\s*<\/thinking>/g,
-    '<thinking>$1</thinking>',
-  );
-}
-
-function replaceFictionalLangTagTokens(markdown: string): string {
-  return markdown
-    .replace(/<celestial:R>/gi, '<celestial reveal>')
-    .replace(/<abyssal:R>/gi, '<abyssal reveal>')
-    .replace(/<\/celestial:R>/gi, '</celestial>')
-    .replace(/<\/abyssal:R>/gi, '</abyssal>');
-}
 
 function lightenHexColor(hex: string, ratio: number): string {
   const normalized = hex.trim().replace(/^#/, '');
@@ -331,6 +302,8 @@ interface PostContentSectionProps {
   thinkingColor: string;
   thinkingGlowColor: string;
   thinkingMutedColor: string;
+  speechDocument: SpeechDocument;
+  ttsHighlightRange: TtsHighlightRange | null;
 }
 
 function PostContentSection({
@@ -344,15 +317,19 @@ function PostContentSection({
   thinkingColor,
   thinkingGlowColor,
   thinkingMutedColor,
+  speechDocument,
+  ttsHighlightRange,
 }: PostContentSectionProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  // Wire this up to the button when Luna is ready.
+  const [ttsAutoFollowEnabled] = useState(true);
+  const followSuppressedRef = useRef(false);
+  const programmaticScrollRef = useRef(false);
+  const programmaticScrollTimerRef = useRef<number | null>(null);
+  const previousSpeechDocumentRef = useRef(speechDocument);
 
   const markdownContent = useMemo(() => {
-    let cleaned = post.content;
-    cleaned = replaceLoreImageTokens(cleaned);
-    cleaned = normalizeThinkingTagFormatting(cleaned);
-    cleaned = replaceFictionalLangTagTokens(cleaned);
-    return cleaned;
+    return preparePostMarkdown(post.content);
   }, [post.content]);
   const markdownParts = useMemo(
     () => splitMarkdownSpeciesCareTokens(markdownContent),
@@ -644,6 +621,93 @@ function PostContentSection({
     };
   }, []);
 
+  useEffect(() => {
+    if (!ttsHighlightRange) return;
+
+    const shouldSuppress = () => {
+      if (programmaticScrollRef.current) return;
+      followSuppressedRef.current = true;
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.matches('input, textarea, select, [contenteditable="true"]') ||
+        !['ArrowDown', 'ArrowUp', 'End', 'Home', 'PageDown', 'PageUp', ' '].includes(event.key)
+      ) {
+        return;
+      }
+      shouldSuppress();
+    };
+
+    window.addEventListener('wheel', shouldSuppress, { passive: true });
+    window.addEventListener('touchmove', shouldSuppress, { passive: true });
+    window.addEventListener('scroll', shouldSuppress, { passive: true });
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('wheel', shouldSuppress);
+      window.removeEventListener('touchmove', shouldSuppress);
+      window.removeEventListener('scroll', shouldSuppress);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [ttsHighlightRange]);
+
+  useLayoutEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+
+    if (previousSpeechDocumentRef.current !== speechDocument) {
+      clearTtsHighlights(root);
+      previousSpeechDocumentRef.current = speechDocument;
+    }
+
+    if (!ttsHighlightRange) {
+      clearTtsHighlights(root, { normal: 'transition', layerone: 'linger' });
+      return;
+    }
+
+    applyTtsHighlight(root, speechDocument, ttsHighlightRange);
+    if (!ttsAutoFollowEnabled || followSuppressedRef.current) return;
+
+    const targets = Array.from(
+      root.querySelectorAll<HTMLElement>(
+        'pre.tts-layerone-active, .tts-highlight--entering, .tts-highlight--active',
+      ),
+    );
+    if (targets.length === 0) return;
+
+    const first = targets[0];
+    const last = targets.at(-1);
+    if (!first || !last) return;
+    const firstRect = first.getBoundingClientRect();
+    const lastRect = last.getBoundingClientRect();
+    const target = firstRect.top < 0 ? first : lastRect.bottom > window.innerHeight ? last : null;
+    if (!target) return;
+
+    programmaticScrollRef.current = true;
+    if (programmaticScrollTimerRef.current !== null) {
+      window.clearTimeout(programmaticScrollTimerRef.current);
+    }
+    target.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
+    });
+    programmaticScrollTimerRef.current = window.setTimeout(() => {
+      programmaticScrollRef.current = false;
+      programmaticScrollTimerRef.current = null;
+    }, 1000);
+  }, [speechDocument, ttsAutoFollowEnabled, ttsHighlightRange]);
+
+  useLayoutEffect(() => {
+    return () => {
+      if (programmaticScrollTimerRef.current !== null) {
+        window.clearTimeout(programmaticScrollTimerRef.current);
+      }
+      const root = contentRef.current;
+      if (root) clearTtsHighlights(root);
+    };
+  }, []);
+
   return (
     <>
       <Global
@@ -661,6 +725,160 @@ function PostContentSection({
             font-weight: normal;
             font-style: normal;
             font-display: swap;
+          }
+          @property --tts-layerone-red-alpha {
+            syntax: '<number>';
+            inherits: false;
+            initial-value: 0;
+          }
+          @keyframes tts-watercolor {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+          }
+          @keyframes tts-highlight-wipe-in {
+            0% { background-size: 0% 100%; color: inherit; }
+            100% { background-size: 200% 100%; color: var(--tts-highlight-color); }
+          }
+          @keyframes tts-highlight-wipe-out {
+            0% { background-size: 200% 100%; color: var(--tts-highlight-color); }
+            100% { background-size: 0% 100%; color: inherit; }
+          }
+          @keyframes tts-layerone-switch-block {
+            0% {
+              --tts-layerone-red-alpha: 0;
+              border-color: rgba(0, 255, 200, 0.25);
+              box-shadow: none;
+            }
+            20% {
+              --tts-layerone-red-alpha: 0.4;
+              border-color: rgba(239, 68, 68, 0.95);
+              box-shadow: 0 0 10px rgba(239, 68, 68, 0.28);
+            }
+            38% {
+              --tts-layerone-red-alpha: 0.12;
+              border-color: rgba(0, 255, 200, 0.35);
+              box-shadow: 0 0 3px rgba(239, 68, 68, 0.12);
+            }
+            58%, 100% {
+              --tts-layerone-red-alpha: 0.4;
+              border-color: rgba(239, 68, 68, 0.95);
+              box-shadow: 0 0 10px rgba(239, 68, 68, 0.28);
+            }
+          }
+          @keyframes tts-layerone-switch-text {
+            0% { color: #7fffe0; transform: translateX(0); }
+            20% { color: #e2e8f0; transform: translateX(1px); }
+            38% { color: #7fffe0; transform: translateX(-1px); }
+            58%, 100% { color: #e2e8f0; transform: translateX(0); }
+          }
+          .tts-highlight {
+            --tts-highlight-color: color-mix(in srgb, currentColor 75%, #e2e8f0 25%);
+            background-repeat: no-repeat;
+            background-position: left center;
+            background-size: 200% 100%;
+            border-radius: 3px;
+            padding: 1px 0;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+            color: inherit;
+          }
+          .tts-highlight--statement {
+            background-image: linear-gradient(
+              120deg,
+              rgba(139, 92, 246, 0.14),
+              rgba(167, 139, 250, 0.28),
+              rgba(139, 92, 246, 0.14)
+            );
+          }
+          .tts-highlight--chunk {
+            --tts-highlight-color: color-mix(in srgb, currentColor 90%, #e2e8f0 10%);
+            background-image: linear-gradient(
+              120deg,
+              rgba(139, 92, 246, 0.10),
+              rgba(167, 139, 250, 0.20),
+              rgba(139, 92, 246, 0.10)
+            );
+          }
+          [data-dialogue='true'] .tts-highlight--statement {
+            --tts-highlight-color: color-mix(in srgb, currentColor 70%, #e2e8f0 30%);
+          }
+          [data-dialogue='true'] .tts-highlight--chunk {
+            --tts-highlight-color: color-mix(in srgb, currentColor 80%, #e2e8f0 20%);
+          }
+          [data-thinking] .tts-highlight {
+            -webkit-text-fill-color: currentColor;
+          }
+          .tts-highlight--entering {
+            animation: tts-highlight-wipe-in var(--tts-handoff-ms) ease-in forwards;
+          }
+          .tts-highlight--active {
+            color: var(--tts-highlight-color);
+            animation: tts-watercolor 8s ease-in-out infinite alternate;
+          }
+          .tts-highlight--exiting {
+            background-position: right center;
+            animation: tts-highlight-wipe-out var(--tts-handoff-ms) ease-in forwards;
+          }
+          pre.tts-layerone-active,
+          pre.tts-layerone-lingering {
+            background-image: linear-gradient(
+              rgba(239, 68, 68, var(--tts-layerone-red-alpha)),
+              rgba(239, 68, 68, var(--tts-layerone-red-alpha))
+            ) !important;
+          }
+          pre.tts-layerone-active {
+            --tts-layerone-red-alpha: 0.4;
+            border-color: rgba(239, 68, 68, 0.95) !important;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.28);
+          }
+          pre.tts-layerone-active code.language-layerone {
+            color: #e2e8f0 !important;
+            -webkit-text-fill-color: #e2e8f0 !important;
+          }
+          pre.tts-layerone-entering {
+            animation: tts-layerone-switch-block 600ms steps(1, end) forwards;
+          }
+          pre.tts-layerone-entering code.language-layerone {
+            animation: tts-layerone-switch-text 600ms steps(1, end) forwards !important;
+          }
+          pre.tts-layerone-lingering {
+            --tts-layerone-red-alpha: 0;
+            border-color: rgba(0, 255, 200, 0.25) !important;
+            box-shadow: none;
+            transition:
+              --tts-layerone-red-alpha 10s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 10s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 10s cubic-bezier(0.16, 1, 0.3, 1);
+          }
+          pre.tts-layerone-lingering code.language-layerone {
+            color: #7fffe0 !important;
+            -webkit-text-fill-color: #7fffe0 !important;
+            transition:
+              color 10s cubic-bezier(0.16, 1, 0.3, 1),
+              -webkit-text-fill-color 10s cubic-bezier(0.16, 1, 0.3, 1);
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .tts-highlight--entering,
+            .tts-highlight--active,
+            .tts-highlight--exiting {
+              animation: none !important;
+              background-size: 200% 100%;
+              color: var(--tts-highlight-color);
+            }
+            pre.tts-layerone-entering,
+            pre.tts-layerone-entering code.language-layerone {
+              animation: none !important;
+            }
+            pre.tts-layerone-lingering,
+            pre.tts-layerone-lingering code.language-layerone {
+              transition: none !important;
+            }
+          }
+          @supports not (color: color-mix(in srgb, white, black)) {
+            .tts-highlight {
+              --tts-highlight-color: inherit;
+              color: inherit;
+            }
           }
         `}
       />
@@ -1138,6 +1356,11 @@ export function PostView({
   const [, setCoverIsLandscape] = useState<boolean | null>(null);
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
   const [titlePalette, setTitlePalette] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
+  const [ttsHighlightRange, setTtsHighlightRange] = useState<TtsHighlightRange | null>(null);
+  const speechDocument = useMemo(() => deriveSpeechDocument(post.content), [post.content]);
+  const handleTtsHighlightChange = useCallback((range: TtsHighlightRange | null) => {
+    setTtsHighlightRange(range);
+  }, []);
 
   const dateString = useMemo(
     () => getPostDateString(post),
@@ -1298,6 +1521,10 @@ export function PostView({
   useEffect(() => {
     setEffectiveCoverImageUrl(transformedCoverImageUrl);
   }, [transformedCoverImageUrl]);
+
+  useEffect(() => {
+    if (ttsLocked || ttsFadingOut) setTtsHighlightRange(null);
+  }, [ttsFadingOut, ttsLocked]);
 
   useEffect(() => {
     if (!hasThinkingTitleFx) {
@@ -1600,19 +1827,20 @@ export function PostView({
 
           {!isScheduledPreview && (
             <Box sx={{ mb: 4, position: 'relative' }}>
-              <TtsPlayer
-                slug={post.filename.replace(/\.md$/, '')}
-                type={postType}
-                text={post.content}
-                onPrimaryColorChange={setTtsPrimaryColor}
-                coverImageUrl={effectiveCoverImageUrl}
-              />
-              {(ttsLocked || ttsFadingOut) && (
+              {!ttsLocked && !ttsFadingOut ? (
+                <TtsPlayer
+                  slug={post.filename.replace(/\.md$/, '')}
+                  type={postType}
+                  document={speechDocument}
+                  onPrimaryColorChange={setTtsPrimaryColor}
+                  onHighlightChange={handleTtsHighlightChange}
+                  coverImageUrl={effectiveCoverImageUrl}
+                />
+              ) : (
                 <Box
+                  aria-label="Audio unlocks with this post"
                   sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 1,
+                    height: 44,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1661,6 +1889,8 @@ export function PostView({
               thinkingColor={thinkingColor}
               thinkingGlowColor={thinkingGlowColor}
               thinkingMutedColor={thinkingMutedColor}
+              speechDocument={speechDocument}
+              ttsHighlightRange={ttsHighlightRange}
             />,
             ttsPrimaryColor,
           )
@@ -1676,6 +1906,8 @@ export function PostView({
             thinkingColor={thinkingColor}
             thinkingGlowColor={thinkingGlowColor}
             thinkingMutedColor={thinkingMutedColor}
+            speechDocument={speechDocument}
+            ttsHighlightRange={ttsHighlightRange}
           />
         )}
       </Box>

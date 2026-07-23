@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { isValidTtsIdentity, ttsIdentityQuery } from '@/lib/tts/contract';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,9 +12,18 @@ export async function GET(
 ) {
   try {
     const { type, slug } = await params;
+    const contentHash = request.nextUrl.searchParams.get('content_hash');
+    const cacheVersion = request.nextUrl.searchParams.get('cache_version');
 
     if (!['blog', 'lore'].includes(type)) {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
+    }
+
+    if (!isValidTtsIdentity(contentHash, cacheVersion)) {
+      return NextResponse.json(
+        { error: 'Invalid TTS content hash or cache version' },
+        { status: 400 },
+      );
     }
 
     const upstreamHeaders = new Headers();
@@ -23,7 +33,7 @@ export async function GET(
     }
 
     const upstream = await fetch(
-      `${TTS_BASE}/audio/${encodeURIComponent(type)}/${encodeURIComponent(slug)}`,
+      `${TTS_BASE}/audio/${encodeURIComponent(type)}/${encodeURIComponent(slug)}?${ttsIdentityQuery(contentHash ?? '')}`,
       {
         cache: 'no-store',
         headers: upstreamHeaders,
@@ -34,13 +44,23 @@ export async function GET(
       return NextResponse.json({ error: 'Audio not found' }, { status: 404 });
     }
 
+    if (upstream.status === 416) {
+      return new NextResponse(upstream.body, {
+        status: upstream.status,
+        headers: new Headers(upstream.headers),
+      });
+    }
+
     if (!upstream.ok) {
       return NextResponse.json({ error: 'Upstream error' }, { status: upstream.status });
     }
 
     const responseHeaders = new Headers(upstream.headers);
     responseHeaders.set('Cache-Control', 'public, max-age=86400');
-    responseHeaders.set('Content-Disposition', `inline; filename="${slug}.wav"`);
+    responseHeaders.set(
+      'Content-Disposition',
+      `inline; filename="${slug}-${contentHash?.slice(0, 12)}.wav"`,
+    );
 
     return new NextResponse(upstream.body, {
       status: upstream.status,

@@ -11,7 +11,9 @@ export const blogRendererTestPost: ParsedPost = {
     date: '2026-05-25',
     author: 'Midori AI Test Fixture',
   },
-  content: `# Blog Markdown Coverage
+  content: `> **Disclaimer:** This opening fixture disclaimer is visible but must not be spoken by TTS.
+
+# Blog Markdown Coverage
 
 This page is a hidden renderer fixture for normal blog posts. It should cover standard markdown behavior without using lore-only brace tokens.
 
@@ -52,7 +54,7 @@ const shouldStayStandardMarkdownOnly = true;
 \`\`\`
 
 \`\`\`layerone
-BLOG TEST SIGNAL :: STANDARD MARKDOWN ONLY
+*BLOG TEST SIGNAL* :: STANDARD MARKDOWN ONLY
 \`\`\`
 
 ## Image
@@ -102,6 +104,8 @@ story_order: 9999
 episode_label: Renderer Test
 ---
 
+> **Disclaimer:** This opening fixture disclaimer is visible but must not be spoken by TTS.
+
 # Lore Markdown Coverage
 
 This page is a hidden renderer fixture for lore posts. It intentionally includes lore-only token systems that normal blog posts should not rely on.
@@ -124,8 +128,12 @@ This page is a hidden renderer fixture for lore posts. It intentionally includes
 
 > This blockquote checks lore prose styling in the same renderer used by real lore posts.
 
+\`\`\`txt
+THIS ORDINARY CODE MUST NOT BE SPOKEN
+\`\`\`
+
 \`\`\`layerone
-LORE TEST SIGNAL :: TOKEN SYSTEMS ACTIVE
+*LORE TEST SIGNAL* :: TOKEN SYSTEMS ACTIVE
 \`\`\`
 
 ## Standard Markdown Image

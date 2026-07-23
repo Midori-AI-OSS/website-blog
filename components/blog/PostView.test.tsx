@@ -94,6 +94,15 @@ describe('PostView', () => {
     expect(html).toContain('Go to next story');
   });
 
+  test('does not mount TTS requests before password-gated lore is unlocked', () => {
+    const html = renderToStaticMarkup(
+      <PostView post={mockPost} onClose={() => {}} postType="lore" ttsLocked />,
+    );
+
+    expect(html).toContain('Audio unlocks with this post');
+    expect(html).not.toContain('Generate audio for this post');
+  });
+
   test('styles balanced dialogue in prose', () => {
     const html = renderPostContent('She said "Hello there." and waved.');
 
@@ -144,6 +153,20 @@ describe('PostView', () => {
     const html = renderPostContent('Use `a—b` as the token.');
 
     expect(html).toContain('<code>a—b</code>');
+  });
+
+  test('ships readable inline TTS and Layer One highlight styles', () => {
+    const html = renderPostContent('Normal prose.\n\n```layerone\nsignal\n```');
+
+    expect(html).toContain('.tts-highlight--statement');
+    expect(html).toContain('tts-watercolor 8s ease-in-out infinite alternate');
+    expect(html).toContain('currentColor 75%');
+    expect(html).toContain('pre.tts-layerone-active');
+    expect(html).toContain('tts-layerone-switch-block 600ms');
+    expect(html).toContain('--tts-layerone-red-alpha 10s');
+    expect(html).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(html).not.toContain('::highlight(');
+    expect(html).not.toContain('CSS.highlights');
   });
 
   test('renders inline thinking tags as styled content without showing tags', () => {

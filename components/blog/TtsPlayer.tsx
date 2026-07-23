@@ -9,37 +9,69 @@ import {
   type ExtractedPalette,
   extractPaletteFromImage,
 } from '@/lib/theme/artPalette';
+import {
+  TTS_CACHE_VERSION,
+  TTS_OFFSET_UNIT,
+  type TtsHighlightRange,
+  type TtsManifest,
+  type TtsState,
+  type TtsStatusPayload,
+  ttsIdentityQuery,
+} from '@/lib/tts/contract';
+import { hashSpeechDocument, type SpeechDocument } from '@/lib/tts/speechDocument';
 
-type TtsState = 'not_generated' | 'generating' | 'ready';
 type PlaybackState = 'stopped' | 'playing' | 'paused';
 type StatusSource = 'poll' | 'generate' | 'init';
 
 const STATUS_POLL_INTERVAL_MS = 3000;
 const CHUNK_RETRY_DELAY_MS = 800;
 const MIN_PLAYABLE_CHUNKS = 3;
+const COARSE_HIGHLIGHT_HANDOFF_MS = 350;
+const MIN_STATEMENT_HANDOFF_MS = 250;
+const MAX_STATEMENT_HANDOFF_MS = 3000;
+
+function getStatementHandoffMs(startMs: number, endMs: number): number {
+  const duration = Number.isFinite(startMs) && Number.isFinite(endMs) ? endMs - startMs : 0;
+  return Math.round(
+    Math.min(
+      MAX_STATEMENT_HANDOFF_MS,
+      Math.max(MIN_STATEMENT_HANDOFF_MS, Math.max(0, duration) * 0.1),
+    ),
+  );
+}
 
 interface TtsPlayerProps {
   slug: string;
   type: 'blog' | 'lore';
-  text: string;
+  document: SpeechDocument;
   coverImageUrl?: string;
   onPrimaryColorChange?: (color: string) => void;
+  onHighlightChange?: (range: TtsHighlightRange | null) => void;
 }
 
-interface TtsStatusPayload {
-  status: TtsState;
-  generated_chunks: number;
-  total_chunks: number;
-  playable: boolean;
+function parseManifest(raw: unknown, contentHash: string): TtsManifest | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const value = raw as Record<string, unknown>;
+  if (
+    value.cache_version !== TTS_CACHE_VERSION ||
+    value.content_hash !== contentHash ||
+    value.offset_unit !== TTS_OFFSET_UNIT ||
+    !Array.isArray(value.chunks) ||
+    !Array.isArray(value.statements)
+  ) {
+    return undefined;
+  }
+  return value as unknown as TtsManifest;
 }
 
-function parseStatusPayload(raw: unknown): TtsStatusPayload | null {
+function parseStatusPayload(raw: unknown, contentHash: string): TtsStatusPayload | null {
   if (!raw || typeof raw !== 'object') return null;
   const value = raw as Record<string, unknown>;
   const status = value.status;
   if (status !== 'not_generated' && status !== 'generating' && status !== 'ready') {
     return null;
   }
+  if (value.cache_version !== TTS_CACHE_VERSION || value.content_hash !== contentHash) return null;
 
   const parsedGenerated = Number(value.generated_chunks ?? 0);
   const parsedTotal = Number(value.total_chunks ?? 0);
@@ -56,6 +88,9 @@ function parseStatusPayload(raw: unknown): TtsStatusPayload | null {
     generated_chunks: boundedGenerated,
     total_chunks: totalChunks,
     playable,
+    cache_version: TTS_CACHE_VERSION,
+    content_hash: contentHash,
+    manifest: parseManifest(value.manifest, contentHash),
   };
 }
 
@@ -89,9 +124,10 @@ function getTimelineState(audio: HTMLAudioElement) {
 export function TtsPlayer({
   slug,
   type,
-  text,
+  document,
   coverImageUrl,
   onPrimaryColorChange,
+  onHighlightChange,
 }: TtsPlayerProps) {
   const [state, setState] = useState<TtsState>('not_generated');
   const [playback, setPlayback] = useState<PlaybackState>('stopped');
@@ -101,6 +137,7 @@ export function TtsPlayer({
   const [isGenerationActive, setIsGenerationActive] = useState(false);
   const [canSeek, setCanSeek] = useState(false);
   const [colors, setColors] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
+  const [contentHash, setContentHash] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -120,9 +157,27 @@ export function TtsPlayer({
   const totalChunksRef = useRef(0);
   const streamingOffsetRef = useRef(0);
   const chunkDurationsRef = useRef<Map<number, number>>(new Map());
+  const manifestRef = useRef<TtsManifest | null>(null);
+  const highlightKeyRef = useRef('');
 
-  const sharedAudioUrl = `/api/tts/audio/${encodeURIComponent(type)}/${encodeURIComponent(slug)}`;
-  const sharedChunkBaseUrl = `/api/tts/chunk/${encodeURIComponent(type)}/${encodeURIComponent(slug)}`;
+  const identityQuery = contentHash ? ttsIdentityQuery(contentHash) : '';
+  const sharedAudioUrl = contentHash
+    ? `/api/tts/audio/${encodeURIComponent(type)}/${encodeURIComponent(slug)}?${identityQuery}`
+    : '';
+  const sharedChunkBaseUrl = contentHash
+    ? `/api/tts/chunk/${encodeURIComponent(type)}/${encodeURIComponent(slug)}`
+    : '';
+
+  useEffect(() => {
+    let active = true;
+    setContentHash(null);
+    void hashSpeechDocument(document).then((hash) => {
+      if (active) setContentHash(hash);
+    });
+    return () => {
+      active = false;
+    };
+  }, [document]);
 
   useEffect(() => {
     playbackRef.current = playback;
@@ -190,6 +245,60 @@ export function TtsPlayer({
     return total;
   }, []);
 
+  const emitHighlight = useCallback(
+    (range: TtsHighlightRange | null) => {
+      const key = range ? `${range.start}:${range.end}:${range.precision}` : '';
+      if (key === highlightKeyRef.current) return;
+      highlightKeyRef.current = key;
+      onHighlightChange?.(range);
+    },
+    [onHighlightChange],
+  );
+
+  const syncHighlight = useCallback(
+    (absoluteSeconds: number, chunkIndex: number | null) => {
+      if (playbackRef.current === 'stopped') {
+        emitHighlight(null);
+        return;
+      }
+      const manifest = manifestRef.current;
+      if (!manifest || !Number.isFinite(absoluteSeconds)) {
+        emitHighlight(null);
+        return;
+      }
+
+      const currentMs = absoluteSeconds * 1000;
+      const statement = manifest.statements.find(
+        (candidate) => currentMs >= candidate.start_ms && currentMs < candidate.end_ms,
+      );
+      if (statement) {
+        emitHighlight({
+          start: statement.start,
+          end: statement.end,
+          precision: 'statement',
+          handoff_ms: getStatementHandoffMs(statement.start_ms, statement.end_ms),
+        });
+        return;
+      }
+
+      const chunk =
+        chunkIndex === null
+          ? null
+          : manifest.chunks.find((candidate) => candidate.index === chunkIndex);
+      if (chunk) {
+        emitHighlight({
+          start: chunk.start,
+          end: chunk.end,
+          precision: 'chunk',
+          handoff_ms: COARSE_HIGHLIGHT_HANDOFF_MS,
+        });
+        return;
+      }
+      emitHighlight(null);
+    },
+    [emitHighlight],
+  );
+
   const syncTimelineFromAudio = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -199,17 +308,28 @@ export function TtsPlayer({
       setDuration(timeline.duration);
       setCurrentTime(timeline.currentTime);
       setProgress(timeline.progress);
+      syncHighlight(timeline.currentTime, null);
       return;
     }
 
     const activeIndex = currentChunkIndexRef.current;
+    const manifestChunk =
+      activeIndex === null
+        ? null
+        : manifestRef.current?.chunks.find((chunk) => chunk.index === activeIndex);
     const baseOffset =
-      activeIndex !== null ? sumKnownChunkDurations(activeIndex) : streamingOffsetRef.current;
+      manifestChunk?.start_ms !== undefined
+        ? manifestChunk.start_ms / 1000
+        : activeIndex !== null
+          ? sumKnownChunkDurations(activeIndex)
+          : streamingOffsetRef.current;
 
     const chunkDuration = getSafeDuration(audio.duration);
     const chunkCurrent = getSafeCurrentTime(audio.currentTime, chunkDuration);
     const totalCurrent = baseOffset + chunkCurrent;
-    const generatedDuration = sumKnownChunkDurations(generatedChunksRef.current);
+    const generatedDuration =
+      (manifestRef.current?.duration_ms ?? 0) / 1000 ||
+      sumKnownChunkDurations(generatedChunksRef.current);
     const totalDuration = Math.max(totalCurrent, generatedDuration);
     const nextProgress =
       totalDuration > 0 ? Math.min(100, Math.max(0, (totalCurrent / totalDuration) * 100)) : 0;
@@ -217,7 +337,8 @@ export function TtsPlayer({
     setDuration(totalDuration);
     setCurrentTime(totalCurrent);
     setProgress(nextProgress);
-  }, [sumKnownChunkDurations]);
+    syncHighlight(totalCurrent, activeIndex);
+  }, [sumKnownChunkDurations, syncHighlight]);
 
   const loadReadyAudio = useCallback(
     async (autoplay = false) => {
@@ -238,6 +359,7 @@ export function TtsPlayer({
       setDuration(0);
       setCurrentTime(0);
       setProgress(0);
+      emitHighlight(null);
 
       if (!autoplay && !audio.paused) {
         audio.pause();
@@ -257,7 +379,7 @@ export function TtsPlayer({
         setPlayback('stopped');
       }
     },
-    [clearChunkRetry, revokeCurrentChunkUrl, sharedAudioUrl],
+    [clearChunkRetry, emitHighlight, revokeCurrentChunkUrl, sharedAudioUrl],
   );
 
   const tryStartChunkPlayback = useCallback(
@@ -284,9 +406,13 @@ export function TtsPlayer({
       }
 
       try {
-        const response = await fetch(`${sharedChunkBaseUrl}/${chunkIndex}`, {
-          cache: 'no-store',
-        });
+        if (!contentHash) return false;
+        const response = await fetch(
+          `${sharedChunkBaseUrl}/${chunkIndex}?${ttsIdentityQuery(contentHash)}`,
+          {
+            cache: 'no-store',
+          },
+        );
         if (!response.ok) {
           if (
             (response.status === 404 || response.status === 425) &&
@@ -335,6 +461,7 @@ export function TtsPlayer({
     },
     [
       clearChunkRetry,
+      contentHash,
       revokeCurrentChunkUrl,
       sharedChunkBaseUrl,
       sumKnownChunkDurations,
@@ -383,6 +510,7 @@ export function TtsPlayer({
 
   const applyStatus = useCallback(
     async (statusData: TtsStatusPayload, source: StatusSource): Promise<TtsState> => {
+      if (statusData.manifest) manifestRef.current = statusData.manifest;
       generatedChunksRef.current = statusData.generated_chunks;
       totalChunksRef.current = statusData.total_chunks;
       generationCompleteRef.current = statusData.status === 'ready';
@@ -432,21 +560,22 @@ export function TtsPlayer({
 
   const checkStatus = useCallback(
     async (source: StatusSource = 'poll') => {
+      if (!contentHash) return null;
       try {
         const response = await fetch(
-          `/api/tts/status?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}`,
+          `/api/tts/status?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}&${ttsIdentityQuery(contentHash)}`,
           { cache: 'no-store' },
         );
         if (!response.ok) return null;
         const raw = await response.json();
-        const payload = parseStatusPayload(raw);
+        const payload = parseStatusPayload(raw, contentHash);
         if (!payload) return null;
         return await applyStatus(payload, source);
       } catch {
         return null;
       }
     },
-    [applyStatus, slug, type],
+    [applyStatus, contentHash, slug, type],
   );
 
   const startPolling = useCallback(() => {
@@ -457,6 +586,7 @@ export function TtsPlayer({
   }, [checkStatus]);
 
   const handleGenerate = useCallback(async () => {
+    if (!contentHash) return;
     setState('generating');
     setIsGenerationActive(true);
     setCanSeek(false);
@@ -465,15 +595,21 @@ export function TtsPlayer({
     generateRequestInFlightRef.current = true;
 
     try {
-      const response = await fetch('/api/tts/generate', {
+      const response = await fetch(`/api/tts/generate?${ttsIdentityQuery(contentHash)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, slug, type }),
+        body: JSON.stringify({
+          document,
+          slug,
+          type,
+          content_hash: contentHash,
+          cache_version: TTS_CACHE_VERSION,
+        }),
       });
 
       let payload: TtsStatusPayload | null = null;
       try {
-        payload = parseStatusPayload(await response.json());
+        payload = parseStatusPayload(await response.json(), contentHash);
       } catch {
         payload = null;
       }
@@ -498,7 +634,7 @@ export function TtsPlayer({
     } finally {
       generateRequestInFlightRef.current = false;
     }
-  }, [applyStatus, checkStatus, slug, startPolling, text, type]);
+  }, [applyStatus, checkStatus, contentHash, document, slug, startPolling, type]);
 
   const handlePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -551,8 +687,10 @@ export function TtsPlayer({
       nextChunkIndexRef.current = 0;
       streamingOffsetRef.current = 0;
       setPlayback('stopped');
+      playbackRef.current = 'stopped';
       setCurrentTime(0);
       setProgress(0);
+      emitHighlight(null);
       if (generationCompleteRef.current) {
         void loadReadyAudio(false);
       }
@@ -562,9 +700,11 @@ export function TtsPlayer({
     audio.pause();
     audio.currentTime = 0;
     setPlayback('stopped');
+    playbackRef.current = 'stopped';
     setCurrentTime(0);
     setProgress(0);
-  }, [clearChunkRetry, loadReadyAudio]);
+    emitHighlight(null);
+  }, [clearChunkRetry, emitHighlight, loadReadyAudio]);
 
   useEffect(() => {
     const audio = new Audio();
@@ -601,12 +741,15 @@ export function TtsPlayer({
     };
 
     const handlePlayingEvent = () => {
+      playbackRef.current = 'playing';
       setPlayback('playing');
       syncTimelineFromAudio();
     };
 
     const handlePauseEvent = () => {
-      setPlayback(audio.currentTime > 0 ? 'paused' : 'stopped');
+      const nextPlayback = audio.currentTime > 0 ? 'paused' : 'stopped';
+      playbackRef.current = nextPlayback;
+      setPlayback(nextPlayback);
       syncTimelineFromAudio();
     };
 
@@ -631,6 +774,7 @@ export function TtsPlayer({
         ) {
           streamingActiveRef.current = false;
           streamingShouldPlayRef.current = false;
+          playbackRef.current = 'stopped';
           setPlayback('stopped');
           setCurrentTime(0);
           setProgress(0);
@@ -642,9 +786,11 @@ export function TtsPlayer({
         return;
       }
 
+      playbackRef.current = 'stopped';
       setPlayback('stopped');
       setCurrentTime(0);
       setProgress(0);
+      emitHighlight(null);
     };
 
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
@@ -666,9 +812,11 @@ export function TtsPlayer({
       stopPolling();
       clearChunkRetry();
       revokeCurrentChunkUrl();
+      emitHighlight(null);
     };
   }, [
     clearChunkRetry,
+    emitHighlight,
     loadReadyAudio,
     revokeCurrentChunkUrl,
     stopPolling,
@@ -677,6 +825,11 @@ export function TtsPlayer({
   ]);
 
   useEffect(() => {
+    if (!contentHash) {
+      stopPolling();
+      return;
+    }
+
     let isActive = true;
 
     const syncInitialStatus = async () => {
@@ -689,8 +842,9 @@ export function TtsPlayer({
 
     return () => {
       isActive = false;
+      stopPolling();
     };
-  }, [checkStatus, startPolling]);
+  }, [checkStatus, contentHash, startPolling, stopPolling]);
 
   const gradientBg = useMemo(
     () =>
