@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import re
 import shutil
 import threading
@@ -189,18 +190,31 @@ def _version_root() -> Path:
 
 def _cache_base() -> Path:
     """Return the canonical cache root used for containment checks."""
-    return TTS_DIR.resolve(strict=False)
+    return Path(os.path.realpath(os.fspath(TTS_DIR)))
 
 
 def _confined_cache_path(path: Path) -> Path:
-    """Resolve a cache path and reject traversal or symlink escapes."""
-    cache_base = _cache_base()
-    candidate = path.resolve(strict=False)
-    try:
-        candidate.relative_to(cache_base)
-    except ValueError as error:
-        raise ValueError("TTS cache path escapes the cache root") from error
-    return candidate
+    """Normalize a cache path and reject traversal or symlink escapes."""
+    cache_base = os.path.realpath(os.fspath(TTS_DIR))
+    cache_prefix = f"{cache_base}{os.sep}"
+    candidate = os.path.realpath(os.fspath(path))
+    if not candidate.startswith(cache_prefix):
+        raise ValueError("TTS cache path escapes the cache root")
+    return Path(candidate)
+
+
+def _confined_cache_entry(path: Path) -> Path:
+    """Validate a cache entry path without following its final symlink."""
+    cache_base = os.path.realpath(os.fspath(TTS_DIR))
+    cache_prefix = f"{cache_base}{os.sep}"
+    candidate = os.path.abspath(os.fspath(path))
+    if not candidate.startswith(cache_prefix):
+        raise ValueError("TTS cache path escapes the cache root")
+
+    actual_parent = os.path.realpath(os.path.dirname(candidate))
+    if actual_parent != cache_base and not actual_parent.startswith(cache_prefix):
+        raise ValueError("TTS cache parent escapes the cache root")
+    return Path(candidate)
 
 
 def _validate_cache_components(type_: str, slug: str, content_hash: str) -> None:
@@ -297,16 +311,22 @@ def _release_lock(type_: str, slug: str, content_hash: str) -> None:
 
 
 def _safe_remove(path: Path, expected_parent: Path) -> None:
-    confined_parent = _confined_cache_path(expected_parent)
-    lexical_path = path.absolute()
-    if lexical_path.parent.resolve(strict=False) != confined_parent:
-        return
-    if not lexical_path.exists() and not lexical_path.is_symlink():
+    cache_base = _cache_base()
+    confined_parent = (
+        cache_base
+        if expected_parent == cache_base
+        else _confined_cache_path(expected_parent)
+    )
+    lexical_path = _confined_cache_entry(path)
+    actual_parent = Path(os.path.realpath(os.fspath(lexical_path.parent)))
+    if actual_parent != confined_parent:
         return
     if lexical_path.is_symlink():
         lexical_path.unlink(missing_ok=True)
         return
     confined_path = _confined_cache_path(lexical_path)
+    if not confined_path.exists():
+        return
     if confined_path.is_file():
         confined_path.unlink(missing_ok=True)
         return

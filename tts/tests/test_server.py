@@ -317,9 +317,13 @@ class TtsServerTest(unittest.TestCase):
             tempfile.TemporaryDirectory() as temporary,
             tempfile.TemporaryDirectory() as external,
         ):
-            root = Path(temporary)
+            root = Path(temporary) / "tts"
+            root.mkdir()
             outside = Path(external) / "outside.json"
             outside.write_text("protected", encoding="utf-8")
+            prefix_sibling = Path(temporary) / "tts-escape" / "outside.json"
+            prefix_sibling.parent.mkdir()
+            prefix_sibling.write_text("protected", encoding="utf-8")
             with patch.object(server, "TTS_DIR", root):
                 for invalid_path in (
                     lambda: server._cache_path("../../tmp", "post", valid_hash),
@@ -334,7 +338,12 @@ class TtsServerTest(unittest.TestCase):
                     server._atomic_json_write(outside, {"changed": True})
                 with self.assertRaises(ValueError):
                     server._read_json(outside)
+                with self.assertRaises(ValueError):
+                    server._atomic_json_write(prefix_sibling, {"changed": True})
                 self.assertEqual(outside.read_text(encoding="utf-8"), "protected")
+                self.assertEqual(
+                    prefix_sibling.read_text(encoding="utf-8"), "protected"
+                )
 
     def test_cache_paths_reject_symlink_escapes_for_reads_and_writes(self):
         content_hash = "a" * 64
