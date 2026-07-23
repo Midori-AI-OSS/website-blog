@@ -184,35 +184,75 @@ def _validate_document(document: SpeechDocument, content_hash: str) -> None:
 
 
 def _version_root() -> Path:
-    return TTS_DIR / CACHE_DIRNAME
+    return _confined_cache_path(TTS_DIR / CACHE_DIRNAME)
+
+
+def _cache_base() -> Path:
+    """Return the canonical cache root used for containment checks."""
+    return TTS_DIR.resolve(strict=False)
+
+
+def _confined_cache_path(path: Path) -> Path:
+    """Resolve a cache path and reject traversal or symlink escapes."""
+    cache_base = _cache_base()
+    candidate = path.resolve(strict=False)
+    try:
+        candidate.relative_to(cache_base)
+    except ValueError as error:
+        raise ValueError("TTS cache path escapes the cache root") from error
+    return candidate
+
+
+def _validate_cache_components(type_: str, slug: str, content_hash: str) -> None:
+    if type_ not in VALID_TYPES:
+        raise ValueError("Invalid TTS cache type")
+    if not SLUG_RE.fullmatch(slug):
+        raise ValueError("Invalid TTS cache slug")
+    if not CONTENT_HASH_RE.fullmatch(content_hash):
+        raise ValueError("Invalid TTS cache content hash")
 
 
 def _slug_root(type_: str, slug: str) -> Path:
-    return _version_root() / type_ / slug
+    if type_ not in VALID_TYPES:
+        raise ValueError("Invalid TTS cache type")
+    if not SLUG_RE.fullmatch(slug):
+        raise ValueError("Invalid TTS cache slug")
+    return _confined_cache_path(_version_root() / type_ / slug)
 
 
 def _cache_root(type_: str, slug: str, content_hash: str) -> Path:
-    return _slug_root(type_, slug) / content_hash
+    _validate_cache_components(type_, slug, content_hash)
+    return _confined_cache_path(_slug_root(type_, slug) / content_hash)
 
 
 def _cache_path(type_: str, slug: str, content_hash: str) -> Path:
-    return _cache_root(type_, slug, content_hash) / "audio.wav"
+    return _confined_cache_path(
+        _cache_root(type_, slug, content_hash) / "audio.wav"
+    )
 
 
 def _chunks_dir(type_: str, slug: str, content_hash: str) -> Path:
-    return _cache_root(type_, slug, content_hash) / "chunks"
+    return _confined_cache_path(_cache_root(type_, slug, content_hash) / "chunks")
 
 
 def _chunk_path(type_: str, slug: str, content_hash: str, index: int) -> Path:
-    return _chunks_dir(type_, slug, content_hash) / f"{index:04d}.wav"
+    if not isinstance(index, int) or isinstance(index, bool) or index < 0:
+        raise ValueError("Invalid TTS chunk index")
+    return _confined_cache_path(
+        _chunks_dir(type_, slug, content_hash) / f"{index:04d}.wav"
+    )
 
 
 def _status_path(type_: str, slug: str, content_hash: str) -> Path:
-    return _cache_root(type_, slug, content_hash) / "status.json"
+    return _confined_cache_path(
+        _cache_root(type_, slug, content_hash) / "status.json"
+    )
 
 
 def _manifest_path(type_: str, slug: str, content_hash: str) -> Path:
-    return _cache_root(type_, slug, content_hash) / "manifest.json"
+    return _confined_cache_path(
+        _cache_root(type_, slug, content_hash) / "manifest.json"
+    )
 
 
 def _slug_lock_key(type_: str, slug: str) -> str:
@@ -257,22 +297,31 @@ def _release_lock(type_: str, slug: str, content_hash: str) -> None:
 
 
 def _safe_remove(path: Path, expected_parent: Path) -> None:
-    if path.parent != expected_parent or (not path.exists() and not path.is_symlink()):
+    confined_parent = _confined_cache_path(expected_parent)
+    lexical_path = path.absolute()
+    if lexical_path.parent.resolve(strict=False) != confined_parent:
         return
-    if path.is_symlink() or path.is_file():
-        path.unlink(missing_ok=True)
+    if not lexical_path.exists() and not lexical_path.is_symlink():
         return
-    if path.is_dir():
-        shutil.rmtree(path)
+    if lexical_path.is_symlink():
+        lexical_path.unlink(missing_ok=True)
+        return
+    confined_path = _confined_cache_path(lexical_path)
+    if confined_path.is_file():
+        confined_path.unlink(missing_ok=True)
+        return
+    if confined_path.is_dir():
+        shutil.rmtree(confined_path)
 
 
 def _cleanup_cache_versions() -> None:
-    TTS_DIR.mkdir(parents=True, exist_ok=True)
-    for child in TTS_DIR.iterdir():
+    cache_base = _cache_base()
+    cache_base.mkdir(parents=True, exist_ok=True)
+    for child in cache_base.iterdir():
         if child.name in VALID_TYPES or (
             VERSION_DIR_RE.fullmatch(child.name) and child.name != CACHE_DIRNAME
         ):
-            _safe_remove(child, TTS_DIR)
+            _safe_remove(child, cache_base)
 
 
 def _delete_stale_hashes(type_: str, slug: str, content_hash: str) -> None:
@@ -293,20 +342,24 @@ def _reset_outputs(type_: str, slug: str, content_hash: str) -> None:
 
 
 def _atomic_json_write(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(f"{path.suffix}.tmp")
+    confined_path = _confined_cache_path(path)
+    confined_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = _confined_cache_path(
+        confined_path.with_suffix(f"{confined_path.suffix}.tmp")
+    )
     temporary.write_text(
         json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
         encoding="utf-8",
     )
-    temporary.replace(path)
+    temporary.replace(confined_path)
 
 
 def _read_json(path: Path) -> dict[str, Any] | None:
-    if not path.exists():
+    confined_path = _confined_cache_path(path)
+    if not confined_path.exists():
         return None
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(confined_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
     return payload if isinstance(payload, dict) else None

@@ -251,6 +251,23 @@ class TtsServerTest(unittest.TestCase):
             self.assertTrue((root / CACHE_DIRNAME).exists())
             self.assertTrue((root / "keep-me").exists())
 
+    def test_startup_unlinks_legacy_symlinks_without_touching_their_targets(self):
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            tempfile.TemporaryDirectory() as external,
+        ):
+            root = Path(temporary)
+            external_root = Path(external)
+            protected = external_root / "protected.txt"
+            protected.write_text("keep", encoding="utf-8")
+            (root / "cache-v1-3").symlink_to(external_root, target_is_directory=True)
+
+            with patch.object(server, "TTS_DIR", root):
+                _cleanup_cache_versions()
+
+            self.assertFalse((root / "cache-v1-3").exists())
+            self.assertEqual(protected.read_text(encoding="utf-8"), "keep")
+
     def test_new_generation_deletes_stale_hashes_for_the_same_slug_only(self):
         current_hash = "a" * 64
         stale_hash = "b" * 64
@@ -269,6 +286,88 @@ class TtsServerTest(unittest.TestCase):
                 self.assertTrue(current.exists())
                 self.assertFalse(stale.exists())
                 self.assertTrue(other_slug.exists())
+
+    def test_stale_hash_cleanup_unlinks_symlinks_without_removing_targets(self):
+        current_hash = "a" * 64
+        stale_hash = "b" * 64
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            tempfile.TemporaryDirectory() as external,
+        ):
+            root = Path(temporary)
+            external_root = Path(external)
+            protected = external_root / "protected.txt"
+            protected.write_text("keep", encoding="utf-8")
+
+            with patch.object(server, "TTS_DIR", root):
+                slug_root = server._slug_root("lore", "story")
+                slug_root.mkdir(parents=True)
+                (slug_root / stale_hash).symlink_to(
+                    external_root, target_is_directory=True
+                )
+
+                _delete_stale_hashes("lore", "story", current_hash)
+
+                self.assertFalse((slug_root / stale_hash).exists())
+                self.assertEqual(protected.read_text(encoding="utf-8"), "keep")
+
+    def test_cache_paths_reject_untrusted_components_and_parent_traversal(self):
+        valid_hash = "a" * 64
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            tempfile.TemporaryDirectory() as external,
+        ):
+            root = Path(temporary)
+            outside = Path(external) / "outside.json"
+            outside.write_text("protected", encoding="utf-8")
+            with patch.object(server, "TTS_DIR", root):
+                for invalid_path in (
+                    lambda: server._cache_path("../../tmp", "post", valid_hash),
+                    lambda: server._cache_path("blog", "../post", valid_hash),
+                    lambda: server._cache_path("blog", "post", "../escape"),
+                    lambda: server._chunk_path("blog", "post", valid_hash, -1),
+                ):
+                    with self.assertRaises(ValueError):
+                        invalid_path()
+
+                with self.assertRaises(ValueError):
+                    server._atomic_json_write(outside, {"changed": True})
+                with self.assertRaises(ValueError):
+                    server._read_json(outside)
+                self.assertEqual(outside.read_text(encoding="utf-8"), "protected")
+
+    def test_cache_paths_reject_symlink_escapes_for_reads_and_writes(self):
+        content_hash = "a" * 64
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            tempfile.TemporaryDirectory() as external,
+        ):
+            root = Path(temporary)
+            external_root = Path(external)
+            protected = external_root / "status.json"
+            protected.write_text('{"protected":true}', encoding="utf-8")
+            type_root = root / CACHE_DIRNAME / "blog"
+            type_root.mkdir(parents=True)
+            (type_root / "escape").symlink_to(
+                external_root, target_is_directory=True
+            )
+
+            with patch.object(server, "TTS_DIR", root):
+                with self.assertRaises(ValueError):
+                    server._status_path("blog", "escape", content_hash)
+
+                cache_root = server._cache_root("blog", "safe-post", content_hash)
+                cache_root.mkdir(parents=True)
+                status_link = cache_root / "status.json"
+                status_link.symlink_to(protected)
+                with self.assertRaises(ValueError):
+                    server._atomic_json_write(status_link, {"changed": True})
+                with self.assertRaises(ValueError):
+                    server._read_json(status_link)
+
+            self.assertEqual(
+                protected.read_text(encoding="utf-8"), '{"protected":true}'
+            )
 
     def test_cache_version_is_explicit(self):
         self.assertEqual(CACHE_VERSION, "1-4")
