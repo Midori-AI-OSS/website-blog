@@ -41,13 +41,25 @@ function buildVibeState(seed: string): VibeState | null {
   const effectSeeds = seeds.slice(0, 3);
   const effectPool = [...VIBE_EFFECTS];
   const selected = selectFromPool(effectPool, masterRng, 2 + Math.floor(masterRng() * 2));
+
+  const backgroundNames = new Set([
+    'auroraRibbons',
+    'geometricWaves',
+    'threadWeave',
+    'cloudLayers',
+  ]);
+  const withSeeds = selected.map((e, i) => ({ ...e, seed: effectSeeds[i] ?? 0 }));
+  const ordered: typeof withSeeds = [];
+  for (const item of withSeeds) if (backgroundNames.has(item.name)) ordered.push(item);
+  for (const item of withSeeds) if (!backgroundNames.has(item.name)) ordered.push(item);
+
   const paletteRng = createRng(lastSeed);
   const colors = deriveColors(paletteRng, null, 5 + Math.floor(masterRng() * 3));
   return {
-    effects: selected.map((e) => ({ name: e.name })),
-    effectFns: selected.map((e) => e.fn),
+    effects: ordered.map((e) => ({ name: e.name })),
+    effectFns: ordered.map((e) => e.fn),
     colors,
-    effectSeeds,
+    effectSeeds: ordered.map((e) => e.seed),
   };
 }
 

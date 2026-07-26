@@ -1114,7 +1114,8 @@ function wireframeDiamond(
     let rz = x * Math.sin(angleY) + z * Math.cos(angleY);
     const ry = y * Math.cos(angleX) - rz * Math.sin(angleX);
     rz = y * Math.sin(angleX) + rz * Math.cos(angleX);
-    const scale = 200 / (200 + rz);
+    const perspective = Math.max(size * 3, 1);
+    const scale = perspective / (perspective + rz);
     return [cx + rx * scale, cy + ry * scale];
   };
 
