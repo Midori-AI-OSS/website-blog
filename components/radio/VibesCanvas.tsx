@@ -20,14 +20,14 @@ interface VibeState {
       ctx: CanvasRenderingContext2D,
       w: number,
       h: number,
-      rng: () => number,
+      seed: number,
       t: number,
       colors: string[],
       speed: number,
     ) => void
   >;
   colors: string[];
-  effectRngs: Array<() => number>;
+  effectSeeds: number[];
 }
 
 function buildVibeState(seed: string): VibeState | null {
@@ -38,7 +38,7 @@ function buildVibeState(seed: string): VibeState | null {
   const lastSeed = seeds[seeds.length - 1];
   if (firstSeed === undefined || lastSeed === undefined) return null;
   const masterRng = createRng(firstSeed);
-  const effectRngs = seeds.slice(0, 3).map((s) => createRng(s));
+  const effectSeeds = seeds.slice(0, 3);
   const effectPool = [...VIBE_EFFECTS];
   const selected = selectFromPool(effectPool, masterRng, 2 + Math.floor(masterRng() * 2));
   const paletteRng = createRng(lastSeed);
@@ -47,7 +47,7 @@ function buildVibeState(seed: string): VibeState | null {
     effects: selected.map((e) => ({ name: e.name })),
     effectFns: selected.map((e) => e.fn),
     colors,
-    effectRngs,
+    effectSeeds,
   };
 }
 
@@ -62,6 +62,7 @@ export default function VibesCanvas({
   const vibeRef = React.useRef<VibeState | null>(null);
   const rafRef = React.useRef<number | null>(null);
   const startTimeRef = React.useRef<number>(0);
+  const lastFrameRef = React.useRef<number>(0);
   const paletteRef = React.useRef<ExtractedPalette | null>(palette);
   paletteRef.current = palette;
 
@@ -107,6 +108,14 @@ export default function VibesCanvas({
     const frame = (timestamp: number) => {
       if (!running) return;
 
+      if (reducedMotionRef.current && startTimeRef.current !== 0) return;
+
+      if (timestamp - lastFrameRef.current < 32) {
+        if (running) rafRef.current = requestAnimationFrame(frame);
+        return;
+      }
+      lastFrameRef.current = timestamp;
+
       const vibe = vibeRef.current;
       if (!vibe || vibe.effectFns.length === 0) {
         if (running) rafRef.current = requestAnimationFrame(frame);
@@ -129,14 +138,14 @@ export default function VibesCanvas({
 
       ctx.clearRect(0, 0, w, h);
 
-      const speed = energyRef.current || 1;
+      const speed = Math.min(1.15, energyRef.current || 1);
       const t = reducedMotionRef.current ? 1 : elapsed;
 
       for (let i = 0; i < vibe.effectFns.length; i++) {
         const effectFn = vibe.effectFns[i];
-        const rng = vibe.effectRngs[i] ?? (() => Math.random());
+        const seed = vibe.effectSeeds[i] ?? 0;
         if (effectFn) {
-          effectFn(ctx, w, h, rng, t, vibe.colors, speed);
+          effectFn(ctx, w, h, seed, t, vibe.colors, speed);
         }
       }
 
@@ -181,7 +190,7 @@ export default function VibesCanvas({
           inset: 0,
           pointerEvents: 'none',
           mixBlendMode: 'screen',
-          opacity: 0.85,
+          opacity: 0.5,
         }}
       />
     </Box>

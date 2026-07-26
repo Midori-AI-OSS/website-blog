@@ -201,5 +201,5 @@ export function detectEnergy(vibeText: string): number {
 
   if (highCount === 0 && lowCount === 0) return 1.0;
   const ratio = highCount / Math.max(1, lowCount);
-  return Math.min(1.5, Math.max(0.6, ratio));
+  return Math.min(1.15, Math.max(0.75, ratio));
 }
