@@ -190,7 +190,7 @@ export default function VibesCanvas({
           inset: 0,
           pointerEvents: 'none',
           mixBlendMode: 'screen',
-          opacity: 0.5,
+          opacity: 0.75,
         }}
       />
     </Box>

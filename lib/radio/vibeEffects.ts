@@ -74,7 +74,7 @@ function floatingOrbs(
   for (const orb of orbs) {
     const x = bounceTime(orb.ix + orb.dx * gs * t, w);
     const y = bounceTime(orb.iy + orb.dy * gs * t, h);
-    ctx.globalAlpha = 0.03 + Math.sin(t * 2 + x * 0.01) * 0.07 + 0.07;
+    ctx.globalAlpha = 0.06 + Math.sin(t * 2 + x * 0.01) * 0.1 + 0.1;
     ctx.beginPath();
     ctx.arc(x, y, orb.r, 0, Math.PI * 2);
     ctx.fillStyle = orb.color;
@@ -181,7 +181,7 @@ function particleStream(
   speed: number,
 ) {
   const localRng = seededRng(seed);
-  const count = 80 + Math.floor(localRng() * 121);
+  const count = 150 + Math.floor(localRng() * 200);
   const particles: {
     ix: number;
     iy: number;
@@ -247,7 +247,7 @@ function bokehField(
     const grad = ctx.createRadialGradient(x, y, 0, x, y, b.r);
     grad.addColorStop(0, b.color);
     grad.addColorStop(1, 'transparent');
-    ctx.globalAlpha = 0.08 + Math.sin(t * 1.5 + x * 0.005) * 0.04;
+    ctx.globalAlpha = 0.13 + Math.sin(t * 1.5 + x * 0.005) * 0.06;
     ctx.beginPath();
     ctx.arc(x, y, b.r, 0, Math.PI * 2);
     ctx.fillStyle = grad;
@@ -286,7 +286,7 @@ function voronoiTiles(
     color: s.color,
   }));
 
-  const step = 8;
+  const step = 6;
   for (let px = 0; px < w; px += step) {
     for (let py = 0; py < h; py += step) {
       let minDist = Infinity;
@@ -303,7 +303,7 @@ function voronoiTiles(
         }
       }
       ctx.fillStyle = computed[nearest]?.color ?? FALLBACK_COLOR;
-      ctx.globalAlpha = 0.07;
+      ctx.globalAlpha = 0.12;
       ctx.fillRect(px, py, step, step);
     }
   }
@@ -337,7 +337,7 @@ function geometricWaves(
     ctx.lineTo(0, h + 20);
     ctx.closePath();
     ctx.fillStyle = color;
-    ctx.globalAlpha = 0.08;
+    ctx.globalAlpha = 0.15;
     ctx.fill();
   }
   ctx.restore();
@@ -414,7 +414,7 @@ function smokeMist(
     const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(10, radius));
     grad.addColorStop(0, colors[i % colors.length] ?? FALLBACK_COLOR);
     grad.addColorStop(1, 'transparent');
-    ctx.globalAlpha = 0.06 + Math.sin(t * speed * 0.7 + i) * 0.02;
+    ctx.globalAlpha = 0.1 + Math.sin(t * speed * 0.7 + i) * 0.04;
     ctx.beginPath();
     ctx.arc(cx, cy, Math.max(10, radius), 0, Math.PI * 2);
     ctx.fillStyle = grad;
@@ -436,7 +436,7 @@ function classicPlasma(
   const c1y = h * 0.4;
   const c2x = w * 0.7;
   const c2y = h * 0.6;
-  const step = 8;
+  const step = 6;
   for (let px = 0; px < w; px += step) {
     for (let py = 0; py < h; py += step) {
       const d1 = Math.sqrt((px - c1x) ** 2 + (py - c1y) ** 2) * 0.005;
@@ -444,7 +444,7 @@ function classicPlasma(
       const v = Math.sin(d1 + t * speed) + Math.sin(d2 - t * speed * 1.3);
       const idx = Math.abs(Math.floor(((v + 2) / 4) * colors.length)) % colors.length;
       ctx.fillStyle = colors[idx] ?? FALLBACK_COLOR;
-      ctx.globalAlpha = 0.15;
+      ctx.globalAlpha = 0.3;
       ctx.fillRect(px, py, step, step);
     }
   }
@@ -493,7 +493,7 @@ function lavaLamp(
     const grad = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.radius);
     grad.addColorStop(0, blob.color);
     grad.addColorStop(1, 'transparent');
-    ctx.globalAlpha = 0.25;
+    ctx.globalAlpha = 0.4;
     ctx.beginPath();
     ctx.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2);
     ctx.fillStyle = grad;
@@ -557,7 +557,7 @@ function flowField(
   speed: number,
 ) {
   const localRng = seededRng(seed);
-  const count = 150 + Math.floor(localRng() * 201);
+  const count = 300 + Math.floor(localRng() * 400);
   const gridCols = Math.ceil(w / 20);
   const gridRows = Math.ceil(h / 20);
   const grid: number[] = [];
@@ -701,7 +701,7 @@ function gradientMesh(
     color: p.color,
   }));
 
-  const step = 10;
+  const step = 8;
   for (let px = 0; px < w; px += step) {
     for (let py = 0; py < h; py += step) {
       let r = 0;
@@ -725,7 +725,7 @@ function gradientMesh(
       g = Math.round(g / totalWeight);
       bVal = Math.round(bVal / totalWeight);
       ctx.fillStyle = `rgb(${r},${g},${bVal})`;
-      ctx.globalAlpha = 0.08;
+      ctx.globalAlpha = 0.18;
       ctx.fillRect(px, py, step, step);
     }
   }
@@ -946,7 +946,7 @@ function honeycombShift(
       }
       ctx.closePath();
       ctx.fillStyle = colors[colorIdx] ?? FALLBACK_COLOR;
-      ctx.globalAlpha = 0.1;
+      ctx.globalAlpha = 0.15;
       ctx.fill();
     }
   }
@@ -1010,7 +1010,7 @@ function glassPrism(
     grad.addColorStop(0.3, color);
     grad.addColorStop(0.7, color);
     grad.addColorStop(1, 'transparent');
-    ctx.globalAlpha = 0.06;
+    ctx.globalAlpha = 0.12;
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
   }
@@ -1073,7 +1073,7 @@ function cloudLayers(
     const yBase = (h / (layerCount + 1)) * (layer + 1);
     const drift = layer * 0.4 * speed;
     ctx.save();
-    ctx.globalAlpha = 0.05;
+    ctx.globalAlpha = 0.12;
     const grad = ctx.createLinearGradient(0, yBase - 30, 0, yBase + 30);
     const color = colors[layer % colors.length] ?? FALLBACK_COLOR;
     grad.addColorStop(0, 'transparent');
