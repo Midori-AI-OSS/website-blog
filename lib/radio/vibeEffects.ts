@@ -55,16 +55,27 @@ function floatingOrbs(
 ) {
   const localRng = seededRng(seed);
   const count = 12 + Math.floor(localRng() * 9);
-  const orbs: { ix: number; iy: number; dx: number; dy: number; r: number; color: string }[] = [];
+  const orbs: {
+    ix: number;
+    iy: number;
+    dx: number;
+    dy: number;
+    r: number;
+    color: string;
+    phaseOffset: number;
+    pulseRate: number;
+  }[] = [];
 
   for (let i = 0; i < count; i++) {
     orbs.push({
       ix: localRng() * w,
       iy: localRng() * h,
-      dx: (localRng() - 0.5) * 0.5,
-      dy: (localRng() - 0.5) * 0.5,
+      dx: (localRng() - 0.5) * 0.8,
+      dy: (localRng() - 0.5) * 0.8,
       r: 8 + localRng() * 52,
       color: pick(colors, localRng),
+      phaseOffset: localRng() * Math.PI * 2,
+      pulseRate: 0.15 + localRng() * 0.3,
     });
   }
 
@@ -74,7 +85,7 @@ function floatingOrbs(
   for (const orb of orbs) {
     const x = bounceTime(orb.ix + orb.dx * gs * t, w);
     const y = bounceTime(orb.iy + orb.dy * gs * t, h);
-    ctx.globalAlpha = 0.06 + Math.sin(t * 2 + x * 0.01) * 0.1 + 0.1;
+    ctx.globalAlpha = 0.06 + Math.sin(t * orb.pulseRate + orb.phaseOffset + x * 0.01) * 0.1 + 0.1;
     ctx.beginPath();
     ctx.arc(x, y, orb.r, 0, Math.PI * 2);
     ctx.fillStyle = orb.color;
@@ -225,16 +236,27 @@ function bokehField(
 ) {
   const localRng = seededRng(seed);
   const count = 20 + Math.floor(localRng() * 21);
-  const bokehs: { ix: number; iy: number; dx: number; dy: number; r: number; color: string }[] = [];
+  const bokehs: {
+    ix: number;
+    iy: number;
+    dx: number;
+    dy: number;
+    r: number;
+    color: string;
+    phaseOffset: number;
+    pulseRate: number;
+  }[] = [];
 
   for (let i = 0; i < count; i++) {
     bokehs.push({
       ix: localRng() * w,
       iy: localRng() * h,
-      dx: (localRng() - 0.5) * 0.6,
-      dy: (localRng() - 0.5) * 0.6,
+      dx: (localRng() - 0.5) * 0.9,
+      dy: (localRng() - 0.5) * 0.9,
       r: 20 + localRng() * 80,
       color: pick(colors, localRng),
+      phaseOffset: localRng() * Math.PI * 2,
+      pulseRate: 0.15 + localRng() * 0.3,
     });
   }
 
@@ -247,7 +269,7 @@ function bokehField(
     const grad = ctx.createRadialGradient(x, y, 0, x, y, b.r);
     grad.addColorStop(0, b.color);
     grad.addColorStop(1, 'transparent');
-    ctx.globalAlpha = 0.13 + Math.sin(t * 1.5 + x * 0.005) * 0.06;
+    ctx.globalAlpha = 0.13 + Math.sin(t * b.pulseRate + b.phaseOffset + x * 0.005) * 0.06;
     ctx.beginPath();
     ctx.arc(x, y, b.r, 0, Math.PI * 2);
     ctx.fillStyle = grad;
@@ -643,27 +665,40 @@ function rippleRings(
 ) {
   const localRng = seededRng(seed);
   const maxRings = 8;
-  const rings: { x: number; y: number; color: string }[] = [];
+  const rings: {
+    x: number;
+    y: number;
+    dx: number;
+    dy: number;
+    color: string;
+    phaseOffset: number;
+    period: number;
+  }[] = [];
   for (let i = 0; i < maxRings; i++) {
     rings.push({
       x: localRng() * w,
       y: localRng() * h,
+      dx: (localRng() - 0.5) * 15,
+      dy: (localRng() - 0.5) * 15,
       color: pick(colors, localRng),
+      phaseOffset: localRng() * Math.PI * 2,
+      period: 10 + localRng() * 8,
     });
   }
 
   const gs = gentleSpeed(speed);
-  for (let i = 0; i < rings.length; i++) {
-    const ring = rings[i];
-    if (!ring) continue;
-    const phaseOffset = i / rings.length;
-    const localPhase = (((t * 0.25 + phaseOffset) % 1) + 1) % 1;
-    const radius = localPhase * Math.max(w, h) * 0.5 * gs;
-    const alpha = (1 - localPhase) * 0.35;
-    if (alpha <= 0) continue;
+  const maxDim = Math.max(w, h);
+  for (const ring of rings) {
+    const cx = wrapTime(ring.x + ring.dx * gs * t * 0.03, w);
+    const cy = wrapTime(ring.y + ring.dy * gs * t * 0.03, h);
+    const phase = ((t * gs) / ring.period + ring.phaseOffset / (Math.PI * 2)) % 1;
+    const sinPhase = (Math.sin(phase * Math.PI * 2) + 1) / 2;
+    const radius = sinPhase * maxDim * 0.5;
+    const alpha = Math.sin(phase * Math.PI * 2) * 0.15 + 0.2;
+    if (alpha <= 0.005) continue;
     ctx.globalAlpha = alpha;
     ctx.beginPath();
-    ctx.arc(ring.x, ring.y, radius, 0, Math.PI * 2);
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.strokeStyle = ring.color;
     ctx.lineWidth = 1;
     ctx.stroke();
@@ -743,7 +778,15 @@ function diamondDust(
 ) {
   const localRng = seededRng(seed);
   const count = 30 + Math.floor(localRng() * 31);
-  const specs: { x: number; y: number; size: number; angle: number; color: string }[] = [];
+  const specs: {
+    x: number;
+    y: number;
+    size: number;
+    angle: number;
+    color: string;
+    twinkleRate: number;
+    spinRate: number;
+  }[] = [];
 
   for (let i = 0; i < count; i++) {
     specs.push({
@@ -752,15 +795,18 @@ function diamondDust(
       size: 2 + localRng() * 3,
       angle: localRng() * Math.PI * 2,
       color: pick(colors, localRng),
+      twinkleRate: 0.15 + localRng() * 0.6,
+      spinRate: 0.08 + localRng() * 0.25,
     });
   }
 
+  const gs = gentleSpeed(speed);
   for (const spec of specs) {
-    const alpha = Math.abs(Math.sin(spec.angle + t * speed)) * 0.6;
+    const alpha = Math.abs(Math.sin(spec.angle + t * gs * spec.twinkleRate)) * 0.6;
     if (alpha < 0.02) continue;
     ctx.save();
     ctx.translate(spec.x, spec.y);
-    ctx.rotate(t * 0.3 + spec.angle);
+    ctx.rotate(t * gs * spec.spinRate + spec.angle);
     ctx.globalAlpha = alpha;
     ctx.fillStyle = spec.color;
     ctx.fillRect(-spec.size / 2, -spec.size / 2, spec.size, spec.size);
@@ -819,31 +865,47 @@ function pulseRings(
   seed: number,
   t: number,
   colors: string[],
-  _speed: number,
+  speed: number,
 ) {
   const localRng = seededRng(seed);
-  const centers: { x: number; y: number; color: string }[] = [];
+  const centers: {
+    x: number;
+    y: number;
+    dx: number;
+    dy: number;
+    color: string;
+    phaseOffset: number;
+    period: number;
+  }[] = [];
   const count = 3 + Math.floor(localRng() * 3);
 
   for (let i = 0; i < count; i++) {
     centers.push({
       x: w * 0.2 + localRng() * w * 0.6,
       y: h * 0.2 + localRng() * h * 0.6,
+      dx: (localRng() - 0.5) * 20,
+      dy: (localRng() - 0.5) * 20,
       color: colors[i % colors.length] ?? FALLBACK_COLOR,
+      phaseOffset: localRng() * Math.PI * 2,
+      period: 10 + localRng() * 6,
     });
   }
 
-  const period = 2 + localRng();
+  const gs = gentleSpeed(speed);
+  const maxDim = Math.max(w, h);
   for (const center of centers) {
-    const phase = (t % period) / period;
+    const cx = wrapTime(center.x + center.dx * gs * t * 0.03, w);
+    const cy = wrapTime(center.y + center.dy * gs * t * 0.03, h);
+    const basePhase = ((t * gs) / center.period + center.phaseOffset / (Math.PI * 2)) % 1;
     for (let ringIdx = 0; ringIdx < 3; ringIdx++) {
-      const ringPhase = (phase + ringIdx / 3) % 1;
-      const radius = ringPhase * Math.max(w, h) * 0.6;
-      const alpha = (1 - ringPhase) * 0.35;
-      if (alpha <= 0) continue;
+      const ringPhaseRaw = (basePhase + ringIdx / 3) % 1;
+      const sinPhase = (Math.sin(ringPhaseRaw * Math.PI * 2) + 1) / 2;
+      const radius = sinPhase * maxDim * 0.5;
+      const alpha = Math.sin(ringPhaseRaw * Math.PI * 2) * 0.15 + 0.2;
+      if (alpha <= 0.005) continue;
       ctx.globalAlpha = alpha;
       ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       ctx.strokeStyle = center.color;
       ctx.lineWidth = 1.5;
       ctx.stroke();

@@ -3,99 +3,185 @@
 import Box from '@mui/joy/Box';
 import * as React from 'react';
 import { VIBE_EFFECTS } from '@/lib/radio/vibeEffects';
-import { createRng, cyrb53, deriveColors, hashToSeeds, selectFromPool } from '@/lib/radio/vibeHash';
+import {
+  createRng,
+  cyrb53,
+  deriveColors,
+  hashToSeeds,
+  sceneForPosition,
+  selectFromPool,
+  visualIdentitySeed,
+} from '@/lib/radio/vibeHash';
 import type { ExtractedPalette } from '@/lib/theme/artPalette';
 
 interface VibesCanvasProps {
   seed: string;
+  trackId: string;
+  startedAt: string;
+  durationMs: number;
+  positionMs: number;
   palette: ExtractedPalette | null;
   energyMultiplier: number;
   reducedMotion: boolean;
 }
 
-interface VibeState {
-  effects: readonly { name: string }[] | null;
-  effectFns: Array<
-    (
-      ctx: CanvasRenderingContext2D,
-      w: number,
-      h: number,
-      seed: number,
-      t: number,
-      colors: string[],
-      speed: number,
-    ) => void
-  >;
-  colors: string[];
-  effectSeeds: number[];
+interface VibeEffectEntry {
+  name: string;
+  fn: (
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    seed: number,
+    t: number,
+    colors: string[],
+    speed: number,
+  ) => void;
+  seed: number;
+  phaseOffset: number;
+  tempoMult: number;
 }
 
-function buildVibeState(seed: string): VibeState | null {
-  if (!seed) return null;
-  const hash = cyrb53(seed);
-  const seeds = hashToSeeds(hash, 10);
+interface VibeScene {
+  effects: VibeEffectEntry[];
+  colors: string[];
+}
+
+interface TransitionState {
+  prev: VibeScene;
+  next: VibeScene;
+  startedAt: number;
+}
+
+const BACKGROUND_NAMES = new Set(['auroraRibbons', 'geometricWaves', 'threadWeave', 'cloudLayers']);
+
+const TRANSITION_TOTAL_MS = 900;
+const FADE_DURATION_MS = 600;
+
+function buildVibeScene(visualSeed: string): VibeScene | null {
+  if (!visualSeed) return null;
+  const hash = cyrb53(visualSeed);
+  const seeds = hashToSeeds(hash, 12);
   const firstSeed = seeds[0];
   const lastSeed = seeds[seeds.length - 1];
   if (firstSeed === undefined || lastSeed === undefined) return null;
   const masterRng = createRng(firstSeed);
   const effectSeeds = seeds.slice(0, 3);
+  const timingSeeds = seeds.slice(3, 6);
   const effectPool = [...VIBE_EFFECTS];
   const selected = selectFromPool(effectPool, masterRng, 2 + Math.floor(masterRng() * 2));
 
-  const backgroundNames = new Set([
-    'auroraRibbons',
-    'geometricWaves',
-    'threadWeave',
-    'cloudLayers',
-  ]);
-  const withSeeds = selected.map((e, i) => ({ ...e, seed: effectSeeds[i] ?? 0 }));
+  const withSeeds = selected.map((e, i) => ({
+    ...e,
+    seed: effectSeeds[i] ?? 0,
+    phaseOffset: (((timingSeeds[i] ?? 0) % 1000) / 1000) * Math.PI * 2,
+    tempoMult: 0.82 + (((timingSeeds[i] ?? 0) % 1000) / 1000) * 0.36,
+  }));
+
   const ordered: typeof withSeeds = [];
-  for (const item of withSeeds) if (backgroundNames.has(item.name)) ordered.push(item);
-  for (const item of withSeeds) if (!backgroundNames.has(item.name)) ordered.push(item);
+  for (const item of withSeeds) if (BACKGROUND_NAMES.has(item.name)) ordered.push(item);
+  for (const item of withSeeds) if (!BACKGROUND_NAMES.has(item.name)) ordered.push(item);
 
   const paletteRng = createRng(lastSeed);
   const colors = deriveColors(paletteRng, null, 5 + Math.floor(masterRng() * 3));
+
   return {
-    effects: ordered.map((e) => ({ name: e.name })),
-    effectFns: ordered.map((e) => e.fn),
+    effects: ordered.map((e) => ({
+      name: e.name,
+      fn: e.fn,
+      seed: e.seed,
+      phaseOffset: e.phaseOffset,
+      tempoMult: e.tempoMult,
+    })),
     colors,
-    effectSeeds: ordered.map((e) => e.seed),
   };
+}
+
+function fadeOutProgress(elapsed: number, total: number, isBg: boolean): number {
+  const delay = isBg ? 150 : 0;
+  const start = delay / total;
+  const duration = FADE_DURATION_MS / total;
+  if (elapsed < start) return 1;
+  if (elapsed > start + duration) return 0;
+  return 1 - (elapsed - start) / duration;
+}
+
+function fadeInProgress(elapsed: number, total: number, isBg: boolean): number {
+  const delay = isBg ? 300 : 450;
+  const start = delay / total;
+  const duration = FADE_DURATION_MS / total;
+  if (elapsed < start) return 0;
+  if (elapsed > start + duration) return 1;
+  return (elapsed - start) / duration;
 }
 
 export default function VibesCanvas({
   seed,
+  trackId,
+  startedAt,
+  durationMs,
+  positionMs,
   palette,
   energyMultiplier,
   reducedMotion,
 }: VibesCanvasProps) {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const vibeRef = React.useRef<VibeState | null>(null);
+  const sceneRef = React.useRef<VibeScene | null>(null);
+  const transitionRef = React.useRef<TransitionState | null>(null);
   const rafRef = React.useRef<number | null>(null);
   const startTimeRef = React.useRef<number>(0);
   const lastFrameRef = React.useRef<number>(0);
   const paletteRef = React.useRef<ExtractedPalette | null>(palette);
   paletteRef.current = palette;
-
   const energyRef = React.useRef<number>(energyMultiplier);
   energyRef.current = energyMultiplier;
-
   const reducedMotionRef = React.useRef<boolean>(reducedMotion);
   reducedMotionRef.current = reducedMotion;
+  const prevVisualSeedRef = React.useRef<string>('');
+  const scratchRef = React.useRef<HTMLCanvasElement | null>(null);
+
+  const sceneIndex = React.useMemo(
+    () => sceneForPosition(positionMs, durationMs),
+    [positionMs, durationMs],
+  );
+  const visualSeed = React.useMemo(
+    () => visualIdentitySeed(trackId, startedAt, seed, sceneIndex),
+    [trackId, startedAt, seed, sceneIndex],
+  );
 
   React.useEffect(() => {
-    vibeRef.current = buildVibeState(seed);
-  }, [seed]);
+    if (!visualSeed) return;
+    const newScene = buildVibeScene(visualSeed);
+    if (!newScene) return;
+
+    if (sceneRef.current && prevVisualSeedRef.current && visualSeed !== prevVisualSeedRef.current) {
+      if (reducedMotionRef.current) {
+        sceneRef.current = newScene;
+        transitionRef.current = null;
+      } else {
+        transitionRef.current = {
+          prev: sceneRef.current,
+          next: newScene,
+          startedAt: performance.now(),
+        };
+      }
+    } else if (!sceneRef.current) {
+      sceneRef.current = newScene;
+    }
+
+    prevVisualSeedRef.current = visualSeed;
+  }, [visualSeed]);
 
   React.useEffect(() => {
-    if (!vibeRef.current) return;
-    vibeRef.current.colors = deriveColors(
-      createRng(cyrb53(`${seed}palette`)),
+    const transition = transitionRef.current;
+    const target = transition ? transition.next : sceneRef.current;
+    if (!target) return;
+    target.colors = deriveColors(
+      createRng(cyrb53(`${visualSeed}palette`)),
       paletteRef.current,
-      5 + Math.floor(createRng(cyrb53(seed))() * 3),
+      5 + Math.floor(createRng(cyrb53(visualSeed))() * 3),
     );
-  }, [seed]);
+  }, [visualSeed]);
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
@@ -109,6 +195,11 @@ export default function VibesCanvas({
       canvas.height = rect.height * dpr;
       canvas.style.width = `${rect.width}px`;
       canvas.style.height = `${rect.height}px`;
+      const sc = scratchRef.current;
+      if (sc) {
+        sc.width = canvas.width;
+        sc.height = canvas.height;
+      }
     };
 
     const observer = new ResizeObserver(resize);
@@ -128,8 +219,9 @@ export default function VibesCanvas({
       }
       lastFrameRef.current = timestamp;
 
-      const vibe = vibeRef.current;
-      if (!vibe || vibe.effectFns.length === 0) {
+      const transition = transitionRef.current;
+      const scene = sceneRef.current;
+      if (!scene || scene.effects.length === 0) {
         if (running) rafRef.current = requestAnimationFrame(frame);
         return;
       }
@@ -153,11 +245,72 @@ export default function VibesCanvas({
       const speed = Math.min(1.15, energyRef.current || 1);
       const t = reducedMotionRef.current ? 1 : elapsed;
 
-      for (let i = 0; i < vibe.effectFns.length; i++) {
-        const effectFn = vibe.effectFns[i];
-        const seed = vibe.effectSeeds[i] ?? 0;
-        if (effectFn) {
-          effectFn(ctx, w, h, seed, t, vibe.colors, speed);
+      if (transition) {
+        let scratch = scratchRef.current;
+        if (!scratch) {
+          scratch = document.createElement('canvas');
+          scratch.width = canvas.width;
+          scratch.height = canvas.height;
+          scratchRef.current = scratch;
+        }
+
+        const scratchCtx = scratch.getContext('2d');
+        if (!scratchCtx) return;
+
+        const transitionElapsed = performance.now() - transition.startedAt;
+        const progress = Math.min(1, transitionElapsed / TRANSITION_TOTAL_MS);
+
+        for (let i = 0; i < transition.prev.effects.length; i++) {
+          const eff = transition.prev.effects[i];
+          if (!eff) continue;
+          const isBg = BACKGROUND_NAMES.has(eff.name);
+          const opacity = fadeOutProgress(transitionElapsed, TRANSITION_TOTAL_MS, isBg);
+          if (opacity <= 0) continue;
+
+          scratchCtx.clearRect(0, 0, w, h);
+          scratchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          scratchCtx.globalAlpha = 1;
+          const effT = t * eff.tempoMult + eff.phaseOffset;
+          eff.fn(scratchCtx, w, h, eff.seed, effT, transition.prev.colors, speed);
+
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.drawImage(scratch, 0, 0);
+          ctx.restore();
+        }
+
+        for (let i = 0; i < transition.next.effects.length; i++) {
+          const eff = transition.next.effects[i];
+          if (!eff) continue;
+          const isBg = BACKGROUND_NAMES.has(eff.name);
+          const opacity = fadeInProgress(transitionElapsed, TRANSITION_TOTAL_MS, isBg);
+          if (opacity <= 0) continue;
+
+          scratchCtx.clearRect(0, 0, w, h);
+          scratchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          scratchCtx.globalAlpha = 1;
+          const effT = t * eff.tempoMult + eff.phaseOffset;
+          eff.fn(scratchCtx, w, h, eff.seed, effT, transition.next.colors, speed);
+
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.drawImage(scratch, 0, 0);
+          ctx.restore();
+        }
+
+        if (progress >= 1) {
+          transitionRef.current = null;
+          sceneRef.current = transition.next;
+          scratchRef.current = null;
+        }
+      } else {
+        for (let i = 0; i < scene.effects.length; i++) {
+          const eff = scene.effects[i];
+          if (!eff) continue;
+          const effT = t * eff.tempoMult + eff.phaseOffset;
+          eff.fn(ctx, w, h, eff.seed, effT, scene.colors, speed);
         }
       }
 

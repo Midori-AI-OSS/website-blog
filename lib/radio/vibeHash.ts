@@ -177,6 +177,28 @@ const LOW_ENERGY_WORDS = [
   'pastoral',
 ];
 
+export function sceneCount(durationMs: number): number {
+  if (durationMs <= 0) return 1;
+  return Math.max(1, Math.floor(durationMs / 60000));
+}
+
+export function sceneForPosition(positionMs: number, durationMs: number): number {
+  if (durationMs <= 0) return 0;
+  const total = sceneCount(durationMs);
+  const segmentMs = durationMs / total;
+  const idx = Math.floor(Math.max(0, positionMs) / segmentMs);
+  return Math.min(idx, total - 1);
+}
+
+export function visualIdentitySeed(
+  trackId: string,
+  startedAt: string,
+  vibeSeed: string,
+  scene: number,
+): string {
+  return `${trackId}:${startedAt}:${vibeSeed}:s${scene}`;
+}
+
 export function detectEnergy(vibeText: string): number {
   if (!vibeText) return 0;
   const lower = vibeText.toLowerCase();

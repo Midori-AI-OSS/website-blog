@@ -1233,26 +1233,8 @@ export default function RadioPageClient() {
     }
 
     if (vibesPhaseRef.current === 'showing') {
-      if (vibesTimerRef.current !== null) clearTimeout(vibesTimerRef.current);
-      vibesSeqRef.current += 1;
-      const seq = vibesSeqRef.current;
-      vibesPhaseRef.current = 'fading';
-      vibesPendingRef.current = target;
-      setVibesOpacity(0);
-      vibesTimerRef.current = setTimeout(() => {
-        if (seq !== vibesSeqRef.current) return;
-        const pending = vibesPendingRef.current;
-        vibesPendingRef.current = null;
-        if (!pending) return;
-        vibesActiveSeedRef.current = pending.seed;
-        setDisplayedVibeSeed(pending.seed);
-        setVibesRenderKey((k) => k + 1);
-        requestAnimationFrame(() => {
-          if (seq !== vibesSeqRef.current) return;
-          setVibesOpacity(1);
-          vibesPhaseRef.current = 'showing';
-        });
-      }, VIBES_FADE_MS);
+      vibesActiveSeedRef.current = vibeSeed;
+      setDisplayedVibeSeed(vibeSeed);
       return;
     }
 
@@ -1614,9 +1596,13 @@ export default function RadioPageClient() {
                 }}
               >
                 <Box key={vibesRenderKey}>
-                  {displayedVibeSeed ? (
+                  {displayedVibeSeed && currentTrack ? (
                     <VibesCanvas
                       seed={displayedVibeSeed}
+                      trackId={currentTrack.track_id}
+                      startedAt={currentTrack.started_at}
+                      durationMs={durationMs}
+                      positionMs={positionMs}
                       palette={artPalette}
                       energyMultiplier={vibeEnergy}
                       reducedMotion={reducedMotion}
