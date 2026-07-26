@@ -98,11 +98,6 @@ const coverSlideIn = keyframes`
   to { transform: translateX(0); opacity: 1; }
 `;
 
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-
 const lyricsEnterRise = keyframes`
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -320,6 +315,30 @@ export default function RadioPageClient() {
   const pendingLyricsRef = React.useRef<{ content: string; trackId: string } | null>(null);
   const lyricsScrollRef = React.useRef<HTMLDivElement | null>(null);
   const currentLyricsTargetRef = React.useRef<string | null>(null);
+
+  // ── Vibes fade state ──
+  const VIBES_FADE_MS = reducedMotion ? 150 : 350;
+  const [vibesOpacity, setVibesOpacity] = React.useState(0);
+  const [vibesRenderKey, setVibesRenderKey] = React.useState(0);
+  const [displayedVibeSeed, setDisplayedVibeSeed] = React.useState('');
+  const vibesPhaseRef = React.useRef<'hidden' | 'showing' | 'fading'>('hidden');
+  const vibesTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const vibesSeqRef = React.useRef(0);
+  const vibesPendingRef = React.useRef<{
+    seed: string;
+    palette: ExtractedPalette | null;
+    energy: number;
+    trackId: string | null;
+  } | null>(null);
+  const vibesActiveSeedRef = React.useRef<string>('');
+
+  React.useEffect(() => {
+    return () => {
+      if (vibesTimerRef.current !== null) {
+        clearTimeout(vibesTimerRef.current);
+      }
+    };
+  }, []);
 
   const currentTrackId = currentTrack?.track_id ?? null;
   // Keep target ref in sync for lyrics timer callbacks
@@ -1150,6 +1169,96 @@ export default function RadioPageClient() {
       .join(' ') || '';
   const vibeEnergy = React.useMemo(() => (vibeSeed ? detectEnergy(vibeSeed) : 0), [vibeSeed]);
 
+  // ── Vibes fade: toggle + crossfade ──
+  // biome-ignore lint/correctness/useExhaustiveDependencies: uses refs for deferred captures; extra deps would trigger unwanted re-runs
+  React.useEffect(() => {
+    if (!showVibes) {
+      if (vibesPhaseRef.current === 'hidden') return;
+      if (vibesTimerRef.current !== null) clearTimeout(vibesTimerRef.current);
+      vibesSeqRef.current += 1;
+      const seq = vibesSeqRef.current;
+      vibesPhaseRef.current = 'fading';
+      vibesPendingRef.current = null;
+      setVibesOpacity(0);
+      vibesTimerRef.current = setTimeout(() => {
+        if (seq !== vibesSeqRef.current) return;
+        vibesPhaseRef.current = 'hidden';
+        vibesActiveSeedRef.current = '';
+        setDisplayedVibeSeed('');
+        setVibesRenderKey((k) => k + 1);
+      }, VIBES_FADE_MS);
+      return;
+    }
+
+    if (!vibeSeed) {
+      if (vibesPhaseRef.current === 'hidden') return;
+      if (vibesTimerRef.current !== null) clearTimeout(vibesTimerRef.current);
+      vibesSeqRef.current += 1;
+      const seq = vibesSeqRef.current;
+      vibesPhaseRef.current = 'fading';
+      vibesPendingRef.current = null;
+      setVibesOpacity(0);
+      vibesTimerRef.current = setTimeout(() => {
+        if (seq !== vibesSeqRef.current) return;
+        vibesPhaseRef.current = 'hidden';
+        vibesActiveSeedRef.current = '';
+        setDisplayedVibeSeed('');
+        setVibesRenderKey((k) => k + 1);
+      }, VIBES_FADE_MS);
+      return;
+    }
+
+    if (vibeSeed === vibesActiveSeedRef.current) return;
+
+    const target = {
+      seed: vibeSeed,
+      palette: artPalette,
+      energy: vibeEnergy,
+      trackId: currentTrackId,
+    };
+
+    if (vibesPhaseRef.current === 'hidden') {
+      vibesPhaseRef.current = 'fading';
+      vibesActiveSeedRef.current = vibeSeed;
+      setDisplayedVibeSeed(vibeSeed);
+      setVibesRenderKey((k) => k + 1);
+      vibesSeqRef.current += 1;
+      const seq = vibesSeqRef.current;
+      requestAnimationFrame(() => {
+        if (seq !== vibesSeqRef.current) return;
+        setVibesOpacity(1);
+        vibesPhaseRef.current = 'showing';
+      });
+      return;
+    }
+
+    if (vibesPhaseRef.current === 'showing') {
+      if (vibesTimerRef.current !== null) clearTimeout(vibesTimerRef.current);
+      vibesSeqRef.current += 1;
+      const seq = vibesSeqRef.current;
+      vibesPhaseRef.current = 'fading';
+      vibesPendingRef.current = target;
+      setVibesOpacity(0);
+      vibesTimerRef.current = setTimeout(() => {
+        if (seq !== vibesSeqRef.current) return;
+        const pending = vibesPendingRef.current;
+        vibesPendingRef.current = null;
+        if (!pending) return;
+        vibesActiveSeedRef.current = pending.seed;
+        setDisplayedVibeSeed(pending.seed);
+        setVibesRenderKey((k) => k + 1);
+        requestAnimationFrame(() => {
+          if (seq !== vibesSeqRef.current) return;
+          setVibesOpacity(1);
+          vibesPhaseRef.current = 'showing';
+        });
+      }, VIBES_FADE_MS);
+      return;
+    }
+
+    vibesPendingRef.current = target;
+  }, [showVibes, vibeSeed]);
+
   const volumeDots = React.useMemo(
     () =>
       Array.from({ length: 10 }, (_, i) => ({
@@ -1495,48 +1604,50 @@ export default function RadioPageClient() {
                 </Box>
               </Box>
               <Box
-                key={currentTrackId ?? 'idle'}
                 sx={{
                   flex: 1,
                   overflow: 'hidden',
                   minHeight: 0,
                   position: 'relative',
-                  animation: `${fadeIn} 0.35s ease-out`,
+                  opacity: vibesOpacity,
+                  transition: `opacity ${VIBES_FADE_MS}ms ease`,
                 }}
               >
-                {showVibes && vibeSeed ? (
-                  <VibesCanvas
-                    seed={vibeSeed}
-                    palette={artPalette}
-                    energyMultiplier={vibeEnergy}
-                    reducedMotion={reducedMotion}
-                  />
-                ) : showVibes && probeLoading ? (
-                  <Stack spacing={1} sx={{ px: 2, pb: 2 }}>
-                    <Skeleton variant="text" width="90%" />
-                    <Skeleton variant="text" width="75%" />
-                    <Skeleton variant="text" width="85%" />
-                    <Skeleton variant="text" width="60%" />
-                  </Stack>
-                ) : showVibes && !vibeSeed ? (
-                  <Box
-                    sx={{
-                      px: 2,
-                      pb: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                    }}
-                  >
-                    <Typography
-                      level="body-sm"
-                      sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem' } }}
+                <Box key={vibesRenderKey}>
+                  {displayedVibeSeed ? (
+                    <VibesCanvas
+                      seed={displayedVibeSeed}
+                      palette={artPalette}
+                      energyMultiplier={vibeEnergy}
+                      reducedMotion={reducedMotion}
+                    />
+                  ) : showVibes && probeLoading ? (
+                    <Stack spacing={1} sx={{ px: 2, pb: 2 }}>
+                      <Skeleton variant="text" width="90%" />
+                      <Skeleton variant="text" width="75%" />
+                      <Skeleton variant="text" width="85%" />
+                      <Skeleton variant="text" width="60%" />
+                    </Stack>
+                  ) : showVibes && !vibeSeed ? (
+                    <Box
+                      sx={{
+                        px: 2,
+                        pb: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                      }}
                     >
-                      Vibes will appear here when the stream publishes them.
-                    </Typography>
-                  </Box>
-                ) : null}
+                      <Typography
+                        level="body-sm"
+                        sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem' } }}
+                      >
+                        Vibes will appear here when the stream publishes them.
+                      </Typography>
+                    </Box>
+                  ) : null}
+                </Box>
               </Box>
             </Sheet>
             {lyricsMounted ? (
