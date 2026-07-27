@@ -6,6 +6,7 @@ export const MIDORIAI_RADIO_VOLUME_KEY = 'midoriai.radio.volume';
 export const MIDORIAI_RADIO_QUALITY_KEY = 'midoriai.radio.quality';
 export const MIDORIAI_RADIO_CHANNEL_KEY = 'midoriai.radio.channel';
 export const MIDORIAI_RADIO_PLAYING_KEY = 'midoriai.radio.playing';
+export const MIDORIAI_RADIO_VIBE_KEY = 'midoriai.radio.vibe';
 export const MIDORIAI_RADIO_LAST_ERROR_KEY = 'midoriai.radio.last_error';
 export const MIDORIAI_RADIO_STATE_EVENT = 'midoriai.radio.state';
 
@@ -21,6 +22,7 @@ export interface RadioPersistedState {
   channel: string;
   playing: boolean;
   lastError: string | null;
+  showVibes: boolean;
 }
 
 export const DEFAULT_RADIO_STATE: RadioPersistedState = {
@@ -30,6 +32,7 @@ export const DEFAULT_RADIO_STATE: RadioPersistedState = {
   channel: 'all',
   playing: false,
   lastError: null,
+  showVibes: true,
 };
 
 function getStorage(): Storage | null {
@@ -107,6 +110,7 @@ export function loadRadioState(): RadioPersistedState {
     channel: normalizeChannel(channelRaw),
     playing: readBoolean(storage, MIDORIAI_RADIO_PLAYING_KEY, DEFAULT_RADIO_STATE.playing),
     lastError,
+    showVibes: readBoolean(storage, MIDORIAI_RADIO_VIBE_KEY, DEFAULT_RADIO_STATE.showVibes),
   };
 }
 
@@ -140,4 +144,8 @@ export function clearRadioLastError(): void {
     return;
   }
   storage.removeItem(MIDORIAI_RADIO_LAST_ERROR_KEY);
+}
+
+export function saveRadioVibe(showVibes: boolean): void {
+  writeString(MIDORIAI_RADIO_VIBE_KEY, String(showVibes));
 }

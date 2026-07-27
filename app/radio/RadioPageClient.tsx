@@ -8,9 +8,21 @@ import Sheet from '@mui/joy/Sheet';
 import Skeleton from '@mui/joy/Skeleton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
-import { Music, Pause, Play, Radio, StepBack, StepForward, Users, Volume2 } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  Music,
+  Pause,
+  Play,
+  Radio,
+  StepBack,
+  StepForward,
+  Users,
+  Volume2,
+} from 'lucide-react';
 import * as React from 'react';
 import BlobProgressBar from '@/components/radio/BlobProgressBar';
+import VibesCanvas from '@/components/radio/VibesCanvas';
 import {
   fetchArt,
   fetchChannels,
@@ -34,13 +46,16 @@ import {
   MIDORIAI_RADIO_PLAYING_KEY,
   MIDORIAI_RADIO_QUALITY_KEY,
   MIDORIAI_RADIO_STATE_EVENT,
+  MIDORIAI_RADIO_VIBE_KEY,
   MIDORIAI_RADIO_VOLUME_KEY,
   type RadioStateChangeDetail,
   saveRadioChannel,
   saveRadioPlaying,
   saveRadioQuality,
+  saveRadioVibe,
   saveRadioVolume,
 } from '@/lib/radio/state';
+import { detectEnergy } from '@/lib/radio/vibeHash';
 import type { ExtractedPalette } from '@/lib/theme/artPalette';
 
 // ── Lyric section label helpers ──
@@ -81,11 +96,6 @@ function pickPaletteHex(index: number, palette: ExtractedPalette | null): string
 const coverSlideIn = keyframes`
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
-`;
-
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
 `;
 
 const lyricsEnterRise = keyframes`
@@ -275,6 +285,7 @@ export default function RadioPageClient() {
   const [_artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [artUrl, setArtUrl] = React.useState<string | null>(null);
   const [artPalette, setArtPalette] = React.useState<ExtractedPalette | null>(null);
+  const [showVibes, setShowVibes] = React.useState<boolean>(false);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
   const [probeLoading, setProbeLoading] = React.useState(false);
   const [positionMs, setPositionMs] = React.useState(0);
@@ -301,6 +312,30 @@ export default function RadioPageClient() {
   const pendingLyricsRef = React.useRef<{ content: string; trackId: string } | null>(null);
   const lyricsScrollRef = React.useRef<HTMLDivElement | null>(null);
   const currentLyricsTargetRef = React.useRef<string | null>(null);
+
+  // ── Vibes fade state ──
+  const VIBES_FADE_MS = reducedMotion ? 150 : 350;
+  const [vibesOpacity, setVibesOpacity] = React.useState(0);
+  const [vibesRenderKey, setVibesRenderKey] = React.useState(0);
+  const [displayedVibeSeed, setDisplayedVibeSeed] = React.useState('');
+  const vibesPhaseRef = React.useRef<'hidden' | 'showing' | 'fading'>('hidden');
+  const vibesTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const vibesSeqRef = React.useRef(0);
+  const vibesPendingRef = React.useRef<{
+    seed: string;
+    palette: ExtractedPalette | null;
+    energy: number;
+    trackId: string | null;
+  } | null>(null);
+  const vibesActiveSeedRef = React.useRef<string>('');
+
+  React.useEffect(() => {
+    return () => {
+      if (vibesTimerRef.current !== null) {
+        clearTimeout(vibesTimerRef.current);
+      }
+    };
+  }, []);
 
   const currentTrackId = currentTrack?.track_id ?? null;
   // Keep target ref in sync for lyrics timer callbacks
@@ -390,6 +425,7 @@ export default function RadioPageClient() {
     setQuality(restored.quality);
     setChannel(normalizeChannel(restored.channel));
     setPlaybackDesired(restored.playing);
+    setShowVibes(restored.showVibes);
     setHydrated(true);
   }, []);
 
@@ -416,6 +452,11 @@ export default function RadioPageClient() {
 
       if (detail.key === MIDORIAI_RADIO_PLAYING_KEY) {
         setPlaybackDesired(detail.value === 'true');
+        return;
+      }
+
+      if (detail.key === MIDORIAI_RADIO_VIBE_KEY) {
+        setShowVibes(detail.value === 'true');
       }
     };
 
@@ -473,6 +514,14 @@ export default function RadioPageClient() {
 
     saveRadioPlaying(playbackDesired);
   }, [hydrated, playbackDesired]);
+
+  React.useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    saveRadioVibe(showVibes);
+  }, [hydrated, showVibes]);
 
   React.useEffect(() => {
     const audio = audioRef.current;
@@ -1116,6 +1165,98 @@ export default function RadioPageClient() {
   const title = currentTrack?.title ?? 'Finding current track…';
   const streamStateLabel = getStreamStateLabel(streamState);
 
+  const vibeSeed =
+    [probeData?.midori_ai_vibe_summary, probeData?.midori_ai_vibe_analysis]
+      .filter(Boolean)
+      .join(' ') || '';
+  const vibeEnergy = React.useMemo(() => (vibeSeed ? detectEnergy(vibeSeed) : 0), [vibeSeed]);
+
+  // ── Vibes fade: toggle + crossfade ──
+  // biome-ignore lint/correctness/useExhaustiveDependencies: uses refs for deferred captures; extra deps would trigger unwanted re-runs
+  React.useEffect(() => {
+    if (!showVibes) {
+      if (vibesPhaseRef.current === 'hidden') return;
+      if (vibesTimerRef.current !== null) clearTimeout(vibesTimerRef.current);
+      vibesSeqRef.current += 1;
+      const seq = vibesSeqRef.current;
+      vibesPhaseRef.current = 'fading';
+      vibesPendingRef.current = null;
+      setVibesOpacity(0);
+      vibesTimerRef.current = setTimeout(() => {
+        if (seq !== vibesSeqRef.current) return;
+        vibesPhaseRef.current = 'hidden';
+        vibesActiveSeedRef.current = '';
+        setDisplayedVibeSeed('');
+        setVibesRenderKey((k) => k + 1);
+      }, VIBES_FADE_MS);
+      return;
+    }
+
+    if (!vibeSeed) {
+      if (vibesPhaseRef.current === 'hidden') return;
+      if (vibesTimerRef.current !== null) clearTimeout(vibesTimerRef.current);
+      vibesSeqRef.current += 1;
+      const seq = vibesSeqRef.current;
+      vibesPhaseRef.current = 'fading';
+      vibesPendingRef.current = null;
+      setVibesOpacity(0);
+      vibesTimerRef.current = setTimeout(() => {
+        if (seq !== vibesSeqRef.current) return;
+        vibesPhaseRef.current = 'hidden';
+        vibesActiveSeedRef.current = '';
+        setDisplayedVibeSeed('');
+        setVibesRenderKey((k) => k + 1);
+      }, VIBES_FADE_MS);
+      return;
+    }
+
+    if (vibeSeed === vibesActiveSeedRef.current) {
+      // If showVibes is true but we're not in the 'showing' phase, a pending
+      // hide timer may still be running (e.g., user hid then re-enabled within
+      // the fade window). Cancel it and restore visibility.
+      if (vibesPhaseRef.current !== 'showing') {
+        if (vibesTimerRef.current !== null) clearTimeout(vibesTimerRef.current);
+        vibesSeqRef.current += 1;
+        vibesPhaseRef.current = 'showing';
+        vibesActiveSeedRef.current = vibeSeed;
+        setDisplayedVibeSeed(vibeSeed);
+        setVibesOpacity(1);
+        setVibesRenderKey((k) => k + 1);
+      }
+      return;
+    }
+
+    const target = {
+      seed: vibeSeed,
+      palette: artPalette,
+      energy: vibeEnergy,
+      trackId: currentTrackId,
+    };
+
+    if (vibesPhaseRef.current === 'hidden') {
+      vibesPhaseRef.current = 'fading';
+      vibesActiveSeedRef.current = vibeSeed;
+      setDisplayedVibeSeed(vibeSeed);
+      setVibesRenderKey((k) => k + 1);
+      vibesSeqRef.current += 1;
+      const seq = vibesSeqRef.current;
+      requestAnimationFrame(() => {
+        if (seq !== vibesSeqRef.current) return;
+        setVibesOpacity(1);
+        vibesPhaseRef.current = 'showing';
+      });
+      return;
+    }
+
+    if (vibesPhaseRef.current === 'showing') {
+      vibesActiveSeedRef.current = vibeSeed;
+      setDisplayedVibeSeed(vibeSeed);
+      return;
+    }
+
+    vibesPendingRef.current = target;
+  }, [showVibes, vibeSeed]);
+
   const volumeDots = React.useMemo(
     () =>
       Array.from({ length: 10 }, (_, i) => ({
@@ -1392,61 +1533,123 @@ export default function RadioPageClient() {
                 flex: 1,
                 mt: 2,
                 minHeight: 0,
-                bgcolor: 'rgba(10,12,18,0.4)',
-                borderColor: 'rgba(255,255,255,0.08)',
+                bgcolor: 'rgba(10,12,18,0.3)',
+                backdropFilter: 'blur(20px)',
+                borderColor:
+                  showVibes && artPalette ? `${artPalette.primary}20` : 'rgba(255,255,255,0.08)',
                 borderRadius: 0,
                 overflow: 'hidden',
+                position: 'relative',
+                transition: 'border-color 0.35s ease',
               }}
             >
-              <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
+              <Box
+                sx={{
+                  px: 2,
+                  pt: 1.5,
+                  pb: 0.5,
+                  zIndex: 1,
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Typography
                   level="body-sm"
                   sx={{
-                    color: 'text.tertiary',
+                    color: showVibes && artPalette ? artPalette.primary : 'text.tertiary',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
+                    transition: 'color 350ms ease',
                   }}
                 >
-                  Track Story
+                  Vibes
                 </Typography>
+                <Box
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setShowVibes((prev) => !prev)}
+                  onKeyDown={(event: React.KeyboardEvent) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setShowVibes((prev) => !prev);
+                    }
+                  }}
+                  aria-label={showVibes ? 'Hide vibes visualization' : 'Show vibes visualization'}
+                  aria-pressed={showVibes}
+                  sx={{
+                    cursor: 'pointer',
+                    minWidth: 44,
+                    minHeight: 44,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: showVibes ? (artPalette?.primary ?? 'text.tertiary') : 'text.tertiary',
+                    opacity: showVibes ? 0.9 : 0.4,
+                    transition: 'color 350ms ease, opacity 200ms ease',
+                    '&:focus-visible': {
+                      outline: '2px solid',
+                      outlineColor: 'primary.400',
+                      outlineOffset: 2,
+                    },
+                    '&:hover': {
+                      opacity: 1,
+                    },
+                  }}
+                >
+                  {showVibes ? <Eye size={18} /> : <EyeOff size={18} />}
+                </Box>
               </Box>
               <Box
-                key={currentTrackId ?? 'idle'}
                 sx={{
                   flex: 1,
-                  overflow: 'auto',
-                  px: 2,
-                  pb: 2,
+                  overflow: 'hidden',
                   minHeight: 0,
-                  animation: `${fadeIn} 0.35s ease-out`,
+                  position: 'relative',
+                  opacity: vibesOpacity,
+                  transition: `opacity ${VIBES_FADE_MS}ms ease`,
                 }}
               >
-                {probeData?.comment?.trim() ? (
-                  <Typography
-                    level="body-sm"
-                    sx={{
-                      color: 'text.secondary',
-                      whiteSpace: 'pre-wrap',
-                      fontSize: { xs: '0.875rem' },
-                    }}
-                  >
-                    {probeData.comment.trim()}
-                  </Typography>
-                ) : probeLoading ? (
-                  <Stack spacing={1}>
-                    <Skeleton variant="text" width="90%" />
-                    <Skeleton variant="text" width="75%" />
-                    <Skeleton variant="text" width="85%" />
-                    <Skeleton variant="text" width="60%" />
-                  </Stack>
-                ) : (
-                  <Typography
-                    level="body-sm"
-                    sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem' } }}
-                  >
-                    Track story metadata will appear here when the stream publishes it.
-                  </Typography>
-                )}
+                <Box key={vibesRenderKey}>
+                  {displayedVibeSeed && currentTrack ? (
+                    <VibesCanvas
+                      seed={displayedVibeSeed}
+                      trackId={currentTrack.track_id}
+                      startedAt={currentTrack.started_at}
+                      durationMs={durationMs}
+                      positionMs={positionMs}
+                      palette={artPalette}
+                      energyMultiplier={vibeEnergy}
+                      reducedMotion={reducedMotion}
+                    />
+                  ) : showVibes && probeLoading ? (
+                    <Stack spacing={1} sx={{ px: 2, pb: 2 }}>
+                      <Skeleton variant="text" width="90%" />
+                      <Skeleton variant="text" width="75%" />
+                      <Skeleton variant="text" width="85%" />
+                      <Skeleton variant="text" width="60%" />
+                    </Stack>
+                  ) : showVibes && !vibeSeed ? (
+                    <Box
+                      sx={{
+                        px: 2,
+                        pb: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                      }}
+                    >
+                      <Typography
+                        level="body-sm"
+                        sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem' } }}
+                      >
+                        Vibes will appear here when the stream publishes them.
+                      </Typography>
+                    </Box>
+                  ) : null}
+                </Box>
               </Box>
             </Sheet>
             {lyricsMounted ? (
