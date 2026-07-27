@@ -285,10 +285,7 @@ export default function RadioPageClient() {
   const [_artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [artUrl, setArtUrl] = React.useState<string | null>(null);
   const [artPalette, setArtPalette] = React.useState<ExtractedPalette | null>(null);
-  const [showVibes, setShowVibes] = React.useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    return loadRadioState().showVibes;
-  });
+  const [showVibes, setShowVibes] = React.useState<boolean>(false);
   const [probeData, setProbeData] = React.useState<ProbeMetadata | null>(null);
   const [probeLoading, setProbeLoading] = React.useState(false);
   const [positionMs, setPositionMs] = React.useState(0);
@@ -428,6 +425,7 @@ export default function RadioPageClient() {
     setQuality(restored.quality);
     setChannel(normalizeChannel(restored.channel));
     setPlaybackDesired(restored.playing);
+    setShowVibes(restored.showVibes);
     setHydrated(true);
   }, []);
 
@@ -1208,7 +1206,21 @@ export default function RadioPageClient() {
       return;
     }
 
-    if (vibeSeed === vibesActiveSeedRef.current) return;
+    if (vibeSeed === vibesActiveSeedRef.current) {
+      // If showVibes is true but we're not in the 'showing' phase, a pending
+      // hide timer may still be running (e.g., user hid then re-enabled within
+      // the fade window). Cancel it and restore visibility.
+      if (vibesPhaseRef.current !== 'showing') {
+        if (vibesTimerRef.current !== null) clearTimeout(vibesTimerRef.current);
+        vibesSeqRef.current += 1;
+        vibesPhaseRef.current = 'showing';
+        vibesActiveSeedRef.current = vibeSeed;
+        setDisplayedVibeSeed(vibeSeed);
+        setVibesOpacity(1);
+        setVibesRenderKey((k) => k + 1);
+      }
+      return;
+    }
 
     const target = {
       seed: vibeSeed,
