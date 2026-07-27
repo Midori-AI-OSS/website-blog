@@ -516,8 +516,12 @@ export default function RadioPageClient() {
   }, [hydrated, playbackDesired]);
 
   React.useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
     saveRadioVibe(showVibes);
-  }, [showVibes]);
+  }, [hydrated, showVibes]);
 
   React.useEffect(() => {
     const audio = audioRef.current;

@@ -192,6 +192,10 @@ export default function VibesCanvas({
       palette,
       5 + Math.floor(createRng(cyrb53(visualSeed))() * 3),
     );
+    if (reducedMotionRef.current && palette) {
+      startTimeRef.current = 0;
+      scheduleFrameRef.current?.();
+    }
   }, [visualSeed, palette]);
 
   React.useEffect(() => {
@@ -322,6 +326,7 @@ export default function VibesCanvas({
           transitionRef.current = null;
           sceneRef.current = transition.next;
           scratchRef.current = null;
+          lastDrawnSeedRef.current = visualSeedRef.current;
         }
       } else {
         for (let i = 0; i < scene.effects.length; i++) {
@@ -330,9 +335,8 @@ export default function VibesCanvas({
           const effT = t * eff.tempoMult + eff.phaseOffset;
           eff.fn(ctx, w, h, eff.seed, effT, scene.colors, speed);
         }
+        lastDrawnSeedRef.current = visualSeedRef.current;
       }
-
-      lastDrawnSeedRef.current = visualSeedRef.current;
 
       if (reducedMotionRef.current) {
         // Keep one rAF queued so future scene changes (detected by
