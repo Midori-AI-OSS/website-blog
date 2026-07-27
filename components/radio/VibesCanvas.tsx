@@ -192,7 +192,7 @@ export default function VibesCanvas({
       palette,
       5 + Math.floor(createRng(cyrb53(visualSeed))() * 3),
     );
-    if (reducedMotionRef.current && palette) {
+    if (reducedMotionRef.current) {
       startTimeRef.current = 0;
       scheduleFrameRef.current?.();
     }
@@ -326,7 +326,8 @@ export default function VibesCanvas({
           transitionRef.current = null;
           sceneRef.current = transition.next;
           scratchRef.current = null;
-          lastDrawnSeedRef.current = visualSeedRef.current;
+          // Do NOT mark the seed as drawn here. The next frame will take the
+          // else branch and render a clean frame, which sets lastDrawnSeedRef.
         }
       } else {
         for (let i = 0; i < scene.effects.length; i++) {
