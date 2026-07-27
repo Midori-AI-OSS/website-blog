@@ -44,6 +44,100 @@ function wrapTime(raw: number, max: number): number {
   return ((raw % max) + max) % max;
 }
 
+type Point3 = [number, number, number];
+type Point4 = [number, number, number, number];
+
+function rotate3DPoint(
+  x: number,
+  y: number,
+  z: number,
+  angleX: number,
+  angleY: number,
+  angleZ: number,
+): Point3 {
+  let rx = x;
+  let ry = y;
+  let rz = z;
+  if (angleY !== 0) {
+    const c = Math.cos(angleY);
+    const s = Math.sin(angleY);
+    const tx = rx * c - rz * s;
+    rz = rx * s + rz * c;
+    rx = tx;
+  }
+  if (angleX !== 0) {
+    const c = Math.cos(angleX);
+    const s = Math.sin(angleX);
+    const ty = ry * c - rz * s;
+    rz = ry * s + rz * c;
+    ry = ty;
+  }
+  if (angleZ !== 0) {
+    const c = Math.cos(angleZ);
+    const s = Math.sin(angleZ);
+    const tx = rx * c - ry * s;
+    ry = rx * s + ry * c;
+    rx = tx;
+  }
+  return [rx, ry, rz];
+}
+
+function perspective2D(
+  x: number,
+  y: number,
+  z: number,
+  distance: number,
+  cx: number,
+  cy: number,
+): [number, number] {
+  const d = Math.max(distance, 1e-6);
+  const scale = d / (d + z);
+  return [cx + x * scale, cy + y * scale];
+}
+
+function rotate4DPoint(v: Point4, axisA: number, axisB: number, angle: number): Point4 {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const r: Point4 = [...v];
+  const a = r[axisA] ?? 0;
+  const b = r[axisB] ?? 0;
+  r[axisA] = a * c - b * s;
+  r[axisB] = a * s + b * c;
+  return r;
+}
+
+function project4Dto3D(v: Point4, distance: number): Point3 {
+  const w = v[3] ?? 0;
+  const d = Math.max(distance, 1e-6);
+  const scale = d / (d + w);
+  return [v[0] * scale, v[1] * scale, v[2] * scale];
+}
+
+function drawWireframeEdges(
+  ctx: CanvasRenderingContext2D,
+  projected: [number, number][],
+  edges: [number, number][],
+  color: string,
+  alpha: number,
+) {
+  ctx.save();
+  ctx.shadowBlur = 4;
+  ctx.shadowColor = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.2;
+  ctx.globalAlpha = alpha;
+  for (const [a, b] of edges) {
+    const pa = projected[a];
+    const pb = projected[b];
+    if (!pa || !pb) continue;
+    ctx.beginPath();
+    ctx.moveTo(pa[0], pa[1]);
+    ctx.lineTo(pb[0], pb[1]);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function floatingOrbs(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -1230,6 +1324,550 @@ function wireframeDiamond(
   ctx.restore();
 }
 
+function wireframeCube(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+) {
+  const localRng = seededRng(seed);
+  const cx = w / 2;
+  const cy = h / 2;
+  const sx = (0.18 + localRng() * 0.08) * w;
+  const sy = (0.15 + localRng() * 0.1) * h;
+  const sz = (0.14 + localRng() * 0.12) * Math.min(w, h);
+  const dist = Math.min(w, h) * 0.55;
+
+  const verts: Point3[] = [];
+  for (let ix = -1; ix <= 1; ix += 2)
+    for (let iy = -1; iy <= 1; iy += 2)
+      for (let iz = -1; iz <= 1; iz += 2) verts.push([ix * sx, iy * sy, iz * sz]);
+
+  const edges: [number, number][] = [];
+  for (let i = 0; i < 8; i++)
+    for (let j = i + 1; j < 8; j++) {
+      const xor = i ^ j;
+      if (xor !== 0 && (xor & (xor - 1)) === 0) edges.push([i, j]);
+    }
+
+  const gs = gentleSpeed(speed);
+  const ax = t * gs * 0.25 + localRng() * Math.PI * 2;
+  const ay = t * gs * 0.3 + localRng() * Math.PI * 2;
+  const az = t * gs * 0.12;
+
+  const projected = verts.map(([x, y, z]) => {
+    const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, az);
+    return perspective2D(rx, ry, rz, dist, cx, cy);
+  });
+
+  const ci = Math.floor(t * speed * 0.12) % colors.length;
+  drawWireframeEdges(ctx, projected, edges, colors[ci] ?? FALLBACK_COLOR, 0.6);
+}
+
+function wireframeIcosahedron(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+) {
+  const localRng = seededRng(seed);
+  const cx = w / 2;
+  const cy = h / 2;
+  const baseScale = Math.min(w, h) * 0.28;
+  const dist = Math.min(w, h) * 0.55;
+  const phi = (1 + Math.sqrt(5)) / 2;
+
+  const rawVerts: [number, number, number][] = [];
+  for (let i = -1; i <= 1; i += 2) {
+    rawVerts.push([0, i, phi], [0, i, -phi], [phi, 0, i], [-phi, 0, i], [i, phi, 0], [i, -phi, 0]);
+  }
+  const verts: Point3[] = rawVerts.map(([a, b, c]) => [
+    a * baseScale,
+    b * baseScale,
+    c * baseScale,
+  ]);
+
+  const edges: [number, number][] = [];
+  for (let i = 0; i < 12; i++) {
+    for (let j = i + 1; j < 12; j++) {
+      const a = verts[i];
+      const b = verts[j];
+      if (!a || !b) continue;
+      const dx = a[0] - b[0];
+      const dy = a[1] - b[1];
+      const dz = a[2] - b[2];
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (Math.abs(d2 - 4 * baseScale * baseScale) < 0.01) edges.push([i, j]);
+    }
+  }
+
+  const gs = gentleSpeed(speed);
+  const ax = t * gs * 0.2 + localRng() * Math.PI * 2;
+  const ay = t * gs * 0.28 + localRng() * Math.PI * 2;
+  const az = t * gs * 0.08;
+
+  const projected = verts.map(([x, y, z]) => {
+    const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, az);
+    return perspective2D(rx, ry, rz, dist, cx, cy);
+  });
+
+  const ci = Math.floor(t * speed * 0.1) % colors.length;
+  drawWireframeEdges(ctx, projected, edges, colors[ci] ?? FALLBACK_COLOR, 0.55);
+}
+
+function wireframeTorus(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+) {
+  const localRng = seededRng(seed);
+  const cx = w / 2;
+  const cy = h / 2;
+  const baseScale = Math.min(w, h) * 0.28;
+  const R = baseScale * (0.65 + localRng() * 0.3);
+  const r = baseScale * (0.25 + localRng() * 0.2);
+  const uCount = 16;
+  const vCount = 10;
+  const dist = Math.min(w, h) * 0.6;
+
+  const grid: Point3[][] = [];
+  for (let iu = 0; iu < uCount; iu++) {
+    const u = (iu / uCount) * Math.PI * 2;
+    const row: Point3[] = [];
+    for (let iv = 0; iv < vCount; iv++) {
+      const v = (iv / vCount) * Math.PI * 2;
+      row.push([
+        (R + r * Math.cos(v)) * Math.cos(u),
+        (R + r * Math.cos(v)) * Math.sin(u),
+        r * Math.sin(v),
+      ]);
+    }
+    grid.push(row);
+  }
+
+  const gs = gentleSpeed(speed);
+  const ax = t * gs * 0.2 + localRng() * Math.PI * 2;
+  const ay = t * gs * 0.3 + localRng() * Math.PI * 2;
+
+  const projected = grid.map((row) =>
+    row.map(([x, y, z]) => {
+      const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, 0);
+      return perspective2D(rx, ry, rz, dist, cx, cy);
+    }),
+  );
+
+  const ci = Math.floor(t * speed * 0.1) % colors.length;
+  const color = colors[ci] ?? FALLBACK_COLOR;
+
+  ctx.save();
+  ctx.shadowBlur = 3;
+  ctx.shadowColor = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 0.9;
+  ctx.globalAlpha = 0.5;
+
+  for (let iu = 0; iu < uCount; iu++) {
+    for (let iv = 0; iv < vCount; iv++) {
+      const p = projected[iu]?.[iv];
+      const pv = projected[iu]?.[(iv + 1) % vCount];
+      const pu = projected[(iu + 1) % uCount]?.[iv];
+      if (!p || !pv || !pu) continue;
+      ctx.beginPath();
+      ctx.moveTo(p[0], p[1]);
+      ctx.lineTo(pv[0], pv[1]);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p[0], p[1]);
+      ctx.lineTo(pu[0], pu[1]);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function wireframeSphere(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+) {
+  const localRng = seededRng(seed);
+  const cx = w / 2;
+  const cy = h / 2;
+  const radius = Math.min(w, h) * (0.22 + localRng() * 0.12);
+  const latCount = 14;
+  const lonCount = 12;
+  const dist = Math.min(w, h) * 0.55;
+
+  const gs = gentleSpeed(speed);
+  const ax = t * gs * 0.22 + localRng() * Math.PI * 2;
+  const ay = t * gs * 0.18 + localRng() * Math.PI * 2;
+
+  const ci = Math.floor(t * speed * 0.08) % colors.length;
+  const color = colors[ci] ?? FALLBACK_COLOR;
+
+  ctx.save();
+  ctx.shadowBlur = 3;
+  ctx.shadowColor = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 0.9;
+  ctx.globalAlpha = 0.48;
+
+  for (let ilat = 0; ilat <= latCount; ilat++) {
+    const phi = (ilat / latCount) * Math.PI;
+    let first = true;
+    ctx.beginPath();
+    for (let ilon = 0; ilon <= lonCount; ilon++) {
+      const theta = (ilon / lonCount) * Math.PI * 2;
+      const x = radius * Math.sin(phi) * Math.cos(theta);
+      const y = radius * Math.cos(phi);
+      const z = radius * Math.sin(phi) * Math.sin(theta);
+      const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, 0);
+      const proj = perspective2D(rx, ry, rz, dist, cx, cy);
+      if (first) {
+        ctx.moveTo(proj[0], proj[1]);
+        first = false;
+      } else {
+        ctx.lineTo(proj[0], proj[1]);
+      }
+    }
+    ctx.stroke();
+  }
+
+  for (let ilon = 0; ilon < lonCount; ilon++) {
+    const theta = (ilon / lonCount) * Math.PI * 2;
+    let first = true;
+    ctx.beginPath();
+    for (let ilat = 0; ilat <= latCount; ilat++) {
+      const phi = (ilat / latCount) * Math.PI;
+      const x = radius * Math.sin(phi) * Math.cos(theta);
+      const y = radius * Math.cos(phi);
+      const z = radius * Math.sin(phi) * Math.sin(theta);
+      const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, 0);
+      const proj = perspective2D(rx, ry, rz, dist, cx, cy);
+      if (first) {
+        ctx.moveTo(proj[0], proj[1]);
+        first = false;
+      } else {
+        ctx.lineTo(proj[0], proj[1]);
+      }
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function wireframeTunnel(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+) {
+  const localRng = seededRng(seed);
+  const cx = w / 2;
+  const cy = h / 2;
+  const frameCount = 14;
+  const vertsPerFrame = 8;
+  const baseRadius = Math.min(w, h) * 0.3;
+  const depthRange = Math.min(w, h) * 0.7;
+  const twist = (localRng() - 0.5) * 0.4;
+  const dist = Math.min(w, h) * 0.45;
+
+  const gs = gentleSpeed(speed);
+  const ax = t * gs * 0.15;
+  const ay = t * gs * 0.1;
+
+  const frames: [number, number][][] = [];
+  for (let i = 0; i < frameCount; i++) {
+    const zRatio = i / frameCount;
+    const scroll = (zRatio + t * gs * 0.2) % 1;
+    const z = scroll * depthRange * 2 - depthRange;
+    const scale = dist / Math.max(dist + z, 1e-6);
+
+    const frame: [number, number][] = [];
+    for (let v = 0; v < vertsPerFrame; v++) {
+      const angle = (v / vertsPerFrame) * Math.PI * 2 + z * twist;
+      const sx = Math.cos(angle) * baseRadius * scale;
+      const sy = Math.sin(angle) * baseRadius * scale;
+      const [rx, ry, rz] = rotate3DPoint(sx, sy, z, ax, ay, 0);
+      const proj = perspective2D(rx, ry, rz, dist, cx, cy);
+      frame.push(proj);
+    }
+    frames.push(frame);
+  }
+
+  const ci = Math.floor(t * speed * 0.08) % colors.length;
+  const color = colors[ci] ?? FALLBACK_COLOR;
+
+  ctx.save();
+  ctx.shadowBlur = 3;
+  ctx.shadowColor = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 0.9;
+  ctx.globalAlpha = 0.45;
+
+  for (let i = 0; i < frameCount; i++) {
+    const frame = frames[i];
+    if (!frame) continue;
+    ctx.beginPath();
+    const first = frame[0];
+    if (!first) continue;
+    ctx.moveTo(first[0], first[1]);
+    for (let v = 1; v < vertsPerFrame; v++) {
+      const pv = frame[v];
+      if (!pv) continue;
+      ctx.lineTo(pv[0], pv[1]);
+    }
+    ctx.closePath();
+    ctx.globalAlpha = 0.3 + (0.25 * i) / frameCount;
+    ctx.stroke();
+
+    if (i < frameCount - 1) {
+      const next = frames[i + 1];
+      if (!next) continue;
+      ctx.globalAlpha = 0.2;
+      for (let v = 0; v < vertsPerFrame; v++) {
+        const pf = frame[v];
+        const pn = next[v];
+        if (!pf || !pn) continue;
+        ctx.beginPath();
+        ctx.moveTo(pf[0], pf[1]);
+        ctx.lineTo(pn[0], pn[1]);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function wireframeTesseract(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+) {
+  const localRng = seededRng(seed);
+  const cx = w / 2;
+  const cy = h / 2;
+  const scale = Math.min(w, h) * 0.22;
+  const dist4D = 3.5;
+  const dist3D = Math.min(w, h) * 0.5;
+
+  const verts4D: Point4[] = [];
+  for (let i = 0; i < 16; i++) {
+    verts4D.push([i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1, i & 8 ? 1 : -1]);
+  }
+
+  const edges4D: [number, number][] = [];
+  for (let i = 0; i < 16; i++) {
+    for (let j = i + 1; j < 16; j++) {
+      const xor = i ^ j;
+      if (xor !== 0 && (xor & (xor - 1)) === 0) edges4D.push([i, j]);
+    }
+  }
+
+  const gs = gentleSpeed(speed);
+  const axy = t * gs * 0.18;
+  const axw = t * gs * 0.25 + localRng() * Math.PI * 2;
+  const ayw = t * gs * 0.22 + localRng() * Math.PI * 2;
+  const azw = t * gs * 0.15;
+
+  const projected3D: Point3[] = verts4D.map((v) => {
+    let p = v;
+    p = rotate4DPoint(p, 0, 1, axy);
+    p = rotate4DPoint(p, 0, 3, axw);
+    p = rotate4DPoint(p, 1, 3, ayw);
+    p = rotate4DPoint(p, 2, 3, azw);
+    return project4Dto3D(p, dist4D);
+  });
+
+  const ax = t * gs * 0.08;
+  const ay = t * gs * 0.1;
+  const projected = projected3D.map(([x, y, z]) => {
+    const sx = x * scale;
+    const sy = y * scale;
+    const sz = z * scale;
+    const [rx, ry, rz] = rotate3DPoint(sx, sy, sz, ax, ay, 0);
+    return perspective2D(rx, ry, rz, dist3D, cx, cy);
+  });
+
+  const ci = Math.floor(t * speed * 0.12) % colors.length;
+  drawWireframeEdges(ctx, projected, edges4D, colors[ci] ?? FALLBACK_COLOR, 0.55);
+}
+
+function wireframe16Cell(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+) {
+  const localRng = seededRng(seed);
+  const cx = w / 2;
+  const cy = h / 2;
+  const scale = Math.min(w, h) * 0.24;
+  const dist4D = 3.5;
+  const dist3D = Math.min(w, h) * 0.5;
+
+  const verts4D: Point4[] = [
+    [1, 0, 0, 0],
+    [-1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, -1, 0, 0],
+    [0, 0, 1, 0],
+    [0, 0, -1, 0],
+    [0, 0, 0, 1],
+    [0, 0, 0, -1],
+  ];
+
+  const edges4D: [number, number][] = [];
+  for (let i = 0; i < 8; i++) {
+    for (let j = i + 1; j < 8; j++) {
+      if (j !== (i ^ 1)) edges4D.push([i, j]);
+    }
+  }
+
+  const gs = gentleSpeed(speed);
+  const axy = t * gs * 0.2;
+  const axw = t * gs * 0.22 + localRng() * Math.PI * 2;
+  const ayw = t * gs * 0.26 + localRng() * Math.PI * 2;
+  const azw = t * gs * 0.18 + localRng() * Math.PI * 2;
+
+  const projected3D: Point3[] = verts4D.map((v) => {
+    let p = v;
+    p = rotate4DPoint(p, 0, 1, axy);
+    p = rotate4DPoint(p, 0, 3, axw);
+    p = rotate4DPoint(p, 1, 3, ayw);
+    p = rotate4DPoint(p, 2, 3, azw);
+    return project4Dto3D(p, dist4D);
+  });
+
+  const ax = t * gs * 0.06;
+  const ay = t * gs * 0.09;
+  const projected = projected3D.map(([x, y, z]) => {
+    const sx = x * scale;
+    const sy = y * scale;
+    const sz = z * scale;
+    const [rx, ry, rz] = rotate3DPoint(sx, sy, sz, ax, ay, 0);
+    return perspective2D(rx, ry, rz, dist3D, cx, cy);
+  });
+
+  const ci = Math.floor(t * speed * 0.1) % colors.length;
+  drawWireframeEdges(ctx, projected, edges4D, colors[ci] ?? FALLBACK_COLOR, 0.5);
+}
+
+function spiralVortex(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+) {
+  const localRng = seededRng(seed);
+  const cx = w / 2;
+  const cy = h / 2;
+  const armCount = 3 + Math.floor(localRng() * 4);
+  const maxR = Math.min(w, h) * 0.44;
+  const turns = 3 + Math.floor(localRng() * 4);
+  const clockwise = localRng() > 0.5 ? 1 : -1;
+  const gs = gentleSpeed(speed);
+
+  ctx.save();
+  ctx.lineWidth = 1.3;
+
+  for (let arm = 0; arm < armCount; arm++) {
+    const phase = (arm / armCount) * Math.PI * 2;
+    const color = colors[arm % colors.length] ?? FALLBACK_COLOR;
+    ctx.strokeStyle = color;
+    ctx.shadowBlur = 2;
+    ctx.shadowColor = color;
+
+    ctx.beginPath();
+    const steps = 200;
+    for (let i = 0; i <= steps; i++) {
+      const frac = i / steps;
+      const r = frac * maxR;
+      const angle = clockwise * (frac * turns * Math.PI * 2 + phase + t * gs * 0.4);
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.globalAlpha = 0.55;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function roseSpiral(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+) {
+  const localRng = seededRng(seed);
+  const cx = w / 2;
+  const cy = h / 2;
+  const petals = 3 + Math.floor(localRng() * 5);
+  const layers = 2 + Math.floor(localRng() * 3);
+  const maxR = Math.min(w, h) * 0.38;
+  const gs = gentleSpeed(speed);
+
+  ctx.save();
+  ctx.lineWidth = 1.1;
+
+  for (let layer = 0; layer < layers; layer++) {
+    const color = colors[layer % colors.length] ?? FALLBACK_COLOR;
+    ctx.strokeStyle = color;
+    ctx.shadowBlur = 2;
+    ctx.shadowColor = color;
+
+    const dir = localRng() > 0.5 ? 1 : -1;
+    const phase = layer * 0.8 + t * gs * 0.12 * (layer + 1) * dir;
+    const scale = 0.6 + layer * 0.2;
+
+    ctx.beginPath();
+    const steps = 300;
+    for (let i = 0; i <= steps; i++) {
+      const theta = (i / steps) * Math.PI * 2 * 4;
+      const r = Math.cos(petals * theta + phase) * maxR * scale;
+      const px = cx + Math.cos(theta) * r;
+      const py = cy + Math.sin(theta) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.globalAlpha = 0.38;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 export const VIBE_EFFECTS: readonly { name: string; fn: VibeEffectFn }[] = [
   { name: 'floatingOrbs', fn: floatingOrbs },
   { name: 'constellationWeb', fn: constellationWeb },
@@ -1257,6 +1895,15 @@ export const VIBE_EFFECTS: readonly { name: string; fn: VibeEffectFn }[] = [
   { name: 'rainStreaks', fn: rainStreaks },
   { name: 'cloudLayers', fn: cloudLayers },
   { name: 'wireframeDiamond', fn: wireframeDiamond },
+  { name: 'wireframeCube', fn: wireframeCube },
+  { name: 'wireframeIcosahedron', fn: wireframeIcosahedron },
+  { name: 'wireframeTorus', fn: wireframeTorus },
+  { name: 'wireframeSphere', fn: wireframeSphere },
+  { name: 'wireframeTunnel', fn: wireframeTunnel },
+  { name: 'wireframeTesseract', fn: wireframeTesseract },
+  { name: 'wireframe16Cell', fn: wireframe16Cell },
+  { name: 'spiralVortex', fn: spiralVortex },
+  { name: 'roseSpiral', fn: roseSpiral },
 ];
 
 export const VIBE_EFFECT_COUNT = VIBE_EFFECTS.length;
