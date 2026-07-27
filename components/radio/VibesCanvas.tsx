@@ -2,6 +2,7 @@
 
 import Box from '@mui/joy/Box';
 import * as React from 'react';
+import { computeEffectDelays, effectOpacity, FADE_DURATION_MS } from '@/lib/radio/transitionMath';
 import { VIBE_EFFECTS } from '@/lib/radio/vibeEffects';
 import {
   createRng,
@@ -50,12 +51,12 @@ interface TransitionState {
   prev: VibeScene;
   next: VibeScene;
   startedAt: number;
+  fadeOutDelays: number[];
+  fadeInDelays: number[];
+  maxEndMs: number;
 }
 
 const BACKGROUND_NAMES = new Set(['auroraRibbons', 'geometricWaves', 'threadWeave', 'cloudLayers']);
-
-const TRANSITION_TOTAL_MS = 900;
-const FADE_DURATION_MS = 600;
 
 function buildVibeScene(visualSeed: string): VibeScene | null {
   if (!visualSeed) return null;
@@ -94,24 +95,6 @@ function buildVibeScene(visualSeed: string): VibeScene | null {
     })),
     colors,
   };
-}
-
-function fadeOutProgress(elapsed: number, total: number, isBg: boolean): number {
-  const delay = isBg ? 150 : 0;
-  const start = delay / total;
-  const duration = FADE_DURATION_MS / total;
-  if (elapsed < start) return 1;
-  if (elapsed > start + duration) return 0;
-  return 1 - (elapsed - start) / duration;
-}
-
-function fadeInProgress(elapsed: number, total: number, isBg: boolean): number {
-  const delay = isBg ? 300 : 450;
-  const start = delay / total;
-  const duration = FADE_DURATION_MS / total;
-  if (elapsed < start) return 0;
-  if (elapsed > start + duration) return 1;
-  return (elapsed - start) / duration;
 }
 
 export default function VibesCanvas({
@@ -156,13 +139,30 @@ export default function VibesCanvas({
 
     if (sceneRef.current && prevVisualSeedRef.current && visualSeed !== prevVisualSeedRef.current) {
       if (reducedMotionRef.current) {
-        sceneRef.current = newScene;
-        transitionRef.current = null;
-      } else {
         transitionRef.current = {
           prev: sceneRef.current,
           next: newScene,
           startedAt: performance.now(),
+          fadeOutDelays: [0],
+          fadeInDelays: [0],
+          maxEndMs: FADE_DURATION_MS / 2,
+        };
+      } else {
+        const outDelays = computeEffectDelays(
+          sceneRef.current.effects.map((e) => ({ isBackground: BACKGROUND_NAMES.has(e.name) })),
+          true,
+        );
+        const inDelays = computeEffectDelays(
+          newScene.effects.map((e) => ({ isBackground: BACKGROUND_NAMES.has(e.name) })),
+          false,
+        );
+        transitionRef.current = {
+          prev: sceneRef.current,
+          next: newScene,
+          startedAt: performance.now(),
+          fadeOutDelays: outDelays.delays,
+          fadeInDelays: inDelays.delays,
+          maxEndMs: Math.max(outDelays.maxEnd, inDelays.maxEnd),
         };
       }
     } else if (!sceneRef.current) {
@@ -258,17 +258,16 @@ export default function VibesCanvas({
         if (!scratchCtx) return;
 
         const transitionElapsed = performance.now() - transition.startedAt;
-        const progress = Math.min(1, transitionElapsed / TRANSITION_TOTAL_MS);
 
         for (let i = 0; i < transition.prev.effects.length; i++) {
           const eff = transition.prev.effects[i];
           if (!eff) continue;
-          const isBg = BACKGROUND_NAMES.has(eff.name);
-          const opacity = fadeOutProgress(transitionElapsed, TRANSITION_TOTAL_MS, isBg);
+          const delay = transition.fadeOutDelays[i] ?? 0;
+          const opacity = effectOpacity(transitionElapsed, delay, true);
           if (opacity <= 0) continue;
 
-          scratchCtx.clearRect(0, 0, w, h);
           scratchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          scratchCtx.clearRect(0, 0, w, h);
           scratchCtx.globalAlpha = 1;
           const effT = t * eff.tempoMult + eff.phaseOffset;
           eff.fn(scratchCtx, w, h, eff.seed, effT, transition.prev.colors, speed);
@@ -283,12 +282,12 @@ export default function VibesCanvas({
         for (let i = 0; i < transition.next.effects.length; i++) {
           const eff = transition.next.effects[i];
           if (!eff) continue;
-          const isBg = BACKGROUND_NAMES.has(eff.name);
-          const opacity = fadeInProgress(transitionElapsed, TRANSITION_TOTAL_MS, isBg);
+          const delay = transition.fadeInDelays[i] ?? 0;
+          const opacity = effectOpacity(transitionElapsed, delay, false);
           if (opacity <= 0) continue;
 
-          scratchCtx.clearRect(0, 0, w, h);
           scratchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          scratchCtx.clearRect(0, 0, w, h);
           scratchCtx.globalAlpha = 1;
           const effT = t * eff.tempoMult + eff.phaseOffset;
           eff.fn(scratchCtx, w, h, eff.seed, effT, transition.next.colors, speed);
@@ -300,7 +299,7 @@ export default function VibesCanvas({
           ctx.restore();
         }
 
-        if (progress >= 1) {
+        if (transitionElapsed >= transition.maxEndMs) {
           transitionRef.current = null;
           sceneRef.current = transition.next;
           scratchRef.current = null;
