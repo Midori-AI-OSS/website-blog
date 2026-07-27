@@ -1596,7 +1596,7 @@ function wireframeTunnel(
   const frames: [number, number][][] = [];
   for (let i = 0; i < frameCount; i++) {
     const zRatio = i / frameCount;
-    const scroll = (zRatio + t * gs * 0.2) % 1;
+    const scroll = (zRatio + t * gs * 0.04) % 1;
     const z = scroll * depthRange * 2 - depthRange;
     const scale = dist / Math.max(dist + z, 1e-6);
 
