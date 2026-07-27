@@ -121,6 +121,9 @@ export default function VibesCanvas({
   const reducedMotionRef = React.useRef<boolean>(reducedMotion);
   reducedMotionRef.current = reducedMotion;
   const prevVisualSeedRef = React.useRef<string>('');
+  const visualSeedRef = React.useRef<string>('');
+  const lastDrawnSeedRef = React.useRef<string>('');
+  const scheduleFrameRef = React.useRef<(() => void) | null>(null);
   const scratchRef = React.useRef<HTMLCanvasElement | null>(null);
 
   const sceneIndex = React.useMemo(
@@ -131,6 +134,7 @@ export default function VibesCanvas({
     () => visualIdentitySeed(trackId, startedAt, seed, sceneIndex),
     [trackId, startedAt, seed, sceneIndex],
   );
+  visualSeedRef.current = visualSeed;
 
   React.useEffect(() => {
     if (!visualSeed) return;
@@ -170,6 +174,13 @@ export default function VibesCanvas({
     }
 
     prevVisualSeedRef.current = visualSeed;
+
+    // When reduced motion is active and the scene changes, trigger a single
+    // redraw so the canvas displays the new scene instead of remaining static.
+    if (reducedMotionRef.current) {
+      startTimeRef.current = 0;
+      scheduleFrameRef.current?.();
+    }
   }, [visualSeed]);
 
   React.useEffect(() => {
@@ -178,10 +189,14 @@ export default function VibesCanvas({
     if (!target) return;
     target.colors = deriveColors(
       createRng(cyrb53(`${visualSeed}palette`)),
-      paletteRef.current,
+      palette,
       5 + Math.floor(createRng(cyrb53(visualSeed))() * 3),
     );
-  }, [visualSeed]);
+    if (reducedMotionRef.current) {
+      startTimeRef.current = 0;
+      scheduleFrameRef.current?.();
+    }
+  }, [visualSeed, palette]);
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
@@ -211,7 +226,15 @@ export default function VibesCanvas({
     const frame = (timestamp: number) => {
       if (!running) return;
 
-      if (reducedMotionRef.current && startTimeRef.current !== 0) return;
+      // Reduced motion: skip rendering only if we already drew the current seed.
+      // The visualSeed effect will reset startTimeRef and schedule a redraw
+      // when the scene actually changes.
+      if (
+        reducedMotionRef.current &&
+        startTimeRef.current !== 0 &&
+        lastDrawnSeedRef.current === visualSeedRef.current
+      )
+        return;
 
       if (timestamp - lastFrameRef.current < 32) {
         if (running) rafRef.current = requestAnimationFrame(frame);
@@ -303,6 +326,8 @@ export default function VibesCanvas({
           transitionRef.current = null;
           sceneRef.current = transition.next;
           scratchRef.current = null;
+          // Do NOT mark the seed as drawn here. The next frame will take the
+          // else branch and render a clean frame, which sets lastDrawnSeedRef.
         }
       } else {
         for (let i = 0; i < scene.effects.length; i++) {
@@ -311,15 +336,28 @@ export default function VibesCanvas({
           const effT = t * eff.tempoMult + eff.phaseOffset;
           eff.fn(ctx, w, h, eff.seed, effT, scene.colors, speed);
         }
+        lastDrawnSeedRef.current = visualSeedRef.current;
       }
 
       if (reducedMotionRef.current) {
+        // Keep one rAF queued so future scene changes (detected by
+        // lastDrawnSeedRef) can be picked up without a permanent busy loop.
+        if (running) {
+          rafRef.current = requestAnimationFrame(frame);
+        }
         return;
       }
 
       if (running) {
         rafRef.current = requestAnimationFrame(frame);
       }
+    };
+
+    scheduleFrameRef.current = () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      rafRef.current = requestAnimationFrame(frame);
     };
 
     rafRef.current = requestAnimationFrame(frame);
