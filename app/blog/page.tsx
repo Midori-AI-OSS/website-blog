@@ -1,20 +1,21 @@
 /**
- * Blog List Page
+ * Blog Archive Page
  *
- * Server component that loads all blog posts and displays them in a grid.
- * Uses Next.js App Router for static generation.
+ * Server component that loads all blog posts, groups them into chronological
+ * archive periods with month-level merging, and displays them in per-period
+ * sections with independent filtering and pagination.
  */
 
 import { Box, Typography } from '@mui/joy';
-import { loadAllPosts, paginatePosts } from '@/lib/blog/loader';
-import { BlogPageClient } from './BlogPageClient';
+import { groupPostsIntoArchivePeriods } from '@/lib/blog/archive';
+import { loadAllPosts } from '@/lib/blog/loader';
+import { BlogArchiveClient } from './BlogArchiveClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function BlogPage() {
-  // Load all posts (this runs at build time with SSG)
   const allPosts = await loadAllPosts();
-  const { posts: initialPosts } = paginatePosts(allPosts, 0, 10);
+  const periods = groupPostsIntoArchivePeriods(allPosts);
 
   return (
     <Box
@@ -31,10 +32,10 @@ export default async function BlogPage() {
           Blog
         </Typography>
         <Typography level="body-lg" sx={{ mb: 4, color: 'text.secondary' }}>
-          Engineering updates, project notes, and what we’ve learned while building.
+          Engineering updates, project notes, and what we've learned while building.
         </Typography>
       </Box>
-      <BlogPageClient initialPosts={initialPosts} allPosts={allPosts} />
+      <BlogArchiveClient periods={periods} />
     </Box>
   );
 }

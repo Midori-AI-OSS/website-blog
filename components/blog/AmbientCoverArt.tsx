@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Card } from '@mui/joy';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 export const AMBIENT_PULSE_KEYFRAMES = {
   '@keyframes ambient-pulse': {
@@ -31,10 +31,21 @@ export function AmbientCoverArt({
   onImageError,
 }: AmbientCoverArtProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
+  const lastFailedUrlRef = useRef<string | null>(null);
+  const previousCoverImageUrlRef = useRef(coverImageUrl);
 
   useEffect(() => {
+    if (previousCoverImageUrlRef.current === coverImageUrl) return;
+    previousCoverImageUrlRef.current = coverImageUrl;
+    lastFailedUrlRef.current = null;
     setCoverIsLandscape(null);
-  }, []);
+  }, [coverImageUrl]);
+
+  const handleImageError = () => {
+    if (lastFailedUrlRef.current === coverImageUrl) return;
+    lastFailedUrlRef.current = coverImageUrl;
+    onImageError?.(coverImageUrl);
+  };
 
   return (
     <Card
@@ -79,7 +90,7 @@ export function AmbientCoverArt({
         component="img"
         src={coverImageUrl}
         alt=""
-        onError={() => onImageError?.(coverImageUrl)}
+        onError={handleImageError}
         sx={{
           position: 'absolute',
           top: 0,
@@ -100,7 +111,7 @@ export function AmbientCoverArt({
         src={coverImageUrl}
         alt={alt}
         loading="lazy"
-        onError={() => onImageError?.(coverImageUrl)}
+        onError={handleImageError}
         onLoad={(event) => {
           const img = event.currentTarget;
           if (img.naturalWidth > 0 && img.naturalHeight > 0) {
