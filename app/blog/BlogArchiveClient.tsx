@@ -16,6 +16,12 @@ import {
 } from '@/lib/blog/archive';
 import type { ParsedPost } from '@/lib/blog/parser';
 
+import {
+  DEFAULT_PAGE_SIZE,
+  getVisiblePageNumbers,
+  parseStoredPageSize,
+  serializePageSize,
+} from './archiveUi';
 import { BlogPeriodPicker, type PeriodPickerItem } from './BlogPeriodPicker';
 
 const fadeInFromRight = keyframes`
@@ -108,7 +114,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
   const periodsWithUi = useMemo(() => {
     return periods.map((period) => {
       const selectedTag = selectedTagByPeriod[period.key] ?? '';
-      const pageSize = pageSizeByPeriod[period.key] ?? 10;
+      const pageSize = pageSizeByPeriod[period.key] ?? DEFAULT_PAGE_SIZE;
       const currentPage = currentPageByPeriod[period.key] ?? 1;
       const coverErrorIndex = coverErrorsByPeriod[period.key] ?? 0;
 
@@ -148,6 +154,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
         currentPage,
         totalPages,
         totalFiltered,
+        visiblePageNumbers: getVisiblePageNumbers(totalPages, currentPage),
         coverImageUrl,
         coverErrorIndex,
         tags,
@@ -185,11 +192,9 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
     const hydrated: Record<string, number> = {};
     for (const period of periods) {
       const stored = localStorage.getItem(`blog-archive-page-size-${period.key}`);
-      if (stored !== null) {
-        const parsed = Number(stored);
-        if (Number.isFinite(parsed) && parsed > 0) {
-          hydrated[period.key] = parsed;
-        }
+      const parsed = parseStoredPageSize(stored);
+      if (parsed !== null) {
+        hydrated[period.key] = parsed;
       }
     }
     if (Object.keys(hydrated).length > 0) {
@@ -337,7 +342,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                           if (value === null) return;
                           localStorage.setItem(
                             `blog-archive-page-size-${period.key}`,
-                            String(value),
+                            serializePageSize(value),
                           );
                           setPageSizeByPeriod((current) => ({
                             ...current,
@@ -424,7 +429,13 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                   spacing={0.75}
                   alignItems="center"
                   justifyContent="center"
-                  sx={{ mt: 2 }}
+                  useFlexGap
+                  sx={{
+                    mt: 2,
+                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                    rowGap: 0.75,
+                    maxWidth: '100%',
+                  }}
                 >
                   <Box
                     component="button"
@@ -463,9 +474,19 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                     <ChevronLeft size={20} strokeWidth={2} />
                   </Box>
 
-                  <Stack direction="row" spacing={0.75} alignItems="center">
-                    {Array.from({ length: period.totalPages }, (_, i) => {
-                      const pageNum = i + 1;
+                  <Stack
+                    direction="row"
+                    spacing={0.75}
+                    alignItems="center"
+                    useFlexGap
+                    sx={{
+                      flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                      justifyContent: 'center',
+                      rowGap: 0.75,
+                      maxWidth: '100%',
+                    }}
+                  >
+                    {period.visiblePageNumbers.map((pageNum) => {
                       const isActive = pageNum === period.currentPage;
                       return (
                         <Box
@@ -477,7 +498,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                               [period.key]: pageNum,
                             }));
                           }}
-                          aria-label={`Page ${pageNum}`}
+                          aria-label={`Go to page ${pageNum}`}
                           aria-current={isActive ? 'page' : undefined}
                           sx={{
                             display: 'flex',

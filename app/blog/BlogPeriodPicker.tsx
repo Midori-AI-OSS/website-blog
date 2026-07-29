@@ -33,6 +33,22 @@ interface PeriodPickerProps {
   onSelectPeriod?: (slug: string) => void;
 }
 
+function hashSlug(slug: string): number {
+  let hash = 0;
+  for (const char of slug) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+  return hash;
+}
+
+export function getPeriodBreatheTiming(slug: string): { dur: number; delay: number } {
+  const hash = hashSlug(slug);
+  return {
+    dur: 3.5 + (hash % 300) / 100,
+    delay: ((hash >>> 8) % 400) / 100,
+  };
+}
+
 export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
@@ -41,10 +57,7 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
   const breatheTimings = useMemo(() => {
     const map = new Map<string, { dur: number; delay: number }>();
     for (const period of periods) {
-      map.set(period.slug, {
-        dur: 3.5 + Math.random() * 3,
-        delay: Math.random() * 4,
-      });
+      map.set(period.slug, getPeriodBreatheTiming(period.slug));
     }
     return map;
   }, [periods]);
@@ -155,6 +168,8 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
               sx={windowing ? { animation: `${slideIn} 0.3s ease-out` } : undefined}
             >
               <Box
+                component="button"
+                type="button"
                 onClick={() => {
                   onSelectPeriod?.(period.slug);
                   document
@@ -175,6 +190,9 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
                   alignItems: 'center',
                   justifyContent: 'center',
                   p: 0,
+                  border: 'none',
+                  appearance: 'none',
+                  font: 'inherit',
                   transition: 'box-shadow 0.2s ease, filter 0.2s ease',
                   ...(!effectiveCover && { bgcolor: '#8b5cf6' }),
                   ...(isActive && {
@@ -182,6 +200,10 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
                   }),
                   '&:hover': {
                     filter: 'brightness(1.15)',
+                  },
+                  '&:focus-visible': {
+                    outline: '2px solid rgba(255,255,255,0.95)',
+                    outlineOffset: '2px',
                   },
                   animation: `${breathePulse} ${timing.dur}s ease-in-out ${timing.delay}s infinite`,
                   ...(effectiveCover && {

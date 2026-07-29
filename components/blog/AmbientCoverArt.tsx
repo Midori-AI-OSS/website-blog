@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Card } from '@mui/joy';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 
 export const AMBIENT_PULSE_KEYFRAMES = {
   '@keyframes ambient-pulse': {
@@ -31,13 +31,17 @@ export function AmbientCoverArt({
   onImageError,
 }: AmbientCoverArtProps) {
   const [coverIsLandscape, setCoverIsLandscape] = useState<boolean | null>(null);
+  const lastFailedUrlRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    setCoverIsLandscape(null);
-  }, []);
+  const handleImageError = () => {
+    if (lastFailedUrlRef.current === coverImageUrl) return;
+    lastFailedUrlRef.current = coverImageUrl;
+    onImageError?.(coverImageUrl);
+  };
 
   return (
     <Card
+      key={coverImageUrl}
       variant="plain"
       sx={{
         p: 0,
@@ -79,7 +83,7 @@ export function AmbientCoverArt({
         component="img"
         src={coverImageUrl}
         alt=""
-        onError={() => onImageError?.(coverImageUrl)}
+        onError={handleImageError}
         sx={{
           position: 'absolute',
           top: 0,
@@ -100,7 +104,7 @@ export function AmbientCoverArt({
         src={coverImageUrl}
         alt={alt}
         loading="lazy"
-        onError={() => onImageError?.(coverImageUrl)}
+        onError={handleImageError}
         onLoad={(event) => {
           const img = event.currentTarget;
           if (img.naturalWidth > 0 && img.naturalHeight > 0) {
