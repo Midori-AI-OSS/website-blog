@@ -41,12 +41,12 @@ ONLINE
 `);
 
     expect(document.text).toBe(
-      'First paragraph with "dialogue", a thought, "language", and a link. It drops . A retained quote. First list item. Second list item with . DIGITAL SIGNAL ONLINE',
+      'First paragraph with "dialogue", a thought, "language", and a link. It drops inline(). A retained quote. First list item. Second list item with . DIGITAL SIGNAL ONLINE',
     );
     expect(
       document.paragraphs.map((paragraph) => document.text.slice(paragraph.start, paragraph.end)),
     ).toEqual([
-      'First paragraph with "dialogue", a thought, "language", and a link. It drops .',
+      'First paragraph with "dialogue", a thought, "language", and a link. It drops inline().',
       'A retained quote.',
       'First list item.',
       'Second list item with .',
@@ -90,6 +90,21 @@ ONLINE
     expect(
       document.paragraphs.map((paragraph) => document.text.slice(paragraph.start, paragraph.end)),
     ).toEqual(['Launch 🚀 now.', 'Second 🧡 paragraph.']);
+  });
+
+  test('speaks inline code as its literal value alongside other prose', () => {
+    const document = deriveSpeechDocument(
+      'Cast `spells` and `statements` should be spoken. `spells` and `statements` should be spoken.',
+    );
+
+    expect(document.text).toBe(
+      'Cast spells and statements should be spoken. spells and statements should be spoken.',
+    );
+    expect(
+      document.paragraphs.map((paragraph) => document.text.slice(paragraph.start, paragraph.end)),
+    ).toEqual([
+      'Cast spells and statements should be spoken. spells and statements should be spoken.',
+    ]);
   });
 
   test('only removes a disclaimer when it is the opening substantive block', () => {

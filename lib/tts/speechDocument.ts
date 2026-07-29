@@ -51,7 +51,8 @@ function isParent(node: Content | Root): node is (Content | Root) & Parent {
 function inlineText(node: Content): string {
   if (node.type === 'text') return node.value;
   if (node.type === 'break') return ' ';
-  if (node.type === 'inlineCode' || node.type === 'image' || node.type === 'imageReference') {
+  if (node.type === 'inlineCode') return node.value;
+  if (node.type === 'image' || node.type === 'imageReference') {
     return '';
   }
   if (node.type === 'html') return '';
