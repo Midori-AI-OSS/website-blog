@@ -971,4 +971,74 @@ describe('TtsPlayer', () => {
     expect(container.textContent ?? '').not.toContain('Infinity');
     expect(container.textContent ?? '').not.toContain('NaN');
   });
+
+  test('keeps the preceding statement highlighting through a paragraph gap', async () => {
+    const highlights: Array<TtsHighlightRange | null> = [];
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) {
+        return jsonResponse(
+          payload('ready', {
+            generated_chunks: 1,
+            total_chunks: 1,
+            playable: true,
+            manifest: {
+              cache_version: TTS_CACHE_VERSION,
+              content_hash: TEST_CONTENT_HASH,
+              offset_unit: TTS_OFFSET_UNIT,
+              text_length: TEST_DOCUMENT.text.length,
+              paragraph_gap_ms: 500,
+              duration_ms: 1200,
+              chunks: [{ index: 0, start: 0, end: 11, generated: true, start_ms: 0, end_ms: 1200 }],
+              statements: [
+                { start: 0, end: 6, paragraph: 0, chunk: 0, start_ms: 0, end_ms: 600 },
+                { start: 6, end: 11, paragraph: 1, chunk: 0, start_ms: 600, end_ms: 700 },
+              ],
+            } as TtsManifest,
+          }),
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const playButton = await waitForElement(
+      () => getVisibleReadyButton('Play'),
+      'Expected ready Play button',
+    );
+
+    await act(async () => {
+      playButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    // Simulate playback during the paragraph gap (300 ms)
+    await act(async () => {
+      if (!lastAudio) throw new Error('Expected audio instance');
+      lastAudio.currentTime = 0.3;
+      lastAudio.dispatch('timeupdate');
+      await flushEffects();
+    });
+
+    expect(highlights.at(-1)).toEqual({
+      start: 0,
+      end: 6,
+      precision: 'statement',
+      handoff_ms: 250,
+    });
+
+    // Simulate playback after the gap (650 ms), now in statement 1
+    await act(async () => {
+      if (!lastAudio) throw new Error('Expected audio instance');
+      lastAudio.currentTime = 0.65;
+      lastAudio.dispatch('timeupdate');
+      await flushEffects();
+    });
+
+    expect(highlights.at(-1)).toEqual({
+      start: 6,
+      end: 11,
+      precision: 'statement',
+      handoff_ms: 250,
+    });
+  });
 });
