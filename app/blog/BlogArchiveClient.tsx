@@ -448,7 +448,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                       }
                     }}
                     disabled={period.currentPage <= 1}
-                    aria-label="Previous page"
+                    aria-label={`Previous page for ${period.label}`}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -498,7 +498,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                               [period.key]: pageNum,
                             }));
                           }}
-                          aria-label={`Go to page ${pageNum}`}
+                          aria-label={`Go to page ${pageNum} for ${period.label}`}
                           aria-current={isActive ? 'page' : undefined}
                           sx={{
                             display: 'flex',
@@ -541,7 +541,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                       }
                     }}
                     disabled={period.currentPage >= period.totalPages}
-                    aria-label="Next page"
+                    aria-label={`Next page for ${period.label}`}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
