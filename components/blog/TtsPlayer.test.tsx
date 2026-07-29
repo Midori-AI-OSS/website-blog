@@ -860,6 +860,82 @@ describe('TtsPlayer', () => {
     });
   });
 
+  test('clears highlights on chunk transition and restores after audio starts playing', async () => {
+    const highlights: Array<TtsHighlightRange | null> = [];
+    let chunkFetches = 0;
+
+    setFetchMock(async (url) => {
+      if (url.includes('/api/tts/status')) return jsonResponse(payload('not_generated'));
+      if (url.includes('/api/tts/generate?')) {
+        return jsonResponse(
+          payload('generating', {
+            generated_chunks: 3,
+            total_chunks: 3,
+            playable: true,
+            manifest: {
+              cache_version: TTS_CACHE_VERSION,
+              content_hash: TEST_CONTENT_HASH,
+              offset_unit: TTS_OFFSET_UNIT,
+              text_length: TEST_DOCUMENT.text.length,
+              paragraph_gap_ms: 500,
+              duration_ms: 2000,
+              chunks: [
+                { index: 0, start: 0, end: 6, generated: true, start_ms: 0, end_ms: 1000 },
+                { index: 1, start: 6, end: 11, generated: true, start_ms: 1000, end_ms: 2000 },
+              ],
+              statements: [
+                { start: 0, end: 6, paragraph: 0, chunk: 0, start_ms: 0, end_ms: 1000 },
+                { start: 6, end: 11, paragraph: 0, chunk: 1, start_ms: 1000, end_ms: 2000 },
+              ],
+            } as TtsManifest,
+          }),
+          202,
+        );
+      }
+      if (url.includes('/api/tts/chunk/blog/shared-post/')) {
+        chunkFetches += 1;
+        return wavResponse();
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    await renderPlayer((range) => highlights.push(range));
+    const listenButton = getVisibleListenButton();
+    if (!listenButton) throw new Error('Expected visible listen button');
+
+    await act(async () => {
+      listenButton.dispatchEvent(new testWindow.MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    // Wait for chunk 0 highlight to appear
+    await waitForCondition(
+      () => highlights.some((h) => h !== null && h.start === 0),
+      'Expected chunk 0 highlight',
+    );
+
+    // Simulate chunk 0 ending
+    await act(async () => {
+      if (!lastAudio) throw new Error('Expected audio');
+      lastAudio.currentTime = 75;
+      lastAudio.dispatch('ended');
+      await flushEffects();
+    });
+
+    // The last highlight should be for chunk 1 (audio started for the new chunk)
+    const lastHighlight = highlights.at(-1);
+    expect(lastHighlight).not.toBeNull();
+    expect(lastHighlight?.start).toBe(6);
+    expect(lastHighlight?.end).toBe(11);
+
+    // Null should have been emitted during the transition after chunk 0 was playing
+    const chunk0HighlightIndex = highlights.findIndex((h) => h !== null && h.start === 0);
+    expect(highlights.some((h, i) => h === null && i > chunk0HighlightIndex)).toBe(true);
+
+    // Chunk 1 should have been fetched
+    expect(chunkFetches).toBeGreaterThanOrEqual(2);
+  });
+
   test('renders safe time labels when audio metadata is non-finite', async () => {
     setFetchMock(async (url) => {
       if (url.includes('/api/tts/status')) {
