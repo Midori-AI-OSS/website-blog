@@ -205,4 +205,18 @@ describe('TTS DOM highlights', () => {
     clearTtsHighlights(root, { layerone: 'linger' });
     expect(block?.className).toBe('');
   });
+
+  test('wraps preceding paragraph across a gap when statement timing covers the silence', () => {
+    const document = deriveSpeechDocument('First paragraph.\n\nSecond paragraph.');
+    const { root } = createRoot('<p>First paragraph.</p><p>Second paragraph.</p>');
+    const original = root.innerHTML;
+
+    applyTtsHighlight(root, document, rangeFor(document.text, 'First paragraph.'));
+
+    expect(root.querySelector('.tts-highlight')?.textContent).toBe('First paragraph.');
+    expect(root.querySelectorAll('.tts-highlight')).toHaveLength(1);
+
+    clearTtsHighlights(root);
+    expect(root.innerHTML).toBe(original);
+  });
 });

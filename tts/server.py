@@ -833,6 +833,14 @@ def _generate_chunks_worker(
                     gap = np.zeros(PARAGRAPH_GAP_SAMPLES, dtype=np.float32)
                     chunk_parts.append(gap)
                     global_sample += gap.size
+                    preceding = (
+                        generated_statements[-1]
+                        if generated_statements
+                        else manifest["statements"][-1]
+                    )
+                    preceding["end_ms"] = round(
+                        global_sample * 1000 / SAMPLE_RATE, 3
+                    )
 
                 statement_text = document.text[statement["start"] : statement["end"]]
                 statement_audio = _synthesize_statement(statement_text)

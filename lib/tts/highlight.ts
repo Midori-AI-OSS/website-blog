@@ -137,7 +137,7 @@ function getSpeechDomCandidates(root: HTMLElement): NormalizedDomText[] {
         (descendant.tagName === 'UL' || descendant.tagName === 'OL')
       ) {
         excluded.add(descendant);
-      } else if (descendant.tagName === 'CODE' || descendant.tagName === 'PRE') {
+      } else if (descendant.tagName === 'PRE') {
         excluded.add(descendant);
       }
     }
@@ -276,6 +276,7 @@ function wrapSegment(
   activeRange: TtsHighlightRange,
 ): HTMLElement | null {
   if (!segment.node.isConnected) return null;
+  if (segment.node.parentElement?.closest?.('code')) return null;
   const document = segment.node.ownerDocument;
   const range = document.createRange();
   range.setStart(segment.node, segment.start);

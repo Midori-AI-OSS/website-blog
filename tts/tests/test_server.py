@@ -134,7 +134,7 @@ class TtsServerTest(unittest.TestCase):
         self.assertEqual(rate, SAMPLE_RATE)
         self.assertEqual(manifest["paragraph_gap_ms"], PARAGRAPH_GAP_MS)
         self.assertEqual(manifest["statements"][0]["start_ms"], 0)
-        self.assertEqual(manifest["statements"][0]["end_ms"], 100)
+        self.assertEqual(manifest["statements"][0]["end_ms"], 600)
         self.assertEqual(manifest["statements"][1]["start_ms"], 600)
         self.assertEqual(manifest["statements"][1]["end_ms"], expected_end_ms)
         self.assertEqual(manifest["duration_ms"], expected_end_ms)
@@ -144,6 +144,63 @@ class TtsServerTest(unittest.TestCase):
         )
         gap = audio[SAMPLE_RATE // 10 : SAMPLE_RATE // 10 + SAMPLE_RATE // 2]
         self.assertTrue(np.allclose(gap, 0.0))
+
+    def test_paragraph_gap_attributed_across_chunk_boundaries(self):
+        document = make_document(
+            "Para zero. Para one. Para two.",
+            [
+                (0, 10, "prose"),
+                (11, 20, "layerone"),
+                (21, 30, "prose"),
+            ],
+        )
+        content_hash = _calculate_document_hash(document)
+
+        with patch.object(server, "TARGET_CHUNK_CHARS", 1):
+            statements = _statement_ranges(document)
+            plans = _chunk_plans(statements)
+
+        self.assertGreaterEqual(
+            len(plans),
+            2,
+            "Expected at least two chunks to exercise cross-chunk gaps",
+        )
+
+        synthesized = np.full(SAMPLE_RATE // 10, 0.25, dtype=np.float32)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            with (
+                patch.object(server, "TTS_DIR", Path(temporary)),
+                patch.object(
+                    server,
+                    "_synthesize_statement",
+                    return_value=synthesized,
+                ),
+            ):
+                _generate_chunks_worker(
+                    "blog", "cross-chunk-post", content_hash, document, plans
+                )
+                manifest = json.loads(
+                    _manifest_path(
+                        "blog", "cross-chunk-post", content_hash
+                    ).read_text(encoding="utf-8")
+                )
+
+        stmts = manifest["statements"]
+        self.assertEqual(len(stmts), 3)
+        self.assertEqual(stmts[0]["start_ms"], 0)
+        # Statement 0 is the only prose statement in paragraph 0 (100 ms audio).
+        # Gap before paragraph 1 extends statement 0 to 600 ms.
+        self.assertEqual(stmts[0]["end_ms"], 600)
+        # Statement 1 (layerone, paragraph 1) starts after the gap.
+        self.assertEqual(stmts[1]["start_ms"], 600)
+        # Gap before paragraph 2 extends statement 1's end_ms.
+        # Layer‑one audio is longer than raw 100 ms due to the glitch effect.
+        gap_before_p2_ms = stmts[2]["start_ms"] - stmts[1]["start_ms"]
+        self.assertGreater(gap_before_p2_ms, 0)
+        self.assertEqual(stmts[1]["end_ms"], stmts[2]["start_ms"])
+        # Statement 2 starts at the end of the extended layer‑one block.
+        self.assertEqual(stmts[2]["start_ms"], manifest["duration_ms"] - 100)
 
     def test_astral_utf16_offsets_validate_and_round_trip_through_manifest(self):
         document = make_document(

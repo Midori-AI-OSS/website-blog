@@ -159,6 +159,7 @@ export function TtsPlayer({
   const chunkDurationsRef = useRef<Map<number, number>>(new Map());
   const manifestRef = useRef<TtsManifest | null>(null);
   const highlightKeyRef = useRef('');
+  const chunkTransitioningRef = useRef(false);
 
   const identityQuery = contentHash ? ttsIdentityQuery(contentHash) : '';
   const sharedAudioUrl = contentHash
@@ -337,6 +338,7 @@ export function TtsPlayer({
     setDuration(totalDuration);
     setCurrentTime(totalCurrent);
     setProgress(nextProgress);
+    if (chunkTransitioningRef.current) return;
     syncHighlight(totalCurrent, activeIndex);
   }, [sumKnownChunkDurations, syncHighlight]);
 
@@ -347,6 +349,7 @@ export function TtsPlayer({
 
       clearChunkRetry();
       revokeCurrentChunkUrl();
+      chunkTransitioningRef.current = false;
       streamingActiveRef.current = false;
       streamingShouldPlayRef.current = false;
       currentChunkIndexRef.current = null;
@@ -432,6 +435,8 @@ export function TtsPlayer({
         revokeCurrentChunkUrl();
         currentChunkObjectUrlRef.current = objectUrl;
 
+        chunkTransitioningRef.current = true;
+        emitHighlight(null);
         currentChunkIndexRef.current = chunkIndex;
         nextChunkIndexRef.current = chunkIndex + 1;
         streamingOffsetRef.current = sumKnownChunkDurations(chunkIndex);
@@ -462,6 +467,7 @@ export function TtsPlayer({
     [
       clearChunkRetry,
       contentHash,
+      emitHighlight,
       revokeCurrentChunkUrl,
       sharedChunkBaseUrl,
       sumKnownChunkDurations,
@@ -679,6 +685,7 @@ export function TtsPlayer({
     if (!audio) return;
 
     if (streamingActiveRef.current) {
+      chunkTransitioningRef.current = false;
       streamingShouldPlayRef.current = false;
       clearChunkRetry();
       audio.pause();
@@ -741,6 +748,7 @@ export function TtsPlayer({
     };
 
     const handlePlayingEvent = () => {
+      chunkTransitioningRef.current = false;
       playbackRef.current = 'playing';
       setPlayback('playing');
       syncTimelineFromAudio();
@@ -772,6 +780,7 @@ export function TtsPlayer({
           totalChunksRef.current > 0 &&
           nextIndex >= totalChunksRef.current
         ) {
+          chunkTransitioningRef.current = false;
           streamingActiveRef.current = false;
           streamingShouldPlayRef.current = false;
           playbackRef.current = 'stopped';
@@ -782,6 +791,7 @@ export function TtsPlayer({
           return;
         }
 
+        emitHighlight(null);
         void tryStartChunkPlayback(nextIndex, true);
         return;
       }
