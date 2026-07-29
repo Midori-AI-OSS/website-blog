@@ -190,9 +190,10 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
                   alignItems: 'center',
                   justifyContent: 'center',
                   p: 0,
-                  border: 'none',
-                  appearance: 'none',
+                  border: 0,
                   font: 'inherit',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
                   transition: 'box-shadow 0.2s ease, filter 0.2s ease',
                   ...(!effectiveCover && { bgcolor: '#8b5cf6' }),
                   ...(isActive && {
