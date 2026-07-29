@@ -4,6 +4,7 @@
 
 import { describe, expect, test } from 'bun:test';
 import {
+  BLOG_PLACEHOLDER_URL,
   extractYearMonth,
   getMonthAbbrev,
   getPeriodImageCandidates,
@@ -109,6 +110,36 @@ describe('getPeriodTags', () => {
     const posts = [makePost('2026-01-17.md', ['Zebra', 'alpha', 'Beta'])];
     const tags = getPeriodTags(posts);
     expect(tags).toEqual(['alpha', 'Beta', 'Zebra']);
+  });
+});
+
+describe('BLOG_PLACEHOLDER_URL', () => {
+  test('has the correct placeholder value', () => {
+    expect(BLOG_PLACEHOLDER_URL).toBe('/api/blog-images/placeholder.png');
+  });
+});
+
+describe('fallback chain', () => {
+  test('getPeriodImageCandidates returns empty for invalid month, requiring caller fallback', () => {
+    const candidates = getPeriodImageCandidates(0, 2026);
+    expect(candidates).toEqual([]);
+    // When candidates are empty, the caller should use BLOG_PLACEHOLDER_URL
+  });
+
+  test('getPeriodImageCandidates for valid month/year returns same-year candidate first', () => {
+    const candidates = getPeriodImageCandidates(6, 2026);
+    expect(candidates[0]).toBe('/blog/years/2026/jun.png');
+  });
+
+  test('getPeriodImageCandidates for valid month/year returns earlier-year candidates', () => {
+    const candidates = getPeriodImageCandidates(6, 2026);
+    expect(candidates.length).toBeGreaterThanOrEqual(2);
+    expect(candidates[1]).toBe('/blog/years/2025/jun.png');
+  });
+
+  test('BLOG_PLACEHOLDER_URL is a valid non-empty API path', () => {
+    expect(BLOG_PLACEHOLDER_URL.length).toBeGreaterThan(0);
+    expect(BLOG_PLACEHOLDER_URL.startsWith('/api/')).toBe(true);
   });
 });
 

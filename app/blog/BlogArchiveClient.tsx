@@ -4,11 +4,16 @@ import { keyframes } from '@emotion/react';
 import { Box, Divider, FormControl, Option, Select, Stack, Typography } from '@mui/joy';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { BlogCard } from '@/components/blog/BlogCard';
-import { type ArchivePeriod, getPeriodImageCandidates, getPeriodTags } from '@/lib/blog/archive';
+import {
+  type ArchivePeriod,
+  BLOG_PLACEHOLDER_URL,
+  getPeriodImageCandidates,
+  getPeriodTags,
+} from '@/lib/blog/archive';
 import type { ParsedPost } from '@/lib/blog/parser';
 
 import { BlogPeriodPicker, type PeriodPickerItem } from './BlogPeriodPicker';
@@ -46,6 +51,60 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
   const [coverErrorsByPeriod, setCoverErrorsByPeriod] = useState<Record<string, number>>({});
   const prevPageByPeriod = useRef<Record<string, number>>({});
 
+  // ── Lazy mounting: mount 2 newest sections initially ──
+  const [mountedKeys, setMountedKeys] = useState<Set<string>>(() => {
+    const initial = new Set<string>();
+    // periods are sorted newest-first; mount the first 2
+    for (let i = 0; i < Math.min(2, periods.length); i++) {
+      const p = periods[i];
+      if (p) initial.add(p.key);
+    }
+    return initial;
+  });
+
+  const mountPeriod = useCallback((key: string) => {
+    setMountedKeys((prev) => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }, []);
+
+  const handleSelectPeriod = useCallback(
+    (slug: string) => {
+      mountPeriod(slug);
+    },
+    [mountPeriod],
+  );
+
+  // IntersectionObserver for lazy-mounting placeholders
+  const mountPeriodRef = useRef(mountPeriod);
+  mountPeriodRef.current = mountPeriod;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const slug = entry.target.id.replace('period-', '');
+          mountPeriodRef.current(slug);
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: '400px 0px' },
+    );
+
+    const placeholders = document.querySelectorAll<HTMLElement>(
+      '[id^="period-"][data-lazy="true"]',
+    );
+    for (const el of placeholders) {
+      observer.observe(el);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   const periodsWithUi = useMemo(() => {
     return periods.map((period) => {
       const selectedTag = selectedTagByPeriod[period.key] ?? '';
@@ -69,13 +128,13 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
           ? filteredPosts
           : filteredPosts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-      // Resolve cover image
+      // Resolve cover image: try candidates, fall back to placeholder when exhausted
       const imageCandidates = getPeriodImageCandidates(period.newestMonth, period.year);
-      let coverImageUrl: string | null = null;
-      if (imageCandidates.length > 0 && coverErrorIndex < imageCandidates.length) {
-        // biome-ignore lint/style/noNonNullAssertion: bounded by length check
-        coverImageUrl = imageCandidates[coverErrorIndex]!;
-      }
+      const coverImageUrl: string =
+        imageCandidates.length > 0 && coverErrorIndex < imageCandidates.length
+          ? // biome-ignore lint/style/noNonNullAssertion: bounded by length check
+            imageCandidates[coverErrorIndex]!
+          : BLOG_PLACEHOLDER_URL;
 
       // Tags for this period (from unfiltered posts)
       const tags = getPeriodTags(period.posts);
@@ -167,9 +226,28 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
 
   return (
     <>
-      <BlogPeriodPicker periods={pickerItems} />
+      <BlogPeriodPicker periods={pickerItems} onSelectPeriod={handleSelectPeriod} />
       <Stack spacing={3}>
         {visiblePeriods.map((period) => {
+          const isMounted = mountedKeys.has(period.key);
+
+          if (!isMounted) {
+            // Placeholder: keeps the section in the DOM for picker IntersectionObserver
+            return (
+              <Box
+                key={period.key}
+                id={`period-${period.key}`}
+                data-lazy="true"
+                sx={{
+                  p: { xs: 1.25, sm: 2.25 },
+                  bgcolor: 'rgba(10, 12, 18, 0.72)',
+                  scrollMarginTop: '80px',
+                  minHeight: '120px',
+                }}
+              />
+            );
+          }
+
           const prevPage = prevPageByPeriod.current[period.key];
           let animationName: string | undefined;
           if (prevPage != null && period.currentPage !== prevPage) {
@@ -287,29 +365,14 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                   </Stack>
                 </Stack>
 
-                {/* Cover image */}
+                {/* Cover image — always render with AmbientCoverArt (falls back to placeholder) */}
                 <Box sx={{ width: '100%', minWidth: 0 }}>
-                  {period.coverImageUrl ? (
-                    <AmbientCoverArt
-                      coverImageUrl={period.coverImageUrl}
-                      alt={`${period.label} cover art`}
-                      minHeight={{ xs: '100px', sm: '100px' }}
-                      onImageError={() => handleCoverError(period.key, period.coverErrorIndex)}
-                    />
-                  ) : (
-                    <Box
-                      sx={{
-                        minHeight: { xs: '100px', sm: '100px' },
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: 'rgba(30,34,50,0.4)',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      <Typography level="body-sm">No cover art</Typography>
-                    </Box>
-                  )}
+                  <AmbientCoverArt
+                    coverImageUrl={period.coverImageUrl}
+                    alt={`${period.label} cover art`}
+                    minHeight={{ xs: '100px', sm: '100px' }}
+                    onImageError={() => handleCoverError(period.key, period.coverErrorIndex)}
+                  />
                 </Box>
               </Stack>
 
@@ -354,7 +417,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                 )}
               </Stack>
 
-              {/* Pagination controls */}
+              {/* Pagination controls — 44x44 touch targets on phone */}
               {period.totalPages > 1 && period.pageSize !== Infinity && (
                 <Stack
                   direction="row"
@@ -379,8 +442,10 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: 28,
-                      height: 28,
+                      minWidth: { xs: '44px', sm: '28px' },
+                      minHeight: { xs: '44px', sm: '28px' },
+                      width: { xs: '44px', sm: '28px' },
+                      height: { xs: '44px', sm: '28px' },
                       border: 'none',
                       bgcolor: 'transparent',
                       color:
@@ -415,15 +480,21 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                           aria-label={`Page ${pageNum}`}
                           aria-current={isActive ? 'page' : undefined}
                           sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             border: 'none',
                             bgcolor: isActive ? '#8b5cf6' : 'rgba(255,255,255,0.2)',
                             borderRadius: isActive ? '4px' : '50%',
-                            width: isActive ? 24 : 8,
-                            height: 8,
+                            minWidth: { xs: '44px', sm: isActive ? '24px' : '8px' },
+                            minHeight: { xs: '44px', sm: '8px' },
+                            width: { xs: '44px', sm: isActive ? '24px' : '8px' },
+                            height: { xs: '44px', sm: '8px' },
                             cursor: 'pointer',
                             p: 0,
                             m: 0,
-                            transition: 'width 0.2s ease, background-color 0.2s ease',
+                            transition:
+                              'width 0.2s ease, min-width 0.2s ease, background-color 0.2s ease',
                             '&:hover': {
                               bgcolor: isActive ? '#9b6dff' : 'rgba(255,255,255,0.4)',
                             },
@@ -454,8 +525,10 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: 28,
-                      height: 28,
+                      minWidth: { xs: '44px', sm: '28px' },
+                      minHeight: { xs: '44px', sm: '28px' },
+                      width: { xs: '44px', sm: '28px' },
+                      height: { xs: '44px', sm: '28px' },
                       border: 'none',
                       bgcolor: 'transparent',
                       color:

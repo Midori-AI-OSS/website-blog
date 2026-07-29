@@ -7,6 +7,12 @@
 
 import type { ParsedPost } from './parser';
 
+/**
+ * Minimum post count threshold below which a month group is merged
+ * into the next newer month within the same year.
+ */
+const MERGE_THRESHOLD = 5;
+
 const MONTH_ABBREV = [
   'Jan',
   'Feb',
@@ -105,8 +111,8 @@ export function getPeriodImageCandidates(month: number, year: number): string[] 
  * Algorithm:
  * 1. Group posts by (year, month) from filename
  * 2. Per year, process months oldest→newest
- * 3. Recursively merge any under-5-post group into the next newer month
- * 4. Stop merging when group reaches ≥5 posts OR reaches the year's final month
+ * 3. Iteratively merge any below-threshold group into the next newer month
+ * 4. Stop merging when group reaches MERGE_THRESHOLD posts OR reaches the year's final month
  * 5. Never merge across years
  *
  * @param posts - Posts sorted newest-first (as returned by loadAllPosts)
@@ -151,11 +157,11 @@ export function groupPostsIntoArchivePeriods(posts: ParsedPost[]): ArchivePeriod
       return { months: [month], posts: [...monthPosts] };
     });
 
-    // Step 3: Merge under-5 groups into newer adjacent (process oldest→newest)
+    // Step 3: Merge below-threshold groups into newer adjacent (process oldest→newest)
     for (let i = rawPeriods.length - 2; i >= 0; i--) {
-      // While current group is under 5 and has a newer neighbor...
+      // While current group is below MERGE_THRESHOLD and has a newer neighbor...
       // biome-ignore lint/style/noNonNullAssertion: index bounds enforced by loop and while condition
-      while (rawPeriods[i]!.posts.length < 5 && i + 1 < rawPeriods.length) {
+      while (rawPeriods[i]!.posts.length < MERGE_THRESHOLD && i + 1 < rawPeriods.length) {
         // biome-ignore lint/style/noNonNullAssertion: validated by while condition
         const current = rawPeriods[i]!;
         // biome-ignore lint/style/noNonNullAssertion: validated by while condition

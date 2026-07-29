@@ -30,9 +30,10 @@ export interface PeriodPickerItem {
 
 interface PeriodPickerProps {
   periods: PeriodPickerItem[];
+  onSelectPeriod?: (slug: string) => void;
 }
 
-export function BlogPeriodPicker({ periods }: PeriodPickerProps) {
+export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [coverErrors, setCoverErrors] = useState<Set<string>>(new Set());
@@ -155,6 +156,7 @@ export function BlogPeriodPicker({ periods }: PeriodPickerProps) {
             >
               <Box
                 onClick={() => {
+                  onSelectPeriod?.(period.slug);
                   document
                     .getElementById(`period-${period.slug}`)
                     ?.scrollIntoView({ behavior: 'smooth' });
