@@ -31,6 +31,7 @@ export type BlogCardProps = {
   href?: string;
   variant?: 'plain' | 'outlined' | 'soft' | 'solid';
   color?: 'primary' | 'neutral' | 'danger' | 'success' | 'warning';
+  hideDate?: boolean;
   secondaryCtaLabel?: string;
   secondaryCtaHref?: string;
   secondaryCtaOnClick?: () => void;
@@ -52,6 +53,7 @@ export const BlogCard = React.memo(
     href,
     variant = 'outlined',
     color = 'neutral',
+    hideDate = false,
     secondaryCtaLabel,
     secondaryCtaHref,
     secondaryCtaOnClick,
@@ -406,12 +408,14 @@ export const BlogCard = React.memo(
                 alignItems={{ xs: 'flex-start', sm: 'center' }}
                 sx={{ color: 'text.secondary' }}
               >
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  <Calendar size={14} />
-                  <Typography level="body-xs" textColor="inherit">
-                    {displayDate}
-                  </Typography>
-                </Stack>
+                {!hideDate && (
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    <Calendar size={14} />
+                    <Typography level="body-xs" textColor="inherit">
+                      {displayDate}
+                    </Typography>
+                  </Stack>
+                )}
 
                 {metadata.author && (
                   <Stack direction="row" spacing={0.5} alignItems="center">
