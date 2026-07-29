@@ -170,6 +170,7 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
               <Box
                 component="button"
                 type="button"
+                aria-label={`Jump to ${period.title} archive section`}
                 onClick={() => {
                   onSelectPeriod?.(period.slug);
                   document
