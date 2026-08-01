@@ -46,6 +46,32 @@ export function selectFromPool<T>(pool: readonly T[], rng: () => number, count: 
   return arr.slice(0, n);
 }
 
+/** Whether an effect name belongs to the named `wireframe*` family. */
+export function isWireframeEffectName(name: string): boolean {
+  return name.startsWith('wireframe');
+}
+
+/**
+ * Deterministically selects `count` unique effects from `pool` with at most one
+ * named `wireframe*` effect per scene.  Non-wireframe effects (including
+ * spiralVortex and roseSpiral) are unrestricted.  RNG consumption is fixed and
+ * order-independent of pool contents, so selection stays deterministic.
+ */
+export function selectSceneEffects<T extends { name: string }>(
+  pool: readonly T[],
+  rng: () => number,
+  count: number,
+): T[] {
+  const wireframes = pool.filter((e) => isWireframeEffectName(e.name));
+  const others = pool.filter((e) => !isWireframeEffectName(e.name));
+  const roll = rng();
+  const includeWireframe = wireframes.length > 0 && (others.length < count || roll < 0.5);
+  const othersCount = includeWireframe ? count - 1 : Math.min(count, others.length);
+  const selectedOthers = selectFromPool(others, rng, othersCount);
+  const selectedWireframe = includeWireframe ? selectFromPool(wireframes, rng, 1) : [];
+  return [...selectedOthers, ...selectedWireframe];
+}
+
 function paletteHsl(hex: string): [number, number, number] {
   const [r, g, b] = (() => {
     const normalized = hex.replace('#', '');

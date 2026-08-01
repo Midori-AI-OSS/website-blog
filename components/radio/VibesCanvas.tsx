@@ -10,7 +10,7 @@ import {
   deriveColors,
   hashToSeeds,
   sceneForPosition,
-  selectFromPool,
+  selectSceneEffects,
   visualIdentitySeed,
 } from '@/lib/radio/vibeHash';
 import type { ExtractedPalette } from '@/lib/theme/artPalette';
@@ -58,7 +58,7 @@ interface TransitionState {
 
 const BACKGROUND_NAMES = new Set(['auroraRibbons', 'geometricWaves', 'threadWeave', 'cloudLayers']);
 
-function buildVibeScene(visualSeed: string): VibeScene | null {
+export function buildVibeScene(visualSeed: string): VibeScene | null {
   if (!visualSeed) return null;
   const hash = cyrb53(visualSeed);
   const seeds = hashToSeeds(hash, 12);
@@ -69,7 +69,7 @@ function buildVibeScene(visualSeed: string): VibeScene | null {
   const effectSeeds = seeds.slice(0, 3);
   const timingSeeds = seeds.slice(3, 6);
   const effectPool = [...VIBE_EFFECTS];
-  const selected = selectFromPool(effectPool, masterRng, 2 + Math.floor(masterRng() * 2));
+  const selected = selectSceneEffects(effectPool, masterRng, 2 + Math.floor(masterRng() * 2));
 
   const withSeeds = selected.map((e, i) => ({
     ...e,

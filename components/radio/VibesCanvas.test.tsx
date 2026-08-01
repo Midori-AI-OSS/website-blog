@@ -3,7 +3,7 @@ import { Window } from 'happy-dom';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 
-import VibesCanvas from './VibesCanvas';
+import VibesCanvas, { buildVibeScene } from './VibesCanvas';
 
 let testWindow: Window;
 let container: HTMLDivElement;
@@ -369,6 +369,83 @@ describe('buildVibeScene determinism', () => {
     await render();
     const c2 = container.querySelector('canvas') as HTMLCanvasElement;
     expect(c2).not.toBeNull();
+  });
+});
+
+describe('buildVibeScene scene composition', () => {
+  // Realistic visualIdentitySeed-style inputs across tracks, timestamps, and scenes.
+  const representativeSeeds = [
+    'track-a:2026-07-31T10:00:00.000Z:chill:s0',
+    'track-a:2026-07-31T10:00:00.000Z:chill:s2',
+    'track-b:2026-07-31T12:30:00.000Z:powerful:s1',
+    'track-c:2026-08-01T08:15:00.000Z:dark ambient:s0',
+    'track-c:2026-08-01T08:15:00.000Z:dark ambient:s1',
+    'track-d:2026-08-01T09:45:00.000Z:ethereal:s3',
+    'track-1:2026-07-31T10:00:00.000Z:dark ambient:s0',
+    'track-2:2026-07-31T11:00:00.000Z:chill:s1',
+    'track-3:2026-07-31T12:00:00.000Z:powerful:s2',
+    'track-4:2026-07-31T13:00:00.000Z:ethereal:s0',
+    'track-5:2026-07-31T14:00:00.000Z:driving:s1',
+    'track-6:2026-07-31T15:00:00.000Z:ambient:s0',
+    'track-7:2026-07-31T16:00:00.000Z:hype:s2',
+    'track-8:2026-07-31T17:00:00.000Z:dreamy:s1',
+    'track-9:2026-07-31T18:00:00.000Z:heavy:s0',
+    'track-10:2026-07-31T19:00:00.000Z:lofi:s3',
+    'seed-1',
+    'cosmos',
+    'dark ambient',
+    '12345',
+  ];
+
+  test('every scene has 2-3 unique effects with at most one wireframe', () => {
+    for (const seed of representativeSeeds) {
+      const scene = buildVibeScene(seed);
+      expect(scene).not.toBeNull();
+      const effects = scene?.effects ?? [];
+      expect(effects.length).toBeGreaterThanOrEqual(2);
+      expect(effects.length).toBeLessThanOrEqual(3);
+      const names = effects.map((e) => e.name);
+      expect(new Set(names).size).toBe(names.length);
+      const wireframes = names.filter((n) => n.startsWith('wireframe'));
+      expect(wireframes.length, `seed ${seed}`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('is deterministic for the same visual seed', () => {
+    for (const seed of representativeSeeds) {
+      const a = buildVibeScene(seed);
+      const b = buildVibeScene(seed);
+      expect(a?.effects.map((e) => e.name)).toEqual(b?.effects.map((e) => e.name));
+      expect(a?.colors).toEqual(b?.colors);
+    }
+  });
+
+  test('background effects are ordered before foreground effects', () => {
+    const backgrounds = new Set(['auroraRibbons', 'geometricWaves', 'threadWeave', 'cloudLayers']);
+    let foundBackground = false;
+    for (let i = 0; i < 500 && !foundBackground; i++) {
+      const effects = buildVibeScene(`bg-order-${i}`)?.effects ?? [];
+      if (!effects.some((e) => backgrounds.has(e.name))) continue;
+      foundBackground = true;
+      const firstForeground = effects.findIndex((e) => !backgrounds.has(e.name));
+      for (const e of effects) {
+        if (backgrounds.has(e.name)) {
+          expect(effects.indexOf(e)).toBeLessThan(firstForeground);
+        }
+      }
+    }
+    expect(foundBackground).toBe(true);
+  });
+
+  test('spiral effects are not excluded from scenes', () => {
+    let foundSpiral = false;
+    for (let i = 0; i < 500 && !foundSpiral; i++) {
+      const effects = buildVibeScene(`spiral-scene-${i}`)?.effects ?? [];
+      if (effects.some((e) => e.name === 'spiralVortex' || e.name === 'roseSpiral')) {
+        foundSpiral = true;
+      }
+    }
+    expect(foundSpiral).toBe(true);
   });
 });
 
