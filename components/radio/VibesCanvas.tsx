@@ -251,8 +251,9 @@ export default function VibesCanvas({
     };
 
     const frame = (timestamp: number) => {
+      // Mark this rAF callback as consumed so scheduleNext can re-arm.
+      rafRef.current = null;
       if (!running || document.hidden) {
-        rafRef.current = null;
         return;
       }
 

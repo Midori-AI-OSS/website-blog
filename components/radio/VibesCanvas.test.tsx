@@ -92,6 +92,9 @@ function installDom() {
   };
   const cafMock = (id: number) => {
     cancelledRafIds.add(id);
+    // Clear pending callbacks: real browser cancelAnimationFrame prevents the
+    // callback from firing, so reflected here by emptying the queue.
+    rafCallbacks = [];
   };
 
   (globalThis as Record<string, unknown>).requestAnimationFrame = rafMock;
@@ -227,14 +230,18 @@ describe('VibesCanvas lifecycle', () => {
   test('schedules and processes rAF frames without error', async () => {
     await render();
 
-    // Run several frames
+    // Run several frames; each should have a callback queued
+    let framesProcessed = 0;
     for (let i = 0; i < 5; i++) {
+      expect(rafCallbacks.length).toBeGreaterThan(0);
       expect(() => flushRafCallbacks(performance.now() + i * 33)).not.toThrow();
+      framesProcessed++;
     }
     await flushEffects();
 
     const canvas = container.querySelector('canvas');
     expect(canvas).not.toBeNull();
+    expect(framesProcessed).toBe(5);
   });
 
   test('pauses rAF scheduling when document becomes hidden', async () => {
