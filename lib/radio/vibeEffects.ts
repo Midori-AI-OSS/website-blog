@@ -11,6 +11,13 @@ type VibeEffectFn = (
 
 const FALLBACK_COLOR = '#888888';
 
+/** Geometry scale applied to all eight `wireframe*` effects (60% of previous geometry). */
+export const WIREFRAME_GEOMETRY_SCALE = 0.6;
+/** Rotation/color animation slowdown for the eight wireframe effects (50% slower). */
+export const WIREFRAME_ANIMATION_SLOWDOWN = 0.5;
+/** wireframeTunnel-only slowdown for rotation, depth scroll, and color (70% slower). */
+export const WIREFRAME_TUNNEL_SLOWDOWN = 0.3;
+
 /** Safe array element access — arrays are pre-filled in prepare functions. */
 function el<T>(a: T[], i: number, fallback: T): T {
   const v = a[i];
@@ -1560,9 +1567,9 @@ function wireframeDiamond(
 ) {
   const cx = w / 2;
   const cy = h / 2;
-  const size = Math.min(w, h) * 0.3;
-  const angleY = t * gentleSpeed(speed) * 0.3;
-  const angleX = t * gentleSpeed(speed) * 0.25;
+  const size = Math.min(w, h) * 0.3 * WIREFRAME_GEOMETRY_SCALE;
+  const angleY = t * gentleSpeed(speed) * 0.3 * WIREFRAME_ANIMATION_SLOWDOWN;
+  const angleX = t * gentleSpeed(speed) * 0.25 * WIREFRAME_ANIMATION_SLOWDOWN;
 
   const perspective = Math.max(size * 3, 1);
   const cosY = Math.cos(angleY);
@@ -1606,7 +1613,9 @@ function wireframeDiamond(
   ctx.save();
   ctx.shadowBlur = 6;
   const colorIdx =
-    Math.floor(((Math.sin(t * speed * 0.5) + 1) / 2) * colors.length) % colors.length;
+    Math.floor(
+      ((Math.sin(t * speed * 0.5 * WIREFRAME_ANIMATION_SLOWDOWN) + 1) / 2) * colors.length,
+    ) % colors.length;
   const edgeColor = colors[colorIdx] ?? FALLBACK_COLOR;
   ctx.shadowColor = edgeColor;
   ctx.strokeStyle = edgeColor;
@@ -1637,9 +1646,9 @@ interface WireframeCubePrep {
 
 function prepareWireframeCube(seed: number, w: number, h: number): WireframeCubePrep {
   const localRng = seededRng(seed);
-  const sx = (0.18 + localRng() * 0.08) * w;
-  const sy = (0.15 + localRng() * 0.1) * h;
-  const sz = (0.14 + localRng() * 0.12) * Math.min(w, h);
+  const sx = (0.18 + localRng() * 0.08) * w * WIREFRAME_GEOMETRY_SCALE;
+  const sy = (0.15 + localRng() * 0.1) * h * WIREFRAME_GEOMETRY_SCALE;
+  const sz = (0.14 + localRng() * 0.12) * Math.min(w, h) * WIREFRAME_GEOMETRY_SCALE;
   const dist = Math.min(w, h) * 0.55;
   const verts: Point3[] = [];
   for (let ix = -1; ix <= 1; ix += 2)
@@ -1682,14 +1691,14 @@ function wireframeCube(
   const cx = w / 2;
   const cy = h / 2;
   const gs = gentleSpeed(speed);
-  const ax = t * gs * 0.25 + prep.axOff;
-  const ay = t * gs * 0.3 + prep.ayOff;
-  const az = t * gs * 0.12;
+  const ax = t * gs * 0.25 * WIREFRAME_ANIMATION_SLOWDOWN + prep.axOff;
+  const ay = t * gs * 0.3 * WIREFRAME_ANIMATION_SLOWDOWN + prep.ayOff;
+  const az = t * gs * 0.12 * WIREFRAME_ANIMATION_SLOWDOWN;
   const projected = prep.verts.map(([x, y, z]) => {
     const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, az);
     return perspective2D(rx, ry, rz, prep.dist, cx, cy);
   });
-  const ci = Math.floor(t * speed * 0.12) % colors.length;
+  const ci = Math.floor(t * speed * 0.12 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
   drawWireframeEdges(ctx, projected, prep.edges, colors[ci] ?? FALLBACK_COLOR, 0.6);
 }
 
@@ -1704,7 +1713,7 @@ interface WireframeIcosahedronPrep {
 
 function prepareWireframeIcosahedron(seed: number, w: number, h: number): WireframeIcosahedronPrep {
   const localRng = seededRng(seed);
-  const baseScale = Math.min(w, h) * 0.28;
+  const baseScale = Math.min(w, h) * 0.28 * WIREFRAME_GEOMETRY_SCALE;
   const dist = Math.min(w, h) * 0.55;
   const phi = (1 + Math.sqrt(5)) / 2;
   const rawVerts: [number, number, number][] = [];
@@ -1760,14 +1769,14 @@ function wireframeIcosahedron(
   const cx = w / 2;
   const cy = h / 2;
   const gs = gentleSpeed(speed);
-  const ax = t * gs * 0.2 + prep.axOff;
-  const ay = t * gs * 0.28 + prep.ayOff;
-  const az = t * gs * 0.08;
+  const ax = t * gs * 0.2 * WIREFRAME_ANIMATION_SLOWDOWN + prep.axOff;
+  const ay = t * gs * 0.28 * WIREFRAME_ANIMATION_SLOWDOWN + prep.ayOff;
+  const az = t * gs * 0.08 * WIREFRAME_ANIMATION_SLOWDOWN;
   const projected = prep.verts.map(([x, y, z]) => {
     const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, az);
     return perspective2D(rx, ry, rz, prep.dist, cx, cy);
   });
-  const ci = Math.floor(t * speed * 0.1) % colors.length;
+  const ci = Math.floor(t * speed * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
   drawWireframeEdges(ctx, projected, prep.edges, colors[ci] ?? FALLBACK_COLOR, 0.55);
 }
 
@@ -1782,7 +1791,7 @@ interface WireframeTorusPrep {
 
 function prepareWireframeTorus(seed: number, w: number, h: number): WireframeTorusPrep {
   const localRng = seededRng(seed);
-  const baseScale = Math.min(w, h) * 0.28;
+  const baseScale = Math.min(w, h) * 0.28 * WIREFRAME_GEOMETRY_SCALE;
   const R = baseScale * (0.65 + localRng() * 0.3);
   const r = baseScale * (0.25 + localRng() * 0.2);
   const dist = Math.min(w, h) * 0.6;
@@ -1824,8 +1833,8 @@ function wireframeTorus(
   const cx = w / 2;
   const cy = h / 2;
   const gs = gentleSpeed(speed);
-  const ax = t * gs * 0.2 + prep.axOff;
-  const ay = t * gs * 0.3 + prep.ayOff;
+  const ax = t * gs * 0.2 * WIREFRAME_ANIMATION_SLOWDOWN + prep.axOff;
+  const ay = t * gs * 0.3 * WIREFRAME_ANIMATION_SLOWDOWN + prep.ayOff;
   const uCount = prep.grid.length;
   const vCount = prep.grid[0]?.length ?? 0;
   const projected = prep.grid.map((row) =>
@@ -1834,7 +1843,7 @@ function wireframeTorus(
       return perspective2D(rx, ry, rz, prep.dist, cx, cy);
     }),
   );
-  const ci = Math.floor(t * speed * 0.1) % colors.length;
+  const ci = Math.floor(t * speed * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
   const color = colors[ci] ?? FALLBACK_COLOR;
   ctx.save();
   ctx.shadowBlur = 3;
@@ -1870,7 +1879,7 @@ interface WireframeSpherePrep {
 
 function prepareWireframeSphere(seed: number, w: number, h: number): WireframeSpherePrep {
   const localRng = seededRng(seed);
-  const radius = Math.min(w, h) * (0.22 + localRng() * 0.12);
+  const radius = Math.min(w, h) * (0.22 + localRng() * 0.12) * WIREFRAME_GEOMETRY_SCALE;
   const dist = Math.min(w, h) * 0.55;
   return { radius, dist, axOff: localRng() * Math.PI * 2, ayOff: localRng() * Math.PI * 2 };
 }
@@ -1896,9 +1905,9 @@ function wireframeSphere(
   const latCount = 14;
   const lonCount = 12;
   const gs = gentleSpeed(speed);
-  const ax = t * gs * 0.22 + prep.axOff;
-  const ay = t * gs * 0.18 + prep.ayOff;
-  const ci = Math.floor(t * speed * 0.08) % colors.length;
+  const ax = t * gs * 0.22 * WIREFRAME_ANIMATION_SLOWDOWN + prep.axOff;
+  const ay = t * gs * 0.18 * WIREFRAME_ANIMATION_SLOWDOWN + prep.ayOff;
+  const ci = Math.floor(t * speed * 0.08 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
   const color = colors[ci] ?? FALLBACK_COLOR;
   ctx.save();
   ctx.shadowBlur = 3;
@@ -1954,11 +1963,14 @@ interface WireframeTunnelPrep {
 
 function prepareWireframeTunnel(seed: number, w: number, h: number): WireframeTunnelPrep {
   const localRng = seededRng(seed);
+  const dist = Math.min(w, h) * 0.45;
   return {
-    baseRadius: Math.min(w, h) * 0.3,
-    depthRange: Math.min(w, h) * 0.7,
+    baseRadius: Math.min(w, h) * 0.3 * WIREFRAME_GEOMETRY_SCALE,
+    // Depth range is capped strictly below the camera distance so `dist + z`
+    // always stays positive and the single perspective projection never blows up.
+    depthRange: Math.min(Math.min(w, h) * 0.7 * WIREFRAME_GEOMETRY_SCALE, dist * 0.6),
     twist: (localRng() - 0.5) * 0.4,
-    dist: Math.min(w, h) * 0.45,
+    dist,
   };
 }
 
@@ -1983,28 +1995,30 @@ function wireframeTunnel(
   const frameCount = 14;
   const vertsPerFrame = 8;
   const gs = gentleSpeed(speed);
-  const ax = t * gs * 0.15;
-  const ay = t * gs * 0.1;
+  const ax = t * gs * 0.15 * WIREFRAME_TUNNEL_SLOWDOWN;
+  const ay = t * gs * 0.1 * WIREFRAME_TUNNEL_SLOWDOWN;
 
   const frames: [number, number][][] = [];
   for (let i = 0; i < frameCount; i++) {
     const zRatio = i / frameCount;
-    const scroll = (zRatio + t * gs * 0.04) % 1;
+    const scroll = (zRatio + t * gs * 0.04 * WIREFRAME_TUNNEL_SLOWDOWN) % 1;
     const z = scroll * prep.depthRange * 2 - prep.depthRange;
-    const scale = prep.dist / Math.max(prep.dist + z, 1e-6);
     const frame: [number, number][] = [];
     for (let v = 0; v < vertsPerFrame; v++) {
       const angle = (v / vertsPerFrame) * Math.PI * 2 + z * prep.twist;
-      const sx = Math.cos(angle) * prep.baseRadius * scale;
-      const sy = Math.sin(angle) * prep.baseRadius * scale;
+      const sx = Math.cos(angle) * prep.baseRadius;
+      const sy = Math.sin(angle) * prep.baseRadius;
       const [rx, ry, rz] = rotate3DPoint(sx, sy, z, ax, ay, 0);
+      // Single perspective projection: rings at depth z are projected once with
+      // `dist / (dist + rz)`.  Because `depthRange < dist`, the denominator is
+      // always positive and the projected coordinates stay bounded.
       const proj = perspective2D(rx, ry, rz, prep.dist, cx, cy);
       frame.push(proj);
     }
     frames.push(frame);
   }
 
-  const ci = Math.floor(t * speed * 0.08) % colors.length;
+  const ci = Math.floor(t * speed * 0.08 * WIREFRAME_TUNNEL_SLOWDOWN) % colors.length;
   const color = colors[ci] ?? FALLBACK_COLOR;
   ctx.save();
   ctx.shadowBlur = 3;
@@ -2056,7 +2070,7 @@ interface WireframeTesseractPrep {
 
 function prepareWireframeTesseract(seed: number, w: number, h: number): WireframeTesseractPrep {
   const localRng = seededRng(seed);
-  const scale = Math.min(w, h) * 0.22;
+  const scale = Math.min(w, h) * 0.22 * WIREFRAME_GEOMETRY_SCALE;
   const dist3D = Math.min(w, h) * 0.5;
   const verts4D: Point4[] = [];
   for (let i = 0; i < 16; i++)
@@ -2097,10 +2111,10 @@ function wireframeTesseract(
   const cx = w / 2;
   const cy = h / 2;
   const gs = gentleSpeed(speed);
-  const axy = t * gs * 0.18;
-  const axw = t * gs * 0.25 + prep.axwOff;
-  const ayw = t * gs * 0.22 + prep.aywOff;
-  const azw = t * gs * 0.15;
+  const axy = t * gs * 0.18 * WIREFRAME_ANIMATION_SLOWDOWN;
+  const axw = t * gs * 0.25 * WIREFRAME_ANIMATION_SLOWDOWN + prep.axwOff;
+  const ayw = t * gs * 0.22 * WIREFRAME_ANIMATION_SLOWDOWN + prep.aywOff;
+  const azw = t * gs * 0.15 * WIREFRAME_ANIMATION_SLOWDOWN;
   const projected3D: Point3[] = prep.verts4D.map((v) => {
     let p = v;
     p = rotate4DPoint(p, 0, 1, axy);
@@ -2109,8 +2123,8 @@ function wireframeTesseract(
     p = rotate4DPoint(p, 2, 3, azw);
     return project4Dto3D(p, 3.5);
   });
-  const ax = t * gs * 0.08;
-  const ay = t * gs * 0.1;
+  const ax = t * gs * 0.08 * WIREFRAME_ANIMATION_SLOWDOWN;
+  const ay = t * gs * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN;
   const projected = projected3D.map(([x, y, z]) => {
     const sx = x * prep.scale;
     const sy = y * prep.scale;
@@ -2118,7 +2132,7 @@ function wireframeTesseract(
     const [rx, ry, rz] = rotate3DPoint(sx, sy, sz, ax, ay, 0);
     return perspective2D(rx, ry, rz, prep.dist3D, cx, cy);
   });
-  const ci = Math.floor(t * speed * 0.12) % colors.length;
+  const ci = Math.floor(t * speed * 0.12 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
   drawWireframeEdges(ctx, projected, prep.edges4D, colors[ci] ?? FALLBACK_COLOR, 0.55);
 }
 
@@ -2134,7 +2148,7 @@ interface Wireframe16CellPrep {
 
 function prepareWireframe16Cell(seed: number, w: number, h: number): Wireframe16CellPrep {
   const localRng = seededRng(seed);
-  const scale = Math.min(w, h) * 0.24;
+  const scale = Math.min(w, h) * 0.24 * WIREFRAME_GEOMETRY_SCALE;
   const dist3D = Math.min(w, h) * 0.5;
   const verts4D: Point4[] = [
     [1, 0, 0, 0],
@@ -2179,10 +2193,10 @@ function wireframe16Cell(
   const cx = w / 2;
   const cy = h / 2;
   const gs = gentleSpeed(speed);
-  const axy = t * gs * 0.2;
-  const axw = t * gs * 0.22 + prep.axwOff;
-  const ayw = t * gs * 0.26 + prep.aywOff;
-  const azw = t * gs * 0.18 + prep.azwOff;
+  const axy = t * gs * 0.2 * WIREFRAME_ANIMATION_SLOWDOWN;
+  const axw = t * gs * 0.22 * WIREFRAME_ANIMATION_SLOWDOWN + prep.axwOff;
+  const ayw = t * gs * 0.26 * WIREFRAME_ANIMATION_SLOWDOWN + prep.aywOff;
+  const azw = t * gs * 0.18 * WIREFRAME_ANIMATION_SLOWDOWN + prep.azwOff;
   const projected3D: Point3[] = prep.verts4D.map((v) => {
     let p = v;
     p = rotate4DPoint(p, 0, 1, axy);
@@ -2191,8 +2205,8 @@ function wireframe16Cell(
     p = rotate4DPoint(p, 2, 3, azw);
     return project4Dto3D(p, 3.5);
   });
-  const ax = t * gs * 0.06;
-  const ay = t * gs * 0.09;
+  const ax = t * gs * 0.06 * WIREFRAME_ANIMATION_SLOWDOWN;
+  const ay = t * gs * 0.09 * WIREFRAME_ANIMATION_SLOWDOWN;
   const projected = projected3D.map(([x, y, z]) => {
     const sx = x * prep.scale;
     const sy = y * prep.scale;
@@ -2200,7 +2214,7 @@ function wireframe16Cell(
     const [rx, ry, rz] = rotate3DPoint(sx, sy, sz, ax, ay, 0);
     return perspective2D(rx, ry, rz, prep.dist3D, cx, cy);
   });
-  const ci = Math.floor(t * speed * 0.1) % colors.length;
+  const ci = Math.floor(t * speed * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
   drawWireframeEdges(ctx, projected, prep.edges4D, colors[ci] ?? FALLBACK_COLOR, 0.5);
 }
 

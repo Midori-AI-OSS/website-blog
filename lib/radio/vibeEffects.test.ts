@@ -4,6 +4,9 @@ import {
   preparedCacheStats,
   VIBE_EFFECT_COUNT,
   VIBE_EFFECTS,
+  WIREFRAME_ANIMATION_SLOWDOWN,
+  WIREFRAME_GEOMETRY_SCALE,
+  WIREFRAME_TUNNEL_SLOWDOWN,
 } from './vibeEffects';
 
 function mockCanvasContext(_w: number, _h: number) {
@@ -61,6 +64,7 @@ function isFiniteCoord(v: unknown): boolean {
 }
 
 const knownEffects = [
+  'wireframeDiamond',
   'wireframeCube',
   'wireframeIcosahedron',
   'wireframeTorus',
@@ -82,7 +86,7 @@ describe('VIBE_EFFECTS registry', () => {
     expect(VIBE_EFFECT_COUNT).toBe(VIBE_EFFECTS.length);
   });
 
-  test('contains all 9 new effects', () => {
+  test('contains all 10 known effects', () => {
     const names = new Set(VIBE_EFFECTS.map((e) => e.name));
     for (const name of knownEffects) {
       expect(names.has(name)).toBe(true);
@@ -91,6 +95,20 @@ describe('VIBE_EFFECTS registry', () => {
 
   test('pool is expanded to 35', () => {
     expect(VIBE_EFFECTS.length).toBe(35);
+  });
+});
+
+describe('wireframe scaling and animation constants', () => {
+  test('geometry is scaled to 60% of the original', () => {
+    expect(WIREFRAME_GEOMETRY_SCALE).toBe(0.6);
+  });
+
+  test('rotation/color animation is slowed by 50%', () => {
+    expect(WIREFRAME_ANIMATION_SLOWDOWN).toBe(0.5);
+  });
+
+  test('wireframeTunnel animation is slowed by 70%', () => {
+    expect(WIREFRAME_TUNNEL_SLOWDOWN).toBe(0.3);
   });
 });
 
@@ -153,6 +171,72 @@ describe('wireframe projected coordinates are finite', () => {
       }
     });
   }
+});
+
+describe('wireframeTunnel projection/depth regression', () => {
+  const palette = ['#aaaaaa', '#bbbbbb'];
+
+  test('all frame coordinates stay finite and bounded across the full scroll cycle', () => {
+    const sizes: Array<[number, number]> = [
+      [1280, 720],
+      [800, 600],
+      [390, 844],
+      [360, 800],
+      [768, 1024],
+    ];
+    const seeds = [1, 42, 99, 12345, 777777];
+    // Scroll advances 0.012 per time unit, so t = 0..84 sweeps every phase;
+    // larger t values check long-running stability.
+    const timestamps = [...Array.from({ length: 85 }, (_, i) => i), 300, 1000, 10000];
+
+    for (const [w, h] of sizes) {
+      const bound = Math.max(w, h) * 8;
+      for (const seed of seeds) {
+        for (const t of timestamps) {
+          const ctx = mockCanvasContext(w, h);
+          const entry = VIBE_EFFECTS.find((e) => e.name === 'wireframeTunnel');
+          expect(entry).toBeDefined();
+          entry?.fn(ctx, w, h, seed, t, palette, 1);
+          for (const pair of [...ctx._paths.moveTo, ...ctx._paths.lineTo]) {
+            const x = pair[0] as number;
+            const y = pair[1] as number;
+            expect(isFiniteCoord(x)).toBe(true);
+            expect(isFiniteCoord(y)).toBe(true);
+            expect(Math.abs(x)).toBeLessThanOrEqual(bound);
+            expect(Math.abs(y)).toBeLessThanOrEqual(bound);
+          }
+        }
+      }
+    }
+  });
+
+  test('keeps the 14-frame ring structure', () => {
+    const ctx = mockCanvasContext(800, 600);
+    const entry = VIBE_EFFECTS.find((e) => e.name === 'wireframeTunnel');
+    expect(entry).toBeDefined();
+    entry?.fn(ctx, 800, 600, 42, 7.25, palette, 1);
+    expect(ctx._paths.closePaths).toBe(14);
+  });
+
+  test('depth stays ahead of the camera across energy speeds', () => {
+    const bound = 4800;
+    for (const speed of [0.75, 1, 1.15]) {
+      for (let t = 0; t < 90; t++) {
+        const ctx = mockCanvasContext(800, 600);
+        const entry = VIBE_EFFECTS.find((e) => e.name === 'wireframeTunnel');
+        expect(entry).toBeDefined();
+        entry?.fn(ctx, 800, 600, 12345, t, palette, speed);
+        for (const pair of [...ctx._paths.moveTo, ...ctx._paths.lineTo]) {
+          const x = pair[0] as number;
+          const y = pair[1] as number;
+          expect(isFiniteCoord(x)).toBe(true);
+          expect(isFiniteCoord(y)).toBe(true);
+          expect(Math.abs(x)).toBeLessThanOrEqual(bound);
+          expect(Math.abs(y)).toBeLessThanOrEqual(bound);
+        }
+      }
+    }
+  });
 });
 
 describe('wireframe save/restore are balanced', () => {
