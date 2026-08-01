@@ -286,13 +286,16 @@ describe('VibesCanvas lifecycle', () => {
 
   test('handles rapid mount-unmount without leaking', async () => {
     for (let i = 0; i < 5; i++) {
-      root = createRoot(container);
+      const c = testWindow.document.createElement('div') as unknown as HTMLDivElement;
+      testWindow.document.body.appendChild(c as unknown as Node);
+      root = createRoot(c);
       await render({ ...defaultProps, seed: `seed-${i}` });
 
       await act(async () => {
         root.unmount();
         await flushEffects();
       });
+      c.remove();
     }
 
     // No errors should have occurred
@@ -357,7 +360,12 @@ describe('buildVibeScene determinism', () => {
       root.unmount();
       await flushEffects();
     });
-    root = createRoot(container);
+    container.remove();
+
+    const c2Container = testWindow.document.createElement('div') as unknown as HTMLDivElement;
+    testWindow.document.body.appendChild(c2Container as unknown as Node);
+    root = createRoot(c2Container);
+    container = c2Container;
     await render();
     const c2 = container.querySelector('canvas') as HTMLCanvasElement;
     expect(c2).not.toBeNull();

@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { VIBE_EFFECT_COUNT, VIBE_EFFECTS } from './vibeEffects';
+import {
+  clearPreparedCache,
+  preparedCacheStats,
+  VIBE_EFFECT_COUNT,
+  VIBE_EFFECTS,
+} from './vibeEffects';
 
 function mockCanvasContext(_w: number, _h: number) {
   const paths: { moveTo: unknown[][]; lineTo: unknown[][]; closePaths: number } = {
@@ -41,6 +46,8 @@ function mockCanvasContext(_w: number, _h: number) {
       addColorStop: (_pos: number, _color: string) => {},
     }),
     fill: () => {},
+    fillRect: (_x: number, _y: number, _w: number, _h: number) => {},
+    setTransform: (..._args: number[]) => {},
   } as unknown as CanvasRenderingContext2D & {
     _paths: typeof paths;
     _calls: typeof calls;
@@ -210,5 +217,146 @@ describe('spiral effects produce continuous paths', () => {
     entry?.fn(ctx, 800, 600, 99, 3, palette, 1);
     expect(ctx._paths.moveTo.length).toBeGreaterThan(0);
     expect(ctx._paths.lineTo.length).toBeGreaterThan(0);
+  });
+});
+
+describe('preparation cache', () => {
+  test('cache starts empty', () => {
+    clearPreparedCache();
+    const stats = preparedCacheStats();
+    expect(stats.size).toBe(0);
+  });
+
+  test('render populates the cache', () => {
+    clearPreparedCache();
+    const palette = ['#ff6b6b', '#4ecdc4'];
+    const ctx = mockCanvasContext(800, 600);
+    const entry = VIBE_EFFECTS.find((e) => e.name === 'particleStream');
+    expect(entry).toBeDefined();
+    entry?.fn(ctx, 800, 600, 42, 1, palette, 1);
+    const stats = preparedCacheStats();
+    expect(stats.size).toBeGreaterThan(0);
+  });
+
+  test('same seed+dims returns cached data (cache hit)', () => {
+    clearPreparedCache();
+    const palette = ['#ff6b6b', '#4ecdc4'];
+    const ctx1 = mockCanvasContext(800, 600);
+    const ctx2 = mockCanvasContext(800, 600);
+    const entry = VIBE_EFFECTS.find((e) => e.name === 'particleStream');
+    expect(entry).toBeDefined();
+
+    entry?.fn(ctx1, 800, 600, 42, 1, palette, 1);
+    const sizeAfterFirst = preparedCacheStats().size;
+
+    entry?.fn(ctx2, 800, 600, 42, 2, palette, 1.2);
+    const sizeAfterSecond = preparedCacheStats().size;
+
+    // Cache size should not grow for same key
+    expect(sizeAfterSecond).toBe(sizeAfterFirst);
+    expect(sizeAfterFirst).toBeGreaterThan(0);
+  });
+
+  test('different seeds produce different cache entries', () => {
+    clearPreparedCache();
+    const palette = ['#ff6b6b', '#4ecdc4'];
+    const ctx = mockCanvasContext(800, 600);
+    const entry = VIBE_EFFECTS.find((e) => e.name === 'floatingOrbs');
+    expect(entry).toBeDefined();
+
+    entry?.fn(ctx, 800, 600, 42, 1, palette, 1);
+    const s1 = preparedCacheStats().size;
+    entry?.fn(ctx, 800, 600, 99, 1, palette, 1);
+    const s2 = preparedCacheStats().size;
+
+    expect(s2).toBeGreaterThan(s1);
+  });
+
+  test('cache is bounded under MAX_PREPARED', () => {
+    clearPreparedCache();
+    const palette = ['#ff6b6b', '#4ecdc4'];
+    const entry = VIBE_EFFECTS.find((e) => e.name === 'particleStream');
+    expect(entry).toBeDefined();
+
+    // Generate 300 unique (seed, w, h) combos via different seeds
+    for (let s = 0; s < 300; s++) {
+      const ctx = mockCanvasContext(800, 600);
+      entry?.fn(ctx, 800, 600, s * 1000, 1, palette, 1);
+    }
+
+    const stats = preparedCacheStats();
+    expect(stats.size).toBeLessThanOrEqual(stats.max);
+    expect(stats.size).toBeGreaterThan(0);
+  });
+
+  test('clearPreparedCache empties the cache', () => {
+    clearPreparedCache();
+    const palette = ['#aaa'];
+    const ctx = mockCanvasContext(400, 300);
+    const entry = VIBE_EFFECTS.find((e) => e.name === 'starfield');
+    expect(entry).toBeDefined();
+
+    entry?.fn(ctx, 400, 300, 7, 0.5, palette, 1);
+    expect(preparedCacheStats().size).toBeGreaterThan(0);
+
+    clearPreparedCache();
+    expect(preparedCacheStats().size).toBe(0);
+  });
+
+  test('rendering parity: cached and fresh render produce identical paths', () => {
+    clearPreparedCache();
+    const palette = ['#ff6b6b', '#4ecdc4', '#45b7d1'];
+    const entry = VIBE_EFFECTS.find((e) => e.name === 'flowField');
+    expect(entry).toBeDefined();
+
+    // First render (populates cache)
+    const ctx1 = mockCanvasContext(1280, 720);
+    entry?.fn(ctx1, 1280, 720, 42, 2, palette, 0.9);
+    const paths1 = JSON.stringify({ moveTo: ctx1._paths.moveTo, lineTo: ctx1._paths.lineTo });
+
+    // Second render (cache hit)
+    const ctx2 = mockCanvasContext(1280, 720);
+    entry?.fn(ctx2, 1280, 720, 42, 2, palette, 0.9);
+    const paths2 = JSON.stringify({ moveTo: ctx2._paths.moveTo, lineTo: ctx2._paths.lineTo });
+
+    expect(paths1).toBe(paths2);
+  });
+
+  test('multiple effect types co-exist in cache', () => {
+    clearPreparedCache();
+    const palette = ['#aaa', '#bbb'];
+    const names = [
+      'floatingOrbs',
+      'particleStream',
+      'starfield',
+      'flowField',
+      'rainStreaks',
+    ] as const;
+    for (let i = 0; i < names.length; i++) {
+      const entry = VIBE_EFFECTS.find((e) => e.name === names[i]);
+      expect(entry).toBeDefined();
+      const ctx = mockCanvasContext(800, 600);
+      entry?.fn(ctx, 800, 600, i * 100, 1, palette, 1);
+    }
+    const stats = preparedCacheStats();
+    expect(stats.size).toBe(names.length);
+  });
+
+  test('dimension quantisation shares cache for minor resize', () => {
+    clearPreparedCache();
+    const palette = ['#ff6b6b', '#4ecdc4'];
+    const entry = VIBE_EFFECTS.find((e) => e.name === 'particleStream');
+    expect(entry).toBeDefined();
+
+    const ctx1 = mockCanvasContext(800, 600);
+    entry?.fn(ctx1, 800, 600, 42, 1, palette, 1);
+    const s1 = preparedCacheStats().size;
+
+    // 800 and 807 both quantise to 800; 600 and 607 both quantise to 608
+    const ctx2 = mockCanvasContext(807, 607);
+    entry?.fn(ctx2, 807, 607, 42, 1, palette, 1);
+    const s2 = preparedCacheStats().size;
+
+    expect(s2).toBe(s1);
   });
 });

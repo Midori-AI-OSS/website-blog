@@ -6,9 +6,59 @@ type VibeEffectFn = (
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) => void;
 
 const FALLBACK_COLOR = '#888888';
+
+/** Safe array element access — arrays are pre-filled in prepare functions. */
+function el<T>(a: T[], i: number, fallback: T): T {
+  const v = a[i];
+  return v !== undefined ? v : fallback;
+}
+
+// ── Preparation Cache ──────────────────────────────────────────────────────────
+// Bounded LRU cache for deterministic per-effect data derived from (name, seed,
+// dimensions).  Colour picks are stored as raw RNG values so palettes can change
+// without invalidating cached positional / structural data.
+
+function quantizeDim(d: number): number {
+  return Math.round(d / 16) * 16;
+}
+
+const MAX_PREPARED = 256;
+const preparedMap = new Map<string, unknown>();
+
+function preparedGet<T>(key: string): T | undefined {
+  const v = preparedMap.get(key);
+  if (v !== undefined) {
+    // promote for LRU ordering
+    preparedMap.delete(key);
+    preparedMap.set(key, v);
+    return v as T;
+  }
+  return undefined;
+}
+
+function preparedSet(key: string, data: unknown): void {
+  if (preparedMap.size >= MAX_PREPARED) {
+    const oldest = preparedMap.keys().next().value;
+    if (oldest !== undefined) preparedMap.delete(oldest);
+  }
+  preparedMap.set(key, data);
+}
+
+function prepareKey(name: string, seed: number, w: number, h: number): string {
+  return `${name}\x00${seed}\x00${quantizeDim(w)}\x00${quantizeDim(h)}`;
+}
+
+export function clearPreparedCache(): void {
+  preparedMap.clear();
+}
+
+export function preparedCacheStats(): { size: number; max: number } {
+  return { size: preparedMap.size, max: MAX_PREPARED };
+}
 
 function pick<T>(arr: readonly T[], rng: () => number): T {
   const index = Math.floor(rng() * arr.length);
@@ -138,6 +188,50 @@ function drawWireframeEdges(
   ctx.restore();
 }
 
+interface FloatingOrbsPrep {
+  count: number;
+  ix: number[];
+  iy: number[];
+  dx: number[];
+  dy: number[];
+  r: number[];
+  colorRng: number[];
+  phaseOffset: number[];
+  pulseRate: number[];
+}
+
+function prepareFloatingOrbs(
+  seed: number,
+  w: number,
+  h: number,
+  _colors: string[],
+): FloatingOrbsPrep {
+  const localRng = seededRng(seed);
+  const count = 12 + Math.floor(localRng() * 9);
+  const prep: FloatingOrbsPrep = {
+    count,
+    ix: new Array(count),
+    iy: new Array(count),
+    dx: new Array(count),
+    dy: new Array(count),
+    r: new Array(count),
+    colorRng: new Array(count),
+    phaseOffset: new Array(count),
+    pulseRate: new Array(count),
+  };
+  for (let i = 0; i < count; i++) {
+    prep.ix[i] = localRng() * w;
+    prep.iy[i] = localRng() * h;
+    prep.dx[i] = (localRng() - 0.5) * 0.8;
+    prep.dy[i] = (localRng() - 0.5) * 0.8;
+    prep.r[i] = 8 + localRng() * 52;
+    prep.colorRng[i] = localRng();
+    prep.phaseOffset[i] = localRng() * Math.PI * 2;
+    prep.pulseRate[i] = 0.15 + localRng() * 0.3;
+  }
+  return prep;
+}
+
 function floatingOrbs(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -146,46 +240,63 @@ function floatingOrbs(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const count = 12 + Math.floor(localRng() * 9);
-  const orbs: {
-    ix: number;
-    iy: number;
-    dx: number;
-    dy: number;
-    r: number;
-    color: string;
-    phaseOffset: number;
-    pulseRate: number;
-  }[] = [];
-
-  for (let i = 0; i < count; i++) {
-    orbs.push({
-      ix: localRng() * w,
-      iy: localRng() * h,
-      dx: (localRng() - 0.5) * 0.8,
-      dy: (localRng() - 0.5) * 0.8,
-      r: 8 + localRng() * 52,
-      color: pick(colors, localRng),
-      phaseOffset: localRng() * Math.PI * 2,
-      pulseRate: 0.15 + localRng() * 0.3,
-    });
+  const key = prepareKey('floatingOrbs', seed, w, h);
+  let prep = preparedGet<FloatingOrbsPrep>(key) ?? (prepared as FloatingOrbsPrep | undefined);
+  if (!prep || prep.count === undefined) {
+    prep = prepareFloatingOrbs(seed, w, h, colors);
+    preparedSet(key, prep);
   }
 
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   const gs = gentleSpeed(speed);
-  for (const orb of orbs) {
-    const x = bounceTime(orb.ix + orb.dx * gs * t, w);
-    const y = bounceTime(orb.iy + orb.dy * gs * t, h);
-    ctx.globalAlpha = 0.06 + Math.sin(t * orb.pulseRate + orb.phaseOffset + x * 0.01) * 0.1 + 0.1;
+  for (let i = 0; i < prep.count; i++) {
+    const ix = el(prep.ix, i, 0);
+    const iy = el(prep.iy, i, 0);
+    const x = bounceTime(ix + el(prep.dx, i, 0) * gs * t, w);
+    const y = bounceTime(iy + el(prep.dy, i, 0) * gs * t, h);
+    ctx.globalAlpha =
+      0.06 +
+      Math.sin(t * el(prep.pulseRate, i, 0) + el(prep.phaseOffset, i, 0) + x * 0.01) * 0.1 +
+      0.1;
     ctx.beginPath();
-    ctx.arc(x, y, orb.r, 0, Math.PI * 2);
-    ctx.fillStyle = orb.color;
+    ctx.arc(x, y, el(prep.r, i, 0), 0, Math.PI * 2);
+    const cIdx = Math.floor(el(prep.colorRng, i, 0) * colors.length) % colors.length;
+    ctx.fillStyle = colors[cIdx] ?? FALLBACK_COLOR;
     ctx.fill();
   }
   ctx.restore();
+}
+
+interface ConstellationWebPrep {
+  count: number;
+  ix: number[];
+  iy: number[];
+  dx: number[];
+  dy: number[];
+  maxDist: number;
+}
+
+function prepareConstellationWeb(seed: number, w: number, h: number): ConstellationWebPrep {
+  const localRng = seededRng(seed);
+  const count = 15 + Math.floor(localRng() * 16);
+  const prep: ConstellationWebPrep = {
+    count,
+    maxDist: Math.min(w, h) * 0.3,
+    ix: new Array(count),
+    iy: new Array(count),
+    dx: new Array(count),
+    dy: new Array(count),
+  };
+  for (let i = 0; i < count; i++) {
+    prep.ix[i] = localRng() * w;
+    prep.iy[i] = localRng() * h;
+    prep.dx[i] = (localRng() - 0.5) * 0.3;
+    prep.dy[i] = (localRng() - 0.5) * 0.3;
+  }
+  return prep;
 }
 
 function constellationWeb(
@@ -196,44 +307,39 @@ function constellationWeb(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const count = 15 + Math.floor(localRng() * 16);
-  const points: { ix: number; iy: number; dx: number; dy: number }[] = [];
-  const maxDist = Math.min(w, h) * 0.3;
-
-  for (let i = 0; i < count; i++) {
-    points.push({
-      ix: localRng() * w,
-      iy: localRng() * h,
-      dx: (localRng() - 0.5) * 0.3,
-      dy: (localRng() - 0.5) * 0.3,
-    });
+  const key = prepareKey('constellationWeb', seed, w, h);
+  let prep =
+    preparedGet<ConstellationWebPrep>(key) ?? (prepared as ConstellationWebPrep | undefined);
+  if (!prep || prep.count === undefined) {
+    prep = prepareConstellationWeb(seed, w, h);
+    preparedSet(key, prep);
   }
 
   const gs = gentleSpeed(speed);
-  const computed: { x: number; y: number }[] = [];
-  for (const p of points) {
-    computed.push({
-      x: bounceTime(p.ix + p.dx * gs * t, w),
-      y: bounceTime(p.iy + p.dy * gs * t, h),
-    });
+  const cxArr = new Array<number>(prep.count);
+  const cyArr = new Array<number>(prep.count);
+  for (let i = 0; i < prep.count; i++) {
+    cxArr[i] = bounceTime(el(prep.ix, i, 0) + el(prep.dx, i, 0) * gs * t, w);
+    cyArr[i] = bounceTime(el(prep.iy, i, 0) + el(prep.dy, i, 0) * gs * t, h);
   }
 
   ctx.strokeStyle = colors[0] ?? '#ffffff';
-  for (let i = 0; i < computed.length; i++) {
-    for (let j = i + 1; j < computed.length; j++) {
-      const a = computed[i];
-      const b = computed[j];
-      if (!a || !b) continue;
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
+  for (let i = 0; i < prep.count; i++) {
+    const ax = el(cxArr, i, 0);
+    const ay = el(cyArr, i, 0);
+    for (let j = i + 1; j < prep.count; j++) {
+      const bx = el(cxArr, j, 0);
+      const by = el(cyArr, j, 0);
+      const dx = ax - bx;
+      const dy = ay - by;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < maxDist) {
-        ctx.globalAlpha = Math.max(0, (1 - dist / maxDist) * 0.25);
+      if (dist < prep.maxDist) {
+        ctx.globalAlpha = Math.max(0, (1 - dist / prep.maxDist) * 0.25);
         ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
         ctx.stroke();
       }
     }
@@ -276,6 +382,39 @@ function auroraRibbons(
   ctx.restore();
 }
 
+interface ParticleStreamPrep {
+  count: number;
+  ix: number[];
+  iy: number[];
+  dx: number[];
+  dy: number[];
+  colorRng: number[];
+  size: number[];
+}
+
+function prepareParticleStream(seed: number, w: number, h: number): ParticleStreamPrep {
+  const localRng = seededRng(seed);
+  const count = 150 + Math.floor(localRng() * 200);
+  const prep: ParticleStreamPrep = {
+    count,
+    ix: new Array(count),
+    iy: new Array(count),
+    dx: new Array(count),
+    dy: new Array(count),
+    colorRng: new Array(count),
+    size: new Array(count),
+  };
+  for (let i = 0; i < count; i++) {
+    prep.ix[i] = localRng() * w;
+    prep.iy[i] = localRng() * h;
+    prep.dx[i] = (localRng() - 0.5) * 1.2;
+    prep.dy[i] = (localRng() - 0.5) * 1.2;
+    prep.colorRng[i] = localRng();
+    prep.size[i] = 1 + localRng() * 3;
+  }
+  return prep;
+}
+
 function particleStream(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -284,39 +423,65 @@ function particleStream(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const count = 150 + Math.floor(localRng() * 200);
-  const particles: {
-    ix: number;
-    iy: number;
-    dx: number;
-    dy: number;
-    color: string;
-    size: number;
-  }[] = [];
-
-  for (let i = 0; i < count; i++) {
-    particles.push({
-      ix: localRng() * w,
-      iy: localRng() * h,
-      dx: (localRng() - 0.5) * 1.2,
-      dy: (localRng() - 0.5) * 1.2,
-      color: pick(colors, localRng),
-      size: 1 + localRng() * 3,
-    });
+  const key = prepareKey('particleStream', seed, w, h);
+  let prep = preparedGet<ParticleStreamPrep>(key) ?? (prepared as ParticleStreamPrep | undefined);
+  if (!prep || prep.count === undefined) {
+    prep = prepareParticleStream(seed, w, h);
+    preparedSet(key, prep);
   }
 
-  for (const p of particles) {
-    const x = bounceTime(p.ix + p.dx * speed * t, w);
-    const y = bounceTime(p.iy + p.dy * speed * t, h);
+  for (let i = 0; i < prep.count; i++) {
+    const x = bounceTime(el(prep.ix, i, 0) + el(prep.dx, i, 0) * speed * t, w);
+    const y = bounceTime(el(prep.iy, i, 0) + el(prep.dy, i, 0) * speed * t, h);
     ctx.beginPath();
-    ctx.arc(x, y, p.size, 0, Math.PI * 2);
-    ctx.fillStyle = p.color;
+    ctx.arc(x, y, el(prep.size, i, 0), 0, Math.PI * 2);
+    const cIdx = Math.floor(el(prep.colorRng, i, 0) * colors.length) % colors.length;
+    ctx.fillStyle = colors[cIdx] ?? FALLBACK_COLOR;
     ctx.globalAlpha = 0.6;
     ctx.fill();
   }
   ctx.globalAlpha = 1;
+}
+
+interface BokehFieldPrep {
+  count: number;
+  ix: number[];
+  iy: number[];
+  dx: number[];
+  dy: number[];
+  r: number[];
+  colorRng: number[];
+  phaseOffset: number[];
+  pulseRate: number[];
+}
+
+function prepareBokehField(seed: number, w: number, h: number): BokehFieldPrep {
+  const localRng = seededRng(seed);
+  const count = 20 + Math.floor(localRng() * 21);
+  const prep: BokehFieldPrep = {
+    count,
+    ix: new Array(count),
+    iy: new Array(count),
+    dx: new Array(count),
+    dy: new Array(count),
+    r: new Array(count),
+    colorRng: new Array(count),
+    phaseOffset: new Array(count),
+    pulseRate: new Array(count),
+  };
+  for (let i = 0; i < count; i++) {
+    prep.ix[i] = localRng() * w;
+    prep.iy[i] = localRng() * h;
+    prep.dx[i] = (localRng() - 0.5) * 0.9;
+    prep.dy[i] = (localRng() - 0.5) * 0.9;
+    prep.r[i] = 20 + localRng() * 80;
+    prep.colorRng[i] = localRng();
+    prep.phaseOffset[i] = localRng() * Math.PI * 2;
+    prep.pulseRate[i] = 0.15 + localRng() * 0.3;
+  }
+  return prep;
 }
 
 function bokehField(
@@ -327,49 +492,63 @@ function bokehField(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const count = 20 + Math.floor(localRng() * 21);
-  const bokehs: {
-    ix: number;
-    iy: number;
-    dx: number;
-    dy: number;
-    r: number;
-    color: string;
-    phaseOffset: number;
-    pulseRate: number;
-  }[] = [];
-
-  for (let i = 0; i < count; i++) {
-    bokehs.push({
-      ix: localRng() * w,
-      iy: localRng() * h,
-      dx: (localRng() - 0.5) * 0.9,
-      dy: (localRng() - 0.5) * 0.9,
-      r: 20 + localRng() * 80,
-      color: pick(colors, localRng),
-      phaseOffset: localRng() * Math.PI * 2,
-      pulseRate: 0.15 + localRng() * 0.3,
-    });
+  const key = prepareKey('bokehField', seed, w, h);
+  let prep = preparedGet<BokehFieldPrep>(key) ?? (prepared as BokehFieldPrep | undefined);
+  if (!prep || prep.count === undefined) {
+    prep = prepareBokehField(seed, w, h);
+    preparedSet(key, prep);
   }
 
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   const gs = gentleSpeed(speed);
-  for (const b of bokehs) {
-    const x = bounceTime(b.ix + b.dx * gs * t, w);
-    const y = bounceTime(b.iy + b.dy * gs * t, h);
-    const grad = ctx.createRadialGradient(x, y, 0, x, y, b.r);
-    grad.addColorStop(0, b.color);
+  for (let i = 0; i < prep.count; i++) {
+    const x = bounceTime(el(prep.ix, i, 0) + el(prep.dx, i, 0) * gs * t, w);
+    const y = bounceTime(el(prep.iy, i, 0) + el(prep.dy, i, 0) * gs * t, h);
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, el(prep.r, i, 0));
+    const cIdx = Math.floor(el(prep.colorRng, i, 0) * colors.length) % colors.length;
+    grad.addColorStop(0, colors[cIdx] ?? FALLBACK_COLOR);
     grad.addColorStop(1, 'transparent');
-    ctx.globalAlpha = 0.13 + Math.sin(t * b.pulseRate + b.phaseOffset + x * 0.005) * 0.06;
+    ctx.globalAlpha =
+      0.13 + Math.sin(t * el(prep.pulseRate, i, 0) + el(prep.phaseOffset, i, 0) + x * 0.005) * 0.06;
     ctx.beginPath();
-    ctx.arc(x, y, b.r, 0, Math.PI * 2);
+    ctx.arc(x, y, el(prep.r, i, 0), 0, Math.PI * 2);
     ctx.fillStyle = grad;
     ctx.fill();
   }
   ctx.restore();
+}
+
+interface VoronoiTilesPrep {
+  count: number;
+  ix: number[];
+  iy: number[];
+  dx: number[];
+  dy: number[];
+  colorRng: number[];
+}
+
+function prepareVoronoiTiles(seed: number, w: number, h: number): VoronoiTilesPrep {
+  const localRng = seededRng(seed);
+  const count = 15 + Math.floor(localRng() * 16);
+  const prep: VoronoiTilesPrep = {
+    count,
+    ix: new Array(count),
+    iy: new Array(count),
+    dx: new Array(count),
+    dy: new Array(count),
+    colorRng: new Array(count),
+  };
+  for (let i = 0; i < count; i++) {
+    prep.ix[i] = localRng() * w;
+    prep.iy[i] = localRng() * h;
+    prep.dx[i] = (localRng() - 0.5) * 0.3;
+    prep.dy[i] = (localRng() - 0.5) * 0.3;
+    prep.colorRng[i] = localRng();
+  }
+  return prep;
 }
 
 function voronoiTiles(
@@ -380,45 +559,39 @@ function voronoiTiles(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const count = 15 + Math.floor(localRng() * 16);
-  const seedsArr: { ix: number; iy: number; dx: number; dy: number; color: string }[] = [];
-
-  for (let i = 0; i < count; i++) {
-    seedsArr.push({
-      ix: localRng() * w,
-      iy: localRng() * h,
-      dx: (localRng() - 0.5) * 0.3,
-      dy: (localRng() - 0.5) * 0.3,
-      color: pick(colors, localRng),
-    });
+  const key = prepareKey('voronoiTiles', seed, w, h);
+  let prep = preparedGet<VoronoiTilesPrep>(key) ?? (prepared as VoronoiTilesPrep | undefined);
+  if (!prep || prep.count === undefined) {
+    prep = prepareVoronoiTiles(seed, w, h);
+    preparedSet(key, prep);
   }
 
   const gs = gentleSpeed(speed);
-  const computed: { x: number; y: number; color: string }[] = seedsArr.map((s) => ({
-    x: bounceTime(s.ix + s.dx * gs * t, w),
-    y: bounceTime(s.iy + s.dy * gs * t, h),
-    color: s.color,
-  }));
+  const cx = new Array<number>(prep.count);
+  const cy = new Array<number>(prep.count);
+  for (let i = 0; i < prep.count; i++) {
+    cx[i] = bounceTime(el(prep.ix, i, 0) + el(prep.dx, i, 0) * gs * t, w);
+    cy[i] = bounceTime(el(prep.iy, i, 0) + el(prep.dy, i, 0) * gs * t, h);
+  }
 
   const step = 6;
   for (let px = 0; px < w; px += step) {
     for (let py = 0; py < h; py += step) {
       let minDist = Infinity;
       let nearest = 0;
-      for (let i = 0; i < computed.length; i++) {
-        const s = computed[i];
-        if (!s) continue;
-        const dx = px - s.x;
-        const dy = py - s.y;
+      for (let i = 0; i < prep.count; i++) {
+        const dx = px - el(cx, i, 0);
+        const dy = py - el(cy, i, 0);
         const dist = dx * dx + dy * dy;
         if (dist < minDist) {
           minDist = dist;
           nearest = i;
         }
       }
-      ctx.fillStyle = computed[nearest]?.color ?? FALLBACK_COLOR;
+      const cIdx = Math.floor(el(prep.colorRng, nearest, 0) * colors.length) % colors.length;
+      ctx.fillStyle = colors[cIdx] ?? FALLBACK_COLOR;
       ctx.globalAlpha = 0.12;
       ctx.fillRect(px, py, step, step);
     }
@@ -618,6 +791,40 @@ function lavaLamp(
   ctx.restore();
 }
 
+interface StarfieldPrep {
+  count: number;
+  ix: number[];
+  y: number[];
+  depth: number[];
+  size: number[];
+  phase: number[];
+  colorRng: number[];
+}
+
+function prepareStarfield(seed: number, w: number, h: number): StarfieldPrep {
+  const localRng = seededRng(seed);
+  const count = 100 + Math.floor(localRng() * 151);
+  const prep: StarfieldPrep = {
+    count,
+    ix: new Array(count),
+    y: new Array(count),
+    depth: new Array(count),
+    size: new Array(count),
+    phase: new Array(count),
+    colorRng: new Array(count),
+  };
+  for (let i = 0; i < count; i++) {
+    const d = 1 + Math.floor(localRng() * 3);
+    prep.ix[i] = localRng() * w;
+    prep.y[i] = localRng() * h;
+    prep.depth[i] = d;
+    prep.size[i] = d === 1 ? 1 : d === 2 ? 1.5 : 2;
+    prep.phase[i] = localRng() * Math.PI * 2;
+    prep.colorRng[i] = localRng();
+  }
+  return prep;
+}
+
 function starfield(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -626,41 +833,63 @@ function starfield(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const count = 100 + Math.floor(localRng() * 151);
-  const stars: {
-    ix: number;
-    y: number;
-    depth: number;
-    size: number;
-    phase: number;
-    color: string;
-  }[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const depth = 1 + Math.floor(localRng() * 3);
-    stars.push({
-      ix: localRng() * w,
-      y: localRng() * h,
-      depth,
-      size: depth === 1 ? 1 : depth === 2 ? 1.5 : 2,
-      phase: localRng() * Math.PI * 2,
-      color: pick(colors, localRng),
-    });
+  const key = prepareKey('starfield', seed, w, h);
+  let prep = preparedGet<StarfieldPrep>(key) ?? (prepared as StarfieldPrep | undefined);
+  if (!prep || prep.count === undefined) {
+    prep = prepareStarfield(seed, w, h);
+    preparedSet(key, prep);
   }
 
   const gs = gentleSpeed(speed);
-  for (const star of stars) {
-    const x = wrapTime(star.ix + star.depth * 0.15 * gs * t, w);
-    const pulse = Math.sin(t * speed * 0.3 + star.phase) * 0.2 + 0.6;
+  for (let i = 0; i < prep.count; i++) {
+    const x = wrapTime(el(prep.ix, i, 0) + el(prep.depth, i, 0) * 0.15 * gs * t, w);
+    const pulse = Math.sin(t * speed * 0.3 + el(prep.phase, i, 0)) * 0.2 + 0.6;
     ctx.globalAlpha = pulse * 0.6;
     ctx.beginPath();
-    ctx.arc(x, star.y, star.size, 0, Math.PI * 2);
-    ctx.fillStyle = star.color;
+    ctx.arc(x, el(prep.y, i, 0), el(prep.size, i, 0), 0, Math.PI * 2);
+    const cIdx = Math.floor(el(prep.colorRng, i, 0) * colors.length) % colors.length;
+    ctx.fillStyle = colors[cIdx] ?? FALLBACK_COLOR;
     ctx.fill();
   }
   ctx.globalAlpha = 1;
+}
+
+interface FlowFieldPrep {
+  count: number;
+  gridCols: number;
+  gridRows: number;
+  grid: number[];
+  ix: number[];
+  iy: number[];
+  colorRng: number[];
+}
+
+function prepareFlowField(seed: number, w: number, h: number): FlowFieldPrep {
+  const localRng = seededRng(seed);
+  const count = 300 + Math.floor(localRng() * 400);
+  const gridCols = Math.ceil(w / 20);
+  const gridRows = Math.ceil(h / 20);
+  const gridLen = gridCols * gridRows;
+  const grid: number[] = new Array(gridLen);
+  for (let i = 0; i < gridLen; i++) grid[i] = localRng() * Math.PI * 2;
+
+  const prep: FlowFieldPrep = {
+    count,
+    gridCols,
+    gridRows,
+    grid,
+    ix: new Array(count),
+    iy: new Array(count),
+    colorRng: new Array(count),
+  };
+  for (let i = 0; i < count; i++) {
+    prep.ix[i] = localRng() * w;
+    prep.iy[i] = localRng() * h;
+    prep.colorRng[i] = localRng();
+  }
+  return prep;
 }
 
 function flowField(
@@ -671,34 +900,25 @@ function flowField(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const count = 300 + Math.floor(localRng() * 400);
-  const gridCols = Math.ceil(w / 20);
-  const gridRows = Math.ceil(h / 20);
-  const grid: number[] = [];
-  for (let i = 0; i < gridCols * gridRows; i++) {
-    grid.push(localRng() * Math.PI * 2);
-  }
-
-  const particles: { ix: number; iy: number; color: string }[] = [];
-  for (let i = 0; i < count; i++) {
-    particles.push({
-      ix: localRng() * w,
-      iy: localRng() * h,
-      color: pick(colors, localRng),
-    });
+  const key = prepareKey('flowField', seed, w, h);
+  let prep = preparedGet<FlowFieldPrep>(key) ?? (prepared as FlowFieldPrep | undefined);
+  if (!prep || prep.count === undefined) {
+    prep = prepareFlowField(seed, w, h);
+    preparedSet(key, prep);
   }
 
   const gs = gentleSpeed(speed) * 0.8;
-  for (const p of particles) {
-    const col = Math.floor(p.ix / 20);
-    const row = Math.floor(p.iy / 20);
-    const idx = Math.min(col + row * gridCols, grid.length - 1);
-    const angle = grid[idx] ?? 0;
-    const x = wrapTime(p.ix + Math.cos(angle) * gs * t, w);
-    const y = wrapTime(p.iy + Math.sin(angle) * gs * t, h);
-    ctx.fillStyle = p.color;
+  for (let i = 0; i < prep.count; i++) {
+    const col = Math.floor(el(prep.ix, i, 0) / 20);
+    const row = Math.floor(el(prep.iy, i, 0) / 20);
+    const idx = Math.min(col + row * prep.gridCols, prep.grid.length - 1);
+    const angle = prep.grid[idx] ?? 0;
+    const x = wrapTime(el(prep.ix, i, 0) + Math.cos(angle) * gs * t, w);
+    const y = wrapTime(el(prep.iy, i, 0) + Math.sin(angle) * gs * t, h);
+    const cIdx = Math.floor(el(prep.colorRng, i, 0) * colors.length) % colors.length;
+    ctx.fillStyle = colors[cIdx] ?? FALLBACK_COLOR;
     ctx.globalAlpha = 0.5;
     ctx.fillRect(x, y, 2, 2);
   }
@@ -800,6 +1020,36 @@ function rippleRings(
   ctx.globalAlpha = 1;
 }
 
+interface GradientMeshPrep {
+  count: number;
+  ix: number[];
+  iy: number[];
+  dx: number[];
+  dy: number[];
+  colorRng: number[];
+}
+
+function prepareGradientMesh(seed: number, w: number, h: number): GradientMeshPrep {
+  const localRng = seededRng(seed);
+  const count = 4 + Math.floor(localRng() * 5);
+  const prep: GradientMeshPrep = {
+    count,
+    ix: new Array(count),
+    iy: new Array(count),
+    dx: new Array(count),
+    dy: new Array(count),
+    colorRng: new Array(count),
+  };
+  for (let i = 0; i < count; i++) {
+    prep.ix[i] = localRng() * w;
+    prep.iy[i] = localRng() * h;
+    prep.dx[i] = (localRng() - 0.5) * 0.5;
+    prep.dy[i] = (localRng() - 0.5) * 0.5;
+    prep.colorRng[i] = localRng();
+  }
+  return prep;
+}
+
 function gradientMesh(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -808,27 +1058,22 @@ function gradientMesh(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const count = 4 + Math.floor(localRng() * 5);
-  const pts: { ix: number; iy: number; dx: number; dy: number; color: string }[] = [];
-
-  for (let i = 0; i < count; i++) {
-    pts.push({
-      ix: localRng() * w,
-      iy: localRng() * h,
-      dx: (localRng() - 0.5) * 0.5,
-      dy: (localRng() - 0.5) * 0.5,
-      color: pick(colors, localRng),
-    });
+  const key = prepareKey('gradientMesh', seed, w, h);
+  let prep = preparedGet<GradientMeshPrep>(key) ?? (prepared as GradientMeshPrep | undefined);
+  if (!prep || prep.count === undefined) {
+    prep = prepareGradientMesh(seed, w, h);
+    preparedSet(key, prep);
   }
 
   const gs = gentleSpeed(speed);
-  const computed: { x: number; y: number; color: string }[] = pts.map((p) => ({
-    x: bounceTime(p.ix + p.dx * gs * t, w),
-    y: bounceTime(p.iy + p.dy * gs * t, h),
-    color: p.color,
-  }));
+  const cx = new Array<number>(prep.count);
+  const cy = new Array<number>(prep.count);
+  for (let i = 0; i < prep.count; i++) {
+    cx[i] = bounceTime(el(prep.ix, i, 0) + el(prep.dx, i, 0) * gs * t, w);
+    cy[i] = bounceTime(el(prep.iy, i, 0) + el(prep.dy, i, 0) * gs * t, h);
+  }
 
   const step = 8;
   for (let px = 0; px < w; px += step) {
@@ -838,13 +1083,14 @@ function gradientMesh(
       let bVal = 0;
       let totalWeight = 0;
 
-      for (const pt of computed) {
-        const dx = px - pt.x;
-        const dy = py - pt.y;
+      for (let i = 0; i < prep.count; i++) {
+        const dx = px - el(cx, i, 0);
+        const dy = py - el(cy, i, 0);
         const dist = Math.sqrt(dx * dx + dy * dy);
         const weight = 1 / Math.max(1, dist);
         totalWeight += weight;
-        const hex = pt.color.replace('#', '');
+        const cIdx = Math.floor(el(prep.colorRng, i, 0) * colors.length) % colors.length;
+        const hex = (colors[cIdx] ?? FALLBACK_COLOR).replace('#', '');
         r += Number.parseInt(hex.slice(0, 2), 16) * weight;
         g += Number.parseInt(hex.slice(2, 4), 16) * weight;
         bVal += Number.parseInt(hex.slice(4, 6), 16) * weight;
@@ -1109,6 +1355,20 @@ function honeycombShift(
   ctx.globalAlpha = 1;
 }
 
+interface SpiralGalaxyPrep {
+  armCount: number;
+  particlesPerArm: number;
+  maxR: number;
+}
+
+function prepareSpiralGalaxy(seed: number, w: number, h: number): SpiralGalaxyPrep {
+  const localRng = seededRng(seed);
+  const armCount = 3 + Math.floor(localRng() * 3);
+  const particlesPerArm = 100 + Math.floor(localRng() * 101);
+  const maxR = Math.min(w, h) * 0.5;
+  return { armCount, particlesPerArm, maxR };
+}
+
 function spiralGalaxy(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -1117,19 +1377,23 @@ function spiralGalaxy(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const armCount = 3 + Math.floor(localRng() * 3);
-  const particlesPerArm = 100 + Math.floor(localRng() * 101);
+  const key = prepareKey('spiralGalaxy', seed, w, h);
+  let prep = preparedGet<SpiralGalaxyPrep>(key) ?? (prepared as SpiralGalaxyPrep | undefined);
+  if (!prep || prep.armCount === undefined) {
+    prep = prepareSpiralGalaxy(seed, w, h);
+    preparedSet(key, prep);
+  }
+
   const cx = w / 2;
   const cy = h / 2;
-
-  for (let arm = 0; arm < armCount; arm++) {
-    const baseAngle = (Math.PI * 2 * arm) / armCount;
+  for (let arm = 0; arm < prep.armCount; arm++) {
+    const baseAngle = (Math.PI * 2 * arm) / prep.armCount;
     const color = colors[arm % colors.length] ?? FALLBACK_COLOR;
-    for (let p = 0; p < particlesPerArm; p++) {
-      const tParam = p / particlesPerArm;
-      const r = tParam * Math.min(w, h) * 0.5;
+    for (let p = 0; p < prep.particlesPerArm; p++) {
+      const tParam = p / prep.particlesPerArm;
+      const r = tParam * prep.maxR;
       const angle = baseAngle + tParam * 4 + t * gentleSpeed(speed) * 0.3;
       const px = cx + Math.cos(angle) * r;
       const py = cy + Math.sin(angle) * r;
@@ -1173,6 +1437,45 @@ function glassPrism(
   ctx.restore();
 }
 
+interface RainStreaksPrep {
+  count: number;
+  angle: number;
+  x: number[];
+  iy: number[];
+  len: number[];
+  colorRng: number[];
+  speedF: number[];
+  alphaRng: number[];
+}
+
+function prepareRainStreaks(seed: number, w: number, h: number): RainStreaksPrep {
+  const localRng = seededRng(seed);
+  const count = 40 + Math.floor(localRng() * 41);
+  const angle = (30 + localRng() * 20) * (Math.PI / 180);
+  const prep: RainStreaksPrep = {
+    count,
+    angle,
+    x: new Array(count),
+    iy: new Array(count),
+    len: new Array(count),
+    colorRng: new Array(count),
+    speedF: new Array(count),
+    alphaRng: new Array(count),
+  };
+  for (let i = 0; i < count; i++) {
+    prep.x[i] = localRng() * w;
+    prep.iy[i] = localRng() * h;
+    prep.len[i] = 20 + localRng() * 60;
+    prep.colorRng[i] = localRng();
+    prep.speedF[i] = 0.5 + localRng() * 1.5;
+  }
+  // consume render-loop RNG calls for per-streak alpha
+  for (let i = 0; i < count; i++) {
+    prep.alphaRng[i] = localRng();
+  }
+  return prep;
+}
+
 function rainStreaks(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -1181,32 +1484,28 @@ function rainStreaks(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
-  const count = 40 + Math.floor(localRng() * 41);
-  const angle = (30 + localRng() * 20) * (Math.PI / 180);
-  const streaks: { x: number; iy: number; len: number; color: string; speedF: number }[] = [];
-
-  for (let i = 0; i < count; i++) {
-    streaks.push({
-      x: localRng() * w,
-      iy: localRng() * h,
-      len: 20 + localRng() * 60,
-      color: pick(colors, localRng),
-      speedF: 0.5 + localRng() * 1.5,
-    });
+  const key = prepareKey('rainStreaks', seed, w, h);
+  let prep = preparedGet<RainStreaksPrep>(key) ?? (prepared as RainStreaksPrep | undefined);
+  if (!prep || prep.count === undefined) {
+    prep = prepareRainStreaks(seed, w, h);
+    preparedSet(key, prep);
   }
 
   const gs = gentleSpeed(speed);
-  for (const s of streaks) {
-    const y = wrapTime(s.iy + s.speedF * gs * t, h + s.len) - s.len;
-    const ex = s.x + Math.cos(angle) * s.len;
-    const ey = y + Math.sin(angle) * s.len;
-    ctx.globalAlpha = 0.1 + localRng() * 0.3;
+  for (let i = 0; i < prep.count; i++) {
+    const y =
+      wrapTime(el(prep.iy, i, 0) + el(prep.speedF, i, 0) * gs * t, h + el(prep.len, i, 0)) -
+      el(prep.len, i, 0);
+    const ex = el(prep.x, i, 0) + Math.cos(prep.angle) * el(prep.len, i, 0);
+    const ey = y + Math.sin(prep.angle) * el(prep.len, i, 0);
+    ctx.globalAlpha = 0.1 + (prep.alphaRng[i] ?? 0) * 0.3;
     ctx.beginPath();
-    ctx.moveTo(s.x, y);
+    ctx.moveTo(el(prep.x, i, 0), y);
     ctx.lineTo(ex, ey);
-    ctx.strokeStyle = s.color;
+    const cIdx = Math.floor(el(prep.colorRng, i, 0) * colors.length) % colors.length;
+    ctx.strokeStyle = colors[cIdx] ?? FALLBACK_COLOR;
     ctx.lineWidth = 0.8;
     ctx.stroke();
   }
@@ -1265,27 +1564,31 @@ function wireframeDiamond(
   const angleY = t * gentleSpeed(speed) * 0.3;
   const angleX = t * gentleSpeed(speed) * 0.25;
 
-  const rotate = (x: number, y: number, z: number): [number, number] => {
-    const rx = x * Math.cos(angleY) - z * Math.sin(angleY);
-    let rz = x * Math.sin(angleY) + z * Math.cos(angleY);
-    const ry = y * Math.cos(angleX) - rz * Math.sin(angleX);
-    rz = y * Math.sin(angleX) + rz * Math.cos(angleX);
-    const perspective = Math.max(size * 3, 1);
+  const perspective = Math.max(size * 3, 1);
+  const cosY = Math.cos(angleY);
+  const sinY = Math.sin(angleY);
+  const cosX = Math.cos(angleX);
+  const sinX = Math.sin(angleX);
+
+  const project = (x: number, y: number, z: number): [number, number] => {
+    const rx = x * cosY - z * sinY;
+    let rz = x * sinY + z * cosY;
+    const ry = y * cosX - rz * sinX;
+    rz = y * sinX + rz * cosX;
     const scale = perspective / (perspective + rz);
     return [cx + rx * scale, cy + ry * scale];
   };
 
-  const top: [number, number, number] = [0, -size, 0];
-  const bottom: [number, number, number] = [0, size, 0];
-  const front: [number, number, number] = [0, 0, size];
-  const back: [number, number, number] = [0, 0, -size];
-  const left: [number, number, number] = [-size, 0, 0];
-  const right: [number, number, number] = [size, 0, 0];
+  const projected: [number, number][] = [
+    project(0, -size, 0),
+    project(0, size, 0),
+    project(0, 0, size),
+    project(0, 0, -size),
+    project(-size, 0, 0),
+    project(size, 0, 0),
+  ];
 
-  const vertices = [top, bottom, front, back, left, right];
-  const projected = vertices.map((v) => rotate(v[0], v[1], v[2]));
-
-  const edgePairs: [number, number][] = [
+  const EDGES: readonly [number, number][] = [
     [0, 2],
     [0, 3],
     [0, 4],
@@ -1299,7 +1602,6 @@ function wireframeDiamond(
     [3, 4],
     [3, 5],
   ];
-  const edges = [...edgePairs];
 
   ctx.save();
   ctx.shadowBlur = 6;
@@ -1310,8 +1612,7 @@ function wireframeDiamond(
   ctx.strokeStyle = edgeColor;
   ctx.lineWidth = 1.5;
   ctx.globalAlpha = 0.7;
-
-  for (const [a, b] of edges) {
+  for (const [a, b] of EDGES) {
     const pa = projected[a];
     const pb = projected[b];
     if (!pa || !pb) continue;
@@ -1320,8 +1621,46 @@ function wireframeDiamond(
     ctx.lineTo(pb[0], pb[1]);
     ctx.stroke();
   }
-
   ctx.restore();
+}
+
+interface WireframeCubePrep {
+  verts: Point3[];
+  edges: [number, number][];
+  sx: number;
+  sy: number;
+  sz: number;
+  dist: number;
+  axOff: number;
+  ayOff: number;
+}
+
+function prepareWireframeCube(seed: number, w: number, h: number): WireframeCubePrep {
+  const localRng = seededRng(seed);
+  const sx = (0.18 + localRng() * 0.08) * w;
+  const sy = (0.15 + localRng() * 0.1) * h;
+  const sz = (0.14 + localRng() * 0.12) * Math.min(w, h);
+  const dist = Math.min(w, h) * 0.55;
+  const verts: Point3[] = [];
+  for (let ix = -1; ix <= 1; ix += 2)
+    for (let iy = -1; iy <= 1; iy += 2)
+      for (let iz = -1; iz <= 1; iz += 2) verts.push([ix * sx, iy * sy, iz * sz]);
+  const edges: [number, number][] = [];
+  for (let i = 0; i < 8; i++)
+    for (let j = i + 1; j < 8; j++) {
+      const xor = i ^ j;
+      if (xor !== 0 && (xor & (xor - 1)) === 0) edges.push([i, j]);
+    }
+  return {
+    verts,
+    edges,
+    sx,
+    sy,
+    sz,
+    dist,
+    axOff: localRng() * Math.PI * 2,
+    ayOff: localRng() * Math.PI * 2,
+  };
 }
 
 function wireframeCube(
@@ -1332,39 +1671,72 @@ function wireframeCube(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
+  const key = prepareKey('wireframeCube', seed, w, h);
+  let prep = preparedGet<WireframeCubePrep>(key) ?? (prepared as WireframeCubePrep | undefined);
+  if (!prep?.verts) {
+    prep = prepareWireframeCube(seed, w, h);
+    preparedSet(key, prep);
+  }
   const cx = w / 2;
   const cy = h / 2;
-  const sx = (0.18 + localRng() * 0.08) * w;
-  const sy = (0.15 + localRng() * 0.1) * h;
-  const sz = (0.14 + localRng() * 0.12) * Math.min(w, h);
-  const dist = Math.min(w, h) * 0.55;
-
-  const verts: Point3[] = [];
-  for (let ix = -1; ix <= 1; ix += 2)
-    for (let iy = -1; iy <= 1; iy += 2)
-      for (let iz = -1; iz <= 1; iz += 2) verts.push([ix * sx, iy * sy, iz * sz]);
-
-  const edges: [number, number][] = [];
-  for (let i = 0; i < 8; i++)
-    for (let j = i + 1; j < 8; j++) {
-      const xor = i ^ j;
-      if (xor !== 0 && (xor & (xor - 1)) === 0) edges.push([i, j]);
-    }
-
   const gs = gentleSpeed(speed);
-  const ax = t * gs * 0.25 + localRng() * Math.PI * 2;
-  const ay = t * gs * 0.3 + localRng() * Math.PI * 2;
+  const ax = t * gs * 0.25 + prep.axOff;
+  const ay = t * gs * 0.3 + prep.ayOff;
   const az = t * gs * 0.12;
-
-  const projected = verts.map(([x, y, z]) => {
+  const projected = prep.verts.map(([x, y, z]) => {
     const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, az);
-    return perspective2D(rx, ry, rz, dist, cx, cy);
+    return perspective2D(rx, ry, rz, prep.dist, cx, cy);
   });
-
   const ci = Math.floor(t * speed * 0.12) % colors.length;
-  drawWireframeEdges(ctx, projected, edges, colors[ci] ?? FALLBACK_COLOR, 0.6);
+  drawWireframeEdges(ctx, projected, prep.edges, colors[ci] ?? FALLBACK_COLOR, 0.6);
+}
+
+interface WireframeIcosahedronPrep {
+  verts: Point3[];
+  edges: [number, number][];
+  baseScale: number;
+  dist: number;
+  axOff: number;
+  ayOff: number;
+}
+
+function prepareWireframeIcosahedron(seed: number, w: number, h: number): WireframeIcosahedronPrep {
+  const localRng = seededRng(seed);
+  const baseScale = Math.min(w, h) * 0.28;
+  const dist = Math.min(w, h) * 0.55;
+  const phi = (1 + Math.sqrt(5)) / 2;
+  const rawVerts: [number, number, number][] = [];
+  for (let i = -1; i <= 1; i += 2) {
+    rawVerts.push([0, i, phi], [0, i, -phi], [phi, 0, i], [-phi, 0, i], [i, phi, 0], [i, -phi, 0]);
+  }
+  const verts: Point3[] = rawVerts.map(([a, b, c]) => [
+    a * baseScale,
+    b * baseScale,
+    c * baseScale,
+  ]);
+  const edges: [number, number][] = [];
+  for (let i = 0; i < 12; i++) {
+    for (let j = i + 1; j < 12; j++) {
+      const a = verts[i];
+      const b = verts[j];
+      if (!a || !b) continue;
+      const dx = a[0] - b[0];
+      const dy = a[1] - b[1];
+      const dz = a[2] - b[2];
+      if (Math.abs(dx * dx + dy * dy + dz * dz - 4 * baseScale * baseScale) < 0.01)
+        edges.push([i, j]);
+    }
+  }
+  return {
+    verts,
+    edges,
+    baseScale,
+    dist,
+    axOff: localRng() * Math.PI * 2,
+    ayOff: localRng() * Math.PI * 2,
+  };
 }
 
 function wireframeIcosahedron(
@@ -1375,71 +1747,47 @@ function wireframeIcosahedron(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
+  const key = prepareKey('wireframeIcosahedron', seed, w, h);
+  let prep =
+    preparedGet<WireframeIcosahedronPrep>(key) ??
+    (prepared as WireframeIcosahedronPrep | undefined);
+  if (!prep?.verts) {
+    prep = prepareWireframeIcosahedron(seed, w, h);
+    preparedSet(key, prep);
+  }
   const cx = w / 2;
   const cy = h / 2;
-  const baseScale = Math.min(w, h) * 0.28;
-  const dist = Math.min(w, h) * 0.55;
-  const phi = (1 + Math.sqrt(5)) / 2;
-
-  const rawVerts: [number, number, number][] = [];
-  for (let i = -1; i <= 1; i += 2) {
-    rawVerts.push([0, i, phi], [0, i, -phi], [phi, 0, i], [-phi, 0, i], [i, phi, 0], [i, -phi, 0]);
-  }
-  const verts: Point3[] = rawVerts.map(([a, b, c]) => [
-    a * baseScale,
-    b * baseScale,
-    c * baseScale,
-  ]);
-
-  const edges: [number, number][] = [];
-  for (let i = 0; i < 12; i++) {
-    for (let j = i + 1; j < 12; j++) {
-      const a = verts[i];
-      const b = verts[j];
-      if (!a || !b) continue;
-      const dx = a[0] - b[0];
-      const dy = a[1] - b[1];
-      const dz = a[2] - b[2];
-      const d2 = dx * dx + dy * dy + dz * dz;
-      if (Math.abs(d2 - 4 * baseScale * baseScale) < 0.01) edges.push([i, j]);
-    }
-  }
-
   const gs = gentleSpeed(speed);
-  const ax = t * gs * 0.2 + localRng() * Math.PI * 2;
-  const ay = t * gs * 0.28 + localRng() * Math.PI * 2;
+  const ax = t * gs * 0.2 + prep.axOff;
+  const ay = t * gs * 0.28 + prep.ayOff;
   const az = t * gs * 0.08;
-
-  const projected = verts.map(([x, y, z]) => {
+  const projected = prep.verts.map(([x, y, z]) => {
     const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, az);
-    return perspective2D(rx, ry, rz, dist, cx, cy);
+    return perspective2D(rx, ry, rz, prep.dist, cx, cy);
   });
-
   const ci = Math.floor(t * speed * 0.1) % colors.length;
-  drawWireframeEdges(ctx, projected, edges, colors[ci] ?? FALLBACK_COLOR, 0.55);
+  drawWireframeEdges(ctx, projected, prep.edges, colors[ci] ?? FALLBACK_COLOR, 0.55);
 }
 
-function wireframeTorus(
-  ctx: CanvasRenderingContext2D,
-  w: number,
-  h: number,
-  seed: number,
-  t: number,
-  colors: string[],
-  speed: number,
-) {
+interface WireframeTorusPrep {
+  grid: Point3[][];
+  R: number;
+  r: number;
+  dist: number;
+  axOff: number;
+  ayOff: number;
+}
+
+function prepareWireframeTorus(seed: number, w: number, h: number): WireframeTorusPrep {
   const localRng = seededRng(seed);
-  const cx = w / 2;
-  const cy = h / 2;
   const baseScale = Math.min(w, h) * 0.28;
   const R = baseScale * (0.65 + localRng() * 0.3);
   const r = baseScale * (0.25 + localRng() * 0.2);
+  const dist = Math.min(w, h) * 0.6;
   const uCount = 16;
   const vCount = 10;
-  const dist = Math.min(w, h) * 0.6;
-
   const grid: Point3[][] = [];
   for (let iu = 0; iu < uCount; iu++) {
     const u = (iu / uCount) * Math.PI * 2;
@@ -1454,28 +1802,46 @@ function wireframeTorus(
     }
     grid.push(row);
   }
+  return { grid, R, r, dist, axOff: localRng() * Math.PI * 2, ayOff: localRng() * Math.PI * 2 };
+}
 
+function wireframeTorus(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+  prepared?: unknown,
+) {
+  const key = prepareKey('wireframeTorus', seed, w, h);
+  let prep = preparedGet<WireframeTorusPrep>(key) ?? (prepared as WireframeTorusPrep | undefined);
+  if (!prep?.grid) {
+    prep = prepareWireframeTorus(seed, w, h);
+    preparedSet(key, prep);
+  }
+  const cx = w / 2;
+  const cy = h / 2;
   const gs = gentleSpeed(speed);
-  const ax = t * gs * 0.2 + localRng() * Math.PI * 2;
-  const ay = t * gs * 0.3 + localRng() * Math.PI * 2;
-
-  const projected = grid.map((row) =>
+  const ax = t * gs * 0.2 + prep.axOff;
+  const ay = t * gs * 0.3 + prep.ayOff;
+  const uCount = prep.grid.length;
+  const vCount = prep.grid[0]?.length ?? 0;
+  const projected = prep.grid.map((row) =>
     row.map(([x, y, z]) => {
       const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, 0);
-      return perspective2D(rx, ry, rz, dist, cx, cy);
+      return perspective2D(rx, ry, rz, prep.dist, cx, cy);
     }),
   );
-
   const ci = Math.floor(t * speed * 0.1) % colors.length;
   const color = colors[ci] ?? FALLBACK_COLOR;
-
   ctx.save();
   ctx.shadowBlur = 3;
   ctx.shadowColor = color;
   ctx.strokeStyle = color;
   ctx.lineWidth = 0.9;
   ctx.globalAlpha = 0.5;
-
   for (let iu = 0; iu < uCount; iu++) {
     for (let iv = 0; iv < vCount; iv++) {
       const p = projected[iu]?.[iv];
@@ -1495,6 +1861,20 @@ function wireframeTorus(
   ctx.restore();
 }
 
+interface WireframeSpherePrep {
+  radius: number;
+  dist: number;
+  axOff: number;
+  ayOff: number;
+}
+
+function prepareWireframeSphere(seed: number, w: number, h: number): WireframeSpherePrep {
+  const localRng = seededRng(seed);
+  const radius = Math.min(w, h) * (0.22 + localRng() * 0.12);
+  const dist = Math.min(w, h) * 0.55;
+  return { radius, dist, axOff: localRng() * Math.PI * 2, ayOff: localRng() * Math.PI * 2 };
+}
+
 function wireframeSphere(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -1503,71 +1883,83 @@ function wireframeSphere(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
+  const key = prepareKey('wireframeSphere', seed, w, h);
+  let prep = preparedGet<WireframeSpherePrep>(key) ?? (prepared as WireframeSpherePrep | undefined);
+  if (!prep || prep.radius === undefined) {
+    prep = prepareWireframeSphere(seed, w, h);
+    preparedSet(key, prep);
+  }
   const cx = w / 2;
   const cy = h / 2;
-  const radius = Math.min(w, h) * (0.22 + localRng() * 0.12);
   const latCount = 14;
   const lonCount = 12;
-  const dist = Math.min(w, h) * 0.55;
-
   const gs = gentleSpeed(speed);
-  const ax = t * gs * 0.22 + localRng() * Math.PI * 2;
-  const ay = t * gs * 0.18 + localRng() * Math.PI * 2;
-
+  const ax = t * gs * 0.22 + prep.axOff;
+  const ay = t * gs * 0.18 + prep.ayOff;
   const ci = Math.floor(t * speed * 0.08) % colors.length;
   const color = colors[ci] ?? FALLBACK_COLOR;
-
   ctx.save();
   ctx.shadowBlur = 3;
   ctx.shadowColor = color;
   ctx.strokeStyle = color;
   ctx.lineWidth = 0.9;
   ctx.globalAlpha = 0.48;
-
   for (let ilat = 0; ilat <= latCount; ilat++) {
     const phi = (ilat / latCount) * Math.PI;
     let first = true;
     ctx.beginPath();
     for (let ilon = 0; ilon <= lonCount; ilon++) {
       const theta = (ilon / lonCount) * Math.PI * 2;
-      const x = radius * Math.sin(phi) * Math.cos(theta);
-      const y = radius * Math.cos(phi);
-      const z = radius * Math.sin(phi) * Math.sin(theta);
+      const x = prep.radius * Math.sin(phi) * Math.cos(theta);
+      const y = prep.radius * Math.cos(phi);
+      const z = prep.radius * Math.sin(phi) * Math.sin(theta);
       const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, 0);
-      const proj = perspective2D(rx, ry, rz, dist, cx, cy);
+      const proj = perspective2D(rx, ry, rz, prep.dist, cx, cy);
       if (first) {
         ctx.moveTo(proj[0], proj[1]);
         first = false;
-      } else {
-        ctx.lineTo(proj[0], proj[1]);
-      }
+      } else ctx.lineTo(proj[0], proj[1]);
     }
     ctx.stroke();
   }
-
   for (let ilon = 0; ilon < lonCount; ilon++) {
     const theta = (ilon / lonCount) * Math.PI * 2;
     let first = true;
     ctx.beginPath();
     for (let ilat = 0; ilat <= latCount; ilat++) {
       const phi = (ilat / latCount) * Math.PI;
-      const x = radius * Math.sin(phi) * Math.cos(theta);
-      const y = radius * Math.cos(phi);
-      const z = radius * Math.sin(phi) * Math.sin(theta);
+      const x = prep.radius * Math.sin(phi) * Math.cos(theta);
+      const y = prep.radius * Math.cos(phi);
+      const z = prep.radius * Math.sin(phi) * Math.sin(theta);
       const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, 0);
-      const proj = perspective2D(rx, ry, rz, dist, cx, cy);
+      const proj = perspective2D(rx, ry, rz, prep.dist, cx, cy);
       if (first) {
         ctx.moveTo(proj[0], proj[1]);
         first = false;
-      } else {
-        ctx.lineTo(proj[0], proj[1]);
-      }
+      } else ctx.lineTo(proj[0], proj[1]);
     }
     ctx.stroke();
   }
   ctx.restore();
+}
+
+interface WireframeTunnelPrep {
+  baseRadius: number;
+  depthRange: number;
+  twist: number;
+  dist: number;
+}
+
+function prepareWireframeTunnel(seed: number, w: number, h: number): WireframeTunnelPrep {
+  const localRng = seededRng(seed);
+  return {
+    baseRadius: Math.min(w, h) * 0.3,
+    depthRange: Math.min(w, h) * 0.7,
+    twist: (localRng() - 0.5) * 0.4,
+    dist: Math.min(w, h) * 0.45,
+  };
 }
 
 function wireframeTunnel(
@@ -1578,17 +1970,18 @@ function wireframeTunnel(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
+  const key = prepareKey('wireframeTunnel', seed, w, h);
+  let prep = preparedGet<WireframeTunnelPrep>(key) ?? (prepared as WireframeTunnelPrep | undefined);
+  if (!prep || prep.baseRadius === undefined) {
+    prep = prepareWireframeTunnel(seed, w, h);
+    preparedSet(key, prep);
+  }
   const cx = w / 2;
   const cy = h / 2;
   const frameCount = 14;
   const vertsPerFrame = 8;
-  const baseRadius = Math.min(w, h) * 0.3;
-  const depthRange = Math.min(w, h) * 0.7;
-  const twist = (localRng() - 0.5) * 0.4;
-  const dist = Math.min(w, h) * 0.45;
-
   const gs = gentleSpeed(speed);
   const ax = t * gs * 0.15;
   const ay = t * gs * 0.1;
@@ -1597,16 +1990,15 @@ function wireframeTunnel(
   for (let i = 0; i < frameCount; i++) {
     const zRatio = i / frameCount;
     const scroll = (zRatio + t * gs * 0.04) % 1;
-    const z = scroll * depthRange * 2 - depthRange;
-    const scale = dist / Math.max(dist + z, 1e-6);
-
+    const z = scroll * prep.depthRange * 2 - prep.depthRange;
+    const scale = prep.dist / Math.max(prep.dist + z, 1e-6);
     const frame: [number, number][] = [];
     for (let v = 0; v < vertsPerFrame; v++) {
-      const angle = (v / vertsPerFrame) * Math.PI * 2 + z * twist;
-      const sx = Math.cos(angle) * baseRadius * scale;
-      const sy = Math.sin(angle) * baseRadius * scale;
+      const angle = (v / vertsPerFrame) * Math.PI * 2 + z * prep.twist;
+      const sx = Math.cos(angle) * prep.baseRadius * scale;
+      const sy = Math.sin(angle) * prep.baseRadius * scale;
       const [rx, ry, rz] = rotate3DPoint(sx, sy, z, ax, ay, 0);
-      const proj = perspective2D(rx, ry, rz, dist, cx, cy);
+      const proj = perspective2D(rx, ry, rz, prep.dist, cx, cy);
       frame.push(proj);
     }
     frames.push(frame);
@@ -1614,14 +2006,12 @@ function wireframeTunnel(
 
   const ci = Math.floor(t * speed * 0.08) % colors.length;
   const color = colors[ci] ?? FALLBACK_COLOR;
-
   ctx.save();
   ctx.shadowBlur = 3;
   ctx.shadowColor = color;
   ctx.strokeStyle = color;
   ctx.lineWidth = 0.9;
   ctx.globalAlpha = 0.45;
-
   for (let i = 0; i < frameCount; i++) {
     const frame = frames[i];
     if (!frame) continue;
@@ -1637,7 +2027,6 @@ function wireframeTunnel(
     ctx.closePath();
     ctx.globalAlpha = 0.3 + (0.25 * i) / frameCount;
     ctx.stroke();
-
     if (i < frameCount - 1) {
       const next = frames[i + 1];
       if (!next) continue;
@@ -1656,6 +2045,38 @@ function wireframeTunnel(
   ctx.restore();
 }
 
+interface WireframeTesseractPrep {
+  verts4D: Point4[];
+  edges4D: [number, number][];
+  scale: number;
+  dist3D: number;
+  axwOff: number;
+  aywOff: number;
+}
+
+function prepareWireframeTesseract(seed: number, w: number, h: number): WireframeTesseractPrep {
+  const localRng = seededRng(seed);
+  const scale = Math.min(w, h) * 0.22;
+  const dist3D = Math.min(w, h) * 0.5;
+  const verts4D: Point4[] = [];
+  for (let i = 0; i < 16; i++)
+    verts4D.push([i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1, i & 8 ? 1 : -1]);
+  const edges4D: [number, number][] = [];
+  for (let i = 0; i < 16; i++)
+    for (let j = i + 1; j < 16; j++) {
+      const xor = i ^ j;
+      if (xor !== 0 && (xor & (xor - 1)) === 0) edges4D.push([i, j]);
+    }
+  return {
+    verts4D,
+    edges4D,
+    scale,
+    dist3D,
+    axwOff: localRng() * Math.PI * 2,
+    aywOff: localRng() * Math.PI * 2,
+  };
+}
+
 function wireframeTesseract(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -1664,72 +2085,57 @@ function wireframeTesseract(
   t: number,
   colors: string[],
   speed: number,
+  prepared?: unknown,
 ) {
-  const localRng = seededRng(seed);
+  const key = prepareKey('wireframeTesseract', seed, w, h);
+  let prep =
+    preparedGet<WireframeTesseractPrep>(key) ?? (prepared as WireframeTesseractPrep | undefined);
+  if (!prep?.verts4D) {
+    prep = prepareWireframeTesseract(seed, w, h);
+    preparedSet(key, prep);
+  }
   const cx = w / 2;
   const cy = h / 2;
-  const scale = Math.min(w, h) * 0.22;
-  const dist4D = 3.5;
-  const dist3D = Math.min(w, h) * 0.5;
-
-  const verts4D: Point4[] = [];
-  for (let i = 0; i < 16; i++) {
-    verts4D.push([i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1, i & 8 ? 1 : -1]);
-  }
-
-  const edges4D: [number, number][] = [];
-  for (let i = 0; i < 16; i++) {
-    for (let j = i + 1; j < 16; j++) {
-      const xor = i ^ j;
-      if (xor !== 0 && (xor & (xor - 1)) === 0) edges4D.push([i, j]);
-    }
-  }
-
   const gs = gentleSpeed(speed);
   const axy = t * gs * 0.18;
-  const axw = t * gs * 0.25 + localRng() * Math.PI * 2;
-  const ayw = t * gs * 0.22 + localRng() * Math.PI * 2;
+  const axw = t * gs * 0.25 + prep.axwOff;
+  const ayw = t * gs * 0.22 + prep.aywOff;
   const azw = t * gs * 0.15;
-
-  const projected3D: Point3[] = verts4D.map((v) => {
+  const projected3D: Point3[] = prep.verts4D.map((v) => {
     let p = v;
     p = rotate4DPoint(p, 0, 1, axy);
     p = rotate4DPoint(p, 0, 3, axw);
     p = rotate4DPoint(p, 1, 3, ayw);
     p = rotate4DPoint(p, 2, 3, azw);
-    return project4Dto3D(p, dist4D);
+    return project4Dto3D(p, 3.5);
   });
-
   const ax = t * gs * 0.08;
   const ay = t * gs * 0.1;
   const projected = projected3D.map(([x, y, z]) => {
-    const sx = x * scale;
-    const sy = y * scale;
-    const sz = z * scale;
+    const sx = x * prep.scale;
+    const sy = y * prep.scale;
+    const sz = z * prep.scale;
     const [rx, ry, rz] = rotate3DPoint(sx, sy, sz, ax, ay, 0);
-    return perspective2D(rx, ry, rz, dist3D, cx, cy);
+    return perspective2D(rx, ry, rz, prep.dist3D, cx, cy);
   });
-
   const ci = Math.floor(t * speed * 0.12) % colors.length;
-  drawWireframeEdges(ctx, projected, edges4D, colors[ci] ?? FALLBACK_COLOR, 0.55);
+  drawWireframeEdges(ctx, projected, prep.edges4D, colors[ci] ?? FALLBACK_COLOR, 0.55);
 }
 
-function wireframe16Cell(
-  ctx: CanvasRenderingContext2D,
-  w: number,
-  h: number,
-  seed: number,
-  t: number,
-  colors: string[],
-  speed: number,
-) {
-  const localRng = seededRng(seed);
-  const cx = w / 2;
-  const cy = h / 2;
-  const scale = Math.min(w, h) * 0.24;
-  const dist4D = 3.5;
-  const dist3D = Math.min(w, h) * 0.5;
+interface Wireframe16CellPrep {
+  verts4D: Point4[];
+  edges4D: [number, number][];
+  scale: number;
+  dist3D: number;
+  axwOff: number;
+  aywOff: number;
+  azwOff: number;
+}
 
+function prepareWireframe16Cell(seed: number, w: number, h: number): Wireframe16CellPrep {
+  const localRng = seededRng(seed);
+  const scale = Math.min(w, h) * 0.24;
+  const dist3D = Math.min(w, h) * 0.5;
   const verts4D: Point4[] = [
     [1, 0, 0, 0],
     [-1, 0, 0, 0],
@@ -1740,41 +2146,62 @@ function wireframe16Cell(
     [0, 0, 0, 1],
     [0, 0, 0, -1],
   ];
-
   const edges4D: [number, number][] = [];
-  for (let i = 0; i < 8; i++) {
-    for (let j = i + 1; j < 8; j++) {
-      if (j !== (i ^ 1)) edges4D.push([i, j]);
-    }
-  }
+  for (let i = 0; i < 8; i++)
+    for (let j = i + 1; j < 8; j++) if (j !== (i ^ 1)) edges4D.push([i, j]);
+  return {
+    verts4D,
+    edges4D,
+    scale,
+    dist3D,
+    axwOff: localRng() * Math.PI * 2,
+    aywOff: localRng() * Math.PI * 2,
+    azwOff: localRng() * Math.PI * 2,
+  };
+}
 
+function wireframe16Cell(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  t: number,
+  colors: string[],
+  speed: number,
+  prepared?: unknown,
+) {
+  const key = prepareKey('wireframe16Cell', seed, w, h);
+  let prep = preparedGet<Wireframe16CellPrep>(key) ?? (prepared as Wireframe16CellPrep | undefined);
+  if (!prep?.verts4D) {
+    prep = prepareWireframe16Cell(seed, w, h);
+    preparedSet(key, prep);
+  }
+  const cx = w / 2;
+  const cy = h / 2;
   const gs = gentleSpeed(speed);
   const axy = t * gs * 0.2;
-  const axw = t * gs * 0.22 + localRng() * Math.PI * 2;
-  const ayw = t * gs * 0.26 + localRng() * Math.PI * 2;
-  const azw = t * gs * 0.18 + localRng() * Math.PI * 2;
-
-  const projected3D: Point3[] = verts4D.map((v) => {
+  const axw = t * gs * 0.22 + prep.axwOff;
+  const ayw = t * gs * 0.26 + prep.aywOff;
+  const azw = t * gs * 0.18 + prep.azwOff;
+  const projected3D: Point3[] = prep.verts4D.map((v) => {
     let p = v;
     p = rotate4DPoint(p, 0, 1, axy);
     p = rotate4DPoint(p, 0, 3, axw);
     p = rotate4DPoint(p, 1, 3, ayw);
     p = rotate4DPoint(p, 2, 3, azw);
-    return project4Dto3D(p, dist4D);
+    return project4Dto3D(p, 3.5);
   });
-
   const ax = t * gs * 0.06;
   const ay = t * gs * 0.09;
   const projected = projected3D.map(([x, y, z]) => {
-    const sx = x * scale;
-    const sy = y * scale;
-    const sz = z * scale;
+    const sx = x * prep.scale;
+    const sy = y * prep.scale;
+    const sz = z * prep.scale;
     const [rx, ry, rz] = rotate3DPoint(sx, sy, sz, ax, ay, 0);
-    return perspective2D(rx, ry, rz, dist3D, cx, cy);
+    return perspective2D(rx, ry, rz, prep.dist3D, cx, cy);
   });
-
   const ci = Math.floor(t * speed * 0.1) % colors.length;
-  drawWireframeEdges(ctx, projected, edges4D, colors[ci] ?? FALLBACK_COLOR, 0.5);
+  drawWireframeEdges(ctx, projected, prep.edges4D, colors[ci] ?? FALLBACK_COLOR, 0.5);
 }
 
 function spiralVortex(
