@@ -18,6 +18,99 @@ export const WIREFRAME_ANIMATION_SLOWDOWN = 0.5;
 /** wireframeTunnel-only slowdown for rotation, depth scroll, and color (70% slower). */
 export const WIREFRAME_TUNNEL_SLOWDOWN = 0.3;
 
+/**
+ * Deterministic continuous colour interpolation across palette entries for a
+ * fractional phase.  Integer phases land exactly on a palette entry; between
+ * entries the colour is blended, and the last entry blends smoothly back into
+ * the first (wrap).  Supports the `hsl()`/`hsla()` strings produced by
+ * `deriveColors` and the `#rgb` / `#rrggbb` hex test palettes.  Empty palettes
+ * fall back to `FALLBACK_COLOR`; single-entry palettes are returned unchanged;
+ * mixed or unparsable entries degrade deterministically to the nearest entry.
+ */
+export function interpolatePaletteColor(colors: string[], phase: number): string {
+  const len = colors.length;
+  if (len === 0) return FALLBACK_COLOR;
+  if (len === 1) return colors[0] as string;
+  const wrapped = ((phase % len) + len) % len;
+  const from = Math.floor(wrapped);
+  const weight = wrapped - from;
+  const a = colors[from];
+  const b = colors[(from + 1) % len];
+  if (!a || !b) return a ?? b ?? FALLBACK_COLOR;
+  const fromHsl = parseHslColor(a);
+  const toHsl = parseHslColor(b);
+  if (fromHsl && toHsl) return blendHslColors(fromHsl, toHsl, weight);
+  const fromHex = parseHexColor(a);
+  const toHex = parseHexColor(b);
+  if (fromHex && toHex) return blendHexColors(fromHex, toHex, weight);
+  return weight < 0.5 ? a : b;
+}
+
+type RgbChannels = [number, number, number];
+
+function parseHexColor(s: string): RgbChannels | null {
+  if (s.length === 4 && s[0] === '#') {
+    const r = parseInt(s.slice(1, 2) + s.slice(1, 2), 16);
+    const g = parseInt(s.slice(2, 3) + s.slice(2, 3), 16);
+    const b = parseInt(s.slice(3, 4) + s.slice(3, 4), 16);
+    return Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b) ? [r, g, b] : null;
+  }
+  if (s.length === 7 && s[0] === '#') {
+    const r = parseInt(s.slice(1, 3), 16);
+    const g = parseInt(s.slice(3, 5), 16);
+    const b = parseInt(s.slice(5, 7), 16);
+    return Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b) ? [r, g, b] : null;
+  }
+  return null;
+}
+
+interface HslColor {
+  h: number;
+  s: number;
+  l: number;
+  a: number;
+  hasAlpha: boolean;
+}
+
+function parseHslColor(s: string): HslColor | null {
+  const match = /^hsla?\(([^)]*)\)$/i.exec(s);
+  if (!match) return null;
+  const parts = (match[1] as string).split(',').map((p) => p.trim());
+  const hue = parseFloat(parts[0] ?? '');
+  const sat = parseFloat((parts[1] ?? '').replace('%', ''));
+  const lit = parseFloat((parts[2] ?? '').replace('%', ''));
+  if (!Number.isFinite(hue) || !Number.isFinite(sat) || !Number.isFinite(lit)) return null;
+  const alphaPart = parts[3];
+  let a = 1;
+  const hasAlpha = alphaPart !== undefined && alphaPart !== '';
+  if (alphaPart !== undefined && alphaPart !== '') {
+    const raw = parseFloat(alphaPart.replace('%', ''));
+    if (!Number.isFinite(raw)) return null;
+    a = alphaPart.endsWith('%') ? raw / 100 : raw;
+  }
+  return { h: hue, s: sat, l: lit, a, hasAlpha };
+}
+
+function blendHexColors(a: RgbChannels, b: RgbChannels, weight: number): string {
+  const ch = (x: number, y: number) =>
+    Math.round(x + (y - x) * weight)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${ch(a[0], b[0])}${ch(a[1], b[1])}${ch(a[2], b[2])}`;
+}
+
+function blendHslColors(a: HslColor, b: HslColor, weight: number): string {
+  let dh = b.h - a.h;
+  if (dh > 180) dh -= 360;
+  else if (dh < -180) dh += 360;
+  const h = ((Math.round((a.h + dh * weight) % 360) % 360) + 360) % 360;
+  const s = Math.round(a.s + (b.s - a.s) * weight);
+  const l = Math.round(a.l + (b.l - a.l) * weight);
+  const alpha = a.a + (b.a - a.a) * weight;
+  if (a.hasAlpha || b.hasAlpha || alpha !== 1) return `hsla(${h},${s}%,${l}%,${alpha})`;
+  return `hsl(${h},${s}%,${l}%)`;
+}
+
 /** Safe array element access — arrays are pre-filled in prepare functions. */
 function el<T>(a: T[], i: number, fallback: T): T {
   const v = a[i];
@@ -1612,11 +1705,10 @@ function wireframeDiamond(
 
   ctx.save();
   ctx.shadowBlur = 6;
-  const colorIdx =
-    Math.floor(
-      ((Math.sin(t * speed * 0.5 * WIREFRAME_ANIMATION_SLOWDOWN) + 1) / 2) * colors.length,
-    ) % colors.length;
-  const edgeColor = colors[colorIdx] ?? FALLBACK_COLOR;
+  const edgeColor = interpolatePaletteColor(
+    colors,
+    ((Math.sin(t * speed * 0.5 * WIREFRAME_ANIMATION_SLOWDOWN) + 1) / 2) * colors.length,
+  );
   ctx.shadowColor = edgeColor;
   ctx.strokeStyle = edgeColor;
   ctx.lineWidth = 1.5;
@@ -1698,8 +1790,8 @@ function wireframeCube(
     const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, az);
     return perspective2D(rx, ry, rz, prep.dist, cx, cy);
   });
-  const ci = Math.floor(t * speed * 0.12 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
-  drawWireframeEdges(ctx, projected, prep.edges, colors[ci] ?? FALLBACK_COLOR, 0.6);
+  const color = interpolatePaletteColor(colors, t * speed * 0.12 * WIREFRAME_ANIMATION_SLOWDOWN);
+  drawWireframeEdges(ctx, projected, prep.edges, color, 0.6);
 }
 
 interface WireframeIcosahedronPrep {
@@ -1776,8 +1868,8 @@ function wireframeIcosahedron(
     const [rx, ry, rz] = rotate3DPoint(x, y, z, ax, ay, az);
     return perspective2D(rx, ry, rz, prep.dist, cx, cy);
   });
-  const ci = Math.floor(t * speed * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
-  drawWireframeEdges(ctx, projected, prep.edges, colors[ci] ?? FALLBACK_COLOR, 0.55);
+  const color = interpolatePaletteColor(colors, t * speed * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN);
+  drawWireframeEdges(ctx, projected, prep.edges, color, 0.55);
 }
 
 interface WireframeTorusPrep {
@@ -1843,8 +1935,7 @@ function wireframeTorus(
       return perspective2D(rx, ry, rz, prep.dist, cx, cy);
     }),
   );
-  const ci = Math.floor(t * speed * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
-  const color = colors[ci] ?? FALLBACK_COLOR;
+  const color = interpolatePaletteColor(colors, t * speed * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN);
   ctx.save();
   ctx.shadowBlur = 3;
   ctx.shadowColor = color;
@@ -1907,8 +1998,7 @@ function wireframeSphere(
   const gs = gentleSpeed(speed);
   const ax = t * gs * 0.22 * WIREFRAME_ANIMATION_SLOWDOWN + prep.axOff;
   const ay = t * gs * 0.18 * WIREFRAME_ANIMATION_SLOWDOWN + prep.ayOff;
-  const ci = Math.floor(t * speed * 0.08 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
-  const color = colors[ci] ?? FALLBACK_COLOR;
+  const color = interpolatePaletteColor(colors, t * speed * 0.08 * WIREFRAME_ANIMATION_SLOWDOWN);
   ctx.save();
   ctx.shadowBlur = 3;
   ctx.shadowColor = color;
@@ -2018,8 +2108,7 @@ function wireframeTunnel(
     frames.push(frame);
   }
 
-  const ci = Math.floor(t * speed * 0.08 * WIREFRAME_TUNNEL_SLOWDOWN) % colors.length;
-  const color = colors[ci] ?? FALLBACK_COLOR;
+  const color = interpolatePaletteColor(colors, t * speed * 0.08 * WIREFRAME_TUNNEL_SLOWDOWN);
   ctx.save();
   ctx.shadowBlur = 3;
   ctx.shadowColor = color;
@@ -2132,8 +2221,8 @@ function wireframeTesseract(
     const [rx, ry, rz] = rotate3DPoint(sx, sy, sz, ax, ay, 0);
     return perspective2D(rx, ry, rz, prep.dist3D, cx, cy);
   });
-  const ci = Math.floor(t * speed * 0.12 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
-  drawWireframeEdges(ctx, projected, prep.edges4D, colors[ci] ?? FALLBACK_COLOR, 0.55);
+  const color = interpolatePaletteColor(colors, t * speed * 0.12 * WIREFRAME_ANIMATION_SLOWDOWN);
+  drawWireframeEdges(ctx, projected, prep.edges4D, color, 0.55);
 }
 
 interface Wireframe16CellPrep {
@@ -2214,8 +2303,8 @@ function wireframe16Cell(
     const [rx, ry, rz] = rotate3DPoint(sx, sy, sz, ax, ay, 0);
     return perspective2D(rx, ry, rz, prep.dist3D, cx, cy);
   });
-  const ci = Math.floor(t * speed * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN) % colors.length;
-  drawWireframeEdges(ctx, projected, prep.edges4D, colors[ci] ?? FALLBACK_COLOR, 0.5);
+  const color = interpolatePaletteColor(colors, t * speed * 0.1 * WIREFRAME_ANIMATION_SLOWDOWN);
+  drawWireframeEdges(ctx, projected, prep.edges4D, color, 0.5);
 }
 
 function spiralVortex(
