@@ -97,6 +97,15 @@ function buildVibeScene(visualSeed: string): VibeScene | null {
   };
 }
 
+export function getStableSceneSize(
+  container: HTMLElement,
+  maxDpr: number,
+): { w: number; h: number; dpr: number } {
+  const rect = container.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
+  return { w: rect.width, h: rect.height, dpr };
+}
+
 export default function VibesCanvas({
   seed,
   trackId,
@@ -125,6 +134,8 @@ export default function VibesCanvas({
   const lastDrawnSeedRef = React.useRef<string>('');
   const scheduleFrameRef = React.useRef<(() => void) | null>(null);
   const scratchRef = React.useRef<HTMLCanvasElement | null>(null);
+  const dprRef = React.useRef<number>(1);
+  const runningRef = React.useRef<boolean>(false);
 
   const sceneIndex = React.useMemo(
     () => sceneForPosition(positionMs, durationMs),
@@ -205,7 +216,8 @@ export default function VibesCanvas({
 
     const resize = () => {
       const rect = container.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dprRef.current = dpr;
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       canvas.style.width = `${rect.width}px`;
@@ -221,10 +233,28 @@ export default function VibesCanvas({
     observer.observe(container);
     resize();
 
+    // Pre-allocate scratch canvas once for the component lifetime
+    if (!scratchRef.current) {
+      const scratch = document.createElement('canvas');
+      scratch.width = canvas.width;
+      scratch.height = canvas.height;
+      scratchRef.current = scratch;
+    }
+
     let running = true;
+    runningRef.current = running;
+
+    const scheduleNext = () => {
+      if (running && rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(frame);
+      }
+    };
 
     const frame = (timestamp: number) => {
-      if (!running) return;
+      if (!running || document.hidden) {
+        rafRef.current = null;
+        return;
+      }
 
       // Reduced motion: skip rendering only if we already drew the current seed.
       // The visualSeed effect will reset startTimeRef and schedule a redraw
@@ -233,11 +263,13 @@ export default function VibesCanvas({
         reducedMotionRef.current &&
         startTimeRef.current !== 0 &&
         lastDrawnSeedRef.current === visualSeedRef.current
-      )
+      ) {
+        scheduleNext();
         return;
+      }
 
       if (timestamp - lastFrameRef.current < 32) {
-        if (running) rafRef.current = requestAnimationFrame(frame);
+        scheduleNext();
         return;
       }
       lastFrameRef.current = timestamp;
@@ -245,19 +277,22 @@ export default function VibesCanvas({
       const transition = transitionRef.current;
       const scene = sceneRef.current;
       if (!scene || scene.effects.length === 0) {
-        if (running) rafRef.current = requestAnimationFrame(frame);
+        scheduleNext();
         return;
       }
 
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        scheduleNext();
+        return;
+      }
 
       if (startTimeRef.current === 0) {
         startTimeRef.current = timestamp;
       }
 
       const elapsed = (timestamp - startTimeRef.current) / 1000;
-      const dpr = Math.min(window.devicePixelRatio, 2);
+      const dpr = dprRef.current;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const w = canvas.width / dpr;
@@ -269,16 +304,17 @@ export default function VibesCanvas({
       const t = reducedMotionRef.current ? 1 : elapsed;
 
       if (transition) {
-        let scratch = scratchRef.current;
+        const scratch = scratchRef.current;
         if (!scratch) {
-          scratch = document.createElement('canvas');
-          scratch.width = canvas.width;
-          scratch.height = canvas.height;
-          scratchRef.current = scratch;
+          scheduleNext();
+          return;
         }
 
         const scratchCtx = scratch.getContext('2d');
-        if (!scratchCtx) return;
+        if (!scratchCtx) {
+          scheduleNext();
+          return;
+        }
 
         const transitionElapsed = performance.now() - transition.startedAt;
 
@@ -325,9 +361,9 @@ export default function VibesCanvas({
         if (transitionElapsed >= transition.maxEndMs) {
           transitionRef.current = null;
           sceneRef.current = transition.next;
-          scratchRef.current = null;
-          // Do NOT mark the seed as drawn here. The next frame will take the
-          // else branch and render a clean frame, which sets lastDrawnSeedRef.
+          // Keep scratch canvas allocated for reuse; do NOT null it.
+          // The next frame will take the else branch and render a clean frame,
+          // which sets lastDrawnSeedRef.
         }
       } else {
         for (let i = 0; i < scene.effects.length; i++) {
@@ -342,34 +378,55 @@ export default function VibesCanvas({
       if (reducedMotionRef.current) {
         // Keep one rAF queued so future scene changes (detected by
         // lastDrawnSeedRef) can be picked up without a permanent busy loop.
-        if (running) {
-          rafRef.current = requestAnimationFrame(frame);
-        }
+        scheduleNext();
         return;
       }
 
-      if (running) {
-        rafRef.current = requestAnimationFrame(frame);
+      scheduleNext();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (rafRef.current !== null) {
+          cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
+        }
+        running = false;
+        runningRef.current = false;
+      } else {
+        running = true;
+        runningRef.current = running;
+        startTimeRef.current = 0;
+        scheduleNext();
       }
     };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     scheduleFrameRef.current = () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
-      rafRef.current = requestAnimationFrame(frame);
-    };
-
-    rafRef.current = requestAnimationFrame(frame);
-
-    return () => {
-      running = false;
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
       startTimeRef.current = 0;
+      scheduleNext();
+    };
+
+    scheduleNext();
+
+    return () => {
+      running = false;
+      runningRef.current = false;
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      startTimeRef.current = 0;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       observer.disconnect();
+      scratchRef.current = null;
+      sceneRef.current = null;
+      transitionRef.current = null;
     };
   }, []);
 
