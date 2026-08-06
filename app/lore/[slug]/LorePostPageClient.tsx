@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import PasswordGate from '@/components/blog/PasswordGate';
 import { PostView } from '@/components/blog/PostView';
 import { PovPicker } from '@/components/PovPicker';
+import { StoryPicker, type StoryPickerStory } from '@/components/StoryPicker';
 import type { ParsedPost } from '@/lib/blog/parser';
 import type { LorePostNeighbor, PovSibling } from '@/lib/lore/loader';
 import type { SpeciesCareCardEmbedMap } from '@/lib/species-care/types';
@@ -19,6 +20,8 @@ interface LorePostPageClientProps {
   speciesCareCards?: SpeciesCareCardEmbedMap;
   gameCoverImage?: string;
   povSiblings?: PovSibling[];
+  povsEnabled?: boolean;
+  gameStories?: StoryPickerStory[];
 }
 
 export function LorePostPageClient({
@@ -30,6 +33,8 @@ export function LorePostPageClient({
   speciesCareCards = {},
   gameCoverImage,
   povSiblings,
+  povsEnabled,
+  gameStories,
 }: LorePostPageClientProps) {
   const router = useRouter();
   const password = post.metadata.password?.trim();
@@ -79,7 +84,11 @@ export function LorePostPageClient({
 
   return (
     <>
-      <PovPicker siblings={povSiblings ?? []} gameCoverImage={gameCoverImage} />
+      {povsEnabled === false ? (
+        <StoryPicker stories={gameStories ?? []} gameCoverImage={gameCoverImage} />
+      ) : (
+        <PovPicker siblings={povSiblings ?? []} gameCoverImage={gameCoverImage} />
+      )}
       <PostView
         post={post}
         onClose={() => router.push('/lore')}

@@ -28,6 +28,7 @@ export interface PostMetadata {
   episode_label?: string;
   password?: string;
   password_hint?: string;
+  povs_enabled?: boolean;
   full_story_pov?: string;
   full_story_tooltip?: string;
 }
@@ -284,6 +285,10 @@ function sanitizeMetadata(data: Record<string, unknown>): Partial<PostMetadata> 
     sanitized.full_story_tooltip = data.full_story_tooltip.trim();
   }
 
+  if (typeof data.povs_enabled === 'boolean') {
+    sanitized.povs_enabled = data.povs_enabled;
+  }
+
   return sanitized;
 }
 
@@ -343,6 +348,7 @@ export function parsePost(filename: string, fileContent: string): ParsedPost {
       episode_label: sanitizedData.episode_label,
       password: sanitizedData.password,
       password_hint: sanitizedData.password_hint,
+      povs_enabled: sanitizedData.povs_enabled,
       full_story_pov: sanitizedData.full_story_pov,
       full_story_tooltip: sanitizedData.full_story_tooltip,
     };
@@ -408,6 +414,7 @@ export function extractMetadata(filename: string, fileContent: string): PostMeta
       episode_label: sanitizedData.episode_label,
       password: sanitizedData.password,
       password_hint: sanitizedData.password_hint,
+      povs_enabled: sanitizedData.povs_enabled,
       full_story_pov: sanitizedData.full_story_pov,
       full_story_tooltip: sanitizedData.full_story_tooltip,
     };

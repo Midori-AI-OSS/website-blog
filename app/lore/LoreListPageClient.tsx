@@ -300,9 +300,11 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                       >
                         {group.game.title}
                       </Typography>
-                      <Chip size="sm" variant="soft" color="primary" sx={{ borderRadius: 0 }}>
-                        POV: {povLabel}
-                      </Chip>
+                      {group.game.povsEnabled && (
+                        <Chip size="sm" variant="soft" color="primary" sx={{ borderRadius: 0 }}>
+                          POV: {povLabel}
+                        </Chip>
+                      )}
                     </Stack>
 
                     <Typography
@@ -417,37 +419,39 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                       </Select>
                     </FormControl>
 
-                    <Tooltip
-                      arrow
-                      placement="top-start"
-                      variant="soft"
-                      title={group.game.fullStoryTooltip || `Read ${povLabel}'s full story`}
-                      enterTouchDelay={0}
-                    >
-                      <Button
-                        component={Link}
-                        href={group.fullStoryHref}
-                        variant="solid"
-                        color="primary"
-                        sx={{
-                          minHeight: 44,
-                          px: 2,
-                          borderRadius: 0,
-                          fontWeight: 700,
-                          textTransform: 'none',
-                          width: { xs: '100%', sm: 'auto' },
-                          whiteSpace: 'nowrap',
-                          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                          '&:focus-visible': {
-                            outline: '2px solid',
-                            outlineColor: 'primary.500',
-                            outlineOffset: '2px',
-                          },
-                        }}
+                    {group.game.povsEnabled && (
+                      <Tooltip
+                        arrow
+                        placement="top-start"
+                        variant="soft"
+                        title={group.game.fullStoryTooltip || `Read ${povLabel}'s full story`}
+                        enterTouchDelay={0}
                       >
-                        Read {povLabel}&apos;s full story
-                      </Button>
-                    </Tooltip>
+                        <Button
+                          component={Link}
+                          href={group.fullStoryHref}
+                          variant="solid"
+                          color="primary"
+                          sx={{
+                            minHeight: 44,
+                            px: 2,
+                            borderRadius: 0,
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            width: { xs: '100%', sm: 'auto' },
+                            whiteSpace: 'nowrap',
+                            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                            '&:focus-visible': {
+                              outline: '2px solid',
+                              outlineColor: 'primary.500',
+                              outlineOffset: '2px',
+                            },
+                          }}
+                        >
+                          Read {povLabel}&apos;s full story
+                        </Button>
+                      </Tooltip>
+                    )}
                   </Stack>
                 </Stack>
 
