@@ -106,8 +106,8 @@ export function StoryPicker({ stories, gameCoverImage }: StoryPickerProps) {
                   overflow: 'hidden',
                   borderRadius: 9999,
                   width: 'auto',
-                  minWidth: 120,
-                  maxWidth: 160,
+                  minWidth: 100,
+                  maxWidth: 140,
                   height: 28,
                   px: 1.5,
                   cursor: 'pointer',
@@ -153,6 +153,7 @@ export function StoryPicker({ stories, gameCoverImage }: StoryPickerProps) {
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
+                    minWidth: 0,
                     animation: `${breathePulseInverse} ${timing.dur}s ease-in-out ${timing.delay}s infinite`,
                   }}
                 >
