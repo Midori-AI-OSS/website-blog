@@ -18,12 +18,20 @@ const breathePulseInverse = keyframes`
 export interface StoryPickerStory {
   slug: string;
   title: string;
+  summary?: string;
   coverImage?: string;
 }
 
 interface StoryPickerProps {
   stories: StoryPickerStory[];
   gameCoverImage?: string;
+}
+
+function buildTooltipText(story: StoryPickerStory): string {
+  const summary = (story.summary ?? '').trim();
+  if (!summary) return story.title;
+  const snippet = summary.length > 110 ? `${summary.slice(0, 109).trimEnd()}…` : summary;
+  return `${story.title} - ${snippet}`;
 }
 
 export function StoryPicker({ stories, gameCoverImage }: StoryPickerProps) {
@@ -87,7 +95,7 @@ export function StoryPicker({ stories, gameCoverImage }: StoryPickerProps) {
               key={story.slug}
               arrow
               variant="soft"
-              title={story.title}
+              title={buildTooltipText(story)}
               placement="right"
               enterTouchDelay={0}
             >
@@ -99,6 +107,7 @@ export function StoryPicker({ stories, gameCoverImage }: StoryPickerProps) {
                   borderRadius: 9999,
                   width: 'auto',
                   minWidth: 120,
+                  maxWidth: 160,
                   height: 28,
                   px: 1.5,
                   cursor: 'pointer',

@@ -64,7 +64,9 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
     coverImage: sib.coverImage ? transformPostImageUrl(sib.coverImage) : undefined,
   }));
 
-  let gameStories: Array<{ slug: string; title: string; coverImage?: string }> | undefined;
+  let gameStories:
+    | Array<{ slug: string; title: string; summary?: string; coverImage?: string }>
+    | undefined;
   if (!povsEnabled && matchingGame) {
     const currentSlug = getLorePostSlug(post);
     const gamePosts = sortLorePosts(
@@ -76,6 +78,7 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
       .map((p) => ({
         slug: getLorePostSlug(p),
         title: p.metadata.title,
+        summary: p.metadata.summary,
         coverImage: p.metadata.cover_image?.trim()
           ? transformPostImageUrl(p.metadata.cover_image.trim())
           : undefined,
