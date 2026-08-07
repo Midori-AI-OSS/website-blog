@@ -153,7 +153,7 @@ export function StoryPicker({ stories, gameCoverImage }: StoryPickerProps) {
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    minWidth: 0,
+                    maxWidth: '100%',
                     animation: `${breathePulseInverse} ${timing.dur}s ease-in-out ${timing.delay}s infinite`,
                   }}
                 >
