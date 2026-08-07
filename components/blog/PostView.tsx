@@ -177,6 +177,7 @@ const revealCursorKeyframes = keyframes({
 const REVEAL_REVERSE_DELAY_MS = 5000;
 const REVEAL_HALF_MS_PER_CHARACTER = 40;
 const REVEAL_MIN_HALF_MS = 160;
+const REVEAL_MAX_HALF_MS = 800;
 
 /**
  * Props for PostView component
@@ -508,9 +509,9 @@ function PostContentSection({
     root.querySelectorAll<HTMLElement>('[data-reveal="true"]').forEach((el) => {
       const text = el.textContent ?? '';
       const characterCount = Math.max(1, Array.from(text).length);
-      const revealHalfMs = Math.max(
-        REVEAL_MIN_HALF_MS,
-        characterCount * REVEAL_HALF_MS_PER_CHARACTER,
+      const revealHalfMs = Math.min(
+        REVEAL_MAX_HALF_MS,
+        Math.max(REVEAL_MIN_HALF_MS, characterCount * REVEAL_HALF_MS_PER_CHARACTER),
       );
 
       el.style.setProperty('--reveal-chars', String(characterCount));
@@ -560,16 +561,27 @@ function PostContentSection({
       };
 
       const startForward = () => {
-        clearForwardTimers();
         clearReverseTimers();
 
-        if (
-          el.getAttribute('data-reveal-translated') === 'true' &&
-          !el.hasAttribute('data-reveal-phase')
-        ) {
+        const phase = el.getAttribute('data-reveal-phase');
+        const translated = el.getAttribute('data-reveal-translated') === 'true';
+
+        if (translated && !phase) {
           return;
         }
 
+        if (phase === 'backspace' || phase === 'type') {
+          return;
+        }
+
+        if (phase === 'reverse-backspace' || phase === 'reverse-type') {
+          clearForwardTimers();
+          el.removeAttribute('data-reveal-phase');
+          el.setAttribute('data-reveal-translated', 'true');
+          return;
+        }
+
+        clearForwardTimers();
         el.removeAttribute('data-reveal-translated');
         restartPhase('backspace');
 
