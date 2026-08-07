@@ -115,7 +115,6 @@ export function StoryPicker({ stories, gameCoverImage }: StoryPickerProps) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  p: 0,
                   transition: 'box-shadow 0.2s ease, filter 0.2s ease',
                   ...(!coverUrl && { bgcolor: '#8b5cf6' }),
                   '&:hover': {
