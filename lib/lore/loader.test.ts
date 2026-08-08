@@ -188,6 +188,49 @@ full_story_pov: luna
     expect(realMoments?.fullStoryTooltip).toBe("Read Riley's full thread for this arc.");
   });
 
+  test('loadLoreGameIndexes defaults povsEnabled to true when not specified', async () => {
+    const indexes = await loadLoreGameIndexes(testGamesDir);
+    const realMoments = indexes.find((index) => index.slug === 'real-moments');
+
+    expect(realMoments?.povsEnabled).toBe(true);
+  });
+
+  test('loadLoreGameIndexes loads game with povs_enabled false and no full_story_pov', async () => {
+    await createGameIndex(
+      'no-pov-game',
+      `---
+title: No POV Game
+summary: A game without POVs.
+povs_enabled: false
+---
+`,
+    );
+
+    const indexes = await loadLoreGameIndexes(testGamesDir);
+    const noPov = indexes.find((index) => index.slug === 'no-pov-game');
+
+    expect(noPov).toBeDefined();
+    expect(noPov?.povsEnabled).toBe(false);
+    expect(noPov?.fullStoryPov).toBe('');
+  });
+
+  test('loadLoreGameIndexes loads game with povs_enabled true but missing full_story_pov returns null', async () => {
+    await createGameIndex(
+      'missing-pov-game',
+      `---
+title: Missing POV Game
+summary: Has POVs enabled but no full_story_pov.
+povs_enabled: true
+---
+`,
+    );
+
+    const indexes = await loadLoreGameIndexes(testGamesDir);
+    const missing = indexes.find((index) => index.slug === 'missing-pov-game');
+
+    expect(missing).toBeUndefined();
+  });
+
   test('loadLoreGameGroups groups posts and derives character filters', async () => {
     const groups = await loadLoreGameGroups(
       { includeScheduled: false, now: '2026-01-16T18:00:00Z' },

@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, IconButton, Stack, Typography } from '@mui/joy';
-import { Headphones, Pause, Play, Square } from 'lucide-react';
+import { Headphones, Pause, Play, ScrollText, Square } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -47,6 +47,9 @@ interface TtsPlayerProps {
   coverImageUrl?: string;
   onPrimaryColorChange?: (color: string) => void;
   onHighlightChange?: (range: TtsHighlightRange | null) => void;
+  onPlaybackChange?: (state: PlaybackState) => void;
+  autoFollowEnabled?: boolean;
+  onToggleAutoFollow?: () => void;
 }
 
 function parseManifest(raw: unknown, contentHash: string): TtsManifest | undefined {
@@ -128,6 +131,9 @@ export function TtsPlayer({
   coverImageUrl,
   onPrimaryColorChange,
   onHighlightChange,
+  onPlaybackChange,
+  autoFollowEnabled,
+  onToggleAutoFollow,
 }: TtsPlayerProps) {
   const [state, setState] = useState<TtsState>('not_generated');
   const [playback, setPlayback] = useState<PlaybackState>('stopped');
@@ -183,6 +189,10 @@ export function TtsPlayer({
   useEffect(() => {
     playbackRef.current = playback;
   }, [playback]);
+
+  useEffect(() => {
+    onPlaybackChange?.(playback);
+  }, [playback, onPlaybackChange]);
 
   useEffect(() => {
     let active = true;
@@ -1162,6 +1172,28 @@ export function TtsPlayer({
           >
             {formatTime(currentTime)} / {formatTime(duration)}
           </Typography>
+
+          {onToggleAutoFollow && (
+            <IconButton
+              onClick={onToggleAutoFollow}
+              size="sm"
+              variant="plain"
+              aria-label={autoFollowEnabled ? 'Auto-scroll on' : 'Auto-scroll off'}
+              title={autoFollowEnabled ? 'Disable auto-scroll' : 'Enable auto-scroll'}
+              sx={{
+                borderRadius: 0,
+                width: 28,
+                minWidth: 28,
+                height: 28,
+                minHeight: 28,
+                ml: 0.5,
+                color: autoFollowEnabled ? colors.primary : 'var(--joy-palette-text-tertiary)',
+                '&:hover': { bgcolor: `${colors.primary}18` },
+              }}
+            >
+              <ScrollText size={14} />
+            </IconButton>
+          )}
         </Stack>
       </Stack>
     </Box>

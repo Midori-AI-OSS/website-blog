@@ -1,7 +1,12 @@
 import { Box } from '@mui/joy';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
-import { getLorePovPosts, loadLoreGameGroups, sortLorePosts } from '@/lib/lore/loader';
+import {
+  getLorePostSlug,
+  getLorePovPosts,
+  loadLoreGameGroups,
+  sortLorePosts,
+} from '@/lib/lore/loader';
 import { FullStoryClient } from './FullStoryClient';
 import { LoreBackButton } from './LoreBackButton';
 
@@ -17,6 +22,14 @@ export default async function LoreGameFullStoryPage({
   const group = gameGroups.find((candidate) => candidate.game.slug === game);
 
   if (!group) {
+    notFound();
+  }
+
+  if (!group.game.povsEnabled) {
+    const newest = sortLorePosts(group.posts, 'story_order_desc')[0];
+    if (newest) {
+      redirect(`/lore/${getLorePostSlug(newest)}`);
+    }
     notFound();
   }
 

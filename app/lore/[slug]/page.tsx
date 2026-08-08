@@ -10,11 +10,14 @@ import { transformPostImageUrl } from '@/lib/content/imageUrl';
 import { getPublishState } from '@/lib/content/publish';
 import {
   getLorePostBySlug,
+  getLorePostSlug,
+  getLorePostsForGame,
   getLoreStoryNeighbors,
   getPovSiblings,
   loadAllLorePosts,
   loadLoreGameIndexes,
   type PovSibling,
+  sortLorePosts,
 } from '@/lib/lore/loader';
 import { loadSpeciesCareCardsForMarkdown } from '@/lib/species-care/loader';
 
@@ -47,6 +50,7 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
   const gameCoverImage = matchingGame?.coverImage
     ? transformPostImageUrl(matchingGame.coverImage)
     : undefined;
+  const povsEnabled = matchingGame?.povsEnabled !== false;
 
   const publishState = getPublishState(post.metadata.date);
   const neighbors = getLoreStoryNeighbors(allPosts, post);
@@ -54,11 +58,32 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
     ? {}
     : await loadSpeciesCareCardsForMarkdown(post.content);
 
-  const rawPovSiblings = getPovSiblings(allPosts, post);
+  const rawPovSiblings = povsEnabled ? getPovSiblings(allPosts, post) : [];
   const povSiblings: PovSibling[] = rawPovSiblings.map((sib) => ({
     ...sib,
     coverImage: sib.coverImage ? transformPostImageUrl(sib.coverImage) : undefined,
   }));
+
+  let gameStories:
+    | Array<{ slug: string; title: string; summary?: string; coverImage?: string }>
+    | undefined;
+  if (!povsEnabled && matchingGame) {
+    const currentSlug = getLorePostSlug(post);
+    const gamePosts = sortLorePosts(
+      getLorePostsForGame(allPosts, matchingGame.slug),
+      'story_order_desc',
+    );
+    gameStories = gamePosts
+      .filter((p) => getLorePostSlug(p) !== currentSlug)
+      .map((p) => ({
+        slug: getLorePostSlug(p),
+        title: p.metadata.title,
+        summary: p.metadata.summary,
+        coverImage: p.metadata.cover_image?.trim()
+          ? transformPostImageUrl(p.metadata.cover_image.trim())
+          : undefined,
+      }));
+  }
 
   return (
     <LorePostPageClient
@@ -70,6 +95,8 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
       speciesCareCards={speciesCareCards}
       gameCoverImage={gameCoverImage}
       povSiblings={povSiblings}
+      povsEnabled={povsEnabled}
+      gameStories={gameStories}
     />
   );
 }

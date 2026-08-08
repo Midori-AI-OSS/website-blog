@@ -177,6 +177,7 @@ const revealCursorKeyframes = keyframes({
 const REVEAL_REVERSE_DELAY_MS = 5000;
 const REVEAL_HALF_MS_PER_CHARACTER = 40;
 const REVEAL_MIN_HALF_MS = 160;
+const REVEAL_MAX_HALF_MS = 800;
 
 /**
  * Props for PostView component
@@ -304,6 +305,7 @@ interface PostContentSectionProps {
   thinkingMutedColor: string;
   speechDocument: SpeechDocument;
   ttsHighlightRange: TtsHighlightRange | null;
+  ttsAutoFollowEnabled: boolean;
 }
 
 function PostContentSection({
@@ -319,10 +321,9 @@ function PostContentSection({
   thinkingMutedColor,
   speechDocument,
   ttsHighlightRange,
+  ttsAutoFollowEnabled,
 }: PostContentSectionProps) {
   const contentRef = useRef<HTMLDivElement>(null);
-  // Wire this up to the button when Luna is ready.
-  const [ttsAutoFollowEnabled] = useState(true);
   const followSuppressedRef = useRef(false);
   const programmaticScrollRef = useRef(false);
   const programmaticScrollTimerRef = useRef<number | null>(null);
@@ -508,9 +509,9 @@ function PostContentSection({
     root.querySelectorAll<HTMLElement>('[data-reveal="true"]').forEach((el) => {
       const text = el.textContent ?? '';
       const characterCount = Math.max(1, Array.from(text).length);
-      const revealHalfMs = Math.max(
-        REVEAL_MIN_HALF_MS,
-        characterCount * REVEAL_HALF_MS_PER_CHARACTER,
+      const revealHalfMs = Math.min(
+        REVEAL_MAX_HALF_MS,
+        Math.max(REVEAL_MIN_HALF_MS, characterCount * REVEAL_HALF_MS_PER_CHARACTER),
       );
 
       el.style.setProperty('--reveal-chars', String(characterCount));
@@ -560,16 +561,27 @@ function PostContentSection({
       };
 
       const startForward = () => {
-        clearForwardTimers();
         clearReverseTimers();
 
-        if (
-          el.getAttribute('data-reveal-translated') === 'true' &&
-          !el.hasAttribute('data-reveal-phase')
-        ) {
+        const phase = el.getAttribute('data-reveal-phase');
+        const translated = el.getAttribute('data-reveal-translated') === 'true';
+
+        if (translated && !phase) {
           return;
         }
 
+        if (phase === 'backspace' || phase === 'type') {
+          return;
+        }
+
+        if (phase === 'reverse-backspace' || phase === 'reverse-type') {
+          clearForwardTimers();
+          el.removeAttribute('data-reveal-phase');
+          el.setAttribute('data-reveal-translated', 'true');
+          return;
+        }
+
+        clearForwardTimers();
         el.removeAttribute('data-reveal-translated');
         restartPhase('backspace');
 
@@ -1357,6 +1369,7 @@ export function PostView({
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
   const [titlePalette, setTitlePalette] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
   const [ttsHighlightRange, setTtsHighlightRange] = useState<TtsHighlightRange | null>(null);
+  const [ttsAutoFollowEnabled, setTtsAutoFollowEnabled] = useState(true);
   const speechDocument = useMemo(() => deriveSpeechDocument(post.content), [post.content]);
   const handleTtsHighlightChange = useCallback((range: TtsHighlightRange | null) => {
     setTtsHighlightRange(range);
@@ -1834,6 +1847,8 @@ export function PostView({
                   document={speechDocument}
                   onPrimaryColorChange={setTtsPrimaryColor}
                   onHighlightChange={handleTtsHighlightChange}
+                  autoFollowEnabled={ttsAutoFollowEnabled}
+                  onToggleAutoFollow={() => setTtsAutoFollowEnabled((prev) => !prev)}
                   coverImageUrl={effectiveCoverImageUrl}
                 />
               ) : (
@@ -1891,6 +1906,7 @@ export function PostView({
               thinkingMutedColor={thinkingMutedColor}
               speechDocument={speechDocument}
               ttsHighlightRange={ttsHighlightRange}
+              ttsAutoFollowEnabled={ttsAutoFollowEnabled}
             />,
             ttsPrimaryColor,
           )
@@ -1908,6 +1924,7 @@ export function PostView({
             thinkingMutedColor={thinkingMutedColor}
             speechDocument={speechDocument}
             ttsHighlightRange={ttsHighlightRange}
+            ttsAutoFollowEnabled={ttsAutoFollowEnabled}
           />
         )}
       </Box>

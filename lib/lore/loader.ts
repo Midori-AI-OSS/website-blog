@@ -40,6 +40,7 @@ export interface LoreGameIndex {
   title: string;
   summary: string;
   coverImage?: string;
+  povsEnabled: boolean;
   fullStoryPov: string;
   fullStoryTooltip?: string;
 }
@@ -528,6 +529,7 @@ export async function loadLoreGameIndexes(gamesDir: string = GAMES_DIR): Promise
 
         const title = parsed.metadata.title?.trim();
         const summary = parsed.metadata.summary?.trim();
+        const povsEnabled = parsed.metadata.povs_enabled !== false;
         const fullStoryPov = normalizeSlug(parsed.metadata.full_story_pov);
 
         if (!title) {
@@ -540,7 +542,7 @@ export async function loadLoreGameIndexes(gamesDir: string = GAMES_DIR): Promise
           return null;
         }
 
-        if (!fullStoryPov) {
+        if (!fullStoryPov && povsEnabled) {
           console.error(`Game index ${indexPath} is missing required "full_story_pov" field.`);
           return null;
         }
@@ -550,7 +552,8 @@ export async function loadLoreGameIndexes(gamesDir: string = GAMES_DIR): Promise
           title,
           summary,
           coverImage: parsed.metadata.cover_image?.trim(),
-          fullStoryPov,
+          povsEnabled,
+          fullStoryPov: fullStoryPov || '',
           fullStoryTooltip: parsed.metadata.full_story_tooltip?.trim() || undefined,
         } satisfies LoreGameIndex;
       }),
