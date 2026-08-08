@@ -305,6 +305,7 @@ interface PostContentSectionProps {
   thinkingMutedColor: string;
   speechDocument: SpeechDocument;
   ttsHighlightRange: TtsHighlightRange | null;
+  ttsAutoFollowEnabled: boolean;
 }
 
 function PostContentSection({
@@ -320,10 +321,9 @@ function PostContentSection({
   thinkingMutedColor,
   speechDocument,
   ttsHighlightRange,
+  ttsAutoFollowEnabled,
 }: PostContentSectionProps) {
   const contentRef = useRef<HTMLDivElement>(null);
-  // Wire this up to the button when Luna is ready.
-  const [ttsAutoFollowEnabled] = useState(true);
   const followSuppressedRef = useRef(false);
   const programmaticScrollRef = useRef(false);
   const programmaticScrollTimerRef = useRef<number | null>(null);
@@ -1369,6 +1369,7 @@ export function PostView({
   const [ttsPrimaryColor, setTtsPrimaryColor] = useState<string | null>(null);
   const [titlePalette, setTitlePalette] = useState<ExtractedPalette>(DEFAULT_ART_PALETTE);
   const [ttsHighlightRange, setTtsHighlightRange] = useState<TtsHighlightRange | null>(null);
+  const [ttsAutoFollowEnabled, setTtsAutoFollowEnabled] = useState(true);
   const speechDocument = useMemo(() => deriveSpeechDocument(post.content), [post.content]);
   const handleTtsHighlightChange = useCallback((range: TtsHighlightRange | null) => {
     setTtsHighlightRange(range);
@@ -1846,6 +1847,8 @@ export function PostView({
                   document={speechDocument}
                   onPrimaryColorChange={setTtsPrimaryColor}
                   onHighlightChange={handleTtsHighlightChange}
+                  autoFollowEnabled={ttsAutoFollowEnabled}
+                  onToggleAutoFollow={() => setTtsAutoFollowEnabled((prev) => !prev)}
                   coverImageUrl={effectiveCoverImageUrl}
                 />
               ) : (
@@ -1903,6 +1906,7 @@ export function PostView({
               thinkingMutedColor={thinkingMutedColor}
               speechDocument={speechDocument}
               ttsHighlightRange={ttsHighlightRange}
+              ttsAutoFollowEnabled={ttsAutoFollowEnabled}
             />,
             ttsPrimaryColor,
           )
@@ -1920,6 +1924,7 @@ export function PostView({
             thinkingMutedColor={thinkingMutedColor}
             speechDocument={speechDocument}
             ttsHighlightRange={ttsHighlightRange}
+            ttsAutoFollowEnabled={ttsAutoFollowEnabled}
           />
         )}
       </Box>
