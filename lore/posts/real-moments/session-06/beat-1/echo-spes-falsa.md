@@ -34,8 +34,6 @@ The juice box is still on the tray. The sandwich is somewhere. I stopped trackin
 
 Nothing in the room moves except the monitor and the vent. Well, and Weave. Weave is dense around Riley's bed rail, and some of her moves through the rest of the room in the slow circuit she has been doing all night. Monitor edge. Bed rail. Window. IV pole. Door. Riley. Then she starts over. I have been watching her do it long enough that I know the order, and I think maybe if the order changed I would know something was wrong. Or maybe I would not notice until it was already too late. I do not know which one is worse.
 
-{{image: /lore/real-moments/spes-falsa/room/room-spes-falsa-room-1.png}}
-
 My skin starts bothering me. Dried tears pulling under my eyes. That tight scratchy feeling where the salt dried and the skin got stiff. Sweat where the cardigan sits against the back of my neck. Not a lot of sweat, just enough that the fabric feels wrong there, like it is stuck. The imaging-center smell in my hair, which is probably not a smell. Cold air and contrast dye and that machine banging. It is still in there somehow. I washed my hair and it is still in there. Okay.
 
 I need to clean up. Actually I need to shower, I think. Wash my hair properly. Get the hospital off me. Or the imaging center off me, or both. Whatever it is that is still in my hair.
@@ -241,6 +239,8 @@ Then I remember something Leo told me a while ago. Luna fell asleep at a college
 I think these were the same ones because they disappeared before Luna woke up too. What was she dreaming about? Maybe the stars came from the dream, or maybe they were doing something around her while she dreamed. I dont know, so I rub the same place on Riley's blanket and try to keep the order straight in case I have to explain it later.
 
 The gray outside the blinds keeps coming. Sunday starts without asking permission, the way it always does. The hall gets louder. That morning shift change noise. The coffee smell gets replaced by fresh coffee and then goes stale again almost immediately.
+
+{{image: /lore/real-moments/spes-falsa/room/room-spes-falsa-room-1.png}}
 
 Luna wakes first. She surfaces slow, in pieces. Her hand tightens and then loosens and then tightens again. Her breathing changes. She looks like she is coming back from somewhere far away. Leo wakes when she moves. His eyes open before he is fully awake, which means his body knew she was moving before his brain caught up.
 
