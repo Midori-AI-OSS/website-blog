@@ -1,6 +1,6 @@
-# Midori AI Public MCP Server
+# Midori AI Public Blog MCP Server
 
-The Midori AI website provides a public, read-only MCP endpoint at:
+The Midori AI blog website provides a public, read-only MCP endpoint at:
 
 ```text
 https://blog.midori-ai.xyz/api/mcp
@@ -8,7 +8,7 @@ https://blog.midori-ai.xyz/api/mcp
 
 It uses the Streamable HTTP transport. No authentication is required, and it does not provide write, admin, streaming, or listener-heartbeat operations.
 
-## ChatGPT Developer Mode
+## ChatGPT
 
 1. In ChatGPT, enable Developer mode under **Settings > Security and login**.
 2. Open the Plugins interface and add a custom MCP server.
@@ -33,10 +33,6 @@ For local development, run `bun run dev` and connect to `http://localhost:3000/a
 | `get_radio_health` | Get radio health and cache status. |
 
 `list_*` and `search_*` accept an optional `limit`, which defaults to 5 and must be between 1 and 30. `search_*` requires a non-empty `query`.
-
-## Protected Posts
-
-Posts with a `password` front-matter field are excluded from list and search results. A direct `get_blog_post` or `get_lore_post` call can include an optional `password` input. If it is absent or invalid, the tool returns public metadata and the post's password hint, but never the post body or password. A valid password returns normalized plain text.
 
 ## Response Behavior
 
