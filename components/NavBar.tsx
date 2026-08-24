@@ -9,18 +9,24 @@ import Typography from '@mui/joy/Typography';
 import { BookOpen, Home, LayoutDashboard, Radio } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useRadioAvailability } from './radio/RadioAvailabilityProvider';
 
-export default function NavBar() {
-  const pathname = usePathname();
-
-  if (pathname.startsWith('/species-care')) return null;
-
-  const items = [
+export function createNavigationItems(radioOnline: boolean) {
+  return [
     { name: 'Home', icon: <Home size={18} />, path: '/' },
     { name: 'Blog', icon: <BookOpen size={18} />, path: '/blog' },
     { name: 'Lore', icon: <LayoutDashboard size={18} />, path: '/lore' },
-    { name: 'Radio', icon: <Radio size={18} />, path: '/radio' },
+    ...(radioOnline ? [{ name: 'Radio', icon: <Radio size={18} />, path: '/radio' }] : []),
   ];
+}
+
+export default function NavBar() {
+  const pathname = usePathname();
+  const { status: radioStatus } = useRadioAvailability();
+
+  if (pathname.startsWith('/species-care')) return null;
+
+  const items = createNavigationItems(radioStatus === 'online');
 
   return (
     <Box
@@ -42,7 +48,7 @@ export default function NavBar() {
           '--List-radius': '0px',
           '--List-padding': '0px',
           display: { xs: 'grid', sm: 'none' },
-          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+          gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
           gap: 0,
           width: '100%',
           m: 0,

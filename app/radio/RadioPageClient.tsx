@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import BlobProgressBar from '@/components/radio/BlobProgressBar';
+import { useRadioAvailability } from '@/components/radio/RadioAvailabilityProvider';
 import VibesCanvas from '@/components/radio/VibesCanvas';
 import {
   fetchArt,
@@ -250,20 +251,21 @@ function fadeAudioVolume(
 }
 
 export default function RadioPageClient() {
+  const { disableRadio } = useRadioAvailability();
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const channelRef = React.useRef('all');
   const qualityRef = React.useRef<QualityName>('medium');
   const volumeRef = React.useRef(0.5);
   const playbackDesiredRef = React.useRef(false);
-  const restartNonceRef = React.useRef(0);
-  const startPlaybackRef = React.useRef<() => void>(() => {});
   const progressSnapshotRef = React.useRef<ProgressSnapshot>({
     positionMs: 0,
     durationMs: 0,
     updatedAtMs: Date.now(),
   });
   const currentRequestRef = React.useRef(0);
+  const currentAbortRef = React.useRef<AbortController | null>(null);
   const artRequestRef = React.useRef(0);
+  const artAbortRef = React.useRef<AbortController | null>(null);
   const sessionIdRef = React.useRef<string | null>(null);
   const heartbeatIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const bgLayerRef = React.useRef<HTMLDivElement | null>(null);
@@ -275,7 +277,6 @@ export default function RadioPageClient() {
   const [channel, setChannel] = React.useState('all');
   const [playbackDesired, setPlaybackDesired] = React.useState(false);
   const [streamState, setStreamState] = React.useState<StreamState>('idle');
-  const [restartNonce, setRestartNonce] = React.useState(0);
   const prevChannelRef = React.useRef(channel);
   const restoreInitialRef = React.useRef(true);
 
@@ -372,10 +373,6 @@ export default function RadioPageClient() {
   React.useEffect(() => {
     qualityRef.current = quality;
   }, [quality]);
-
-  React.useEffect(() => {
-    restartNonceRef.current = restartNonce;
-  }, [restartNonce]);
 
   React.useEffect(() => {
     const layer = bgLayerRef.current;
@@ -548,11 +545,14 @@ export default function RadioPageClient() {
     async (selectedChannel: string) => {
       const requestId = currentRequestRef.current + 1;
       currentRequestRef.current = requestId;
+      currentAbortRef.current?.abort();
+      const controller = new AbortController();
+      currentAbortRef.current = controller;
 
       try {
-        const payload = await fetchCurrent(selectedChannel);
+        const payload = await fetchCurrent(selectedChannel, '', controller.signal);
 
-        if (currentRequestRef.current !== requestId) {
+        if (currentRequestRef.current !== requestId || controller.signal.aborted) {
           return;
         }
 
@@ -560,13 +560,14 @@ export default function RadioPageClient() {
         syncProgress(payload);
         setLastError(null);
       } catch (error) {
-        if (currentRequestRef.current !== requestId) {
+        if (currentRequestRef.current !== requestId || controller.signal.aborted) {
           return;
         }
         setLastError(toErrorMessage(error));
+        disableRadio('radio-current-track-failed');
       }
     },
-    [syncProgress],
+    [disableRadio, syncProgress],
   );
 
   React.useEffect(() => {
@@ -583,6 +584,7 @@ export default function RadioPageClient() {
 
     return () => {
       window.clearInterval(intervalId);
+      currentAbortRef.current?.abort();
     };
   }, [channel, hydrated, refreshCurrent]);
 
@@ -609,11 +611,12 @@ export default function RadioPageClient() {
     }
 
     let active = true;
+    const controller = new AbortController();
 
     const loadChannels = async () => {
       try {
-        const payload = await fetchChannels();
-        if (!active) {
+        const payload = await fetchChannels('', controller.signal);
+        if (!active || controller.signal.aborted) {
           return;
         }
 
@@ -625,7 +628,7 @@ export default function RadioPageClient() {
           setChannel('all');
         }
       } catch (error) {
-        if (active) {
+        if (active && !controller.signal.aborted) {
           setLastError(toErrorMessage(error));
         }
       }
@@ -635,6 +638,7 @@ export default function RadioPageClient() {
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, [hydrated]);
 
@@ -647,14 +651,17 @@ export default function RadioPageClient() {
 
     const requestId = artRequestRef.current + 1;
     artRequestRef.current = requestId;
+    artAbortRef.current?.abort();
+    const controller = new AbortController();
+    artAbortRef.current = controller;
     const requestedChannel = normalizeChannel(channel);
     const requestedTrackId = currentTrackId;
 
     const loadArt = async () => {
       try {
-        const payload = await fetchArt(requestedChannel);
+        const payload = await fetchArt(requestedChannel, '', controller.signal);
 
-        if (artRequestRef.current !== requestId) {
+        if (artRequestRef.current !== requestId || controller.signal.aborted) {
           return;
         }
 
@@ -666,7 +673,7 @@ export default function RadioPageClient() {
             : null;
         setArtUrl(nextArtUrl && nextArtUrl.length > 0 ? nextArtUrl : null);
       } catch {
-        if (artRequestRef.current !== requestId) {
+        if (artRequestRef.current !== requestId || controller.signal.aborted) {
           return;
         }
         setArtMetadata(null);
@@ -675,6 +682,10 @@ export default function RadioPageClient() {
     };
 
     void loadArt();
+
+    return () => {
+      controller.abort();
+    };
   }, [channel, currentTrackId, hydrated]);
 
   React.useEffect(() => {
@@ -684,10 +695,11 @@ export default function RadioPageClient() {
     }
 
     let cancelled = false;
+    const controller = new AbortController();
 
     const paletteUrl = `/api/radio/palette?url=${encodeURIComponent(artUrl)}`;
 
-    fetch(paletteUrl)
+    fetch(paletteUrl, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`Palette API returned ${res.status}`);
         return res.json() as Promise<ExtractedPalette>;
@@ -703,6 +715,7 @@ export default function RadioPageClient() {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [artUrl]);
 
@@ -922,7 +935,7 @@ export default function RadioPageClient() {
 
     setStreamState('loading');
 
-    audio.src = `${streamUrl}&restart=${restartNonceRef.current}`;
+    audio.src = streamUrl;
     audio.load();
     audio.play().catch((error: DOMException) => {
       if (error.name === 'NotAllowedError') {
@@ -930,9 +943,12 @@ export default function RadioPageClient() {
         setPlaybackDesired(false);
         playbackDesiredRef.current = false;
         setLastError('Playback blocked by browser. Press play to retry.');
+        return;
       }
+
+      disableRadio('radio-stream-start-failed');
     });
-  }, []);
+  }, [disableRadio]);
 
   const stopPlayback = React.useCallback(() => {
     setPlaybackDesired(false);
@@ -947,10 +963,6 @@ export default function RadioPageClient() {
 
     setStreamState('idle');
   }, []);
-
-  React.useEffect(() => {
-    startPlaybackRef.current = startPlayback;
-  }, [startPlayback]);
 
   React.useEffect(() => {
     if (!hydrated) return;
@@ -1008,7 +1020,7 @@ export default function RadioPageClient() {
 
     const handleEnded = () => {
       if (playbackDesiredRef.current) {
-        setRestartNonce((previous) => previous + 1);
+        disableRadio('radio-stream-ended');
       }
     };
 
@@ -1017,10 +1029,7 @@ export default function RadioPageClient() {
         return;
       }
 
-      setStreamState('error');
-      setLastError('Stream playback error. Press play to retry.');
-      setPlaybackDesired(false);
-      playbackDesiredRef.current = false;
+      disableRadio('radio-stream-failed');
     };
 
     audio.addEventListener('playing', handlePlaying);
@@ -1040,7 +1049,7 @@ export default function RadioPageClient() {
         audioRef.current = null;
       }
     };
-  }, []);
+  }, [disableRadio]);
 
   React.useEffect(() => {
     if (!mobileVolOpen) return;
@@ -1059,14 +1068,6 @@ export default function RadioPageClient() {
       document.removeEventListener('pointerdown', handlePointerDown);
     };
   }, [mobileVolOpen]);
-
-  React.useEffect(() => {
-    if (!playbackDesired || restartNonce === 0) {
-      return;
-    }
-
-    startPlaybackRef.current();
-  }, [playbackDesired, restartNonce]);
 
   React.useEffect(() => {
     const isPlaying = playbackDesired && streamState === 'playing';

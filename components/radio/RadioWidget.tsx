@@ -12,6 +12,7 @@ import { Headphones, Music, Pin, PinOff, Play, Square } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
+import { useRadioAvailability } from '@/components/radio/RadioAvailabilityProvider';
 import {
   buildStreamUrl,
   fetchArt,
@@ -127,13 +128,9 @@ function clampVolume(input: number): number {
   return Math.min(1, Math.max(0, input));
 }
 
-function getReconnectDelay(attempt: number): number {
-  const delays = [2000, 4000, 8000, 16000, 30000];
-  return delays[Math.min(attempt, delays.length - 1)] ?? 30000;
-}
-
 export default function RadioWidget() {
   const { setRadioState } = useDynamicBackdrop();
+  const { disableRadio } = useRadioAvailability();
   const desktopEligible = useDesktopEligibility();
   const pathname = usePathname();
   const isRadioPage = pathname === '/radio';
@@ -143,9 +140,8 @@ export default function RadioWidget() {
   const qualityRef = React.useRef<QualityName>('medium');
   const channelRef = React.useRef('all');
   const metadataRequestRef = React.useRef(0);
-  const reconnectAttemptRef = React.useRef(0);
-  const reconnectTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const reconnectGuardRef = React.useRef(false);
+  const metadataAbortRef = React.useRef<AbortController | null>(null);
+  const channelsAbortRef = React.useRef<AbortController | null>(null);
 
   const [hydrated, setHydrated] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
@@ -342,9 +338,12 @@ export default function RadioWidget() {
         playbackDesiredRef.current = false;
         setLastError('Autoplay blocked by browser');
         saveRadioLastError('Autoplay blocked by browser');
+        return;
       }
+
+      disableRadio('radio-stream-start-failed');
     });
-  }, []);
+  }, [disableRadio]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional one-shot hydration effect
   React.useEffect(() => {
@@ -378,34 +377,6 @@ export default function RadioWidget() {
     }
   }, [isRadioPage, hydrated, startPlayback]);
 
-  const scheduleReconnect = React.useCallback(() => {
-    if (!playbackDesiredRef.current) {
-      return;
-    }
-
-    if (reconnectTimerRef.current !== null) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
-    }
-
-    if (reconnectGuardRef.current) {
-      return;
-    }
-    reconnectGuardRef.current = true;
-
-    setStreamState('buffering');
-    setStatusText('Reconnecting…');
-
-    const delay = getReconnectDelay(reconnectAttemptRef.current);
-    reconnectTimerRef.current = setTimeout(() => {
-      reconnectTimerRef.current = null;
-      reconnectAttemptRef.current += 1;
-      if (playbackDesiredRef.current) {
-        startPlayback();
-      }
-    }, delay);
-  }, [startPlayback]);
-
   const stopPlayback = React.useCallback(() => {
     setPlaybackDesired(false);
     playbackDesiredRef.current = false;
@@ -433,12 +404,12 @@ export default function RadioWidget() {
       setStatusText('Live');
       setLastError(null);
       clearRadioLastError();
-      reconnectAttemptRef.current = 0;
-      reconnectGuardRef.current = false;
     };
 
     const handleStreamError = () => {
-      scheduleReconnect();
+      if (playbackDesiredRef.current) {
+        disableRadio('radio-stream-failed');
+      }
     };
 
     const handleWaiting = () => {
@@ -463,23 +434,13 @@ export default function RadioWidget() {
       audio.removeEventListener('ended', handleStreamError);
       audioRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scheduleReconnect]);
+  }, [disableRadio]);
 
   React.useEffect(() => {
     return () => {
       clearCloseLingerTimer();
     };
   }, [clearCloseLingerTimer]);
-
-  React.useEffect(() => {
-    return () => {
-      if (reconnectTimerRef.current !== null) {
-        clearTimeout(reconnectTimerRef.current);
-        reconnectTimerRef.current = null;
-      }
-    };
-  }, []);
 
   React.useEffect(() => {
     if (stickyOpen) {
@@ -491,32 +452,62 @@ export default function RadioWidget() {
   const refreshMetadata = React.useCallback(async () => {
     const currentRequest = metadataRequestRef.current + 1;
     metadataRequestRef.current = currentRequest;
+    metadataAbortRef.current?.abort();
+    const controller = new AbortController();
+    metadataAbortRef.current = controller;
 
     try {
       const selectedChannel = normalizeChannel(channelRef.current);
-      const [currentPayload, artPayload] = await Promise.all([
-        fetchCurrent(selectedChannel),
-        fetchArt(selectedChannel),
-      ]);
+      const currentPayload = await fetchCurrent(selectedChannel, '', controller.signal);
 
-      if (metadataRequestRef.current !== currentRequest) {
+      if (metadataRequestRef.current !== currentRequest || controller.signal.aborted) {
         return;
       }
 
       setCurrentTrack(currentPayload);
-      setArtMetadata(artPayload);
       setLastError(null);
       clearRadioLastError();
     } catch (error) {
+      if (controller.signal.aborted || metadataRequestRef.current !== currentRequest) {
+        return;
+      }
+
       const message = toErrorMessage(error);
       setLastError(message);
       saveRadioLastError(message);
+      disableRadio('radio-current-track-failed');
+      return;
     }
-  }, []);
+
+    try {
+      const artPayload = await fetchArt(
+        normalizeChannel(channelRef.current),
+        '',
+        controller.signal,
+      );
+
+      if (metadataRequestRef.current !== currentRequest || controller.signal.aborted) {
+        return;
+      }
+
+      setArtMetadata(artPayload);
+    } catch {
+      if (!controller.signal.aborted && metadataRequestRef.current === currentRequest) {
+        setArtMetadata(null);
+      }
+    }
+  }, [disableRadio]);
 
   const refreshChannels = React.useCallback(async () => {
+    channelsAbortRef.current?.abort();
+    const controller = new AbortController();
+    channelsAbortRef.current = controller;
+
     try {
-      const payload = await fetchChannels();
+      const payload = await fetchChannels('', controller.signal);
+      if (controller.signal.aborted) {
+        return;
+      }
       const sortedChannels = [...payload.channels].sort((a, b) => a.name.localeCompare(b.name));
       setChannels(sortedChannels);
 
@@ -526,6 +517,9 @@ export default function RadioWidget() {
         setChannel('all');
       }
     } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
       const message = toErrorMessage(error);
       setLastError(message);
       saveRadioLastError(message);
@@ -534,10 +528,14 @@ export default function RadioWidget() {
 
   React.useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     const loadInventory = async () => {
       try {
-        const response = await fetch('/api/radio-images', { cache: 'no-store' });
+        const response = await fetch('/api/radio-images', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
         if (!response.ok) {
           throw new Error(`Image inventory request failed: ${response.status}`);
         }
@@ -549,7 +547,7 @@ export default function RadioWidget() {
 
         setImageInventory(payload);
       } catch {
-        if (!active) {
+        if (!active || controller.signal.aborted) {
           return;
         }
 
@@ -565,6 +563,7 @@ export default function RadioWidget() {
     void loadInventory();
     return () => {
       active = false;
+      controller.abort();
     };
   }, []);
 
@@ -581,6 +580,7 @@ export default function RadioWidget() {
 
     return () => {
       window.clearInterval(intervalId);
+      channelsAbortRef.current?.abort();
     };
   }, [refreshChannels, hydrated]);
 
@@ -598,6 +598,7 @@ export default function RadioWidget() {
 
     return () => {
       window.clearInterval(intervalId);
+      metadataAbortRef.current?.abort();
     };
   }, [refreshMetadata, hydrated]);
 

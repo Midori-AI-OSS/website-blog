@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bun scripts/build-with-radio-check.ts",
     "start": "next start",
     "test": "echo 'Tests require Bun runtime. Install Bun (https://bun.sh) and run: bun test' && exit 1",
     "test:bun": "bun test",
