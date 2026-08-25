@@ -360,20 +360,6 @@ async function runInterval(delay: number) {
   });
 }
 
-async function _runTimeout(delay: number) {
-  const match = [...timeoutEntries.entries()].find(([, entry]) => entry.delay === delay);
-  if (!match) {
-    throw new Error(`Expected timeout with delay ${delay}`);
-  }
-
-  timeoutEntries.delete(match[0]);
-
-  await act(async () => {
-    match[1].callback();
-    await flushEffects();
-  });
-}
-
 beforeEach(() => {
   installDom();
   installTimers();
@@ -457,7 +443,7 @@ describe('RadioWidget', () => {
     expect(lastAudio?.playCalls).toBe(initialPlayCalls);
   });
 
-  test('auto-reconnects when audio element errors', async () => {
+  test('does not reconnect when audio element errors', async () => {
     await renderWidget();
     await clickPrimaryButton();
 
@@ -473,12 +459,8 @@ describe('RadioWidget', () => {
       await flushEffects();
     });
 
-    // Should not immediately start new playback (backoff delay)
+    // Required stream failures latch radio off instead of scheduling reconnects.
     expect(lastAudio?.playCalls).toBe(playCallsBefore);
-
-    // After 2s delay (first backoff step), should reconnect
-    await _runTimeout(2000);
-
-    expect(lastAudio?.playCalls).toBe(playCallsBefore ? playCallsBefore + 1 : undefined);
+    expect([...timeoutEntries.values()].some((entry) => entry.delay === 2_000)).toBe(false);
   });
 });

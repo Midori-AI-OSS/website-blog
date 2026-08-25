@@ -1,37 +1,7 @@
-import {
-  isRadioEnvelope,
-  MIDORIAI_RADIO_API_VERSION,
-} from '../lib/radio/contract';
+import { isRadioEnvelope, MIDORIAI_RADIO_API_VERSION } from '../lib/radio/contract';
 
 export const RADIO_HEALTH_TIMEOUT_MS = 3_000;
 export const DEFAULT_RADIO_HEALTH_URL = 'https://radio.midori-ai.xyz/health';
-const ALLOWED_RADIO_HEALTH_HOSTNAME = 'radio.midori-ai.xyz';
-const ALLOWED_RADIO_HEALTH_PATHNAME = '/health';
-
-function resolveRadioHealthUrl(envValue: string | undefined): string {
-  const fallbackUrl = new URL(DEFAULT_RADIO_HEALTH_URL);
-  const candidate = envValue?.trim();
-
-  if (!candidate) {
-    return fallbackUrl.toString();
-  }
-
-  try {
-    const parsed = new URL(candidate);
-
-    if (
-      parsed.protocol !== 'https:' ||
-      parsed.hostname !== ALLOWED_RADIO_HEALTH_HOSTNAME ||
-      parsed.pathname !== ALLOWED_RADIO_HEALTH_PATHNAME
-    ) {
-      return fallbackUrl.toString();
-    }
-
-    return `${parsed.origin}${parsed.pathname}`;
-  } catch {
-    return fallbackUrl.toString();
-  }
-}
 
 export interface BuildRadioStatus {
   available: boolean;
@@ -120,7 +90,7 @@ export function createBuildRadioStatus(
 
 async function runBuild(): Promise<number> {
   const buildId = crypto.randomUUID();
-  const healthUrl = resolveRadioHealthUrl(process.env.RADIO_HEALTH_URL);
+  const healthUrl = DEFAULT_RADIO_HEALTH_URL;
   const result = await checkRadioHealth(healthUrl);
   const status = createBuildRadioStatus(buildId, healthUrl, result);
 

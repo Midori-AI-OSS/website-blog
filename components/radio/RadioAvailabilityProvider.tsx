@@ -1,14 +1,14 @@
 'use client';
 
-import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import * as React from 'react';
 import {
   hasRadioOfflineLatch,
   isSuccessfulRadioHealthEnvelope,
   RADIO_AVAILABLE_AT_BUILD,
   RADIO_BUILD_ID,
-  setRadioOfflineLatch,
   type RadioAvailabilityStatus,
+  setRadioOfflineLatch,
 } from '@/lib/radio/availability';
 
 const SERVER_HEALTH_TIMEOUT_MS = 3_000;

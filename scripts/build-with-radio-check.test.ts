@@ -20,8 +20,10 @@ function successfulEnvelope(data: unknown = { status: 'ready' }): Response {
 
 describe('build radio health check', () => {
   test('accepts a radio.v1 success envelope with data', async () => {
-    const result = await checkRadioHealth('https://radio.test/health', RADIO_HEALTH_TIMEOUT_MS, () =>
-      Promise.resolve(successfulEnvelope()),
+    const result = await checkRadioHealth(
+      'https://radio.test/health',
+      RADIO_HEALTH_TIMEOUT_MS,
+      () => Promise.resolve(successfulEnvelope()),
     );
 
     expect(result).toEqual({ available: true, reason: null });
