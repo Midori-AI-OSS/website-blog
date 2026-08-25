@@ -56,7 +56,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
         >
           <Box
             component="img"
-            src="https://tea-cup.midori-ai.xyz/download/blog-logo.png"
+            src="/branding/blog-logo.png"
             alt="Midori AI Logo"
             loading="lazy"
             sx={{

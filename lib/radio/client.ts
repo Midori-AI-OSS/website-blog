@@ -156,17 +156,21 @@ export async function fetchHealth(
   return requestRadioData<HealthPayload>('/health', {}, baseUrl);
 }
 
-export async function fetchChannels(baseUrl: string = ''): Promise<ChannelsPayload> {
-  return requestRadioData<ChannelsPayload>('/api/radio/channels', {}, baseUrl);
+export async function fetchChannels(
+  baseUrl: string = '',
+  signal?: AbortSignal,
+): Promise<ChannelsPayload> {
+  return requestRadioData<ChannelsPayload>('/api/radio/channels', { signal }, baseUrl);
 }
 
 export async function fetchCurrent(
   channel: string | null | undefined,
   baseUrl: string = '',
+  signal?: AbortSignal,
 ): Promise<CurrentPayload> {
   return requestRadioData<CurrentPayload>(
     buildChannelQueryPath('/api/radio/current', channel),
-    {},
+    { signal },
     baseUrl,
   );
 }
@@ -174,10 +178,11 @@ export async function fetchCurrent(
 export async function fetchArt(
   channel: string | null | undefined,
   baseUrl: string = '',
+  signal?: AbortSignal,
 ): Promise<ArtPayload> {
   const art = await requestRadioData<ArtPayload>(
     buildChannelQueryPath('/api/radio/art', channel),
-    {},
+    { signal },
     baseUrl,
   );
   return {
