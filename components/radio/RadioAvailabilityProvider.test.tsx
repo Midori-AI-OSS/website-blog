@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -6,8 +6,17 @@ import { createRoot, type Root } from 'react-dom/client';
 process.env.NEXT_PUBLIC_RADIO_AVAILABLE_AT_BUILD = 'true';
 process.env.NEXT_PUBLIC_RADIO_BUILD_ID = 'radio-health-test';
 
-const { RadioAvailabilityGate, RadioAvailabilityProvider, RADIO_BROWSER_HEALTH_TIMEOUT_MS, RADIO_SERVER_HEALTH_TIMEOUT_MS } =
-  await import('./RadioAvailabilityProvider');
+mock.module('next/navigation', () => ({
+  usePathname: () => '/radio',
+  useRouter: () => ({ replace: () => undefined }),
+}));
+
+const {
+  RadioAvailabilityGate,
+  RadioAvailabilityProvider,
+  RADIO_BROWSER_HEALTH_TIMEOUT_MS,
+  RADIO_SERVER_HEALTH_TIMEOUT_MS,
+} = await import('./RadioAvailabilityProvider');
 
 let testWindow: Window;
 let container: HTMLDivElement;
@@ -91,8 +100,9 @@ describe('RadioAvailabilityProvider health startup', () => {
     });
     expect(container.textContent).toBe('');
 
-    await new Promise((resolve) => setTimeout(resolve, 4_100));
-    await flushEffects();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 4_100));
+    });
 
     expect(container.textContent).toBe('radio is ready');
   });
