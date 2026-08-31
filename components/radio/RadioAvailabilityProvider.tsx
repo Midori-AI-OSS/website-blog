@@ -11,8 +11,8 @@ import {
   setRadioOfflineLatch,
 } from '@/lib/radio/availability';
 
-const SERVER_HEALTH_TIMEOUT_MS = 3_000;
-const CLIENT_HEALTH_TIMEOUT_MS = SERVER_HEALTH_TIMEOUT_MS + 500;
+const SERVER_HEALTH_TIMEOUT_MS = 5_500;
+const CLIENT_HEALTH_TIMEOUT_MS = 5_500;
 
 function getLocalStorage(): Storage | null {
   try {

@@ -1,6 +1,6 @@
 import { isRadioEnvelope, MIDORIAI_RADIO_API_VERSION } from '../lib/radio/contract';
 
-export const RADIO_HEALTH_TIMEOUT_MS = 3_000;
+export const RADIO_HEALTH_TIMEOUT_MS = 5_500;
 export const DEFAULT_RADIO_HEALTH_URL = 'https://radio.midori-ai.xyz/health';
 
 export interface BuildRadioStatus {

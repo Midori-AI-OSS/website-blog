@@ -19,6 +19,24 @@ function successfulEnvelope(data: unknown = { status: 'ready' }): Response {
 }
 
 describe('build radio health check', () => {
+  test('allows the default build health check to complete after the old three-second budget', async () => {
+    const result = await checkRadioHealth('https://radio.test/health', undefined, (_url, init) =>
+      new Promise<Response>((resolve, reject) => {
+        const responseTimer = setTimeout(() => resolve(successfulEnvelope()), 4_000);
+        init?.signal?.addEventListener('abort', () => {
+          clearTimeout(responseTimer);
+          reject(new DOMException('aborted', 'AbortError'));
+        });
+      }),
+    );
+
+    expect(result).toEqual({ available: true, reason: null });
+  });
+
+  test('uses a five-and-a-half-second default build health budget', () => {
+    expect(RADIO_HEALTH_TIMEOUT_MS).toBe(5_500);
+  });
+
   test('accepts a radio.v1 success envelope with data', async () => {
     const result = await checkRadioHealth(
       'https://radio.test/health',

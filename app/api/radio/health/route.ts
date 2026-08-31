@@ -8,7 +8,7 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const UPSTREAM_TIMEOUT_MS = 3_000;
+export const RADIO_HEALTH_UPSTREAM_TIMEOUT_MS = 5_500;
 
 function errorResponse(code: string, message: string): NextResponse {
   return NextResponse.json(
@@ -28,7 +28,7 @@ function errorResponse(code: string, message: string): NextResponse {
 
 export async function GET(): Promise<NextResponse> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), RADIO_HEALTH_UPSTREAM_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${MIDORIAI_RADIO_BASE_URL}/health`, {
