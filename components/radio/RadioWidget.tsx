@@ -135,7 +135,7 @@ export default function RadioWidget() {
   const isRadioPage = pathname === '/radio';
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const closeLingerTimerRef = React.useRef<number | null>(null);
-  const reconnectTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectTimerRef = React.useRef<number | null>(null);
   const reconnectAttemptRef = React.useRef(0);
   const startPlaybackRef = React.useRef<() => void>(() => undefined);
   const playbackDesiredRef = React.useRef(false);

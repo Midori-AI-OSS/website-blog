@@ -252,7 +252,7 @@ function fadeAudioVolume(
 
 export default function RadioPageClient() {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
-  const reconnectTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectTimerRef = React.useRef<number | null>(null);
   const reconnectAttemptRef = React.useRef(0);
   const startPlaybackRef = React.useRef<() => void>(() => undefined);
   const channelRef = React.useRef('all');
