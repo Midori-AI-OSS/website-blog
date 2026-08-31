@@ -3,36 +3,24 @@
 import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import {
-  hasRadioOfflineLatch,
   isSuccessfulRadioHealthEnvelope,
   RADIO_AVAILABLE_AT_BUILD,
   RADIO_BUILD_ID,
   type RadioAvailabilityStatus,
-  setRadioOfflineLatch,
 } from '@/lib/radio/availability';
 
 const SERVER_HEALTH_TIMEOUT_MS = 5_500;
 const CLIENT_HEALTH_TIMEOUT_MS = 5_500;
 
-function getLocalStorage(): Storage | null {
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 interface RadioAvailabilityContextValue {
   buildId: string;
   status: RadioAvailabilityStatus;
-  disableRadio: (reason?: string) => void;
   reason: string | null;
 }
 
 const RadioAvailabilityContext = React.createContext<RadioAvailabilityContextValue>({
   buildId: RADIO_BUILD_ID,
   status: 'offline',
-  disableRadio: () => undefined,
   reason: 'radio-not-enabled-at-build',
 });
 
@@ -69,6 +57,7 @@ function getRadioHealthCheck(buildId: string): Promise<void> {
   }, CLIENT_HEALTH_TIMEOUT_MS);
   const check = requestRadioHealth(controller.signal).finally(() => {
     window.clearTimeout(timeoutId);
+    healthChecksByBuild.delete(buildId);
   });
   healthChecksByBuild.set(buildId, check);
   return check;
@@ -85,55 +74,37 @@ export function RadioAvailabilityProvider({ children }: { children: React.ReactN
   const [reason, setReason] = React.useState<string | null>(() =>
     RADIO_AVAILABLE_AT_BUILD ? null : 'radio-not-enabled-at-build',
   );
-  const statusRef = React.useRef(status);
-
-  const disableRadio = React.useCallback((nextReason = 'radio-runtime-failure') => {
-    if (statusRef.current === 'offline') {
-      return;
-    }
-
-    statusRef.current = 'offline';
-    setRadioOfflineLatch(getLocalStorage(), RADIO_BUILD_ID);
-    setReason(nextReason);
-    setStatus('offline');
-  }, []);
 
   React.useEffect(() => {
     if (!RADIO_AVAILABLE_AT_BUILD) {
       return;
     }
 
-    if (hasRadioOfflineLatch(getLocalStorage(), RADIO_BUILD_ID)) {
-      statusRef.current = 'offline';
-      setReason('radio-offline-latch');
-      setStatus('offline');
-      return;
-    }
-
     let active = true;
     void getRadioHealthCheck(RADIO_BUILD_ID)
       .then(() => {
-        if (!active || statusRef.current === 'offline') {
+        if (!active) {
           return;
         }
-        statusRef.current = 'online';
+        setReason(null);
         setStatus('online');
       })
       .catch(() => {
-        if (!active || statusRef.current === 'offline') {
+        if (!active) {
           return;
         }
-        disableRadio('radio-startup-health-failed');
+        setReason('radio-startup-health-failed');
+        setStatus('offline');
       });
 
     return () => {
       active = false;
     };
-  }, [disableRadio]);
+  }, []);
 
   const contextValue = React.useMemo(
-    () => ({ buildId: RADIO_BUILD_ID, status, disableRadio, reason }),
-    [disableRadio, reason, status],
+    () => ({ buildId: RADIO_BUILD_ID, status, reason }),
+    [reason, status],
   );
 
   return (

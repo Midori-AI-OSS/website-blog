@@ -37,8 +37,9 @@
 - Verify play starts `/radio/v1/stream` with selected `channel` and `q`.
 - Verify stop halts playback and clears reconnect timers.
 - Simulate stream failure and verify bounded backoff sequence:
-- `1s`, `2s`, `4s`, `8s`, `16s`, then capped at `30s`.
+- `100ms`, `200ms`, `400ms`, `800ms`, `1.6s`, then capped at `2s`.
 - Verify retry counter resets after successful `playing` event.
+- Verify runtime stream failures keep the page and widget available while reconnecting.
 
 ## Polling
 - Verify `/current` and `/art` poll every `5s` while playback is active.

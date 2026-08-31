@@ -12,7 +12,6 @@ import { Headphones, Music, Pin, PinOff, Play, Square } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
-import { useRadioAvailability } from '@/components/radio/RadioAvailabilityProvider';
 import {
   buildStreamUrl,
   fetchArt,
@@ -25,6 +24,7 @@ import type { ArtPayload, ChannelEntry, CurrentPayload, QualityName } from '@/li
 import { normalizeChannel, normalizeQuality, QUALITY_LEVELS } from '@/lib/radio/contract';
 import type { RadioImageInventory } from '@/lib/radio/images';
 import { appendTrackCacheKey, pickDeterministicImage, preloadImage } from '@/lib/radio/images';
+import { getRadioReconnectDelay } from '@/lib/radio/reconnect';
 import {
   clearRadioLastError,
   loadRadioState,
@@ -130,12 +130,14 @@ function clampVolume(input: number): number {
 
 export default function RadioWidget() {
   const { setRadioState } = useDynamicBackdrop();
-  const { disableRadio } = useRadioAvailability();
   const desktopEligible = useDesktopEligibility();
   const pathname = usePathname();
   const isRadioPage = pathname === '/radio';
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const closeLingerTimerRef = React.useRef<number | null>(null);
+  const reconnectTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptRef = React.useRef(0);
+  const startPlaybackRef = React.useRef<() => void>(() => undefined);
   const playbackDesiredRef = React.useRef(false);
   const qualityRef = React.useRef<QualityName>('medium');
   const channelRef = React.useRef('all');
@@ -308,6 +310,31 @@ export default function RadioWidget() {
     startCloseLinger();
   }, [startCloseLinger]);
 
+  const cancelReconnect = React.useCallback(() => {
+    if (reconnectTimerRef.current !== null) {
+      window.clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+    reconnectAttemptRef.current = 0;
+  }, []);
+
+  const scheduleReconnect = React.useCallback(() => {
+    if (!playbackDesiredRef.current || reconnectTimerRef.current !== null) {
+      return;
+    }
+
+    const delay = getRadioReconnectDelay(reconnectAttemptRef.current);
+    setStreamState('buffering');
+    setStatusText('Reconnecting…');
+    reconnectTimerRef.current = window.setTimeout(() => {
+      reconnectTimerRef.current = null;
+      reconnectAttemptRef.current += 1;
+      if (playbackDesiredRef.current) {
+        startPlaybackRef.current();
+      }
+    }, delay);
+  }, []);
+
   const startPlayback = React.useCallback(() => {
     const audio = audioRef.current;
     if (audio === null) {
@@ -341,9 +368,13 @@ export default function RadioWidget() {
         return;
       }
 
-      disableRadio('radio-stream-start-failed');
+      scheduleReconnect();
     });
-  }, [disableRadio]);
+  }, [scheduleReconnect]);
+
+  React.useEffect(() => {
+    startPlaybackRef.current = startPlayback;
+  }, [startPlayback]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional one-shot hydration effect
   React.useEffect(() => {
@@ -358,6 +389,7 @@ export default function RadioWidget() {
     if (!hydrated) return;
 
     if (isRadioPage) {
+      cancelReconnect();
       if (playbackDesiredRef.current) {
         playbackDesiredRef.current = false;
         const audio = audioRef.current;
@@ -375,9 +407,10 @@ export default function RadioWidget() {
         startPlayback();
       }
     }
-  }, [isRadioPage, hydrated, startPlayback]);
+  }, [cancelReconnect, isRadioPage, hydrated, startPlayback]);
 
   const stopPlayback = React.useCallback(() => {
+    cancelReconnect();
     setPlaybackDesired(false);
     playbackDesiredRef.current = false;
 
@@ -390,7 +423,7 @@ export default function RadioWidget() {
 
     setStreamState('idle');
     setStatusText('Stopped');
-  }, []);
+  }, [cancelReconnect]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: volume is kept in sync by a separate effect; adding volume to deps would destroy and recreate the audio element on every volume change
   React.useEffect(() => {
@@ -400,6 +433,11 @@ export default function RadioWidget() {
     audioRef.current = audio;
 
     const handlePlaying = () => {
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      reconnectAttemptRef.current = 0;
       setStreamState('playing');
       setStatusText('Live');
       setLastError(null);
@@ -408,7 +446,7 @@ export default function RadioWidget() {
 
     const handleStreamError = () => {
       if (playbackDesiredRef.current) {
-        disableRadio('radio-stream-failed');
+        scheduleReconnect();
       }
     };
 
@@ -434,13 +472,14 @@ export default function RadioWidget() {
       audio.removeEventListener('ended', handleStreamError);
       audioRef.current = null;
     };
-  }, [disableRadio]);
+  }, [scheduleReconnect]);
 
   React.useEffect(() => {
     return () => {
       clearCloseLingerTimer();
+      cancelReconnect();
     };
-  }, [clearCloseLingerTimer]);
+  }, [cancelReconnect, clearCloseLingerTimer]);
 
   React.useEffect(() => {
     if (stickyOpen) {
@@ -475,7 +514,6 @@ export default function RadioWidget() {
       const message = toErrorMessage(error);
       setLastError(message);
       saveRadioLastError(message);
-      disableRadio('radio-current-track-failed');
       return;
     }
 
@@ -496,7 +534,7 @@ export default function RadioWidget() {
         setArtMetadata(null);
       }
     }
-  }, [disableRadio]);
+  }, []);
 
   const refreshChannels = React.useCallback(async () => {
     channelsAbortRef.current?.abort();

@@ -1,10 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import {
-  hasRadioOfflineLatch,
-  isSuccessfulRadioHealthEnvelope,
-  radioOfflineStorageKey,
-  setRadioOfflineLatch,
-} from './availability';
+import { isSuccessfulRadioHealthEnvelope } from './availability';
 
 function envelope(data: unknown, overrides: Record<string, unknown> = {}) {
   return {
@@ -27,21 +22,5 @@ describe('radio availability helpers', () => {
     expect(
       isSuccessfulRadioHealthEnvelope(envelope({ status: 'ready' }, { version: 'other' })),
     ).toBe(false);
-  });
-
-  test('latches only the current browser/build key and ignores older build ids', () => {
-    const values = new Map<string, string>();
-    const storage = {
-      getItem: (key: string) => values.get(key) ?? null,
-      setItem: (key: string, value: string) => {
-        values.set(key, value);
-      },
-    };
-
-    setRadioOfflineLatch(storage, 'build-a');
-
-    expect(values.get(radioOfflineStorageKey('build-a'))).toBe('true');
-    expect(hasRadioOfflineLatch(storage, 'build-a')).toBe(true);
-    expect(hasRadioOfflineLatch(storage, 'build-b')).toBe(false);
   });
 });

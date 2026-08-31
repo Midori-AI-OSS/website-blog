@@ -7,7 +7,6 @@ import {
 import { PathnameContext } from 'next/dist/shared/lib/hooks-client-context.shared-runtime';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { radioOfflineStorageKey } from '@/lib/radio/availability';
 import {
   RADIO_BROWSER_HEALTH_TIMEOUT_MS,
   RADIO_SERVER_HEALTH_TIMEOUT_MS,
@@ -134,14 +133,32 @@ describe('RadioAvailabilityProvider health startup', () => {
     expect(RADIO_BROWSER_HEALTH_TIMEOUT_MS).toBe(5_500);
   });
 
-  test('keeps an existing offline latch closed without making a health request', async () => {
-    testWindow.localStorage.setItem(radioOfflineStorageKey(), 'true');
+  test('ignores a legacy offline latch when boot health succeeds', async () => {
+    testWindow.localStorage.setItem('midoriai.radio.offline:radio-health-test', 'true');
     let requests = 0;
-    const replacements: string[] = [];
     globalThis.fetch = (() => {
       requests += 1;
       return Promise.resolve(successResponse());
     }) as typeof fetch;
+
+    await act(async () => {
+      root.render(
+        <AppRouterHarness>
+          <RadioAvailabilityProvider>
+            <RadioAvailabilityGate>radio is ready</RadioAvailabilityGate>
+          </RadioAvailabilityProvider>
+        </AppRouterHarness>,
+      );
+    });
+    await flushEffects();
+
+    expect(container.textContent).toBe('radio is ready');
+    expect(requests).toBe(1);
+  });
+
+  test('redirects the radio page when boot health fails', async () => {
+    const replacements: string[] = [];
+    globalThis.fetch = (() => Promise.reject(new Error('radio unavailable'))) as typeof fetch;
 
     await act(async () => {
       root.render(
@@ -155,7 +172,6 @@ describe('RadioAvailabilityProvider health startup', () => {
     await flushEffects();
 
     expect(container.textContent).toBe('');
-    expect(requests).toBe(0);
     expect(replacements).toEqual(['/']);
   });
 });

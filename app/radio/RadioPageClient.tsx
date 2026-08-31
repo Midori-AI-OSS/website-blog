@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import BlobProgressBar from '@/components/radio/BlobProgressBar';
-import { useRadioAvailability } from '@/components/radio/RadioAvailabilityProvider';
 import VibesCanvas from '@/components/radio/VibesCanvas';
 import {
   fetchArt,
@@ -41,6 +40,7 @@ import {
   type QualityName,
 } from '@/lib/radio/contract';
 import { appendTrackCacheKey } from '@/lib/radio/images';
+import { getRadioReconnectDelay } from '@/lib/radio/reconnect';
 import {
   loadRadioState,
   MIDORIAI_RADIO_CHANNEL_KEY,
@@ -251,8 +251,10 @@ function fadeAudioVolume(
 }
 
 export default function RadioPageClient() {
-  const { disableRadio } = useRadioAvailability();
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const reconnectTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptRef = React.useRef(0);
+  const startPlaybackRef = React.useRef<() => void>(() => undefined);
   const channelRef = React.useRef('all');
   const qualityRef = React.useRef<QualityName>('medium');
   const volumeRef = React.useRef(0.5);
@@ -541,6 +543,30 @@ export default function RadioPageClient() {
     setPositionMs(position);
   }, []);
 
+  const cancelReconnect = React.useCallback(() => {
+    if (reconnectTimerRef.current !== null) {
+      window.clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+    reconnectAttemptRef.current = 0;
+  }, []);
+
+  const scheduleReconnect = React.useCallback(() => {
+    if (!playbackDesiredRef.current || reconnectTimerRef.current !== null) {
+      return;
+    }
+
+    const delay = getRadioReconnectDelay(reconnectAttemptRef.current);
+    setStreamState('loading');
+    reconnectTimerRef.current = window.setTimeout(() => {
+      reconnectTimerRef.current = null;
+      reconnectAttemptRef.current += 1;
+      if (playbackDesiredRef.current) {
+        startPlaybackRef.current();
+      }
+    }, delay);
+  }, []);
+
   const refreshCurrent = React.useCallback(
     async (selectedChannel: string) => {
       const requestId = currentRequestRef.current + 1;
@@ -564,10 +590,9 @@ export default function RadioPageClient() {
           return;
         }
         setLastError(toErrorMessage(error));
-        disableRadio('radio-current-track-failed');
       }
     },
-    [disableRadio, syncProgress],
+    [syncProgress],
   );
 
   React.useEffect(() => {
@@ -946,11 +971,16 @@ export default function RadioPageClient() {
         return;
       }
 
-      disableRadio('radio-stream-start-failed');
+      scheduleReconnect();
     });
-  }, [disableRadio]);
+  }, [scheduleReconnect]);
+
+  React.useEffect(() => {
+    startPlaybackRef.current = startPlayback;
+  }, [startPlayback]);
 
   const stopPlayback = React.useCallback(() => {
+    cancelReconnect();
     setPlaybackDesired(false);
     playbackDesiredRef.current = false;
 
@@ -962,7 +992,7 @@ export default function RadioPageClient() {
     }
 
     setStreamState('idle');
-  }, []);
+  }, [cancelReconnect]);
 
   React.useEffect(() => {
     if (!hydrated) return;
@@ -1008,6 +1038,11 @@ export default function RadioPageClient() {
     audioRef.current = audio;
 
     const handlePlaying = () => {
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      reconnectAttemptRef.current = 0;
       setStreamState('playing');
       setLastError(null);
     };
@@ -1020,7 +1055,7 @@ export default function RadioPageClient() {
 
     const handleEnded = () => {
       if (playbackDesiredRef.current) {
-        disableRadio('radio-stream-ended');
+        scheduleReconnect();
       }
     };
 
@@ -1029,7 +1064,7 @@ export default function RadioPageClient() {
         return;
       }
 
-      disableRadio('radio-stream-failed');
+      scheduleReconnect();
     };
 
     audio.addEventListener('playing', handlePlaying);
@@ -1049,7 +1084,13 @@ export default function RadioPageClient() {
         audioRef.current = null;
       }
     };
-  }, [disableRadio]);
+  }, [scheduleReconnect]);
+
+  React.useEffect(() => {
+    return () => {
+      cancelReconnect();
+    };
+  }, [cancelReconnect]);
 
   React.useEffect(() => {
     if (!mobileVolOpen) return;
