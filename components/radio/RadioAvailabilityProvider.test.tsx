@@ -7,12 +7,7 @@ import {
 import { PathnameContext } from 'next/dist/shared/lib/hooks-client-context.shared-runtime';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import {
-  RADIO_BROWSER_HEALTH_TIMEOUT_MS,
-  RADIO_SERVER_HEALTH_TIMEOUT_MS,
-  RadioAvailabilityGate,
-  RadioAvailabilityProvider,
-} from './RadioAvailabilityProvider';
+import { RadioAvailabilityGate, RadioAvailabilityProvider } from './RadioAvailabilityProvider';
 
 let testWindow: Window;
 let container: HTMLDivElement;
@@ -100,41 +95,7 @@ afterEach(async () => {
 });
 
 describe('RadioAvailabilityProvider health startup', () => {
-  test('keeps the gate closed until a delayed health response beyond the old budget succeeds', async () => {
-    globalThis.fetch = ((_input, init) =>
-      new Promise<Response>((resolve, reject) => {
-        const responseTimer = setTimeout(() => resolve(successResponse()), 4_000);
-        init?.signal?.addEventListener('abort', () => {
-          clearTimeout(responseTimer);
-          reject(new DOMException('aborted', 'AbortError'));
-        });
-      })) as typeof fetch;
-
-    await act(async () => {
-      root.render(
-        <AppRouterHarness>
-          <RadioAvailabilityProvider>
-            <RadioAvailabilityGate>radio is ready</RadioAvailabilityGate>
-          </RadioAvailabilityProvider>
-        </AppRouterHarness>,
-      );
-    });
-    expect(container.textContent).toBe('');
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 4_100));
-    });
-
-    expect(container.textContent).toBe('radio is ready');
-  });
-
-  test('uses matching five-and-a-half-second server and browser health budgets', () => {
-    expect(RADIO_SERVER_HEALTH_TIMEOUT_MS).toBe(5_500);
-    expect(RADIO_BROWSER_HEALTH_TIMEOUT_MS).toBe(5_500);
-  });
-
-  test('ignores a legacy offline latch when boot health succeeds', async () => {
-    testWindow.localStorage.setItem('midoriai.radio.offline:radio-health-test', 'true');
+  test('shows the gate after the initial cached health response is online', async () => {
     let requests = 0;
     globalThis.fetch = (() => {
       requests += 1;
@@ -150,15 +111,71 @@ describe('RadioAvailabilityProvider health startup', () => {
         </AppRouterHarness>,
       );
     });
+
     await flushEffects();
 
     expect(container.textContent).toBe('radio is ready');
     expect(requests).toBe(1);
   });
 
+  test('rechecks the cached health response every 30 minutes', async () => {
+    const responses = [successResponse(), new Response('{}', { status: 502 })];
+    let requests = 0;
+    let refresh: (() => void) | undefined;
+    const originalSetInterval = testWindow.setInterval;
+    const originalClearInterval = testWindow.clearInterval;
+    testWindow.setInterval = ((callback: TimerHandler, delay: number) => {
+      expect(delay).toBe(30 * 60 * 1_000);
+      refresh = () => {
+        if (typeof callback === 'function') {
+          callback();
+        }
+      };
+      return 1 as unknown as ReturnType<typeof setInterval>;
+    }) as typeof testWindow.setInterval;
+    testWindow.clearInterval = (() => undefined) as typeof testWindow.clearInterval;
+    globalThis.fetch = (() => {
+      const response = responses[requests];
+      requests += 1;
+      return Promise.resolve(response ?? new Response('{}', { status: 502 }));
+    }) as typeof fetch;
+
+    try {
+      await act(async () => {
+        root.render(
+          <AppRouterHarness>
+            <RadioAvailabilityProvider>
+              <RadioAvailabilityGate>radio is ready</RadioAvailabilityGate>
+            </RadioAvailabilityProvider>
+          </AppRouterHarness>,
+        );
+      });
+      await flushEffects();
+
+      expect(container.textContent).toBe('radio is ready');
+      expect(requests).toBe(1);
+      expect(refresh).toBeDefined();
+
+      await act(async () => {
+        refresh?.();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(requests).toBe(2);
+      expect(container.textContent).toBe('');
+    } finally {
+      testWindow.setInterval = originalSetInterval;
+      testWindow.clearInterval = originalClearInterval;
+    }
+  });
+
   test('redirects the radio page when boot health fails', async () => {
     const replacements: string[] = [];
-    globalThis.fetch = (() => Promise.reject(new Error('radio unavailable'))) as typeof fetch;
+    let requests = 0;
+    globalThis.fetch = (() => {
+      requests += 1;
+      return Promise.resolve(new Response('{}', { status: 502 }));
+    }) as typeof fetch;
 
     await act(async () => {
       root.render(
@@ -173,5 +190,6 @@ describe('RadioAvailabilityProvider health startup', () => {
 
     expect(container.textContent).toBe('');
     expect(replacements).toEqual(['/']);
+    expect(requests).toBe(1);
   });
 });

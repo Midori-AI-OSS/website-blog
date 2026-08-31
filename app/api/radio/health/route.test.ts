@@ -1,13 +1,43 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { GET, RADIO_HEALTH_UPSTREAM_TIMEOUT_MS } from './route';
+import {
+  RADIO_HEALTH_UPSTREAM_TIMEOUT_MS,
+  resetRadioHealthManagerForTests,
+} from '@/lib/radio/radioHealthManager';
+import { GET } from './route';
 
 const originalFetch = globalThis.fetch;
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
+  resetRadioHealthManagerForTests();
 });
 
 describe('/api/radio/health', () => {
+  test('shares one startup health probe across concurrent requests', async () => {
+    let upstreamFetches = 0;
+    globalThis.fetch = (() => {
+      upstreamFetches += 1;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            version: 'radio.v1',
+            ok: true,
+            now: '2026-08-31T00:00:00.000Z',
+            data: { status: 'ready' },
+            error: null,
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+    }) as typeof fetch;
+
+    const [first, second] = await Promise.all([GET(), GET()]);
+
+    expect(upstreamFetches).toBe(1);
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+  });
+
   test('allows an upstream health response that arrives after the old three-second budget', async () => {
     globalThis.fetch = ((_input, init) =>
       new Promise<Response>((resolve, reject) => {
@@ -43,9 +73,11 @@ describe('/api/radio/health', () => {
     expect(RADIO_HEALTH_UPSTREAM_TIMEOUT_MS).toBe(5_500);
   });
 
-  test('returns a validated upstream success envelope without caching', async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve(
+  test('returns the cached validated upstream success envelope without probing again', async () => {
+    let upstreamFetches = 0;
+    globalThis.fetch = (() => {
+      upstreamFetches += 1;
+      return Promise.resolve(
         new Response(
           JSON.stringify({
             version: 'radio.v1',
@@ -56,12 +88,16 @@ describe('/api/radio/health', () => {
           }),
           { status: 200, headers: { 'content-type': 'application/json' } },
         ),
-      )) as typeof fetch;
+      );
+    }) as typeof fetch;
 
     const response = await GET();
+    const secondResponse = await GET();
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ version: 'radio.v1', ok: true });
+    expect(secondResponse.status).toBe(200);
+    expect(upstreamFetches).toBe(1);
     expect(response.headers.get('cache-control')).toBe('no-store, no-cache, must-revalidate');
   });
 

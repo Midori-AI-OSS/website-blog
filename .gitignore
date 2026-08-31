@@ -36,7 +36,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .DS_Store
 .next/
 next-env.d.ts
-.radio-build-status.json
 
 # Python / uv
 tts/.venv/
