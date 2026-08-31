@@ -1,15 +1,19 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
-import { act } from 'react';
+import {
+  AppRouterContext,
+  type AppRouterInstance,
+} from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { PathnameContext } from 'next/dist/shared/lib/hooks-client-context.shared-runtime';
+import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { radioOfflineStorageKey } from '@/lib/radio/availability';
-import { useRadioAvailability } from './RadioAvailabilityProvider';
-
-const {
-  RadioAvailabilityProvider,
+import {
   RADIO_BROWSER_HEALTH_TIMEOUT_MS,
   RADIO_SERVER_HEALTH_TIMEOUT_MS,
-} = await import('./RadioAvailabilityProvider');
+  RadioAvailabilityGate,
+  RadioAvailabilityProvider,
+} from './RadioAvailabilityProvider';
 
 let testWindow: Window;
 let container: HTMLDivElement;
@@ -35,10 +39,27 @@ function successResponse(): Response {
   );
 }
 
-function RadioAvailabilityProbe() {
-  const { status } = useRadioAvailability();
+function AppRouterHarness({
+  children,
+  onReplace = () => undefined,
+}: {
+  children: ReactNode;
+  onReplace?: (href: string) => void;
+}) {
+  const router: AppRouterInstance = {
+    back: () => undefined,
+    forward: () => undefined,
+    refresh: () => undefined,
+    push: () => undefined,
+    replace: onReplace,
+    prefetch: () => undefined,
+  };
 
-  return status === 'online' ? <span>radio is ready</span> : null;
+  return (
+    <AppRouterContext.Provider value={router}>
+      <PathnameContext.Provider value="/radio">{children}</PathnameContext.Provider>
+    </AppRouterContext.Provider>
+  );
 }
 
 async function flushEffects(): Promise<void> {
@@ -92,9 +113,11 @@ describe('RadioAvailabilityProvider health startup', () => {
 
     await act(async () => {
       root.render(
-        <RadioAvailabilityProvider>
-          <RadioAvailabilityProbe />
-        </RadioAvailabilityProvider>,
+        <AppRouterHarness>
+          <RadioAvailabilityProvider>
+            <RadioAvailabilityGate>radio is ready</RadioAvailabilityGate>
+          </RadioAvailabilityProvider>
+        </AppRouterHarness>,
       );
     });
     expect(container.textContent).toBe('');
@@ -114,6 +137,7 @@ describe('RadioAvailabilityProvider health startup', () => {
   test('keeps an existing offline latch closed without making a health request', async () => {
     testWindow.localStorage.setItem(radioOfflineStorageKey(), 'true');
     let requests = 0;
+    const replacements: string[] = [];
     globalThis.fetch = (() => {
       requests += 1;
       return Promise.resolve(successResponse());
@@ -121,14 +145,17 @@ describe('RadioAvailabilityProvider health startup', () => {
 
     await act(async () => {
       root.render(
-        <RadioAvailabilityProvider>
-          <RadioAvailabilityProbe />
-        </RadioAvailabilityProvider>,
+        <AppRouterHarness onReplace={(href) => replacements.push(href)}>
+          <RadioAvailabilityProvider>
+            <RadioAvailabilityGate redirectWhenOffline>radio is ready</RadioAvailabilityGate>
+          </RadioAvailabilityProvider>
+        </AppRouterHarness>,
       );
     });
     await flushEffects();
 
     expect(container.textContent).toBe('');
     expect(requests).toBe(0);
+    expect(replacements).toEqual(['/']);
   });
 });
