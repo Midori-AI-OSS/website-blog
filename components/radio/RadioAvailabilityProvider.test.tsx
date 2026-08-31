@@ -1,15 +1,11 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-
-mock.module('next/navigation', () => ({
-  usePathname: () => '/radio',
-  useRouter: () => ({ replace: () => undefined }),
-}));
+import { radioOfflineStorageKey } from '@/lib/radio/availability';
+import { useRadioAvailability } from './RadioAvailabilityProvider';
 
 const {
-  RadioAvailabilityGate,
   RadioAvailabilityProvider,
   RADIO_BROWSER_HEALTH_TIMEOUT_MS,
   RADIO_SERVER_HEALTH_TIMEOUT_MS,
@@ -37,6 +33,12 @@ function successResponse(): Response {
     }),
     { status: 200, headers: { 'content-type': 'application/json' } },
   );
+}
+
+function RadioAvailabilityProbe() {
+  const { status } = useRadioAvailability();
+
+  return status === 'online' ? <span>radio is ready</span> : null;
 }
 
 async function flushEffects(): Promise<void> {
@@ -91,7 +93,7 @@ describe('RadioAvailabilityProvider health startup', () => {
     await act(async () => {
       root.render(
         <RadioAvailabilityProvider>
-          <RadioAvailabilityGate>radio is ready</RadioAvailabilityGate>
+          <RadioAvailabilityProbe />
         </RadioAvailabilityProvider>,
       );
     });
@@ -110,7 +112,7 @@ describe('RadioAvailabilityProvider health startup', () => {
   });
 
   test('keeps an existing offline latch closed without making a health request', async () => {
-    testWindow.localStorage.setItem('midoriai.radio.offline:radio-health-test', 'true');
+    testWindow.localStorage.setItem(radioOfflineStorageKey(), 'true');
     let requests = 0;
     globalThis.fetch = (() => {
       requests += 1;
@@ -120,7 +122,7 @@ describe('RadioAvailabilityProvider health startup', () => {
     await act(async () => {
       root.render(
         <RadioAvailabilityProvider>
-          <RadioAvailabilityGate>radio is ready</RadioAvailabilityGate>
+          <RadioAvailabilityProbe />
         </RadioAvailabilityProvider>,
       );
     });
