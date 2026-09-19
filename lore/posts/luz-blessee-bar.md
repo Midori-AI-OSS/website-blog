@@ -5,7 +5,7 @@ tags: [lore, "real-moments", "riley"]
 cover_image: /lore/luz-blessee-bar.png
 author: Luna Midori
 date: 2026-04-29
-game: real-moments
+game: archive-moments
 story_order: 1
 episode_label: "Luz Blessee"
 ---
