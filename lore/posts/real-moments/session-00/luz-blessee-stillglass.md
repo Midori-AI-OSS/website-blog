@@ -2,7 +2,7 @@
 title: "Luz Blessee, Vexia's bleed"
 summary: "Two days later, Riley, Echo, Luna, Leo, and Weave. arrive at Stillglass."
 tags: [lore, "real-moments", "riley"]
-cover_image: /lore/luz-blessee-stillglass.png
+cover_image: /lore/real-moments/luz-blessee-stillglass/00-stillglass-cover.png
 author: Luna Midori
 date: 2026-09-19
 game: real-moments
