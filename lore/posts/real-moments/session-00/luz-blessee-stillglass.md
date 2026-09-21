@@ -6299,8 +6299,6 @@ Luna stopped writing for a second just to look.
 
 Weave’s orb rotated above the table, tracking the shapes as they shifted between the four of them.
 
-{{image: /lore/real-moments/luz-blessee-stillglass/magic/21-noctilux-full-group.png}}
-
 __This one is observing the same patterns across Luna, Leo, Echo, and Marisol.__
 
 Nora looked between them.
@@ -6725,6 +6723,8 @@ She caught Marisol before she reached the floor.
 
 The current gathered under Marisol’s back and legs, thickening until Weave had all of her weight. She lowered her carefully beside the chair and stayed gathered behind her, holding her upright as her head fell back.
 
+{{image: /lore/real-moments/luz-blessee-stillglass/magic/21-noctilux-full-group.png}}
+
 Nora dropped beside them.
 
 "Marisol."
@@ -7118,6 +7118,8 @@ She grabbed the trash can, pulled it clear of the chair leg, and got it in front
 June caught Echo at the shoulder. Weave held the rest of her steady.
 
 Echo vomited into the bag.
+
+{{image: /lore/real-moments/luz-blessee-stillglass/recovery/22-settled-support.png}}
 
 Riley kept both hands on the trash can until Echo stopped.
 
@@ -7782,8 +7784,6 @@ Echo rested more of her weight there.
 Luna looked up from the notebook.
 
 She looked around the room. Echo was upright again against Weave. Leo held his water with his free hand resting loose on the table. Marisol sat a little straighter against Nora.
-
-{{image: /lore/real-moments/luz-blessee-stillglass/recovery/22-settled-support.png}}
 
 Luna wrote another short line.
 
@@ -8891,8 +8891,6 @@ Rowan smiled. "See you all around."
 
 They made it back through the public store together.
 
-{{image: /lore/real-moments/luz-blessee-stillglass/departure/24-group-storefront-exit.png}}
-
 Tessa was behind the counter. She looked up when she saw the group coming and immediately gave them a once-over.
 
 "Wow. You all look tired."
@@ -8956,6 +8954,8 @@ They thanked Tessa on the way out.
 Riley gave a weak laugh. "Food."
 
 "Honestly, solid plan."
+
+{{image: /lore/real-moments/luz-blessee-stillglass/departure/24-group-storefront-exit.png}}
 
 Outside, they started toward the car.
 
