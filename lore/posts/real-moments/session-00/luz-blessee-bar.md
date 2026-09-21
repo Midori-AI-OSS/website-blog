@@ -2,7 +2,7 @@
 title: "Luz Blessee, Don’t Drink the Clear Ice"
 summary: "A bar night turns into a contamination incident."
 tags: [lore, "real-moments", "riley"]
-cover_image: /lore/luz-blessee-bar.png
+cover_image: /lore/real-moments/luz-blessee-bar/00-bar-cover.png
 author: Luna Midori
 date: 2026-09-19
 game: real-moments
