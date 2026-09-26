@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
+import { resetRadioHealthManagerForTests } from '@/lib/radio/radioHealthManager';
+import { GET as getRadioHealthRoute } from '../radio/health/route';
 import { OPTIONS, POST } from './route';
 
 const originalFetch = globalThis.fetch;
@@ -45,6 +47,7 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<Mc
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
+  resetRadioHealthManagerForTests();
 });
 
 describe('/api/mcp', () => {
@@ -96,7 +99,7 @@ describe('/api/mcp', () => {
     const result = await callTool('get_radio_health', {});
 
     expect(result.isError).toBe(true);
-    expect(result.content?.[0]?.text).toContain('RADIO_NETWORK_ERROR');
+    expect(result.content?.[0]?.text).toContain('UPSTREAM_UNREACHABLE');
     expect(result.content?.[0]?.text).toContain('radio offline');
     expect(result.content?.[0]?.text).not.toContain('\n');
   });
@@ -122,7 +125,7 @@ describe('/api/mcp', () => {
     }>(response);
 
     expect(body.result?.isError).toBe(true);
-    expect(body.result?.content?.[0]?.text).toContain('RADIO_INVALID_ENVELOPE');
+    expect(body.result?.content?.[0]?.text).toContain('UPSTREAM_UNHEALTHY');
   });
 
   test('applies the default post limit when a caller omits it', async () => {
@@ -215,5 +218,52 @@ describe('/api/mcp', () => {
 
     expect(notFound.structuredContent).toEqual({ found: false, access: 'not_found' });
     expect(notFound.content?.[0]?.text).toBe('{"found":false,"access":"not_found"}');
+  });
+
+  test('reports the same cached offline health snapshot as the UI', async () => {
+    const responses = [
+      new Response(
+        JSON.stringify({
+          version: 'radio.v1',
+          ok: false,
+          now: '2026-09-25T00:00:00.000Z',
+          data: null,
+          error: { code: 'UPSTREAM_UNREACHABLE', message: 'radio offline' },
+        }),
+        { status: 502, headers: { 'Content-Type': 'application/json' } },
+      ),
+      new Response(
+        JSON.stringify({
+          version: 'radio.v1',
+          ok: true,
+          now: '2026-09-25T00:00:01.000Z',
+          data: {
+            status: 'ready',
+            warmup_active: false,
+            track_count: 4,
+            cached_tracks: 2,
+            cached_bytes: 1_024,
+          },
+          error: null,
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    ];
+    let upstreamFetches = 0;
+    globalThis.fetch = (() => {
+      const response = responses[Math.min(upstreamFetches, responses.length - 1)];
+      upstreamFetches += 1;
+      return Promise.resolve(response);
+    }) as typeof fetch;
+
+    const uiHealthResponse = await getRadioHealthRoute();
+    const result = await callTool('get_radio_health', {});
+
+    expect(uiHealthResponse.status).toBe(502);
+    expect(result.isError).toBe(true);
+    expect(result.content?.[0]?.text).toBe(
+      '{"error":{"code":"UPSTREAM_UNREACHABLE","message":"radio offline","status":502}}',
+    );
+    expect(upstreamFetches).toBe(1);
   });
 });

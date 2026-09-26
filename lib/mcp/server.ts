@@ -1,13 +1,9 @@
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 
-import {
-  fetchArt,
-  fetchChannels,
-  fetchCurrent,
-  fetchHealth,
-  RadioApiError,
-} from '@/lib/radio/client';
+import { isSuccessfulRadioHealthEnvelope } from '@/lib/radio/availability';
+import { fetchArt, fetchChannels, fetchCurrent, RadioApiError } from '@/lib/radio/client';
+import { getRadioHealth } from '@/lib/radio/radioHealthManager';
 import { getMcpPost, listMcpPosts, type McpPostResult, searchMcpPosts } from './content';
 
 const limitSchema = z.number().int().min(1).max(30).default(5);
@@ -140,7 +136,19 @@ export function createMidoriMcpServer(): McpServer {
     },
     async () => {
       try {
-        return successResult({ health: await fetchHealth() });
+        const health = await getRadioHealth();
+        if (!isSuccessfulRadioHealthEnvelope(health)) {
+          return errorResult(
+            new RadioApiError(
+              health.error?.message ?? 'Radio health is unavailable',
+              health.error?.code ?? 'RADIO_HEALTH_UNAVAILABLE',
+              502,
+              health.now,
+            ),
+          );
+        }
+
+        return successResult({ health: health.data });
       } catch (error) {
         return errorResult(error);
       }

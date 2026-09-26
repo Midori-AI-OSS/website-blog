@@ -36,4 +36,6 @@ For local development, run `bun run dev` and connect to `http://localhost:3000/a
 
 ## Response Behavior
 
-Content tools return stable metadata including canonical and cover image URLs. Radio tools use the existing validated upstream radio client. Upstream network, HTTP, malformed-response, version, and null-data failures are returned as explicit tool errors; the MCP server does not fabricate or cache stale values.
+List and search tools return compact JSON text alongside their structured metadata. Successful post fetches return normalized post text in the content block and keep access status and metadata in `structuredContent`, so the long-form body is sent once. Password-required and not-found results remain machine-readable and never include a protected body.
+
+Radio data tools use the existing validated upstream client. `get_radio_health` uses the shared server-side health snapshot that drives Radio visibility in the website UI. When that snapshot is offline, MCP returns an explicit tool error with the cached health code and message. Other Radio tools keep their existing request and error behavior.
