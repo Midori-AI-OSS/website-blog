@@ -8,15 +8,27 @@ import {
   fetchHealth,
   RadioApiError,
 } from '@/lib/radio/client';
-import { getMcpPost, listMcpPosts, searchMcpPosts } from './content';
+import { getMcpPost, listMcpPosts, type McpPostResult, searchMcpPosts } from './content';
 
 const limitSchema = z.number().int().min(1).max(30).default(5);
 const channelSchema = z.string().trim().min(1).optional();
 
 function successResult(data: unknown) {
   return {
-    content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+    content: [{ type: 'text' as const, text: JSON.stringify(data) }],
     structuredContent: data,
+  };
+}
+
+function postResult(result: McpPostResult) {
+  if (result.access !== 'granted' || typeof result.content !== 'string') {
+    return successResult(result);
+  }
+
+  const { content, ...structuredContent } = result;
+  return {
+    content: [{ type: 'text' as const, text: content }],
+    structuredContent,
   };
 }
 
@@ -27,7 +39,7 @@ function errorResult(error: unknown) {
   const data = { error: { code, message, status } };
 
   return {
-    content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+    content: [{ type: 'text' as const, text: JSON.stringify(data) }],
     isError: true,
   };
 }
@@ -62,7 +74,7 @@ function registerPostTools(server: McpServer, type: 'blog' | 'lore') {
       description: `Get a Midori AI ${type} post by slug as normalized plain text. Password-protected posts require their password to reveal content.`,
       inputSchema: z.object({ slug: z.string().trim().min(1), password: z.string().optional() }),
     },
-    async ({ slug, password }) => successResult(await getMcpPost(type, slug, password)),
+    async ({ slug, password }) => postResult(await getMcpPost(type, slug, password)),
   );
 }
 
