@@ -10,9 +10,7 @@ export interface RadioAvailabilityEnvelope {
   error: unknown;
 }
 
-export function isSuccessfulRadioHealthEnvelope(
-  value: unknown,
-): value is RadioAvailabilityEnvelope {
+export function isSuccessfulRadioHealthEnvelope(value: unknown): boolean {
   if (!isRadioEnvelope(value)) {
     return false;
   }
