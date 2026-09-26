@@ -1,21 +1,12 @@
 # Midori AI Public Blog MCP Server
 
-The Midori AI blog website provides a public, read-only MCP endpoint at:
+The Midori AI blog provides a public, read-only MCP endpoint.
 
-```text
-https://blog.midori-ai.xyz/api/mcp
-```
-
-It uses the Streamable HTTP transport. No authentication is required, and it does not provide write, admin, streaming, or listener-heartbeat operations.
-
-## ChatGPT
-
-1. In ChatGPT, enable Developer mode under **Settings > Security and login**.
-2. Open the Plugins interface and add a custom MCP server.
-3. Enter `https://blog.midori-ai.xyz/api/mcp` as the server URL.
-4. Save the connection and use the server's read-only tools in a chat.
-
-For local development, run `bun run dev` and connect to `http://localhost:3000/api/mcp`.
+- Endpoint: `https://blog.midori-ai.xyz/api/mcp`
+- Transport: Streamable HTTP
+- Authentication: None
+- Access: Read-only
+- Local development: Run `bun run dev` and connect to `http://localhost:3000/api/mcp`.
 
 ## Tools
 
