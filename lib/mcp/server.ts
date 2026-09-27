@@ -5,6 +5,7 @@ import { isSuccessfulRadioHealthEnvelope } from '@/lib/radio/availability';
 import { fetchArt, fetchChannels, fetchCurrent, RadioApiError } from '@/lib/radio/client';
 import { getRadioHealth } from '@/lib/radio/radioHealthManager';
 import { getMcpPost, listMcpPosts, type McpPostResult, searchMcpPosts } from './content';
+import { getSiteApiOrigin } from './siteApiOrigin';
 
 const limitSchema = z.number().int().min(1).max(30).default(5);
 const channelSchema = z.string().trim().min(1).optional();
@@ -89,7 +90,7 @@ export function createMidoriMcpServer(): McpServer {
     },
     async ({ channel }) => {
       try {
-        return successResult({ current: await fetchCurrent(channel) });
+        return successResult({ current: await fetchCurrent(channel, getSiteApiOrigin()) });
       } catch (error) {
         return errorResult(error);
       }
@@ -104,7 +105,7 @@ export function createMidoriMcpServer(): McpServer {
     },
     async () => {
       try {
-        return successResult({ channels: await fetchChannels() });
+        return successResult({ channels: await fetchChannels(getSiteApiOrigin()) });
       } catch (error) {
         return errorResult(error);
       }
@@ -121,7 +122,7 @@ export function createMidoriMcpServer(): McpServer {
     },
     async ({ channel }) => {
       try {
-        return successResult({ artwork: await fetchArt(channel) });
+        return successResult({ artwork: await fetchArt(channel, getSiteApiOrigin()) });
       } catch (error) {
         return errorResult(error);
       }

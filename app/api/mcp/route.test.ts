@@ -5,6 +5,7 @@ import { GET as getRadioHealthRoute } from '../radio/health/route';
 import { OPTIONS, POST } from './route';
 
 const originalFetch = globalThis.fetch;
+const originalSiteApiOrigin = process.env.SITE_API_ORIGIN;
 
 function request(body: object): Request {
   return new Request('https://example.test/api/mcp', {
@@ -47,6 +48,11 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<Mc
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
+  if (originalSiteApiOrigin === undefined) {
+    delete process.env.SITE_API_ORIGIN;
+  } else {
+    process.env.SITE_API_ORIGIN = originalSiteApiOrigin;
+  }
   resetRadioHealthManagerForTests();
 });
 
@@ -126,6 +132,74 @@ describe('/api/mcp', () => {
 
     expect(body.result?.isError).toBe(true);
     expect(body.result?.content?.[0]?.text).toContain('UPSTREAM_UNHEALTHY');
+  });
+
+  test('routes MCP radio data requests through the configured absolute blog API origin', async () => {
+    process.env.SITE_API_ORIGIN = 'https://blog-api.example.test/';
+    const requestedUrls: string[] = [];
+    globalThis.fetch = ((input) => {
+      const requestUrl = new URL(String(input));
+      requestedUrls.push(requestUrl.toString());
+      const data = requestUrl.pathname.endsWith('/current')
+        ? { track_id: 'track-1' }
+        : requestUrl.pathname.endsWith('/channels')
+          ? { channels: [{ name: 'all', track_count: 4 }] }
+          : { has_art: true, art_url: '/art/current.jpg' };
+
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            version: 'radio.v1',
+            ok: true,
+            now: '2026-09-26T00:00:00.000Z',
+            data,
+            error: null,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }) as typeof fetch;
+
+    const current = await callTool('get_radio_current', { channel: 'all' });
+    const channels = await callTool('list_radio_channels', {});
+    const artwork = await callTool('get_radio_artwork', { channel: 'all' });
+
+    expect(requestedUrls).toEqual([
+      'https://blog-api.example.test/api/radio/current?channel=all',
+      'https://blog-api.example.test/api/radio/channels',
+      'https://blog-api.example.test/api/radio/art?channel=all',
+    ]);
+    expect(current.structuredContent).toMatchObject({ current: { track_id: 'track-1' } });
+    expect(channels.structuredContent).toMatchObject({
+      channels: { channels: [{ name: 'all', track_count: 4 }] },
+    });
+    expect(artwork.structuredContent).toMatchObject({
+      artwork: { has_art: true, art_url: 'https://radio.midori-ai.xyz/art/current.jpg' },
+    });
+  });
+
+  test('uses the loopback blog API origin when no deployment override is set', async () => {
+    delete process.env.SITE_API_ORIGIN;
+    let requestedUrl = '';
+    globalThis.fetch = ((input) => {
+      requestedUrl = String(input);
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            version: 'radio.v1',
+            ok: true,
+            now: '2026-09-26T00:00:00.000Z',
+            data: { track_id: 'track-1' },
+            error: null,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    }) as typeof fetch;
+
+    await callTool('get_radio_current', {});
+
+    expect(requestedUrl).toBe('http://127.0.0.1:3000/api/radio/current?channel=all');
   });
 
   test('applies the default post limit when a caller omits it', async () => {
@@ -224,25 +298,39 @@ describe('/api/mcp', () => {
     const responses = [
       new Response(
         JSON.stringify({
-          version: 'radio.v1',
+          version: 'radio.health.v1',
           ok: false,
           now: '2026-09-25T00:00:00.000Z',
-          data: null,
-          error: { code: 'UPSTREAM_UNREACHABLE', message: 'radio offline' },
+          data: {
+            name: 'radio',
+            status: 'starting',
+            data: {
+              status: 'warming',
+              warmup_active: true,
+              track_count: 4,
+              cached_tracks: 2,
+              cached_bytes: 1_024,
+            },
+          },
+          error: null,
         }),
-        { status: 502, headers: { 'Content-Type': 'application/json' } },
+        { status: 503, headers: { 'Content-Type': 'application/json' } },
       ),
       new Response(
         JSON.stringify({
-          version: 'radio.v1',
+          version: 'radio.health.v1',
           ok: true,
           now: '2026-09-25T00:00:01.000Z',
           data: {
-            status: 'ready',
-            warmup_active: false,
-            track_count: 4,
-            cached_tracks: 2,
-            cached_bytes: 1_024,
+            name: 'radio',
+            status: 'healthy',
+            data: {
+              status: 'ready',
+              warmup_active: false,
+              track_count: 4,
+              cached_tracks: 2,
+              cached_bytes: 1_024,
+            },
           },
           error: null,
         }),
@@ -262,7 +350,7 @@ describe('/api/mcp', () => {
     expect(uiHealthResponse.status).toBe(502);
     expect(result.isError).toBe(true);
     expect(result.content?.[0]?.text).toBe(
-      '{"error":{"code":"UPSTREAM_UNREACHABLE","message":"radio offline","status":502}}',
+      '{"error":{"code":"RADIO_STARTING","message":"Radio is starting","status":502}}',
     );
     expect(upstreamFetches).toBe(1);
   });

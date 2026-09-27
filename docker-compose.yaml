@@ -7,4 +7,5 @@ services:
       - "59382:3000"
     environment:
       - NODE_ENV=production
+      - SITE_API_ORIGIN=${SITE_API_ORIGIN:-http://127.0.0.1:3000}
     restart: always

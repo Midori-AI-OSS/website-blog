@@ -7,6 +7,27 @@ import { GET } from './route';
 
 const originalFetch = globalThis.fetch;
 
+const radioRuntime = {
+  status: 'ready',
+  warmup_active: false,
+  track_count: 12,
+  cached_tracks: 8,
+  cached_bytes: 2_048,
+};
+
+function upstreamHealthResponse(): Response {
+  return new Response(
+    JSON.stringify({
+      version: 'radio.health.v1',
+      ok: true,
+      now: '2026-08-31T00:00:00.000Z',
+      data: { name: 'radio', status: 'healthy', data: radioRuntime },
+      error: null,
+    }),
+    { status: 200, headers: { 'content-type': 'application/json' } },
+  );
+}
+
 afterEach(() => {
   globalThis.fetch = originalFetch;
   resetRadioHealthManagerForTests();
@@ -15,20 +36,10 @@ afterEach(() => {
 describe('/api/radio/health', () => {
   test('shares one startup health probe across concurrent requests', async () => {
     let upstreamFetches = 0;
-    globalThis.fetch = (() => {
+    globalThis.fetch = ((input) => {
+      expect(String(input)).toBe('https://radio.midori-ai.xyz/radio/health');
       upstreamFetches += 1;
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({
-            version: 'radio.v1',
-            ok: true,
-            now: '2026-08-31T00:00:00.000Z',
-            data: { status: 'ready' },
-            error: null,
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        ),
-      );
+      return Promise.resolve(upstreamHealthResponse());
     }) as typeof fetch;
 
     const [first, second] = await Promise.all([GET(), GET()]);
@@ -41,22 +52,7 @@ describe('/api/radio/health', () => {
   test('allows an upstream health response that arrives after the old three-second budget', async () => {
     globalThis.fetch = ((_input, init) =>
       new Promise<Response>((resolve, reject) => {
-        const responseTimer = setTimeout(
-          () =>
-            resolve(
-              new Response(
-                JSON.stringify({
-                  version: 'radio.v1',
-                  ok: true,
-                  now: '2026-08-31T00:00:00.000Z',
-                  data: { status: 'ready' },
-                  error: null,
-                }),
-                { status: 200, headers: { 'content-type': 'application/json' } },
-              ),
-            ),
-          4_000,
-        );
+        const responseTimer = setTimeout(() => resolve(upstreamHealthResponse()), 4_000);
         init?.signal?.addEventListener('abort', () => {
           clearTimeout(responseTimer);
           reject(new DOMException('aborted', 'AbortError'));
@@ -77,18 +73,7 @@ describe('/api/radio/health', () => {
     let upstreamFetches = 0;
     globalThis.fetch = (() => {
       upstreamFetches += 1;
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({
-            version: 'radio.v1',
-            ok: true,
-            now: '2026-08-24T00:00:00.000Z',
-            data: { status: 'ready' },
-            error: null,
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        ),
-      );
+      return Promise.resolve(upstreamHealthResponse());
     }) as typeof fetch;
 
     const response = await GET();
@@ -132,5 +117,28 @@ describe('/api/radio/health', () => {
       data: null,
       error: { code: 'UPSTREAM_UNREACHABLE', message: 'radio offline' },
     });
+  });
+
+  test('returns a JSON fallback envelope if the health manager throws unexpectedly', async () => {
+    const originalSetInterval = globalThis.setInterval;
+    globalThis.setInterval = (() => {
+      throw new Error('timer unavailable');
+    }) as typeof setInterval;
+
+    try {
+      const response = await GET();
+
+      expect(response.status).toBe(502);
+      expect(response.headers.get('content-type')).toContain('application/json');
+      expect(response.headers.get('cache-control')).toBe('no-store, no-cache, must-revalidate');
+      expect(await response.json()).toMatchObject({
+        version: 'radio.v1',
+        ok: false,
+        data: null,
+        error: { code: 'RADIO_HEALTH_UNAVAILABLE' },
+      });
+    } finally {
+      globalThis.setInterval = originalSetInterval;
+    }
   });
 });

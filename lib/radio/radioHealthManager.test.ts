@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
+import type { HealthPayload } from './contract';
 import {
   getRadioHealth,
   isValidatedRadioHealthEnvelope,
@@ -10,20 +11,33 @@ import {
 
 const originalFetch = globalThis.fetch;
 
+const DEFAULT_HEALTH: HealthPayload = {
+  status: 'ready',
+  warmup_active: false,
+  track_count: 12,
+  cached_tracks: 8,
+  cached_bytes: 2_048,
+};
+
 function healthResponse(
-  data: unknown = { status: 'ready' },
+  runtimeOverrides: Partial<HealthPayload> = {},
   overrides: Record<string, unknown> = {},
+  httpStatus = 200,
 ): Response {
   return new Response(
     JSON.stringify({
-      version: 'radio.v1',
+      version: 'radio.health.v1',
       ok: true,
       now: '2026-08-31T00:00:00.000Z',
-      data,
+      data: {
+        name: 'radio',
+        status: 'healthy',
+        data: { ...DEFAULT_HEALTH, ...runtimeOverrides },
+      },
       error: null,
       ...overrides,
     }),
-    { status: 200, headers: { 'content-type': 'application/json' } },
+    { status: httpStatus, headers: { 'content-type': 'application/json' } },
   );
 }
 
@@ -55,19 +69,50 @@ describe('radio health manager', () => {
     ).toBe(true);
   });
 
-  test('caches the full validated envelope for later requests', async () => {
+  test('requests the radio component endpoint and normalizes it for later consumers', async () => {
     let upstreamFetches = 0;
-    globalThis.fetch = (() => {
+    globalThis.fetch = ((input) => {
+      expect(String(input)).toBe('https://radio.midori-ai.xyz/radio/health');
       upstreamFetches += 1;
-      return Promise.resolve(healthResponse({ status: 'ready', track_count: 12 }));
+      return Promise.resolve(healthResponse());
     }) as typeof fetch;
 
     const first = await getRadioHealth();
     const second = await getRadioHealth();
 
     expect(first).toEqual(second);
-    expect(first.data).toEqual({ status: 'ready', track_count: 12 });
+    expect(first).toMatchObject({
+      version: 'radio.v1',
+      ok: true,
+      data: DEFAULT_HEALTH,
+      error: null,
+    });
     expect(upstreamFetches).toBe(1);
+  });
+
+  test('reports a warming radio as offline while retaining its diagnostic message', async () => {
+    globalThis.fetch = (() =>
+      Promise.resolve(
+        healthResponse(
+          { status: 'warming', warmup_active: true },
+          {
+            ok: false,
+            data: {
+              name: 'radio',
+              status: 'starting',
+              data: { ...DEFAULT_HEALTH, status: 'warming', warmup_active: true },
+            },
+          },
+          503,
+        ),
+      )) as typeof fetch;
+
+    await expect(getRadioHealth()).resolves.toMatchObject({
+      version: 'radio.v1',
+      ok: false,
+      data: null,
+      error: { code: 'RADIO_STARTING', message: 'Radio is starting' },
+    });
   });
 
   test('shares one in-flight startup probe', async () => {
@@ -146,28 +191,25 @@ describe('radio health manager', () => {
     let upstreamFetches = 0;
     globalThis.fetch = (() => {
       upstreamFetches += 1;
-      return Promise.resolve(healthResponse({ status: `ready-${upstreamFetches}` }));
+      return Promise.resolve(healthResponse({ track_count: upstreamFetches }));
     }) as typeof fetch;
 
     await startRadioHealthMonitor();
     await refreshRadioHealth();
 
     expect(upstreamFetches).toBe(2);
-    expect((await getRadioHealth()).data).toEqual({ status: 'ready-2' });
+    expect((await getRadioHealth()).data).toMatchObject({ track_count: 2 });
   });
 
   test('refreshes the cache from the scheduled thirty-minute timer', async () => {
     const originalSetInterval = globalThis.setInterval;
-    const responses = [
-      healthResponse({ status: 'ready-1' }),
-      healthResponse({ status: 'ready-2' }),
-    ];
+    const responses = [healthResponse({ track_count: 1 }), healthResponse({ track_count: 2 })];
     let upstreamFetches = 0;
     let scheduledRefresh: (() => void) | undefined;
     globalThis.fetch = (() => {
       const response = responses[upstreamFetches];
       upstreamFetches += 1;
-      return Promise.resolve(response ?? healthResponse({ status: 'ready-later' }));
+      return Promise.resolve(response ?? healthResponse({ track_count: 3 }));
     }) as typeof fetch;
     globalThis.setInterval = ((callback: TimerHandler, delay?: number) => {
       expect(delay).toBe(RADIO_HEALTH_REFRESH_INTERVAL_MS);
@@ -183,9 +225,32 @@ describe('radio health manager', () => {
       await refreshRadioHealth();
 
       expect(upstreamFetches).toBe(2);
-      expect((await getRadioHealth()).data).toEqual({ status: 'ready-2' });
+      expect((await getRadioHealth()).data).toMatchObject({ track_count: 2 });
     } finally {
       globalThis.setInterval = originalSetInterval;
     }
+  });
+
+  test('reports the actual unsupported endpoint version in its error', async () => {
+    globalThis.fetch = (() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            version: 'webserver.health.v1',
+            ok: true,
+            now: '2026-08-31T00:00:00.000Z',
+            data: {},
+            error: null,
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )) as typeof fetch;
+
+    const result = await getRadioHealth();
+
+    expect(result.ok).toBe(false);
+    expect(result.error?.code).toBe('UPSTREAM_UNHEALTHY');
+    expect(result.error?.message).toContain('webserver.health.v1');
+    expect(result.error?.message).not.toBe('Radio health returned HTTP 200');
   });
 });

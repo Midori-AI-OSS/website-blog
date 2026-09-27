@@ -1,4 +1,4 @@
-import type { RadioEnvelope } from './contract';
+import type { HealthPayload, RadioEnvelope } from './contract';
 import { isRadioEnvelope, MIDORIAI_RADIO_API_VERSION, MIDORIAI_RADIO_BASE_URL } from './contract';
 
 /** The upstream probe is allowed to take as long as the client startup budget. */
@@ -7,7 +7,8 @@ export const RADIO_HEALTH_UPSTREAM_TIMEOUT_MS = 5_500;
 /** Health is refreshed in the background at most twice per hour. */
 export const RADIO_HEALTH_REFRESH_INTERVAL_MS = 30 * 60 * 1_000;
 
-const RADIO_HEALTH_URL = `${MIDORIAI_RADIO_BASE_URL}/health`;
+const RADIO_COMPONENT_HEALTH_VERSION = 'radio.health.v1';
+const RADIO_HEALTH_URL = `${MIDORIAI_RADIO_BASE_URL}/radio/health`;
 const GLOBAL_STATE_KEY = '__midoriaiRadioHealthManagerState__';
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -18,6 +19,21 @@ export type RadioHealthEnvelope = RadioEnvelope<unknown>;
 interface RadioErrorShape {
   code: string;
   message: string;
+}
+
+interface RadioComponentReport {
+  name: 'radio';
+  status: 'healthy' | 'starting' | 'degraded' | 'unhealthy';
+  code?: string;
+  data: HealthPayload;
+}
+
+interface RadioComponentHealthEnvelope {
+  version: typeof RADIO_COMPONENT_HEALTH_VERSION;
+  ok: boolean;
+  now: string;
+  data: RadioComponentReport;
+  error: null;
 }
 
 interface RadioHealthState {
@@ -69,6 +85,86 @@ function isRadioError(value: unknown): value is RadioErrorShape {
 
   const candidate = value as Record<string, unknown>;
   return typeof candidate.code === 'string' && typeof candidate.message === 'string';
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isHealthPayload(value: unknown): value is HealthPayload {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    (value.status === 'ready' || value.status === 'warming') &&
+    typeof value.warmup_active === 'boolean' &&
+    typeof value.track_count === 'number' &&
+    Number.isInteger(value.track_count) &&
+    typeof value.cached_tracks === 'number' &&
+    Number.isInteger(value.cached_tracks) &&
+    typeof value.cached_bytes === 'number' &&
+    Number.isInteger(value.cached_bytes)
+  );
+}
+
+function isRadioComponentHealthEnvelope(value: unknown): value is RadioComponentHealthEnvelope {
+  if (!isRadioEnvelope(value) || value.version !== RADIO_COMPONENT_HEALTH_VERSION) {
+    return false;
+  }
+
+  if (!isRecord(value.data)) {
+    return false;
+  }
+
+  const report = value.data;
+  const isKnownStatus =
+    report.status === 'healthy' ||
+    report.status === 'starting' ||
+    report.status === 'degraded' ||
+    report.status === 'unhealthy';
+
+  return (
+    value.error === null &&
+    report.name === 'radio' &&
+    isKnownStatus &&
+    (report.code === undefined || typeof report.code === 'string') &&
+    isHealthPayload(report.data)
+  );
+}
+
+function unsupportedVersionMessage(payload: unknown): string {
+  if (isRecord(payload) && typeof payload.version === 'string') {
+    return `Radio health returned unsupported version "${payload.version}"`;
+  }
+
+  return 'Radio health returned an invalid radio.health.v1 envelope';
+}
+
+function normalizeRadioComponentHealth(payload: RadioComponentHealthEnvelope): RadioHealthEnvelope {
+  const report = payload.data;
+
+  if (payload.ok && report.status === 'healthy' && report.data.status === 'ready') {
+    return {
+      version: MIDORIAI_RADIO_API_VERSION,
+      ok: true,
+      now: payload.now,
+      data: report.data,
+      error: null,
+    };
+  }
+
+  const status = report.status === 'healthy' ? 'starting' : report.status;
+  const code =
+    report.code || (status === 'starting' ? 'RADIO_STARTING' : `RADIO_${status.toUpperCase()}`);
+  const message =
+    status === 'starting'
+      ? 'Radio is starting'
+      : status === 'degraded'
+        ? 'Radio is degraded'
+        : 'Radio is unhealthy';
+
+  return offlineEnvelope(code, message);
 }
 
 /**
@@ -133,15 +229,11 @@ async function requestUpstreamHealth(): Promise<RadioHealthEnvelope> {
       );
     }
 
-    if (!isValidatedRadioHealthEnvelope(payload)) {
-      throw new RadioHealthProbeError(
-        'UPSTREAM_UNHEALTHY',
-        `Radio health returned HTTP ${response.status}`,
-      );
+    if (!isRadioComponentHealthEnvelope(payload)) {
+      throw new RadioHealthProbeError('UPSTREAM_UNHEALTHY', unsupportedVersionMessage(payload));
     }
 
-    // A successful envelope sent with an HTTP error must not be cached as
-    // online. Explicit radio.v1 offline envelopes remain useful as-is.
+    // A healthy component sent with an HTTP error must not be cached as online.
     if (!response.ok && payload.ok) {
       throw new RadioHealthProbeError(
         'UPSTREAM_UNHEALTHY',
@@ -149,7 +241,14 @@ async function requestUpstreamHealth(): Promise<RadioHealthEnvelope> {
       );
     }
 
-    return payload;
+    if (payload.ok !== (payload.data.status === 'healthy')) {
+      throw new RadioHealthProbeError(
+        'UPSTREAM_UNHEALTHY',
+        'Radio health returned an inconsistent component status',
+      );
+    }
+
+    return normalizeRadioComponentHealth(payload);
   })();
 
   const timeout = new Promise<never>((_, reject) => {
