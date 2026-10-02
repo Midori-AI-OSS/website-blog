@@ -44,10 +44,18 @@ cover_image: /lore/example.png
 full_story_pov: riley
 ```
 
+Optional:
+
+```yaml
+display_weight: 300
+```
+
 Notes:
 
 - `full_story_pov` is a character key used by `/lore/game/<game-slug>/full-story`.
 - If no posts in the game match that POV tag, the full-story page falls back to all posts in the game.
+- `display_weight` is a numeric game-list priority; higher values appear before lower values.
+- Games without a `display_weight` appear after weighted games and keep the existing recent-post ordering.
 
 ## Sorting and Navigation Rules
 

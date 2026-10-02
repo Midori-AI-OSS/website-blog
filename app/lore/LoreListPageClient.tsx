@@ -348,6 +348,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                         aria-label={`Sort ${group.game.title} stories`}
                         sx={{
                           minHeight: 44,
+                          '& .MuiSelect-button': { minHeight: 44 },
                           borderRadius: 0,
                           bgcolor: 'rgba(10, 12, 20, 0.82)',
                         }}
@@ -376,6 +377,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                         aria-label={`Filter ${group.game.title} by character`}
                         sx={{
                           minHeight: 44,
+                          '& .MuiSelect-button': { minHeight: 44 },
                           borderRadius: 0,
                           bgcolor: 'rgba(10, 12, 20, 0.82)',
                         }}
@@ -407,6 +409,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                         aria-label={`Posts per page for ${group.game.title}`}
                         sx={{
                           minHeight: 44,
+                          '& .MuiSelect-button': { minHeight: 44 },
                           borderRadius: 0,
                           bgcolor: 'rgba(10, 12, 20, 0.82)',
                         }}

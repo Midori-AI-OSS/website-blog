@@ -1,6 +1,7 @@
 ---
 title: "Side Moments"
 summary: "Short stories, prototypes, and experimental fragments that may shift rapidly or be removed without notice. Not bound to any canon."
+display_weight: 200
 cover_image: /lore/side-moments.png
 povs_enabled: false
 full_story_pov: system

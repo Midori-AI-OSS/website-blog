@@ -22,6 +22,14 @@ const slideIn = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
+function hashGameSlug(slug: string): number {
+  let hash = 2166136261;
+  for (const character of slug) {
+    hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+  }
+  return hash >>> 0;
+}
+
 export interface GamePickerGame {
   slug: string;
   title: string;
@@ -36,13 +44,14 @@ export function GamePicker({ games }: GamePickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
-  /* ── Randomized breathing timings ────────────────────── */
+  /* ── Stable per-game breathing timings ───────────────── */
   const breatheTimings = useMemo(() => {
     const map = new Map<string, { dur: number; delay: number }>();
     for (const game of games) {
+      const hash = hashGameSlug(game.slug);
       map.set(game.slug, {
-        dur: 3.5 + Math.random() * 3,
-        delay: Math.random() * 4,
+        dur: 3.5 + (hash % 3000) / 1000,
+        delay: ((hash >>> 12) % 4000) / 1000,
       });
     }
     return map;

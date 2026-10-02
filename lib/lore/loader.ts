@@ -39,6 +39,7 @@ export interface LoreGameIndex {
   slug: string;
   title: string;
   summary: string;
+  displayWeight?: number;
   coverImage?: string;
   povsEnabled: boolean;
   fullStoryPov: string;
@@ -551,6 +552,7 @@ export async function loadLoreGameIndexes(gamesDir: string = GAMES_DIR): Promise
           slug,
           title,
           summary,
+          displayWeight: parsed.metadata.display_weight,
           coverImage: parsed.metadata.cover_image?.trim(),
           povsEnabled,
           fullStoryPov: fullStoryPov || '',
@@ -594,6 +596,15 @@ export async function loadLoreGameGroups(
   });
 
   return groups.sort((a, b) => {
+    const weightA = a.game.displayWeight;
+    const weightB = b.game.displayWeight;
+
+    if (weightA !== undefined || weightB !== undefined) {
+      if (weightA === undefined) return 1;
+      if (weightB === undefined) return -1;
+      if (weightA !== weightB) return weightB - weightA;
+    }
+
     const latestA = a.posts[0];
     const latestB = b.posts[0];
 

@@ -25,6 +25,7 @@ export interface PostMetadata {
   author?: string;
   game?: string;
   story_order?: number;
+  display_weight?: number;
   episode_label?: string;
   password?: string;
   password_hint?: string;
@@ -115,6 +116,14 @@ function validateMetadata(data: Record<string, unknown>): boolean {
     (typeof data.story_order !== 'number' || !Number.isFinite(data.story_order))
   ) {
     console.warn('Invalid story_order format: expected number');
+    return false;
+  }
+
+  if (
+    data.display_weight !== undefined &&
+    (typeof data.display_weight !== 'number' || !Number.isFinite(data.display_weight))
+  ) {
+    console.warn('Invalid display_weight format: expected number');
     return false;
   }
 
@@ -265,6 +274,10 @@ function sanitizeMetadata(data: Record<string, unknown>): Partial<PostMetadata> 
     sanitized.story_order = data.story_order;
   }
 
+  if (typeof data.display_weight === 'number' && Number.isFinite(data.display_weight)) {
+    sanitized.display_weight = data.display_weight;
+  }
+
   if (typeof data.episode_label === 'string') {
     sanitized.episode_label = data.episode_label.trim();
   }
@@ -345,6 +358,7 @@ export function parsePost(filename: string, fileContent: string): ParsedPost {
       author: sanitizedData.author,
       game: sanitizedData.game,
       story_order: sanitizedData.story_order,
+      display_weight: sanitizedData.display_weight,
       episode_label: sanitizedData.episode_label,
       password: sanitizedData.password,
       password_hint: sanitizedData.password_hint,
