@@ -5,9 +5,9 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { BlogList } from '@/components/blog/BlogList';
+import { usePageTransition } from '@/components/PageTransitionProvider';
 import { TagFilterBar } from '@/components/TagFilterBar';
 import type { ParsedPost } from '@/lib/blog/parser';
 
@@ -18,7 +18,7 @@ interface BlogPageClientProps {
 
 // biome-ignore lint/correctness/noUnusedFunctionParameters: kept for API symmetry with page component
 export function BlogPageClient({ initialPosts, allPosts }: BlogPageClientProps) {
-  const router = useRouter();
+  const navigate = usePageTransition();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   // Derive all unique tags from allPosts
@@ -63,7 +63,7 @@ export function BlogPageClient({ initialPosts, allPosts }: BlogPageClientProps) 
     // Extract slug from filename (remove .md extension)
     const slug = post.filename.replace('.md', '');
     // Navigate to the post page
-    router.push(`/blog/${slug}`);
+    navigate(`/blog/${slug}`);
   };
 
   const getPostHref = (post: ParsedPost) => {

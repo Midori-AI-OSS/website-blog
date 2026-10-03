@@ -15,13 +15,12 @@ import {
 } from '@mui/joy';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-
 import { AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { BlogCard } from '@/components/blog/BlogCard';
 import type { GamePickerGame } from '@/components/GamePicker';
 import { GamePicker } from '@/components/GamePicker';
+import { usePageTransition } from '@/components/PageTransitionProvider';
 import type { ParsedPost } from '@/lib/blog/parser';
 import { transformPostImageUrl } from '@/lib/content/imageUrl';
 import type { LoreGameGroup } from '@/lib/lore/loader';
@@ -163,7 +162,7 @@ function buildFullStoryHref(gameSlug: string): string {
 }
 
 export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
-  const router = useRouter();
+  const navigate = usePageTransition();
   const [sortByGame, setSortByGame] = useState<Record<string, SortMode>>({});
   const [characterByGame, setCharacterByGame] = useState<Record<string, string>>({});
   const [pageSizeByGame, setPageSizeByGame] = useState<Record<string, number>>({});
@@ -524,7 +523,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                         key={post.filename}
                         post={cardPost}
                         postType="lore"
-                        onClick={() => router.push(`/lore/${getPostSlug(post)}`)}
+                        onClick={() => navigate(`/lore/${getPostSlug(post)}`)}
                         variant="outlined"
                       />
                     );

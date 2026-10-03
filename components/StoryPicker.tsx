@@ -2,8 +2,8 @@
 
 import { keyframes } from '@emotion/react';
 import { Box, Stack, Tooltip, Typography } from '@mui/joy';
-import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
+import { usePageTransition } from './PageTransitionProvider';
 
 const breathePulse = keyframes`
   0%, 100% { transform: scale(1); }
@@ -35,7 +35,7 @@ function buildTooltipText(story: StoryPickerStory): string {
 }
 
 export function StoryPicker({ stories, gameCoverImage }: StoryPickerProps) {
-  const router = useRouter();
+  const navigate = usePageTransition();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const breatheTimings = useMemo(() => {
@@ -100,7 +100,7 @@ export function StoryPicker({ stories, gameCoverImage }: StoryPickerProps) {
               enterTouchDelay={0}
             >
               <Box
-                onClick={() => router.push(`/lore/${story.slug}`)}
+                onClick={() => navigate(`/lore/${story.slug}`)}
                 sx={{
                   position: 'relative',
                   overflow: 'hidden',

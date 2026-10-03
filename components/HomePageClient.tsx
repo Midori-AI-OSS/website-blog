@@ -15,9 +15,9 @@ import {
   Youtube,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type { ParsedPost } from '../lib/blog/parser';
 import { BlogCard } from './blog/BlogCard';
+import { usePageTransition } from './PageTransitionProvider';
 
 interface HomePageClientProps {
   recentPosts: ParsedPost[];
@@ -25,17 +25,17 @@ interface HomePageClientProps {
 }
 
 export default function HomePageClient({ recentPosts, recentLorePosts }: HomePageClientProps) {
-  const router = useRouter();
+  const navigate = usePageTransition();
 
   const handlePostClick = (post: ParsedPost) => {
     // Navigate to blog post
     const slug = post.filename.replace('.md', '');
-    router.push(`/blog/${slug}`);
+    navigate(`/blog/${slug}`);
   };
 
   const handleLorePostClick = (post: ParsedPost) => {
     const slug = post.filename.replace('.md', '');
-    router.push(`/lore/${slug}`);
+    navigate(`/lore/${slug}`);
   };
 
   return (
@@ -170,7 +170,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
       </Box>
 
       {/* Projects Section */}
-      <Box sx={{ mb: 8 }}>
+      <Box sx={{ mb: 8, px: { xs: 1, md: 0 } }}>
         <Typography level="h2" sx={{ mb: 3, px: { xs: '0.2rem', sm: 0 } }}>
           Projects
         </Typography>
@@ -291,6 +291,20 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
         >
           Where Creativity and Innovation Blossom, Together
         </Typography>
+        <Typography level="body-sm" sx={{ textAlign: 'center', mt: 2 }}>
+          Local test fixture: the destination waits 1.5 seconds so you can see the page loading
+          indicator.
+        </Typography>
+        <Button
+          component={Link}
+          href="/transition-test"
+          prefetch={false}
+          variant="outlined"
+          color="neutral"
+          sx={{ display: 'flex', mx: 'auto', mt: 1, minHeight: 44 }}
+        >
+          Test page transition
+        </Button>
       </Box>
     </Box>
   );

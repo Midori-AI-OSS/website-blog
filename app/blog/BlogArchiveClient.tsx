@@ -3,11 +3,10 @@
 import { keyframes } from '@emotion/react';
 import { Box, Divider, FormControl, Option, Select, Stack, Typography } from '@mui/joy';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
 import { AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { BlogCard } from '@/components/blog/BlogCard';
+import { usePageTransition } from '@/components/PageTransitionProvider';
 import {
   type ArchivePeriod,
   BLOG_PLACEHOLDER_URL,
@@ -50,7 +49,7 @@ function getPostSlug(post: ParsedPost): string {
 }
 
 export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
-  const router = useRouter();
+  const navigate = usePageTransition();
   const [selectedTagByPeriod, setSelectedTagByPeriod] = useState<Record<string, string>>({});
   const [pageSizeByPeriod, setPageSizeByPeriod] = useState<Record<string, number>>({});
   const [currentPageByPeriod, setCurrentPageByPeriod] = useState<Record<string, number>>({});
@@ -415,7 +414,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                       post={post}
                       postType="blog"
                       hideDate
-                      onClick={() => router.push(`/blog/${getPostSlug(post)}`)}
+                      onClick={() => navigate(`/blog/${getPostSlug(post)}`)}
                       variant="outlined"
                     />
                   ))
