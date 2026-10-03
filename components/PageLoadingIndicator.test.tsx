@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { PageReadinessProvider } from './PageReadinessProvider';
 
 describe('page loading indicator', () => {
-  test('announces loading state with a polite accessible status', async () => {
+  test('registers a busy fallback without rendering a duplicate loading announcement', async () => {
     const modulePath = './PageLoadingIndicator';
     const loadingModule = await import(modulePath).catch(() => null);
 
@@ -15,9 +15,8 @@ describe('page loading indicator', () => {
       createElement(PageReadinessProvider, null, createElement(loadingModule.PageLoadingIndicator)),
     );
 
-    expect(markup).toContain('role="status"');
-    expect(markup).toContain('aria-live="polite"');
+    expect(markup).not.toContain('role="status"');
     expect(markup).toContain('aria-busy="true"');
-    expect(markup).toContain('Loading page');
+    expect(markup).not.toContain('Loading page');
   });
 });

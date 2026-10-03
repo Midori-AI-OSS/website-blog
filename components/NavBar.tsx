@@ -24,8 +24,6 @@ export default function NavBar() {
   const pathname = usePathname();
   const { status: radioStatus } = useRadioAvailability();
 
-  if (pathname.startsWith('/species-care')) return null;
-
   const items = createNavigationItems(radioStatus === 'online');
 
   return (
@@ -33,8 +31,9 @@ export default function NavBar() {
       component="nav"
       aria-label="Primary navigation"
       sx={{
-        position: 'relative',
-        zIndex: 10,
+        position: 'sticky',
+        top: 0,
+        zIndex: 2100,
         p: { xs: 1, sm: 2 },
         borderBottom: '1px solid',
         borderColor: 'background.level2',

@@ -1753,13 +1753,13 @@ export function PostView({
                           placement="right"
                         >
                           <IconButton
+                            component={onNavigateStory ? 'button' : 'a'}
+                            href={onNavigateStory ? undefined : previousStory.href}
                             variant="soft"
                             color="neutral"
                             onClick={() => {
                               if (onNavigateStory) {
                                 onNavigateStory(previousStory.href);
-                              } else {
-                                window.location.assign(previousStory.href);
                               }
                             }}
                             aria-label="Go back to past story"
@@ -1798,13 +1798,13 @@ export function PostView({
                           placement="left"
                         >
                           <IconButton
+                            component={onNavigateStory ? 'button' : 'a'}
+                            href={onNavigateStory ? undefined : nextStory.href}
                             variant="soft"
                             color="neutral"
                             onClick={() => {
                               if (onNavigateStory) {
                                 onNavigateStory(nextStory.href);
-                              } else {
-                                window.location.assign(nextStory.href);
                               }
                             }}
                             aria-label="Go to next story"
@@ -1938,13 +1938,13 @@ export function PostView({
             enterTouchDelay={0}
           >
             <Button
+              component={onNavigateStory ? 'button' : 'a'}
+              href={onNavigateStory ? undefined : nextStory.href}
               variant="solid"
               color="primary"
               onClick={() => {
                 if (onNavigateStory) {
                   onNavigateStory(nextStory.href);
-                } else {
-                  window.location.assign(nextStory.href);
                 }
               }}
               sx={{

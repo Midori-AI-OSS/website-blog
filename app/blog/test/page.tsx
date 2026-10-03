@@ -1,6 +1,6 @@
 import { Box, Divider, Stack, Typography } from '@mui/joy';
 import type { Metadata } from 'next';
-
+import { PageTransitionTestControls } from '@/components/PageTransitionTestControls';
 import { groupPostsIntoArchivePeriods } from '@/lib/blog/archive';
 import type { ParsedPost } from '@/lib/blog/parser';
 import { blogRendererTestPost } from '@/lib/content/test-posts';
@@ -68,6 +68,7 @@ const archiveFixturePeriods = groupPostsIntoArchivePeriods([
 export default function BlogRendererTestPage() {
   return (
     <Stack spacing={6}>
+      <PageTransitionTestControls returnTo="/blog/test" />
       <Box sx={{ px: { xs: 1, sm: 0 }, pt: { xs: 3, sm: 4 } }}>
         <Typography level="h1" sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem' }, mb: 1 }}>
           Hidden Blog Archive Fixture

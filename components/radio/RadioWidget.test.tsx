@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-
+import { PageReadinessProvider } from '../PageReadinessProvider';
 import RadioWidget from './RadioWidget';
 
 let testWindow: Window;
@@ -311,7 +311,11 @@ async function flushEffects() {
 
 async function renderWidget() {
   await act(async () => {
-    root.render(<RadioWidget />);
+    root.render(
+      <PageReadinessProvider>
+        <RadioWidget />
+      </PageReadinessProvider>,
+    );
     await flushEffects();
   });
 }

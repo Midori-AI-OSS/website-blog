@@ -1,3 +1,8 @@
+export function getPageRouteKey(url: URL): string {
+  const search = url.searchParams.toString();
+  return `${url.pathname}${search ? `?${search}` : ''}`;
+}
+
 export function getInternalPageTransitionHref(href: string, currentHref: string): string | null {
   try {
     const current = new URL(currentHref);
@@ -6,7 +11,7 @@ export function getInternalPageTransitionHref(href: string, currentHref: string)
     if (
       destination.origin !== current.origin ||
       (destination.protocol !== 'http:' && destination.protocol !== 'https:') ||
-      destination.pathname === current.pathname
+      getPageRouteKey(destination) === getPageRouteKey(current)
     ) {
       return null;
     }

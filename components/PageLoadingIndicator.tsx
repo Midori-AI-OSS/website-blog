@@ -10,11 +10,7 @@ export function PageLoadingIndicator() {
 
   useClientLayoutEffect(() => registerLoadingFallback(), [registerLoadingFallback]);
 
-  return (
-    <main className="page-loading" aria-busy="true">
-      <PageLoadingStatus />
-    </main>
-  );
+  return <main className="page-loading" aria-busy="true"></main>;
 }
 
 export function PageLoadingStatus() {

@@ -4,6 +4,8 @@ import * as React from 'react';
 import { isPageReadyForArtwork } from '@/lib/pageReadiness';
 
 interface PageReadinessContextValue {
+  shellVisible: boolean;
+  routeEntryComplete: boolean;
   pageReadyForArtwork: boolean;
   loadingFallbackCount: number;
   beginRouteEntry: () => void;
@@ -53,6 +55,8 @@ export function PageReadinessProvider({ children }: { children: React.ReactNode 
 
   const value = React.useMemo<PageReadinessContextValue>(
     () => ({
+      shellVisible,
+      routeEntryComplete,
       pageReadyForArtwork,
       loadingFallbackCount,
       beginRouteEntry,
@@ -62,6 +66,8 @@ export function PageReadinessProvider({ children }: { children: React.ReactNode 
       registerLoadingFallback,
     }),
     [
+      shellVisible,
+      routeEntryComplete,
       beginRouteEntry,
       completeRouteEntry,
       loadingFallbackCount,

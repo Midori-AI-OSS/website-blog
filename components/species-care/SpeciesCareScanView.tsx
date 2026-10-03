@@ -4,6 +4,7 @@ import { Box, Button, Option, Select, Stack, Typography } from '@mui/joy';
 import { ArrowLeft, BadgeCheck, FileHeart, HeartPulse, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePageTransition } from '@/components/PageTransitionProvider';
 
 import type {
   SpeciesCareCardRecord,
@@ -245,6 +246,7 @@ export function SpeciesCareScanView({
   linkedProfile,
   photoUrl,
 }: SpeciesCareScanViewProps) {
+  const navigate = usePageTransition();
   const summary = record.summary;
   const versions =
     availableVersions.length > 0 ? availableVersions : (record.metadata?.versions ?? []);
@@ -272,14 +274,14 @@ export function SpeciesCareScanView({
     if (!value || value === record.version) return;
     const target = new URL(window.location.href);
     target.searchParams.set('version', value);
-    window.location.assign(target.toString());
+    navigate(target.toString(), { scroll: false });
   }
 
   function handleProfileVersionChange(_: unknown, value: string | null) {
     if (!value || !linkedProfile || value === linkedProfile.record.version) return;
     const target = new URL(window.location.href);
     target.searchParams.set('profileVersion', value);
-    window.location.assign(target.toString());
+    navigate(target.toString(), { scroll: false });
   }
 
   return (

@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/joy';
 import type { Metadata } from 'next';
+import { PageTransitionTestControls } from '@/components/PageTransitionTestControls';
 
 import type { ParsedPost } from '@/lib/blog/parser';
 import { loreRendererTestPost } from '@/lib/content/test-posts';
@@ -79,6 +80,7 @@ export default async function LoreRendererTestPage() {
 
   return (
     <>
+      <PageTransitionTestControls returnTo="/lore/test" />
       <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', px: { xs: 1, sm: 4 }, py: 4 }}>
         <Typography level="h1" sx={{ mb: 1 }}>
           Lore Game Ordering Test

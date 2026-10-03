@@ -291,20 +291,6 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
         >
           Where Creativity and Innovation Blossom, Together
         </Typography>
-        <Typography level="body-sm" sx={{ textAlign: 'center', mt: 2 }}>
-          Local test fixture: the destination waits 1.5 seconds so you can see the page loading
-          indicator.
-        </Typography>
-        <Button
-          component={Link}
-          href="/transition-test"
-          prefetch={false}
-          variant="outlined"
-          color="neutral"
-          sx={{ display: 'flex', mx: 'auto', mt: 1, minHeight: 44 }}
-        >
-          Test page transition
-        </Button>
       </Box>
     </Box>
   );
