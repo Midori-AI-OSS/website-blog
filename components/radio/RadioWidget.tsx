@@ -25,7 +25,7 @@ import {
 import type { ArtPayload, ChannelEntry, CurrentPayload, QualityName } from '@/lib/radio/contract';
 import { normalizeChannel, normalizeQuality, QUALITY_LEVELS } from '@/lib/radio/contract';
 import type { RadioImageInventory } from '@/lib/radio/images';
-import { appendTrackCacheKey, pickDeterministicImage, preloadImage } from '@/lib/radio/images';
+import { appendTrackCacheKey, pickDeterministicImage } from '@/lib/radio/images';
 import { getRadioReconnectDelay } from '@/lib/radio/reconnect';
 import {
   clearRadioLastError,
@@ -43,6 +43,7 @@ import {
   saveRadioQuality,
   saveRadioVolume,
 } from '@/lib/radio/state';
+import { useRadioArtwork } from './useRadioArtwork';
 
 const PLACEHOLDER_IMAGE = '/blog/placeholder.png';
 const HOVER_CLOSE_LINGER_MS = 3000;
@@ -51,7 +52,6 @@ const EXPANDED_WIDTH_PX = 380;
 const EXPANDED_HEIGHT_PX = 336;
 
 type StreamState = 'idle' | 'connecting' | 'playing' | 'buffering' | 'error';
-type BackdropSource = 'placeholder' | 'server' | 'fallback';
 
 function addMediaListener(query: MediaQueryList, listener: () => void): () => void {
   if (typeof query.addEventListener === 'function') {
@@ -168,8 +168,6 @@ export default function RadioWidget() {
   const [currentTrack, setCurrentTrack] = React.useState<CurrentPayload | null>(null);
   const [artMetadata, setArtMetadata] = React.useState<ArtPayload | null>(null);
   const [imageInventory, setImageInventory] = React.useState<RadioImageInventory | null>(null);
-  const [backdropUrl, setBackdropUrl] = React.useState(PLACEHOLDER_IMAGE);
-  const [_backdropSource, setBackdropSource] = React.useState<BackdropSource>('placeholder');
 
   React.useEffect(() => {
     qualityRef.current = quality;
@@ -497,10 +495,11 @@ export default function RadioWidget() {
     metadataAbortRef.current?.abort();
     const controller = new AbortController();
     metadataAbortRef.current = controller;
+    const selectedChannel = normalizeChannel(channelRef.current);
+    let currentPayload: CurrentPayload;
 
     try {
-      const selectedChannel = normalizeChannel(channelRef.current);
-      const currentPayload = await fetchCurrent(selectedChannel, '', controller.signal);
+      currentPayload = await fetchCurrent(selectedChannel, '', controller.signal);
 
       if (metadataRequestRef.current !== currentRequest || controller.signal.aborted) {
         return;
@@ -534,7 +533,17 @@ export default function RadioWidget() {
       setArtMetadata(artPayload);
     } catch {
       if (!controller.signal.aborted && metadataRequestRef.current === currentRequest) {
-        setArtMetadata(null);
+        setArtMetadata((previous) =>
+          previous?.channel === selectedChannel && previous.track_id === currentPayload.track_id
+            ? previous
+            : {
+                channel: selectedChannel,
+                track_id: currentPayload.track_id,
+                has_art: false,
+                mime: null,
+                art_url: '',
+              },
+        );
       }
     }
   }, []);
@@ -734,7 +743,11 @@ export default function RadioWidget() {
   }, [fallbackIdentity, imageInventory]);
 
   const preferredServerArtUrl = React.useMemo(() => {
-    if (artMetadata?.has_art !== true) {
+    if (
+      artMetadata?.has_art !== true ||
+      artMetadata.track_id !== currentTrack?.track_id ||
+      artMetadata.channel !== normalizeChannel(channel)
+    ) {
       return null;
     }
 
@@ -744,7 +757,14 @@ export default function RadioWidget() {
     }
 
     return appendTrackCacheKey(artUrl, artMetadata.track_id);
-  }, [artMetadata?.has_art, artMetadata?.art_url, artMetadata?.track_id]);
+  }, [
+    artMetadata?.has_art,
+    artMetadata?.art_url,
+    artMetadata?.track_id,
+    artMetadata?.channel,
+    currentTrack?.track_id,
+    channel,
+  ]);
 
   const canLoadWidgetArtwork = shouldLoadRadioWidgetArtwork({
     pageReady: pageReadyForArtwork,
@@ -752,49 +772,27 @@ export default function RadioWidget() {
     isRadioPage,
   });
 
-  React.useEffect(() => {
-    if (!canLoadWidgetArtwork) return;
-
-    let active = true;
-    const placeholder = imageInventory?.placeholder ?? PLACEHOLDER_IMAGE;
-
-    setBackdropUrl(placeholder);
-    setBackdropSource('placeholder');
-    void preloadImage(placeholder);
-
-    const resolveBackdrop = async () => {
-      if (preferredServerArtUrl !== null) {
-        const serverLoaded = await preloadImage(preferredServerArtUrl);
-        if (active && serverLoaded) {
-          setBackdropUrl(preferredServerArtUrl);
-          setBackdropSource('server');
-          return;
-        }
-      }
-
-      const fallbackLoaded = await preloadImage(fallbackImage);
-      if (active && fallbackLoaded) {
-        setBackdropUrl(fallbackImage);
-        setBackdropSource('fallback');
-      }
-    };
-
-    void resolveBackdrop();
-    return () => {
-      active = false;
-    };
-  }, [canLoadWidgetArtwork, preferredServerArtUrl, fallbackImage, imageInventory]);
+  const backdropUrl = useRadioArtwork({
+    identity: `${normalizeChannel(channel)}::${currentTrack?.track_id ?? currentTrack?.title ?? 'unknown'}`,
+    serverUrl: preferredServerArtUrl,
+    fallbackUrl: fallbackImage,
+    placeholderUrl: imageInventory?.placeholder ?? PLACEHOLDER_IMAGE,
+    canStart:
+      canLoadWidgetArtwork &&
+      artMetadata?.channel === normalizeChannel(channel) &&
+      artMetadata.track_id === currentTrack?.track_id,
+  });
 
   React.useEffect(() => {
     setRadioState({
       playing: playbackDesired,
-      artUrl: preferredServerArtUrl,
+      artUrl: backdropUrl,
     });
 
     return () => {
       setRadioState({ playing: false, artUrl: null });
     };
-  }, [playbackDesired, preferredServerArtUrl, setRadioState]);
+  }, [playbackDesired, backdropUrl, setRadioState]);
 
   const expanded = stickyOpen || hovered || closeLingerActive;
 
@@ -829,7 +827,7 @@ export default function RadioWidget() {
         sx={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: canLoadWidgetArtwork ? `url("${backdropUrl}")` : 'none',
+          backgroundImage: backdropUrl ? `url("${backdropUrl}")` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           opacity: expanded ? 0.27 : 0.58,

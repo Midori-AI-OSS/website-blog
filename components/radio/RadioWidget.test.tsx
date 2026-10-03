@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
-import { act } from 'react';
+import { act, useLayoutEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { PageReadinessProvider } from '../PageReadinessProvider';
+import { PageReadinessProvider, usePageReadiness } from '../PageReadinessProvider';
 import RadioWidget from './RadioWidget';
 
 let testWindow: Window;
@@ -13,6 +13,13 @@ let lastAudio: MockAudio | null = null;
 let intervalEntries = new Map<number, { delay: number; callback: () => void }>();
 let timeoutEntries = new Map<number, { delay: number; callback: () => void }>();
 let nextTimerId = 1;
+let artworkFixture = 0;
+let serverArtwork = false;
+let artworkFetchFails = false;
+let holdImages = false;
+let imageAttempts: MockImage[] = [];
+let holdArtMetadata = false;
+let pendingArtMetadata: (() => void)[] = [];
 
 const originalGlobals = new Map<string, unknown>();
 const originalSetTimeout = globalThis.setTimeout;
@@ -100,7 +107,14 @@ class MockImage {
   onload: (() => void) | null = null;
   onerror: (() => void) | null = null;
 
-  set src(_value: string) {
+  url = '';
+  requestedUrl = '';
+  set src(value: string) {
+    this.url = value;
+    if (!value) return;
+    this.requestedUrl = value;
+    imageAttempts.push(this);
+    if (holdImages) return;
     originalSetTimeout(() => {
       this.onload?.();
     }, 0);
@@ -240,11 +254,13 @@ function setFetchMock() {
   originalGlobals.set('fetch', globalThis.fetch);
   globalThis.fetch = (async (input: RequestInfo | URL) => {
     const url = String(input);
+    const requestedChannel =
+      new URL(url, 'http://localhost:3000').searchParams.get('channel') ?? 'all';
 
     if (url.endsWith('/api/radio-images')) {
       return jsonResponse({
-        images: ['/blog/a.png'],
-        placeholder: '/blog/placeholder.png',
+        images: [`/radio-test/${artworkFixture}/fallback.png`],
+        placeholder: `/radio-test/${artworkFixture}/placeholder.png`,
         count: 1,
         generated_at: '2026-04-17T00:00:00.000Z',
       });
@@ -256,7 +272,10 @@ function setFetchMock() {
         ok: true,
         now: '2026-04-17T00:00:00.000Z',
         data: {
-          channels: [{ name: 'all', track_count: 10 }],
+          channels: [
+            { name: 'all', track_count: 10 },
+            { name: 'chill', track_count: 5 },
+          ],
         },
         error: null,
       });
@@ -269,7 +288,7 @@ function setFetchMock() {
         now: '2026-04-17T00:00:00.000Z',
         data: {
           station_label: 'Midori AI Radio',
-          channel: 'all',
+          channel: requestedChannel,
           track_id: currentTrackId,
           title: currentTrackId === 'track-1' ? 'Track One' : 'Track Two',
           duration_ms: 180000,
@@ -283,16 +302,21 @@ function setFetchMock() {
     }
 
     if (url.includes('/api/radio/art')) {
+      if (artworkFetchFails) throw new Error('Artwork metadata unavailable');
+      const requestedTrackId = currentTrackId;
+      if (holdArtMetadata) await new Promise<void>((resolve) => pendingArtMetadata.push(resolve));
       return jsonResponse({
         version: 'radio.v1',
         ok: true,
         now: '2026-04-17T00:00:00.000Z',
         data: {
-          channel: 'all',
-          track_id: currentTrackId,
-          has_art: false,
+          channel: requestedChannel,
+          track_id: requestedTrackId,
+          has_art: serverArtwork,
           mime: null,
-          art_url: '',
+          art_url: serverArtwork
+            ? `https://radio.example/${artworkFixture}/image?channel=${requestedChannel}`
+            : '',
         },
         error: null,
       });
@@ -309,10 +333,22 @@ async function flushEffects() {
   await new Promise((resolve) => originalSetTimeout(resolve, 0));
 }
 
-async function renderWidget() {
+function ArtworkReadiness({ ready }: { ready: boolean }) {
+  const { markShellVisible, completeRouteEntry, setNavigationTransitionActive } =
+    usePageReadiness();
+  useLayoutEffect(() => {
+    markShellVisible();
+    completeRouteEntry();
+    setNavigationTransitionActive(!ready);
+  }, [ready, markShellVisible, completeRouteEntry, setNavigationTransitionActive]);
+  return null;
+}
+
+async function renderWidget(ready = true) {
   await act(async () => {
     root.render(
       <PageReadinessProvider>
+        <ArtworkReadiness ready={ready} />
         <RadioWidget />
       </PageReadinessProvider>,
     );
@@ -383,6 +419,13 @@ beforeEach(() => {
   installTimers();
   setFetchMock();
   currentTrackId = 'track-1';
+  artworkFixture++;
+  serverArtwork = false;
+  artworkFetchFails = false;
+  holdImages = false;
+  imageAttempts = [];
+  holdArtMetadata = false;
+  pendingArtMetadata = [];
   lastAudio = null;
 
   testWindow.localStorage.setItem('midoriai.radio.open', 'true');
@@ -403,6 +446,237 @@ afterEach(async () => {
 });
 
 describe('RadioWidget', () => {
+  function artworkBackground() {
+    const background = container.querySelector('.MuiSheet-root > div');
+    return background ? testWindow.getComputedStyle(background).backgroundImage : '';
+  }
+
+  function serverImages(trackId = 'track-1') {
+    return imageAttempts.filter(
+      (image) =>
+        image.requestedUrl.startsWith('https://radio.example/') &&
+        new URL(image.requestedUrl).searchParams.get('midoriai_track') === trackId,
+    );
+  }
+
+  test('navigation retains loaded artwork without restarting the same image', async () => {
+    serverArtwork = true;
+    await renderWidget();
+    await waitForCondition(
+      () => artworkBackground().includes('midoriai_track=track-1'),
+      'Artwork should load',
+    );
+    const loadedBackground = artworkBackground();
+    const attempts = imageAttempts.length;
+    await renderWidget(false);
+    expect(artworkBackground()).toBe(loadedBackground);
+    await renderWidget(true);
+    expect(artworkBackground()).toBe(loadedBackground);
+    expect(imageAttempts.length).toBe(attempts);
+  });
+
+  test('a pending artwork image can finish across navigation without being discarded', async () => {
+    serverArtwork = true;
+    holdImages = true;
+    await renderWidget();
+    await waitForCondition(() => serverImages().length > 0, 'Server artwork should start');
+    const pendingImage = serverImages()[0];
+    await renderWidget(false);
+    await act(async () => {
+      pendingImage.onload?.();
+      await flushEffects();
+    });
+    expect(artworkBackground()).toContain('midoriai_track=track-1');
+    await renderWidget(true);
+    expect(artworkBackground()).toContain('midoriai_track=track-1');
+    expect(serverImages().length).toBe(1);
+  });
+
+  test('new song loading keeps the previous image until the replacement succeeds', async () => {
+    serverArtwork = true;
+    await renderWidget();
+    await waitForCondition(
+      () => artworkBackground().includes('midoriai_track=track-1'),
+      'First artwork should load',
+    );
+    const first = artworkBackground();
+    holdImages = true;
+    currentTrackId = 'track-2';
+    await runInterval(2000);
+    await waitForCondition(() => serverImages('track-2').length > 0, 'Second artwork should start');
+    expect(artworkBackground()).toBe(first);
+    await act(async () => {
+      serverImages('track-2')[0].onload?.();
+      await flushEffects();
+    });
+    expect(artworkBackground()).toContain('midoriai_track=track-2');
+  });
+
+  test('late artwork from an older song cannot replace the current song image', async () => {
+    serverArtwork = true;
+    holdImages = true;
+    await renderWidget();
+    await waitForCondition(() => serverImages().length > 0, 'First artwork should start');
+    const oldImage = serverImages()[0];
+    currentTrackId = 'track-2';
+    await runInterval(2000);
+    await waitForCondition(() => serverImages('track-2').length > 0, 'Second artwork should start');
+    await act(async () => {
+      serverImages('track-2')[0].onload?.();
+      await flushEffects();
+    });
+    await act(async () => {
+      oldImage.onload?.();
+      await flushEffects();
+    });
+    expect(artworkBackground()).toContain('midoriai_track=track-2');
+  });
+
+  test('song changes wait for matching artwork metadata without briefly selecting fallback', async () => {
+    serverArtwork = true;
+    await renderWidget();
+    await waitForCondition(
+      () => artworkBackground().includes('midoriai_track=track-1'),
+      'First artwork should load',
+    );
+    const first = artworkBackground();
+    const attempts = imageAttempts.length;
+    holdArtMetadata = true;
+    currentTrackId = 'track-2';
+    await runInterval(2000);
+    expect(pendingArtMetadata.length).toBe(1);
+    expect(artworkBackground()).toBe(first);
+    expect(imageAttempts.length).toBe(attempts);
+    await act(async () => {
+      pendingArtMetadata[0]();
+      await flushEffects();
+    });
+    await waitForCondition(
+      () => artworkBackground().includes('midoriai_track=track-2'),
+      'Matching artwork should replace the first',
+    );
+  });
+
+  test('failed server artwork uses fallback once and navigation does not retry it', async () => {
+    serverArtwork = true;
+    holdImages = true;
+    await renderWidget();
+    await waitForCondition(() => serverImages().length > 0, 'Server artwork should start');
+    await act(async () => {
+      serverImages()[0].onerror?.();
+      await flushEffects();
+    });
+    const fallback = imageAttempts.find((image) => image.url.endsWith('/fallback.png'));
+    expect(Boolean(fallback)).toBe(true);
+    await act(async () => {
+      fallback?.onload?.();
+      await flushEffects();
+    });
+    const loaded = artworkBackground();
+    expect(loaded).toContain('/fallback.png');
+    const attempts = imageAttempts.length;
+    await renderWidget(false);
+    await renderWidget(true);
+    expect(artworkBackground()).toBe(loaded);
+    expect(imageAttempts.length).toBe(attempts);
+    expect(serverImages().length).toBe(1);
+  });
+
+  test('artwork waits for initial page readiness before loading', async () => {
+    serverArtwork = true;
+    await renderWidget(false);
+    expect(imageAttempts.length).toBe(0);
+    await renderWidget(true);
+    await waitForCondition(
+      () => artworkBackground().includes('midoriai_track=track-1'),
+      'Artwork should load after initial readiness',
+    );
+    expect(serverImages().length).toBe(1);
+  });
+
+  test('a failed pending image waits for page readiness before starting fallback', async () => {
+    serverArtwork = true;
+    holdImages = true;
+    await renderWidget();
+    await waitForCondition(() => serverImages().length > 0, 'Server artwork should start');
+    const pending = serverImages()[0];
+    const attempts = imageAttempts.length;
+    await renderWidget(false);
+    await act(async () => {
+      pending.onerror?.();
+      await flushEffects();
+    });
+    expect(imageAttempts.length).toBe(attempts);
+    await renderWidget(true);
+    expect(serverImages().length).toBe(1);
+    const fallback = imageAttempts.find((image) => image.url.endsWith('/fallback.png'));
+    expect(Boolean(fallback)).toBe(true);
+    await act(async () => {
+      fallback?.onload?.();
+      await flushEffects();
+    });
+    expect(artworkBackground()).toContain('/fallback.png');
+  });
+
+  test('temporary artwork metadata errors retain known artwork for the same song', async () => {
+    serverArtwork = true;
+    await renderWidget();
+    await waitForCondition(
+      () => artworkBackground().includes('midoriai_track=track-1'),
+      'Artwork should load',
+    );
+    const loaded = artworkBackground();
+    artworkFetchFails = true;
+    await runInterval(2000);
+    expect(artworkBackground()).toBe(loaded);
+  });
+
+  test('channel changes resolve matching artwork and navigation keeps the result', async () => {
+    serverArtwork = true;
+    await renderWidget();
+    await waitForCondition(
+      () => artworkBackground().includes('channel=all'),
+      'Initial channel art should load',
+    );
+    await act(async () => {
+      const select = container.querySelector('select');
+      if (!select) throw new Error('Missing channel selector');
+      select.value = 'chill';
+      select.dispatchEvent(new testWindow.Event('change', { bubbles: true }));
+      await flushEffects();
+    });
+    await waitForCondition(
+      () => artworkBackground().includes('channel=chill'),
+      'New channel art should load',
+    );
+    const loaded = artworkBackground();
+    const attempts = imageAttempts.length;
+    await renderWidget(false);
+    await renderWidget(true);
+    expect(artworkBackground()).toBe(loaded);
+    expect(imageAttempts.length).toBe(attempts);
+  });
+
+  test('metadata failure for a new song selects fallback instead of keeping stale server metadata', async () => {
+    serverArtwork = true;
+    await renderWidget();
+    await waitForCondition(
+      () => artworkBackground().includes('midoriai_track=track-1'),
+      'Initial artwork should load',
+    );
+    artworkFetchFails = true;
+    currentTrackId = 'track-2';
+    await runInterval(2000);
+    await waitForCondition(
+      () => artworkBackground().includes('/fallback.png'),
+      'New song should use fallback',
+    );
+    const attempts = imageAttempts.length;
+    await renderWidget(false);
+    await renderWidget(true);
+    expect(imageAttempts.length).toBe(attempts);
+  });
+
   test('starts playback with a stream URL on play', async () => {
     await renderWidget();
     await clickPrimaryButton();

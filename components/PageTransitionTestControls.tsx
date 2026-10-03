@@ -15,7 +15,19 @@ export function PageTransitionTestControls({
       <Typography level="h2" sx={{ mb: 2 }}>
         Page loading fixtures
       </Typography>
+      <Typography level="body-md" sx={{ mb: 2 }}>
+        On desktop, let the radio artwork load, then switch between renderer fixtures. Its image
+        should stay the same while the song stays the same, including through delayed navigation.
+      </Typography>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <Button
+          component={Link}
+          href={returnTo === '/blog/test' ? '/lore/test' : '/blog/test'}
+          prefetch={false}
+          sx={{ minHeight: 44 }}
+        >
+          Switch renderer fixture
+        </Button>
         <Button
           component={Link}
           href={`/transition-test?delay=1500&returnTo=${returnTo}`}
