@@ -5,6 +5,7 @@ import { isPageReadyForArtwork } from '@/lib/pageReadiness';
 
 interface PageReadinessContextValue {
   pageReadyForArtwork: boolean;
+  loadingFallbackCount: number;
   beginRouteEntry: () => void;
   completeRouteEntry: () => void;
   markShellVisible: () => void;
@@ -53,6 +54,7 @@ export function PageReadinessProvider({ children }: { children: React.ReactNode 
   const value = React.useMemo<PageReadinessContextValue>(
     () => ({
       pageReadyForArtwork,
+      loadingFallbackCount,
       beginRouteEntry,
       completeRouteEntry,
       markShellVisible,
@@ -62,6 +64,7 @@ export function PageReadinessProvider({ children }: { children: React.ReactNode 
     [
       beginRouteEntry,
       completeRouteEntry,
+      loadingFallbackCount,
       markShellVisible,
       pageReadyForArtwork,
       registerLoadingFallback,

@@ -1,9 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import type { MouseEvent, ReactNode, TransitionEvent } from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { getInternalPageTransitionHref } from '@/lib/pageTransitions';
+import { PageLoadingStatus } from './PageLoadingIndicator';
 import { usePageReadiness } from './PageReadinessProvider';
 
 type TransitionState = 'idle' | 'leaving' | 'entering';
@@ -11,6 +12,7 @@ type TransitionState = 'idle' | 'leaving' | 'entering';
 const EXIT_DURATION_MS = 220;
 const ENTER_DURATION_MS = 260;
 const TRANSITION_FALLBACK_MS = Math.max(EXIT_DURATION_MS, ENTER_DURATION_MS) + 260;
+const NAVIGATION_LOADING_DELAY_MS = 150;
 
 const PageTransitionContext = createContext<((href: string) => void) | null>(null);
 
@@ -22,16 +24,50 @@ export function usePageTransition() {
 
 export default function PageTransitionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const { setNavigationTransitionActive } = usePageReadiness();
+  const pathname = usePathname();
+  const { loadingFallbackCount, setNavigationTransitionActive } = usePageReadiness();
   const [transitionState, setTransitionState] = useState<TransitionState>('idle');
+  const [pendingNavigationSourcePath, setPendingNavigationSourcePath] = useState<string | null>(
+    null,
+  );
+  const [navigationLoadingDelayElapsed, setNavigationLoadingDelayElapsed] = useState(false);
   const transitionStateRef = useRef<TransitionState>('idle');
   const pendingDestinationRef = useRef<string | null>(null);
   const exitTimeoutRef = useRef<number | null>(null);
   const enterTimeoutRef = useRef<number | null>(null);
+  const navigationLoadingTimeoutRef = useRef<number | null>(null);
+  const pendingNavigationTokenRef = useRef(0);
 
   const updateTransitionState = useCallback((nextState: TransitionState) => {
     transitionStateRef.current = nextState;
     setTransitionState(nextState);
+  }, []);
+
+  const startPendingNavigation = useCallback(() => {
+    const token = pendingNavigationTokenRef.current + 1;
+    pendingNavigationTokenRef.current = token;
+    const sourcePath = pathname ?? window.location.pathname;
+
+    if (navigationLoadingTimeoutRef.current !== null) {
+      window.clearTimeout(navigationLoadingTimeoutRef.current);
+    }
+    setPendingNavigationSourcePath(sourcePath);
+    setNavigationLoadingDelayElapsed(false);
+    navigationLoadingTimeoutRef.current = window.setTimeout(() => {
+      if (pendingNavigationTokenRef.current !== token) return;
+      navigationLoadingTimeoutRef.current = null;
+      setNavigationLoadingDelayElapsed(true);
+    }, NAVIGATION_LOADING_DELAY_MS);
+  }, [pathname]);
+
+  const clearPendingNavigation = useCallback(() => {
+    pendingNavigationTokenRef.current += 1;
+    if (navigationLoadingTimeoutRef.current !== null) {
+      window.clearTimeout(navigationLoadingTimeoutRef.current);
+      navigationLoadingTimeoutRef.current = null;
+    }
+    setPendingNavigationSourcePath(null);
+    setNavigationLoadingDelayElapsed(false);
   }, []);
 
   const finishTransitionIn = useCallback(() => {
@@ -50,10 +86,11 @@ export default function PageTransitionProvider({ children }: { children: ReactNo
     if (exitTimeoutRef.current !== null) window.clearTimeout(exitTimeoutRef.current);
     exitTimeoutRef.current = null;
     pendingDestinationRef.current = null;
+    startPendingNavigation();
     router.push(destination);
     updateTransitionState('entering');
     enterTimeoutRef.current = window.setTimeout(finishTransitionIn, TRANSITION_FALLBACK_MS);
-  }, [finishTransitionIn, router, updateTransitionState]);
+  }, [finishTransitionIn, router, startPendingNavigation, updateTransitionState]);
 
   const navigate = useCallback(
     (href: string) => {
@@ -65,6 +102,7 @@ export default function PageTransitionProvider({ children }: { children: ReactNo
       if (transitionStateRef.current !== 'idle') return;
 
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        startPendingNavigation();
         router.push(destination);
         return;
       }
@@ -74,13 +112,27 @@ export default function PageTransitionProvider({ children }: { children: ReactNo
       updateTransitionState('leaving');
       exitTimeoutRef.current = window.setTimeout(finishTransitionOut, TRANSITION_FALLBACK_MS);
     },
-    [finishTransitionOut, router, setNavigationTransitionActive, updateTransitionState],
+    [
+      finishTransitionOut,
+      router,
+      setNavigationTransitionActive,
+      startPendingNavigation,
+      updateTransitionState,
+    ],
   );
+
+  useEffect(() => {
+    if (pendingNavigationSourcePath === null || pendingNavigationSourcePath === pathname) return;
+    clearPendingNavigation();
+  }, [clearPendingNavigation, pathname, pendingNavigationSourcePath]);
 
   useEffect(
     () => () => {
       if (exitTimeoutRef.current !== null) window.clearTimeout(exitTimeoutRef.current);
       if (enterTimeoutRef.current !== null) window.clearTimeout(enterTimeoutRef.current);
+      if (navigationLoadingTimeoutRef.current !== null) {
+        window.clearTimeout(navigationLoadingTimeoutRef.current);
+      }
     },
     [],
   );
@@ -122,13 +174,28 @@ export default function PageTransitionProvider({ children }: { children: ReactNo
     transitionState === 'idle'
       ? 'page-transition-scrim'
       : `page-transition-scrim page-transition-scrim--${transitionState}`;
+  const showTransitionLoader =
+    navigationLoadingDelayElapsed &&
+    pendingNavigationSourcePath !== null &&
+    pendingNavigationSourcePath === pathname &&
+    loadingFallbackCount === 0;
 
   return (
     <PageTransitionContext.Provider value={navigate}>
-      <div className="page-transition-root" onClickCapture={handleClickCapture}>
+      <div
+        className="page-transition-root"
+        aria-busy={showTransitionLoader}
+        inert={showTransitionLoader}
+        onClickCapture={handleClickCapture}
+      >
         {children}
         <div className={scrimClassName} aria-hidden="true" onTransitionEnd={handleTransitionEnd} />
       </div>
+      {showTransitionLoader ? (
+        <div className="page-transition-loader">
+          <PageLoadingStatus />
+        </div>
+      ) : null}
     </PageTransitionContext.Provider>
   );
 }

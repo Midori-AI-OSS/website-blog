@@ -20,6 +20,16 @@
   }
 }
 
+@keyframes page-transition-loader-reveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .page-route-transition {
   animation: page-route-enter 260ms ease-out both;
 }
@@ -71,6 +81,21 @@
   animation: page-loading-spin 800ms linear infinite;
 }
 
+.page-transition-loader {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  padding: 2rem;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.96);
+  animation: page-transition-loader-reveal 140ms ease-out both;
+}
+
+.page-transition-loader .page-loading__status {
+  animation-delay: 0ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-route-transition {
     animation: none;
@@ -80,8 +105,16 @@
     transition: none;
   }
 
+  .page-transition-loader {
+    animation: none;
+  }
+
   .page-loading__status {
     animation: page-loading-reveal 0ms linear 200ms forwards;
+  }
+
+  .page-transition-loader .page-loading__status {
+    animation-delay: 0ms;
   }
 
   .page-loading__spinner {
