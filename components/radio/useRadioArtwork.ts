@@ -53,7 +53,12 @@ export function useRadioArtwork({
         const url = candidates[job.nextIndex];
         if (url === undefined) return;
         const loaded = await preloadImage(url);
-        if (!mounted.current || latestKey.current !== key) return;
+        if (!mounted.current || latestKey.current !== key) {
+          // A discarded result must not leave its identity permanently marked
+          // as requested. Never clear the marker for a newer job.
+          if (requestedKey.current === key) requestedKey.current = null;
+          return;
+        }
         job.nextIndex++;
         if (loaded) {
           setLoadedUrl(url);

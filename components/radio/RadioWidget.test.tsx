@@ -557,6 +557,54 @@ describe('RadioWidget', () => {
     );
   });
 
+  for (const failed of [false, true]) {
+    test(`returning to a song resumes artwork after its ${failed ? 'failed' : 'successful'} image was discarded`, async () => {
+      serverArtwork = true;
+      holdImages = true;
+      await renderWidget();
+      await waitForCondition(() => serverImages().length > 0, 'First artwork should start');
+      const firstImage = serverImages()[0];
+      holdArtMetadata = true;
+      currentTrackId = 'track-2';
+      await runInterval(2000);
+      await act(async () => {
+        if (failed) firstImage.onerror?.();
+        else firstImage.onload?.();
+        await flushEffects();
+      });
+      currentTrackId = 'track-1';
+      await runInterval(2000);
+      holdArtMetadata = false;
+      await act(async () => {
+        for (const release of pendingArtMetadata) release();
+        await flushEffects();
+      });
+      if (failed) {
+        expect(serverImages().length).toBe(2);
+        await act(async () => {
+          serverImages().at(-1)?.onerror?.();
+          await flushEffects();
+        });
+        const fallback = imageAttempts.find((image) => image.url.endsWith('/fallback.png'));
+        expect(Boolean(fallback)).toBe(true);
+        await act(async () => {
+          fallback?.onload?.();
+          await flushEffects();
+        });
+        expect(artworkBackground()).toContain('/fallback.png');
+      } else {
+        expect(serverImages().length).toBe(1);
+        expect(artworkBackground()).toContain('midoriai_track=track-1');
+      }
+      const loaded = artworkBackground();
+      const attempts = imageAttempts.length;
+      await renderWidget(false);
+      await renderWidget(true);
+      expect(artworkBackground()).toBe(loaded);
+      expect(imageAttempts.length).toBe(attempts);
+    });
+  }
+
   test('failed server artwork uses fallback once and navigation does not retry it', async () => {
     serverArtwork = true;
     holdImages = true;
