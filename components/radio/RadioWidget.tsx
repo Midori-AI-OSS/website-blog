@@ -12,6 +12,8 @@ import { Headphones, Music, Pin, PinOff, Play, Square } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { useDynamicBackdrop } from '@/components/DynamicBackdropProvider';
+import { usePageReadiness } from '@/components/PageReadinessProvider';
+import { shouldLoadRadioWidgetArtwork } from '@/lib/pageReadiness';
 import {
   buildStreamUrl,
   fetchArt,
@@ -130,6 +132,7 @@ function clampVolume(input: number): number {
 
 export default function RadioWidget() {
   const { setRadioState } = useDynamicBackdrop();
+  const { pageReadyForArtwork } = usePageReadiness();
   const desktopEligible = useDesktopEligibility();
   const pathname = usePathname();
   const isRadioPage = pathname === '/radio';
@@ -743,7 +746,15 @@ export default function RadioWidget() {
     return appendTrackCacheKey(artUrl, artMetadata.track_id);
   }, [artMetadata?.has_art, artMetadata?.art_url, artMetadata?.track_id]);
 
+  const canLoadWidgetArtwork = shouldLoadRadioWidgetArtwork({
+    pageReady: pageReadyForArtwork,
+    desktopEligible,
+    isRadioPage,
+  });
+
   React.useEffect(() => {
+    if (!canLoadWidgetArtwork) return;
+
     let active = true;
     const placeholder = imageInventory?.placeholder ?? PLACEHOLDER_IMAGE;
 
@@ -772,7 +783,7 @@ export default function RadioWidget() {
     return () => {
       active = false;
     };
-  }, [preferredServerArtUrl, fallbackImage, imageInventory]);
+  }, [canLoadWidgetArtwork, preferredServerArtUrl, fallbackImage, imageInventory]);
 
   React.useEffect(() => {
     setRadioState({
@@ -818,7 +829,7 @@ export default function RadioWidget() {
         sx={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: `url("${backdropUrl}")`,
+          backgroundImage: canLoadWidgetArtwork ? `url("${backdropUrl}")` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           opacity: expanded ? 0.27 : 0.58,

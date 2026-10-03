@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import type { MouseEvent, ReactNode, TransitionEvent } from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { getInternalPageTransitionHref } from '@/lib/pageTransitions';
+import { usePageReadiness } from './PageReadinessProvider';
 
 type TransitionState = 'idle' | 'leaving' | 'entering';
 
@@ -21,6 +22,7 @@ export function usePageTransition() {
 
 export default function PageTransitionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { setNavigationTransitionActive } = usePageReadiness();
   const [transitionState, setTransitionState] = useState<TransitionState>('idle');
   const transitionStateRef = useRef<TransitionState>('idle');
   const pendingDestinationRef = useRef<string | null>(null);
@@ -36,8 +38,9 @@ export default function PageTransitionProvider({ children }: { children: ReactNo
     if (transitionStateRef.current !== 'entering') return;
     if (enterTimeoutRef.current !== null) window.clearTimeout(enterTimeoutRef.current);
     enterTimeoutRef.current = null;
+    setNavigationTransitionActive(false);
     updateTransitionState('idle');
-  }, [updateTransitionState]);
+  }, [setNavigationTransitionActive, updateTransitionState]);
 
   const finishTransitionOut = useCallback(() => {
     if (transitionStateRef.current !== 'leaving') return;
@@ -67,10 +70,11 @@ export default function PageTransitionProvider({ children }: { children: ReactNo
       }
 
       pendingDestinationRef.current = destination;
+      setNavigationTransitionActive(true);
       updateTransitionState('leaving');
       exitTimeoutRef.current = window.setTimeout(finishTransitionOut, TRANSITION_FALLBACK_MS);
     },
-    [finishTransitionOut, router, updateTransitionState],
+    [finishTransitionOut, router, setNavigationTransitionActive, updateTransitionState],
   );
 
   useEffect(

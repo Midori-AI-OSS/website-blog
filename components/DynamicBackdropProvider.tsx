@@ -1,6 +1,7 @@
 'use client';
 
 import Box from '@mui/joy/Box';
+import { usePathname } from 'next/navigation';
 import * as React from 'react';
 
 import {
@@ -9,6 +10,7 @@ import {
   extractPaletteFromImage,
 } from '@/lib/theme/artPalette';
 import { resolveBackdropSource, toDarkMediumBackdropPalette } from '@/lib/theme/dynamicBackdrop';
+import { usePageReadiness } from './PageReadinessProvider';
 
 const PLACEHOLDER_IMAGE_URL = '/blog/placeholder.png';
 const DESKTOP_MIN_WIDTH = 1280;
@@ -83,6 +85,8 @@ interface DynamicBackdropProviderProps {
 }
 
 export default function DynamicBackdropProvider({ children }: DynamicBackdropProviderProps) {
+  const pathname = usePathname();
+  const { pageReadyForArtwork } = usePageReadiness();
   const [postCoverUrl, setPostCoverUrl] = React.useState<string | null>(null);
   const [radioState, setRadioState] = React.useState<RadioBackdropState>({
     playing: false,
@@ -135,6 +139,10 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
       return;
     }
 
+    if (resolvedSource.mode === 'radio' && (!pageReadyForArtwork || pathname === '/radio')) {
+      return;
+    }
+
     let active = true;
 
     const syncPalette = async () => {
@@ -150,7 +158,14 @@ export default function DynamicBackdropProvider({ children }: DynamicBackdropPro
     return () => {
       active = false;
     };
-  }, [isDesktop, resolvedSource.url, placeholderPalette]);
+  }, [
+    isDesktop,
+    pageReadyForArtwork,
+    pathname,
+    resolvedSource.mode,
+    resolvedSource.url,
+    placeholderPalette,
+  ]);
 
   const contextValue = React.useMemo<DynamicBackdropContextValue>(
     () => ({
