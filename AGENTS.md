@@ -1,5 +1,36 @@
 # Agent Rules
 
+## Development Container
+- Do not run Bun/Bunx, uv/uvx, Python checks, builds, or other project toolchain checks on this laptop's host. Skip storylint entirely. Read-only exploration does not need a container.
+- Use `scripts/dev-container.sh` for development commands. It automatically starts `website-blog-dev` when needed and reuses it while running. It uses PixelArch, a one-CPU quota, and a fixed 12-hour lifetime; expiration can interrupt active commands.
+- The checkout is bind-mounted at `/app`, following production. Before a fresh start or explicit restart, the helper deletes only this checkout's stale `node_modules`. Reusing a running container leaves dependencies intact. It refuses cleanup when another running container shares the checkout.
+- Install dependencies explicitly after every fresh start/restart, before running checks or servers:
+
+  ```bash
+  scripts/dev-container.sh exec bun install --frozen-lockfile
+  scripts/dev-container.sh exec uv sync --directory tts --upgrade-package 'transformers>=4.57,<5'
+  ```
+
+- `UV_PROJECT_ENVIRONMENT=/tmp/website-blog-venv` keeps Python's virtualenv inside the container. `UV_CACHE_DIR`, `UV_PYTHON_INSTALL_DIR`, `BUN_INSTALL_CACHE_DIR`, `BUN_RUNTIME_TRANSPILER_CACHE_PATH`, and `HF_HOME` also point inside container `/tmp`. Do not override them with host-mounted paths or create a Python venv in the checkout.
+- The targeted Transformers upgrade avoids an old lockfile resolution that selects `tokenizers 0.10.3`, which needs a Rust source build on Python 3.14. Project dependency declarations stay unchanged. Leave `NODE_ENV` unset globally so Bun tests and Next.js select their appropriate environments.
+- Bun's installed dependencies use normal `/app/node_modules`, shared with the checkout. `BUN_INSTALL_CACHE_DIR` moves the download cache, not `node_modules`. No environment/dependency directories are relocated using host symlinks.
+- Run checks and servers through the helper:
+
+  ```bash
+  scripts/dev-container.sh exec bun run lint
+  scripts/dev-container.sh exec bun run test:bun
+  scripts/dev-container.sh exec bun run build
+  scripts/dev-container.sh exec python -m unittest discover -s scripts/tests -v
+  scripts/dev-container.sh exec uv run --directory tts --with httpx python -m unittest discover -s tests -v
+  scripts/dev-container.sh exec bun run dev --webpack --hostname 0.0.0.0
+  scripts/dev-container.sh exec bash scripts/start-tts.sh start
+  ```
+
+- The dev site is available at `http://127.0.0.1:59383`. Next.js and TTS run in the same container; TTS remains on `127.0.0.1:8888` inside it.
+- Use `start`, `restart`, `shell`, `status`, or `stop` for lifecycle management. `status` never starts a container; `stop` affects only this owned development container. A different checkout cannot take over the same name.
+- If the development image is missing, the helper builds the existing Dockerfile. The one-CPU quota covers the running container; image building is separate setup. If Docker access, image building, or cleanup fails, resolve that error rather than falling back to host toolchain checks or automatically using sudo.
+- Store task files, checks, and reports under `/tmp/agents-artifacts/`. Commit completed changes unless the user asks otherwise; do not push unless requested. Do not post a plan unless requested.
+
 ## Package Management
 - **ALWAYS** use `bun` instead of `npm`, `yarn`, or `pnpm`.
 - Use `bun run dev` for the dev server.
