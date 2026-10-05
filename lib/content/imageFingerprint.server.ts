@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile, stat } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
 import { type ArchivePeriod, getPeriodImageCandidates } from '@/lib/blog/archive';
 import type { ParsedPost } from '@/lib/blog/parser';
@@ -68,23 +68,26 @@ function rememberFingerprint(
 
 export async function getFileFingerprint(filepath: string): Promise<string> {
   for (let attempt = 0; attempt < 3; attempt++) {
-    const before = await stat(filepath);
-    const beforeSignature = getFileMetadataSignature(before);
-    const cached = imageFingerprintCache.get(filepath);
-    if (cached && metadataMatches(cached, beforeSignature)) {
-      imageFingerprintCache.delete(filepath);
-      imageFingerprintCache.set(filepath, cached);
-      return cached.fingerprint;
+    const file = await open(filepath, 'r');
+    try {
+      const beforeSignature = getFileMetadataSignature(await file.stat());
+      const cached = imageFingerprintCache.get(filepath);
+      if (cached && metadataMatches(cached, beforeSignature)) {
+        imageFingerprintCache.delete(filepath);
+        imageFingerprintCache.set(filepath, cached);
+        return cached.fingerprint;
+      }
+
+      const data = await file.readFile();
+      const afterSignature = getFileMetadataSignature(await file.stat());
+      if (!metadataMatches({ fingerprint: '', ...beforeSignature }, afterSignature)) continue;
+
+      const fingerprint = createHash('sha256').update(data).digest('hex');
+      rememberFingerprint(filepath, fingerprint, afterSignature);
+      return fingerprint;
+    } finally {
+      await file.close();
     }
-
-    const data = await readFile(filepath);
-    const after = await stat(filepath);
-    const afterSignature = getFileMetadataSignature(after);
-    if (!metadataMatches({ fingerprint: '', ...beforeSignature }, afterSignature)) continue;
-
-    const fingerprint = createHash('sha256').update(data).digest('hex');
-    rememberFingerprint(filepath, fingerprint, afterSignature);
-    return fingerprint;
   }
 
   throw new Error(`Image changed while fingerprinting: ${filepath}`);
