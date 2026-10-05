@@ -1,5 +1,8 @@
 import { Box, Typography } from '@mui/joy';
-
+import {
+  fingerprintLoreGameGroups,
+  getFingerprintedPlaceholderImageUrl,
+} from '@/lib/content/imageFingerprint.server';
 import { loadLoreGameGroups } from '@/lib/lore/loader';
 
 import { LoreListPageClient } from './LoreListPageClient';
@@ -7,7 +10,11 @@ import { LoreListPageClient } from './LoreListPageClient';
 export const dynamic = 'force-dynamic';
 
 export default async function LorePage() {
-  const gameGroups = await loadLoreGameGroups();
+  const sourceGroups = await loadLoreGameGroups();
+  const [gameGroups, placeholderImageUrl] = await Promise.all([
+    fingerprintLoreGameGroups(sourceGroups),
+    getFingerprintedPlaceholderImageUrl(),
+  ]);
 
   return (
     <Box
@@ -27,7 +34,7 @@ export default async function LorePage() {
           Luna’s RP notes, story times, and campaign lore — collected over time.
         </Typography>
       </Box>
-      <LoreListPageClient gameGroups={gameGroups} />
+      <LoreListPageClient gameGroups={gameGroups} placeholderImageUrl={placeholderImageUrl} />
     </Box>
   );
 }

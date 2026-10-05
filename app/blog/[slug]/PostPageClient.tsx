@@ -13,12 +13,14 @@ interface PostPageClientProps {
   post: ParsedPost;
   isScheduledPreview?: boolean;
   scheduledPublishDate?: string;
+  placeholderImageUrl?: string;
 }
 
 export function PostPageClient({
   post,
   isScheduledPreview = false,
   scheduledPublishDate,
+  placeholderImageUrl,
 }: PostPageClientProps) {
   const navigate = usePageTransition();
 
@@ -30,6 +32,7 @@ export function PostPageClient({
   return (
     <PostView
       post={post}
+      placeholderImageUrl={placeholderImageUrl}
       onClose={handleClose}
       isScheduledPreview={isScheduledPreview}
       scheduledPublishDate={scheduledPublishDate}

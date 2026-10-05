@@ -22,6 +22,7 @@ interface LorePostPageClientProps {
   povSiblings?: PovSibling[];
   povsEnabled?: boolean;
   gameStories?: StoryPickerStory[];
+  placeholderImageUrl?: string;
 }
 
 export function LorePostPageClient({
@@ -35,6 +36,7 @@ export function LorePostPageClient({
   povSiblings,
   povsEnabled,
   gameStories,
+  placeholderImageUrl,
 }: LorePostPageClientProps) {
   const navigate = usePageTransition();
   const password = post.metadata.password?.trim();
@@ -118,6 +120,7 @@ export function LorePostPageClient({
         scheduledPublishDate={scheduledPublishDate}
         speciesCareCards={speciesCareCards}
         gameCoverImage={gameCoverImage}
+        placeholderImageUrl={placeholderImageUrl}
         contentWrapper={contentWrapper}
         ttsLocked={isLocked}
         ttsFadingOut={ttsFadingOut}

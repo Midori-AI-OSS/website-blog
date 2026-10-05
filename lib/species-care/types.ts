@@ -150,6 +150,8 @@ export interface SpeciesCareCardEmbedData {
   record?: SpeciesCareCardRecord;
   availableVersions?: SpeciesCareCardVersionMetadata[];
   error?: string;
+  photoUrl?: string;
+  backgroundPhotoUrl?: string;
 }
 
 export type SpeciesCareCardEmbedMap = Record<string, SpeciesCareCardEmbedData>;

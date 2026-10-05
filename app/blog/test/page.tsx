@@ -3,6 +3,12 @@ import type { Metadata } from 'next';
 import { PageTransitionTestControls } from '@/components/PageTransitionTestControls';
 import { groupPostsIntoArchivePeriods } from '@/lib/blog/archive';
 import type { ParsedPost } from '@/lib/blog/parser';
+import {
+  fingerprintArchivePeriods,
+  fingerprintPostImages,
+  fingerprintPosts,
+  getFingerprintedPlaceholderImageUrl,
+} from '@/lib/content/imageFingerprint.server';
 import { blogRendererTestPost } from '@/lib/content/test-posts';
 
 import { PostPageClient } from '../[slug]/PostPageClient';
@@ -65,7 +71,20 @@ const archiveFixturePeriods = groupPostsIntoArchivePeriods([
   makeArchiveTestPost('0005-01-05.md', 'Archive Fixture Ancient Jan 3', ['placeholder']),
 ]);
 
-export default function BlogRendererTestPage() {
+export default async function BlogRendererTestPage() {
+  const [periods, testPost, placeholderImageUrl] = await Promise.all([
+    fingerprintArchivePeriods(
+      await Promise.all(
+        archiveFixturePeriods.map(async (period) => ({
+          ...period,
+          posts: await fingerprintPosts(period.posts),
+        })),
+      ),
+    ),
+    fingerprintPostImages(blogRendererTestPost),
+    getFingerprintedPlaceholderImageUrl(),
+  ]);
+
   return (
     <Stack spacing={6}>
       <PageTransitionTestControls returnTo="/blog/test" />
@@ -80,7 +99,7 @@ export default function BlogRendererTestPage() {
         </Typography>
       </Box>
 
-      <BlogArchiveClient periods={archiveFixturePeriods} />
+      <BlogArchiveClient periods={periods} placeholderImageUrl={placeholderImageUrl} />
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
 
@@ -88,7 +107,7 @@ export default function BlogRendererTestPage() {
         <Typography level="h2" sx={{ px: { xs: 1, sm: 0 }, mb: 2 }}>
           Hidden Blog Post Renderer Fixture
         </Typography>
-        <PostPageClient post={blogRendererTestPost} />
+        <PostPageClient post={testPost} placeholderImageUrl={placeholderImageUrl} />
       </Box>
     </Stack>
   );

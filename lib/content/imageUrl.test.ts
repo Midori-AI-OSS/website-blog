@@ -4,6 +4,7 @@ import {
   POST_COVER_PLACEHOLDER_IMAGE,
   POST_COVER_PLACEHOLDER_IMAGE_URL,
   resolvePostCoverImageUrl,
+  toLoreImageApiUrl,
   transformPostImageUrl,
 } from './imageUrl';
 
@@ -15,6 +16,19 @@ describe('imageUrl', () => {
   test('transforms lore cover paths through the lore image API', () => {
     expect(transformPostImageUrl('/lore/story cover.png')).toBe(
       '/api/lore-images/story%20cover.png',
+    );
+  });
+
+  test('preserves fingerprints when converting source URLs to image API routes', () => {
+    const fingerprint = 'a'.repeat(64);
+    expect(transformPostImageUrl(`/blog/2026-05-07.png?v=${fingerprint}`)).toBe(
+      `/api/blog-images/2026-05-07.png?v=${fingerprint}`,
+    );
+    expect(transformPostImageUrl(`/lore/story%20cover.png?v=${fingerprint}`)).toBe(
+      `/api/lore-images/story%20cover.png?v=${fingerprint}`,
+    );
+    expect(toLoreImageApiUrl(`/lore/story cover.png?v=${fingerprint}`)).toBe(
+      `/api/lore-images/story%20cover.png?v=${fingerprint}`,
     );
   });
 

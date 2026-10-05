@@ -3,6 +3,12 @@ import type { Metadata } from 'next';
 import { PageTransitionTestControls } from '@/components/PageTransitionTestControls';
 
 import type { ParsedPost } from '@/lib/blog/parser';
+import {
+  fingerprintLoreGameGroups,
+  fingerprintPostImages,
+  fingerprintSpeciesCareCards,
+  getFingerprintedPlaceholderImageUrl,
+} from '@/lib/content/imageFingerprint.server';
 import { loreRendererTestPost } from '@/lib/content/test-posts';
 import type { LoreGameGroup } from '@/lib/lore/loader';
 import { loadSpeciesCareCardsForMarkdown } from '@/lib/species-care/loader';
@@ -76,7 +82,13 @@ export const metadata: Metadata = {
 };
 
 export default async function LoreRendererTestPage() {
-  const speciesCareCards = await loadSpeciesCareCardsForMarkdown(loreRendererTestPost.content);
+  const [groups, post, loadedSpeciesCareCards, placeholderImageUrl] = await Promise.all([
+    fingerprintLoreGameGroups(loreGameOrderingTestGroups),
+    fingerprintPostImages(loreRendererTestPost),
+    loadSpeciesCareCardsForMarkdown(loreRendererTestPost.content),
+    getFingerprintedPlaceholderImageUrl(),
+  ]);
+  const speciesCareCards = await fingerprintSpeciesCareCards(loadedSpeciesCareCards);
 
   return (
     <>
@@ -89,11 +101,16 @@ export default async function LoreRendererTestPage() {
           The three weighted games stay in priority order despite their post dates. Unweighted games
           follow by recent post date, with an empty game last.
         </Typography>
-        <LoreListPageClient gameGroups={loreGameOrderingTestGroups} />
+        <LoreListPageClient gameGroups={groups} placeholderImageUrl={placeholderImageUrl} />
       </Box>
       <LorePostPageClient
-        post={passwordProtectedLoreRendererTestPost}
+        post={{
+          ...passwordProtectedLoreRendererTestPost,
+          ...post,
+          metadata: { ...post.metadata, password: 'lore-test' },
+        }}
         speciesCareCards={speciesCareCards}
+        placeholderImageUrl={placeholderImageUrl}
       />
     </>
   );

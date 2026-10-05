@@ -39,6 +39,7 @@ type SortMode = 'story_order_desc' | 'story_order_asc' | 'date_desc' | 'date_asc
 
 interface LoreListPageClientProps {
   gameGroups: LoreGameGroup[];
+  placeholderImageUrl?: string;
 }
 
 const SORT_OPTIONS: Array<{ value: SortMode; label: string }> = [
@@ -161,7 +162,7 @@ function buildFullStoryHref(gameSlug: string): string {
   return `/lore/game/${gameSlug}/full-story`;
 }
 
-export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
+export function LoreListPageClient({ gameGroups, placeholderImageUrl }: LoreListPageClientProps) {
   const navigate = usePageTransition();
   const [sortByGame, setSortByGame] = useState<Record<string, SortMode>>({});
   const [characterByGame, setCharacterByGame] = useState<Record<string, string>>({});
@@ -523,6 +524,7 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                         key={post.filename}
                         post={cardPost}
                         postType="lore"
+                        placeholderImageUrl={placeholderImageUrl}
                         onClick={() => navigate(`/lore/${getPostSlug(post)}`)}
                         variant="outlined"
                       />

@@ -1,6 +1,9 @@
 import { Box } from '@mui/joy';
 import { notFound, redirect } from 'next/navigation';
-
+import {
+  fingerprintPosts,
+  getFingerprintedPlaceholderImageUrl,
+} from '@/lib/content/imageFingerprint.server';
 import {
   getLorePostSlug,
   getLorePovPosts,
@@ -34,7 +37,12 @@ export default async function LoreGameFullStoryPage({
   }
 
   const povPosts = getLorePovPosts(group.posts, group.game.slug, group.game.fullStoryPov);
-  const storyPosts = povPosts.length > 0 ? povPosts : sortLorePosts(group.posts, 'story_order_asc');
+  const sourceStoryPosts =
+    povPosts.length > 0 ? povPosts : sortLorePosts(group.posts, 'story_order_asc');
+  const [storyPosts, placeholderImageUrl] = await Promise.all([
+    fingerprintPosts(sourceStoryPosts),
+    getFingerprintedPlaceholderImageUrl(),
+  ]);
 
   return (
     <Box
@@ -49,7 +57,7 @@ export default async function LoreGameFullStoryPage({
     >
       <LoreBackButton />
 
-      <FullStoryClient posts={storyPosts} />
+      <FullStoryClient posts={storyPosts} placeholderImageUrl={placeholderImageUrl} />
     </Box>
   );
 }

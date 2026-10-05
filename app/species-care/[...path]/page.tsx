@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 
 import { SpeciesCareScanView } from '@/components/species-care/SpeciesCareScanView';
+import { fingerprintImageSource } from '@/lib/content/imageFingerprint.server';
+import { transformPostImageUrl } from '@/lib/content/imageUrl';
 import {
   getSpeciesCareStaticRouteParams,
   loadSpeciesCareCardByRoutePath,
@@ -30,13 +32,16 @@ export default async function SpeciesCarePage({
   const result = await loadSpeciesCareCardByRoutePath(path, { version, profileVersion });
 
   if (!result) notFound();
+  const photoUrl = transformPostImageUrl(
+    await fingerprintImageSource(`/lore/species-photos/${result.record.slug}.png`),
+  );
 
   return (
     <SpeciesCareScanView
       record={result.record}
       availableVersions={result.availableVersions}
       linkedProfile={result.linkedProfile}
-      photoUrl={`/api/lore-images/species-photos/${result.record.slug}.png`}
+      photoUrl={photoUrl}
     />
   );
 }

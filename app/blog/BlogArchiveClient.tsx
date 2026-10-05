@@ -42,13 +42,14 @@ const PAGE_SIZE_OPTIONS = [
 
 interface BlogArchiveClientProps {
   periods: ArchivePeriod[];
+  placeholderImageUrl?: string;
 }
 
 function getPostSlug(post: ParsedPost): string {
   return post.filename.replace(/\.md$/i, '');
 }
 
-export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
+export function BlogArchiveClient({ periods, placeholderImageUrl }: BlogArchiveClientProps) {
   const navigate = usePageTransition();
   const [selectedTagByPeriod, setSelectedTagByPeriod] = useState<Record<string, string>>({});
   const [pageSizeByPeriod, setPageSizeByPeriod] = useState<Record<string, number>>({});
@@ -134,12 +135,13 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
           : filteredPosts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
       // Resolve cover image: try candidates, fall back to placeholder when exhausted
-      const imageCandidates = getPeriodImageCandidates(period.newestMonth, period.year);
+      const imageCandidates =
+        period.imageCandidates ?? getPeriodImageCandidates(period.newestMonth, period.year);
       const coverImageUrl: string =
         imageCandidates.length > 0 && coverErrorIndex < imageCandidates.length
           ? // biome-ignore lint/style/noNonNullAssertion: bounded by length check
             imageCandidates[coverErrorIndex]!
-          : BLOG_PLACEHOLDER_URL;
+          : (placeholderImageUrl ?? BLOG_PLACEHOLDER_URL);
 
       // Tags for this period (from unfiltered posts)
       const tags = getPeriodTags(period.posts);
@@ -159,7 +161,14 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
         tags,
       };
     });
-  }, [periods, selectedTagByPeriod, pageSizeByPeriod, currentPageByPeriod, coverErrorsByPeriod]);
+  }, [
+    periods,
+    selectedTagByPeriod,
+    pageSizeByPeriod,
+    currentPageByPeriod,
+    coverErrorsByPeriod,
+    placeholderImageUrl,
+  ]);
 
   // Hide empty filtered groups
   const visiblePeriods = periodsWithUi.filter(
@@ -169,7 +178,8 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
   // Build picker items
   const pickerItems = useMemo<PeriodPickerItem[]>(() => {
     return visiblePeriods.map((period) => {
-      const candidates = getPeriodImageCandidates(period.newestMonth, period.year);
+      const candidates =
+        period.imageCandidates ?? getPeriodImageCandidates(period.newestMonth, period.year);
       const primary = candidates[0] ?? null;
       return {
         slug: period.key,
@@ -413,6 +423,7 @@ export function BlogArchiveClient({ periods }: BlogArchiveClientProps) {
                       key={post.filename}
                       post={post}
                       postType="blog"
+                      placeholderImageUrl={placeholderImageUrl}
                       hideDate
                       onClick={() => navigate(`/blog/${getPostSlug(post)}`)}
                       variant="outlined"

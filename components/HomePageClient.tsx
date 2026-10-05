@@ -22,9 +22,14 @@ import { usePageTransition } from './PageTransitionProvider';
 interface HomePageClientProps {
   recentPosts: ParsedPost[];
   recentLorePosts: ParsedPost[];
+  placeholderImageUrl?: string;
 }
 
-export default function HomePageClient({ recentPosts, recentLorePosts }: HomePageClientProps) {
+export default function HomePageClient({
+  recentPosts,
+  recentLorePosts,
+  placeholderImageUrl,
+}: HomePageClientProps) {
   const navigate = usePageTransition();
 
   const handlePostClick = (post: ParsedPost) => {
@@ -119,6 +124,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
             <BlogCard
               key={post.filename}
               post={post}
+              placeholderImageUrl={placeholderImageUrl}
               onClick={() => handlePostClick(post)}
               variant="outlined"
             />
@@ -157,6 +163,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
               key={post.filename}
               post={post}
               postType="lore"
+              placeholderImageUrl={placeholderImageUrl}
               onClick={() => handleLorePostClick(post)}
               variant="outlined"
             />

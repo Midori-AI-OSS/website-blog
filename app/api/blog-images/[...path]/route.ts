@@ -1,23 +1,27 @@
 /**
- * Serves fingerprinted Lore images from public/lore/.
+ * Serves fingerprinted blog images from public/blog/.
  * Legacy requests without a fingerprint remain available with short freshness.
  */
 
 import { join } from 'node:path';
 import { type NextRequest, NextResponse } from 'next/server';
-import { getLoreImageCacheSeconds } from '@/lib/content/imageCachePolicy';
+import { getBlogImageCacheSeconds } from '@/lib/content/imageCachePolicy';
 import { serveFingerprintedImage } from '@/lib/content/imageResponse.server';
-import { getLoreImageReferenceIndex } from '@/lib/content/loreImageReferenceIndex.server';
 
-const LORE_IMAGES_DIR = join(process.cwd(), 'public/lore');
+const BLOG_IMAGES_DIR = join(process.cwd(), 'public/blog');
+const MONTH_IMAGE_NAMES = /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.png$/i;
 
-function isValidPathSegments(segments: string[]): boolean {
-  if (!Array.isArray(segments) || segments.length === 0) return false;
-  return segments.every((segment) => {
-    if (typeof segment !== 'string' || segment.length === 0 || segment.length > 128) return false;
-    if (segment === '.' || segment === '..') return false;
-    return /^[a-zA-Z0-9._-]+$/.test(segment);
-  });
+function isValidBlogImagePath(path: string[]): boolean {
+  if (path.length === 1) {
+    return /^(\d{4}-\d{2}-\d{2}|placeholder|test-image)\.(png|jpg|jpeg|webp)$/.test(path[0] ?? '');
+  }
+
+  return (
+    path.length === 3 &&
+    path[0] === 'years' &&
+    /^\d{4}$/.test(path[1] ?? '') &&
+    MONTH_IMAGE_NAMES.test(path[2] ?? '')
+  );
 }
 
 function getContentType(filename: string): string {
@@ -40,30 +44,23 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
-  if (!isValidPathSegments(path)) {
+  if (!Array.isArray(path) || path.length === 0 || !isValidBlogImagePath(path)) {
     return new NextResponse('Invalid path', { status: 400 });
   }
 
   const filename = path[path.length - 1] ?? '';
-  if (!/\.(png|jpg|jpeg|webp)$/i.test(filename)) {
-    return new NextResponse('Invalid filename', { status: 400 });
-  }
-
   try {
-    const relativePath = path.join('/');
-    const references = await getLoreImageReferenceIndex();
-    const cacheTtlSeconds = getLoreImageCacheSeconds(relativePath, references);
     return await serveFingerprintedImage({
-      filepath: join(LORE_IMAGES_DIR, ...path),
-      cachePath: `lore/${relativePath}`,
+      filepath: join(BLOG_IMAGES_DIR, ...path),
+      cachePath: `blog/${path.join('/')}`,
       contentType: getContentType(filename),
-      cacheTtlSeconds,
+      cacheTtlSeconds: getBlogImageCacheSeconds(path),
       hasVersion: request.nextUrl.searchParams.has('v'),
       requestedVersion: request.nextUrl.searchParams.get('v'),
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Error serving lore image ${String(path)}:`, errorMessage);
+    console.error(`Error serving image ${path.join('/')}:`, errorMessage);
     if (errorMessage.includes('ENOENT')) {
       return new NextResponse('Image not found', { status: 404 });
     }

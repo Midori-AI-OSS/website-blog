@@ -19,12 +19,14 @@ export function SpeciesCareCardEmbed({
   plain,
 }: SpeciesCareCardEmbedProps) {
   if (data?.status === 'loaded' && data.record) {
-    const photoUrl = data.record.slug
-      ? `/api/lore-images/species-photos/${data.record.slug}.png`
-      : undefined;
-    const backgroundPhotoUrl = data.record.slug
-      ? `/api/lore-images/species-photos/backgrounds/${data.record.slug}-signing.png`
-      : undefined;
+    const photoUrl =
+      data.photoUrl ??
+      (data.record.slug ? `/api/lore-images/species-photos/${data.record.slug}.png` : undefined);
+    const backgroundPhotoUrl =
+      data.backgroundPhotoUrl ??
+      (data.record.slug
+        ? `/api/lore-images/species-photos/backgrounds/${data.record.slug}-signing.png`
+        : undefined);
     return (
       <SpeciesCareCardInline
         record={data.record}

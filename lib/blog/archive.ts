@@ -60,6 +60,8 @@ export interface ArchivePeriod {
   posts: ParsedPost[];
   /** Resolved cover image URL or null */
   coverImageUrl: string | null;
+  /** Fingerprinted API URLs for candidate artwork, populated by the server page. */
+  imageCandidates?: string[];
 }
 
 /**
