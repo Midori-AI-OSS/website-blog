@@ -17,7 +17,7 @@
 - A fresh start or restart removes this checkout's stale `node_modules`. Install dependencies before running checks or servers:
 
   ```bash
-  scripts/dev-container.sh exec bun install --frozen-lockfile
+  scripts/dev-container.sh exec bun install
   scripts/dev-container.sh exec uv sync --directory tts --upgrade-package 'transformers>=4.57,<5'
   ```
 
@@ -27,7 +27,7 @@
   scripts/dev-container.sh exec bun run lint
   scripts/dev-container.sh exec bun run test:bun
   scripts/dev-container.sh exec bun run build
-  scripts/dev-container.sh exec python -m unittest discover -s scripts/tests -v
+  scripts/dev-container.sh exec uv run python -m unittest discover -s scripts/tests -v
   scripts/dev-container.sh exec uv run --directory tts --with httpx python -m unittest discover -s tests -v
   scripts/dev-container.sh exec bun run dev --webpack --hostname 0.0.0.0
   scripts/dev-container.sh exec bash scripts/start-tts.sh start
