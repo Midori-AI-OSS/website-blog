@@ -1,7 +1,6 @@
 # Agent Rules
 
 ## Development Container
-- Do not run Bun/Bunx, uv/uvx, Python checks, builds, or other project toolchain checks on this laptop's host. Skip storylint entirely. Read-only exploration does not need a container.
 - Use `scripts/dev-container.sh` for development commands. It automatically starts `website-blog-dev` when needed and reuses it while running. It uses PixelArch, a one-CPU quota, and a fixed 12-hour lifetime; expiration can interrupt active commands.
 - The checkout is bind-mounted at `/app`, following production. Before a fresh start or explicit restart, the helper deletes only this checkout's stale `node_modules`. Reusing a running container leaves dependencies intact. It refuses cleanup when another running container shares the checkout.
 - Install dependencies explicitly after every fresh start/restart, before running checks or servers:
