@@ -5,7 +5,12 @@
  */
 
 import { notFound } from 'next/navigation';
-
+import {
+  fingerprintImageSource,
+  fingerprintPostImages,
+  fingerprintSpeciesCareCards,
+  getFingerprintedPlaceholderImageUrl,
+} from '@/lib/content/imageFingerprint.server';
 import { transformPostImageUrl } from '@/lib/content/imageUrl';
 import { getPublishState } from '@/lib/content/publish';
 import {
@@ -48,21 +53,30 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
     ? gameIndexes.find((index) => index.slug === post.metadata.game)
     : undefined;
   const gameCoverImage = matchingGame?.coverImage
-    ? transformPostImageUrl(matchingGame.coverImage)
+    ? transformPostImageUrl(await fingerprintImageSource(matchingGame.coverImage))
     : undefined;
   const povsEnabled = matchingGame?.povsEnabled !== false;
 
   const publishState = getPublishState(post.metadata.date);
   const neighbors = getLoreStoryNeighbors(allPosts, post);
-  const speciesCareCards = publishState.isScheduled
+  const loadedSpeciesCareCards = publishState.isScheduled
     ? {}
     : await loadSpeciesCareCardsForMarkdown(post.content);
+  const [fingerprintedPost, speciesCareCards, placeholderImageUrl] = await Promise.all([
+    fingerprintPostImages(post),
+    fingerprintSpeciesCareCards(loadedSpeciesCareCards),
+    getFingerprintedPlaceholderImageUrl(),
+  ]);
 
   const rawPovSiblings = povsEnabled ? getPovSiblings(allPosts, post) : [];
-  const povSiblings: PovSibling[] = rawPovSiblings.map((sib) => ({
-    ...sib,
-    coverImage: sib.coverImage ? transformPostImageUrl(sib.coverImage) : undefined,
-  }));
+  const povSiblings: PovSibling[] = await Promise.all(
+    rawPovSiblings.map(async (sib) => ({
+      ...sib,
+      coverImage: sib.coverImage
+        ? transformPostImageUrl(await fingerprintImageSource(sib.coverImage))
+        : undefined,
+    })),
+  );
 
   let gameStories:
     | Array<{ slug: string; title: string; summary?: string; coverImage?: string }>
@@ -73,27 +87,30 @@ export default async function LoreEntryPage({ params }: { params: Promise<{ slug
       getLorePostsForGame(allPosts, matchingGame.slug),
       'story_order_desc',
     );
-    gameStories = gamePosts
-      .filter((p) => getLorePostSlug(p) !== currentSlug)
-      .map((p) => ({
-        slug: getLorePostSlug(p),
-        title: p.metadata.title,
-        summary: p.metadata.summary,
-        coverImage: p.metadata.cover_image?.trim()
-          ? transformPostImageUrl(p.metadata.cover_image.trim())
-          : undefined,
-      }));
+    gameStories = await Promise.all(
+      gamePosts
+        .filter((p) => getLorePostSlug(p) !== currentSlug)
+        .map(async (p) => ({
+          slug: getLorePostSlug(p),
+          title: p.metadata.title,
+          summary: p.metadata.summary,
+          coverImage: p.metadata.cover_image?.trim()
+            ? transformPostImageUrl(await fingerprintImageSource(p.metadata.cover_image.trim()))
+            : undefined,
+        })),
+    );
   }
 
   return (
     <LorePostPageClient
-      post={post}
+      post={fingerprintedPost}
       previousStory={neighbors.previous}
       nextStory={neighbors.next}
       isScheduledPreview={publishState.isScheduled}
       scheduledPublishDate={publishState.publishDate ?? undefined}
       speciesCareCards={speciesCareCards}
       gameCoverImage={gameCoverImage}
+      placeholderImageUrl={placeholderImageUrl}
       povSiblings={povSiblings}
       povsEnabled={povsEnabled}
       gameStories={gameStories}

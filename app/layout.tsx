@@ -1,6 +1,12 @@
 import 'highlight.js/styles/atom-one-dark.css';
+import './page-transitions.css';
 import type { Metadata } from 'next';
+import DynamicBackdropProvider from '../components/DynamicBackdropProvider';
 import NavBar from '../components/NavBar';
+import { PageReadinessProvider } from '../components/PageReadinessProvider';
+import PageTransitionProvider, {
+  PageTransitionContent,
+} from '../components/PageTransitionProvider';
 import {
   RadioAvailabilityGate,
   RadioAvailabilityProvider,
@@ -17,15 +23,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <ThemeRegistry>
-          <RadioAvailabilityProvider>
-            <NavBar />
-            {children}
-            <RadioAvailabilityGate>
-              <RadioWidget />
-            </RadioAvailabilityGate>
-          </RadioAvailabilityProvider>
-        </ThemeRegistry>
+        <PageReadinessProvider>
+          <PageTransitionProvider>
+            <ThemeRegistry>
+              <RadioAvailabilityProvider>
+                <NavBar />
+                <DynamicBackdropProvider>
+                  <PageTransitionContent>
+                    {children}
+                    <RadioAvailabilityGate>
+                      <RadioWidget />
+                    </RadioAvailabilityGate>
+                  </PageTransitionContent>
+                </DynamicBackdropProvider>
+              </RadioAvailabilityProvider>
+            </ThemeRegistry>
+          </PageTransitionProvider>
+        </PageReadinessProvider>
       </body>
     </html>
   );

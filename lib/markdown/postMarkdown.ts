@@ -10,7 +10,8 @@ export function replaceLoreImageTokens(markdown: string): string {
       if (!url) return fullMatch;
 
       const raw = tokenValue.trim();
-      const basename = raw.split('/').filter(Boolean).pop() ?? 'image';
+      const imagePath = raw.split(/[?#]/, 1)[0] ?? raw;
+      const basename = imagePath.split('/').filter(Boolean).pop() ?? 'image';
       const alt =
         basename
           .replace(/\.[a-z0-9]+$/i, '')

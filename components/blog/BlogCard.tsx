@@ -37,6 +37,7 @@ export type BlogCardProps = {
   secondaryCtaOnClick?: () => void;
   secondaryCtaTooltip?: string;
   secondaryCtaAriaLabel?: string;
+  placeholderImageUrl?: string;
 };
 
 function toRgba(hex: string, alpha: number): string {
@@ -59,6 +60,7 @@ export const BlogCard = React.memo(
     secondaryCtaOnClick,
     secondaryCtaTooltip,
     secondaryCtaAriaLabel,
+    placeholderImageUrl = POST_COVER_PLACEHOLDER_IMAGE_URL,
   }: BlogCardProps) => {
     const { metadata, filename } = post;
     const isThinkingLoreCard = postType === 'lore' && metadata.hasThinkingTitle;
@@ -78,7 +80,7 @@ export const BlogCard = React.memo(
     }, [resolvedDecorativeImageUrl]);
 
     React.useEffect(() => {
-      if (decorativeImageUrl === POST_COVER_PLACEHOLDER_IMAGE_URL) {
+      if (decorativeImageUrl === placeholderImageUrl) {
         return;
       }
 
@@ -86,7 +88,7 @@ export const BlogCard = React.memo(
       const image = new Image();
       image.onerror = () => {
         if (active) {
-          setDecorativeImageUrl(POST_COVER_PLACEHOLDER_IMAGE_URL);
+          setDecorativeImageUrl(placeholderImageUrl);
         }
       };
       image.src = decorativeImageUrl;
@@ -94,7 +96,7 @@ export const BlogCard = React.memo(
       return () => {
         active = false;
       };
-    }, [decorativeImageUrl]);
+    }, [decorativeImageUrl, placeholderImageUrl]);
 
     React.useEffect(() => {
       if (!decorativeImageUrl) {

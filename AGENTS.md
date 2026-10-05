@@ -1,5 +1,41 @@
 # Agent Rules
 
+## Development Container
+- Use `scripts/dev-container.sh` to work in the `website-blog-dev` container. `exec` and `shell` start it when needed and reuse it while it is running. Commands run from `/app`, the checkout mount. The container has a one-CPU quota and stops after 12 hours.
+- Supported commands:
+
+  ```bash
+  scripts/dev-container.sh start
+  scripts/dev-container.sh restart
+  scripts/dev-container.sh exec COMMAND [ARG...]
+  scripts/dev-container.sh shell
+  scripts/dev-container.sh status
+  scripts/dev-container.sh stop
+  ```
+
+- `start` reuses the running container or creates a fresh one. `restart` recreates it. `exec` starts or reuses the container, then runs the command in `/app`. `shell` opens Bash in `/app`. `status` reports the state without starting or cleaning anything. `stop` stops this checkout's development container.
+- A fresh start or restart removes this checkout's stale `node_modules`. Install dependencies before running checks or servers:
+
+  ```bash
+  scripts/dev-container.sh exec bun install
+  scripts/dev-container.sh exec uv sync --directory tts --upgrade-package 'transformers>=4.57,<5'
+  ```
+
+- Run project checks and servers through the helper:
+
+  ```bash
+  scripts/dev-container.sh exec bun run lint
+  scripts/dev-container.sh exec bun run test:bun
+  scripts/dev-container.sh exec bun run build
+  scripts/dev-container.sh exec uv run python -m unittest discover -s scripts/tests -v
+  scripts/dev-container.sh exec uv run --directory tts --with httpx python -m unittest discover -s tests -v
+  scripts/dev-container.sh exec bun run dev --webpack --hostname 0.0.0.0
+  scripts/dev-container.sh exec bash scripts/start-tts.sh start
+  ```
+
+- The dev site is available at `http://127.0.0.1:59383`. TTS runs at `127.0.0.1:8888` inside the container.
+- If the development image is missing, the helper builds it before starting the container.
+
 ## Package Management
 - **ALWAYS** use `bun` instead of `npm`, `yarn`, or `pnpm`.
 - Use `bun run dev` for the dev server.

@@ -9,13 +9,22 @@
 import { Box, Typography } from '@mui/joy';
 import { groupPostsIntoArchivePeriods } from '@/lib/blog/archive';
 import { loadAllPosts } from '@/lib/blog/loader';
+import {
+  fingerprintArchivePeriods,
+  fingerprintPosts,
+  getFingerprintedPlaceholderImageUrl,
+} from '@/lib/content/imageFingerprint.server';
 import { BlogArchiveClient } from './BlogArchiveClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function BlogPage() {
-  const allPosts = await loadAllPosts();
-  const periods = groupPostsIntoArchivePeriods(allPosts);
+  const sourcePosts = await loadAllPosts();
+  const [allPosts, placeholderImageUrl] = await Promise.all([
+    fingerprintPosts(sourcePosts),
+    getFingerprintedPlaceholderImageUrl(),
+  ]);
+  const periods = await fingerprintArchivePeriods(groupPostsIntoArchivePeriods(allPosts));
 
   return (
     <Box
@@ -35,7 +44,7 @@ export default async function BlogPage() {
           Engineering updates, project notes, and what we've learned while building.
         </Typography>
       </Box>
-      <BlogArchiveClient periods={periods} />
+      <BlogArchiveClient periods={periods} placeholderImageUrl={placeholderImageUrl} />
     </Box>
   );
 }

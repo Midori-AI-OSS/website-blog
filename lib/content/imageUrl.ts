@@ -6,19 +6,35 @@ export const POST_COVER_PLACEHOLDER_IMAGE = '/blog/placeholder.png';
 export const POST_COVER_PLACEHOLDER_IMAGE_URL = '/api/blog-images/placeholder.png';
 
 export function transformPostImageUrl(url: string): string {
-  if (url.startsWith('/blog/')) {
-    return url.replace('/blog/', '/api/blog-images/');
+  let parsed: URL;
+  try {
+    parsed = new URL(url, 'http://local.invalid');
+  } catch {
+    return url;
+  }
+  if (parsed.origin !== 'http://local.invalid') return url;
+
+  if (parsed.pathname.startsWith('/blog/')) {
+    return `/api/blog-images/${parsed.pathname.slice('/blog/'.length)}${parsed.search}${parsed.hash}`;
   }
 
-  if (url.startsWith('/lore/')) {
-    const withoutLeadingSlashes = url.replace(/^\/+/, '');
-    const withoutLorePrefix = withoutLeadingSlashes.slice('lore/'.length);
-    const normalized = withoutLorePrefix.replace(/^\/+/, '').replace(/\/+$/, '').trim();
+  if (parsed.pathname.startsWith('/lore/')) {
+    const normalized = parsed.pathname
+      .slice('/lore/'.length)
+      .replace(/^\/+/, '')
+      .replace(/\/+$/, '')
+      .trim();
     if (!normalized) return url;
 
     const segments = normalized.split('/').filter(Boolean);
-    const encoded = segments.map((segment) => encodeURIComponent(segment)).join('/');
-    return `/api/lore-images/${encoded}`;
+    try {
+      const encoded = segments
+        .map((segment) => encodeURIComponent(decodeURIComponent(segment)))
+        .join('/');
+      return `/api/lore-images/${encoded}${parsed.search}${parsed.hash}`;
+    } catch {
+      return url;
+    }
   }
 
   return url;
@@ -33,18 +49,33 @@ export function toLoreImageApiUrl(rawPath: string): string | null {
   const raw = rawPath.trim();
   if (!raw) return null;
 
-  const lower = raw.toLowerCase();
-  const hasLorePrefix = lower.startsWith('/lore/') || lower === '/lore';
-  if (!hasLorePrefix) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(raw, 'http://local.invalid');
+  } catch {
+    return null;
+  }
+  if (parsed.origin !== 'http://local.invalid') return null;
 
-  const withoutLeadingSlashes = raw.replace(/^\/+/, '');
-  const withoutLorePrefix = withoutLeadingSlashes.slice('lore/'.length);
-  const normalized = withoutLorePrefix.replace(/^\/+/, '').replace(/\/+$/, '').trim();
+  const lowerPath = parsed.pathname.toLowerCase();
+  if (!lowerPath.startsWith('/lore/') && lowerPath !== '/lore') return null;
+
+  const normalized = parsed.pathname
+    .replace(/^\/+/, '')
+    .slice('lore/'.length)
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
+    .trim();
   if (!normalized) return null;
 
   const segments = normalized.split('/').filter(Boolean);
   if (segments.length === 0) return null;
 
-  const encoded = segments.map((segment) => encodeURIComponent(segment)).join('/');
-  return `/api/lore-images/${encoded}`;
+  let encoded: string;
+  try {
+    encoded = segments.map((segment) => encodeURIComponent(decodeURIComponent(segment))).join('/');
+  } catch {
+    return null;
+  }
+  return `/api/lore-images/${encoded}${parsed.search}${parsed.hash}`;
 }

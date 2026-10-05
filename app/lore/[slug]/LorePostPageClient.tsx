@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PasswordGate from '@/components/blog/PasswordGate';
 import { PostView } from '@/components/blog/PostView';
+import { usePageTransition } from '@/components/PageTransitionProvider';
 import { PovPicker } from '@/components/PovPicker';
 import { StoryPicker, type StoryPickerStory } from '@/components/StoryPicker';
 import type { ParsedPost } from '@/lib/blog/parser';
@@ -22,6 +22,7 @@ interface LorePostPageClientProps {
   povSiblings?: PovSibling[];
   povsEnabled?: boolean;
   gameStories?: StoryPickerStory[];
+  placeholderImageUrl?: string;
 }
 
 export function LorePostPageClient({
@@ -35,8 +36,9 @@ export function LorePostPageClient({
   povSiblings,
   povsEnabled,
   gameStories,
+  placeholderImageUrl,
 }: LorePostPageClientProps) {
-  const router = useRouter();
+  const navigate = usePageTransition();
   const password = post.metadata.password?.trim();
   const passwordHint = post.metadata.password_hint?.trim();
   const [isLocked, setIsLocked] = useState(!!password);
@@ -91,7 +93,7 @@ export function LorePostPageClient({
       )}
       <PostView
         post={post}
-        onClose={() => router.push('/lore')}
+        onClose={() => navigate('/lore')}
         backButtonLabel="Back to lore"
         backButtonAriaLabel="Back to lore list"
         postType="lore"
@@ -113,11 +115,12 @@ export function LorePostPageClient({
               }
             : null
         }
-        onNavigateStory={(href) => router.push(href)}
+        onNavigateStory={navigate}
         isScheduledPreview={isScheduledPreview}
         scheduledPublishDate={scheduledPublishDate}
         speciesCareCards={speciesCareCards}
         gameCoverImage={gameCoverImage}
+        placeholderImageUrl={placeholderImageUrl}
         contentWrapper={contentWrapper}
         ttsLocked={isLocked}
         ttsFadingOut={ttsFadingOut}

@@ -1,7 +1,8 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import * as React from 'react';
+import { usePageTransition } from '@/components/PageTransitionProvider';
 import {
   isSuccessfulRadioHealthEnvelope,
   type RadioAvailabilityStatus,
@@ -103,13 +104,13 @@ export function RadioAvailabilityGate({
 }) {
   const { status } = useRadioAvailability();
   const pathname = usePathname();
-  const router = useRouter();
+  const navigate = usePageTransition();
 
   React.useEffect(() => {
     if (redirectWhenOffline && status === 'offline' && pathname === '/radio') {
-      router.replace('/');
+      navigate('/', { replace: true });
     }
-  }, [pathname, redirectWhenOffline, router, status]);
+  }, [pathname, redirectWhenOffline, navigate, status]);
 
   if (status !== 'online') {
     return null;

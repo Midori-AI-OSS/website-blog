@@ -15,13 +15,12 @@ import {
 } from '@mui/joy';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-
 import { AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { BlogCard } from '@/components/blog/BlogCard';
 import type { GamePickerGame } from '@/components/GamePicker';
 import { GamePicker } from '@/components/GamePicker';
+import { usePageTransition } from '@/components/PageTransitionProvider';
 import type { ParsedPost } from '@/lib/blog/parser';
 import { transformPostImageUrl } from '@/lib/content/imageUrl';
 import type { LoreGameGroup } from '@/lib/lore/loader';
@@ -40,6 +39,7 @@ type SortMode = 'story_order_desc' | 'story_order_asc' | 'date_desc' | 'date_asc
 
 interface LoreListPageClientProps {
   gameGroups: LoreGameGroup[];
+  placeholderImageUrl?: string;
 }
 
 const SORT_OPTIONS: Array<{ value: SortMode; label: string }> = [
@@ -162,8 +162,8 @@ function buildFullStoryHref(gameSlug: string): string {
   return `/lore/game/${gameSlug}/full-story`;
 }
 
-export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
-  const router = useRouter();
+export function LoreListPageClient({ gameGroups, placeholderImageUrl }: LoreListPageClientProps) {
+  const navigate = usePageTransition();
   const [sortByGame, setSortByGame] = useState<Record<string, SortMode>>({});
   const [characterByGame, setCharacterByGame] = useState<Record<string, string>>({});
   const [pageSizeByGame, setPageSizeByGame] = useState<Record<string, number>>({});
@@ -524,7 +524,8 @@ export function LoreListPageClient({ gameGroups }: LoreListPageClientProps) {
                         key={post.filename}
                         post={cardPost}
                         postType="lore"
-                        onClick={() => router.push(`/lore/${getPostSlug(post)}`)}
+                        placeholderImageUrl={placeholderImageUrl}
+                        onClick={() => navigate(`/lore/${getPostSlug(post)}`)}
                         variant="outlined"
                       />
                     );

@@ -1,0 +1,35 @@
+name: website-blog-agent-dev
+
+services:
+  dev:
+    image: website-blog-dev:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: website-blog-dev
+    init: true
+    cpus: 1
+    user: "${DEV_UID:?Use scripts/dev-container.sh}:${DEV_GID:?Use scripts/dev-container.sh}"
+    working_dir: /app
+    entrypoint: []
+    command: ["/usr/bin/bash", "-c", "exec sleep 43200"]
+    restart: "no"
+    volumes:
+      - type: bind
+        source: "${DEV_REPO_ROOT:?Use scripts/dev-container.sh}"
+        target: /app
+        bind:
+          create_host_path: false
+    ports:
+      - "127.0.0.1:59383:3000"
+    environment:
+      SITE_API_ORIGIN: http://127.0.0.1:3000
+      UV_PROJECT_ENVIRONMENT: /tmp/website-blog-venv
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_PYTHON_INSTALL_DIR: /tmp/uv-python
+      BUN_INSTALL_CACHE_DIR: /tmp/bun-cache
+      BUN_RUNTIME_TRANSPILER_CACHE_PATH: /tmp/bun-transpiler-cache
+      HF_HOME: /tmp/huggingface
+    labels:
+      dev.website-blog.managed: "true"
+      dev.website-blog.checkout: "${DEV_REPO_ROOT}"

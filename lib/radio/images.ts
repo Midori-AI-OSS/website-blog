@@ -51,30 +51,61 @@ export function appendTrackCacheKey(url: string, trackId: string | null | undefi
   return nextQuery.length > 0 ? `${pathPart}?${nextQuery}${hashPart}` : `${pathPart}${hashPart}`;
 }
 
-export async function preloadImage(url: string, timeoutMs: number = 7000): Promise<boolean> {
-  if (typeof window === 'undefined') {
-    return false;
+interface ImageLoad {
+  promise: Promise<boolean>;
+  settled: boolean;
+}
+
+const imageLoads = new Map<string, ImageLoad>();
+const MAX_CACHED_IMAGES = 64;
+
+export function preloadImage(url: string, timeoutMs: number = 7000): Promise<boolean> {
+  const key = url.trim();
+  if (typeof window === 'undefined' || !key) return Promise.resolve(false);
+  const existing = imageLoads.get(key);
+  if (existing) {
+    imageLoads.delete(key);
+    imageLoads.set(key, existing);
+    return existing.promise;
   }
 
-  return new Promise<boolean>((resolve) => {
-    const image = new Image();
-    let settled = false;
-
-    const finalize = (success: boolean) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      window.clearTimeout(timeoutId);
-      resolve(success);
-    };
-
-    image.onload = () => finalize(true);
-    image.onerror = () => finalize(false);
-    image.src = url;
-
-    const timeoutId = window.setTimeout(() => {
-      finalize(false);
-    }, timeoutMs);
+  let resolveResult!: (success: boolean) => void;
+  const promise = new Promise<boolean>((resolve) => {
+    resolveResult = resolve;
   });
+  const entry: ImageLoad = { promise, settled: false };
+  imageLoads.set(key, entry);
+  const image = new Image();
+  const timeoutId = window.setTimeout(() => finalize(false), timeoutMs);
+
+  function finalize(success: boolean) {
+    if (entry.settled) return;
+    entry.settled = true;
+    window.clearTimeout(timeoutId);
+    image.onload = null;
+    image.onerror = null;
+    if (!success) {
+      imageLoads.delete(key);
+      image.src = '';
+    } else {
+      let settledCount = [...imageLoads.values()].filter((load) => load.settled).length;
+      for (const [cachedKey, load] of imageLoads) {
+        if (settledCount <= MAX_CACHED_IMAGES) break;
+        if (load.settled) {
+          imageLoads.delete(cachedKey);
+          settledCount--;
+        }
+      }
+    }
+    resolveResult(success);
+  }
+
+  image.onload = () => finalize(true);
+  image.onerror = () => finalize(false);
+  try {
+    image.src = key;
+  } catch {
+    finalize(false);
+  }
+  return promise;
 }

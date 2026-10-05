@@ -219,6 +219,8 @@ export interface PostViewProps {
   speciesCareCards?: SpeciesCareCardEmbedMap;
   /** Optional game cover image URL to use as the backdrop */
   gameCoverImage?: string;
+  /** Fingerprinted blog placeholder to use when a post image fails. */
+  placeholderImageUrl?: string;
   /** Optional wrapper applied to the main post body */
   contentWrapper?: (content: ReactNode, primaryColor?: string | null) => ReactNode;
   /** When true, renders a lock overlay over the TTS player */
@@ -299,6 +301,7 @@ interface PostContentSectionProps {
   speciesCareCards: SpeciesCareCardEmbedMap;
   effectiveCoverImageUrl: string;
   gameCoverImage?: string;
+  placeholderImageUrl: string;
   dialogueColor: string;
   thinkingColor: string;
   thinkingGlowColor: string;
@@ -315,6 +318,7 @@ function PostContentSection({
   speciesCareCards,
   effectiveCoverImageUrl,
   gameCoverImage,
+  placeholderImageUrl,
   dialogueColor,
   thinkingColor,
   thinkingGlowColor,
@@ -401,7 +405,7 @@ function PostContentSection({
               img.src = gameCoverImage;
             } else if (depth <= 1) {
               img.setAttribute('data-fallback-depth', '2');
-              img.src = POST_COVER_PLACEHOLDER_IMAGE_URL;
+              img.src = placeholderImageUrl;
             }
           };
 
@@ -491,7 +495,7 @@ function PostContentSection({
         return <img {...imgProps} />;
       },
     }),
-    [gameCoverImage],
+    [gameCoverImage, placeholderImageUrl],
   );
 
   useLayoutEffect(() => {
@@ -1360,6 +1364,7 @@ export function PostView({
   disableDynamicBackdrop = false,
   speciesCareCards = {},
   gameCoverImage,
+  placeholderImageUrl = POST_COVER_PLACEHOLDER_IMAGE_URL,
   contentWrapper,
   ttsLocked = false,
   ttsFadingOut = false,
@@ -1725,8 +1730,8 @@ export function PostView({
                 isScheduledPreview={isScheduledPreview}
                 onAspectRatioChange={(val) => setCoverIsLandscape(val)}
                 onImageError={(url) => {
-                  if (url !== POST_COVER_PLACEHOLDER_IMAGE_URL) {
-                    setEffectiveCoverImageUrl(POST_COVER_PLACEHOLDER_IMAGE_URL);
+                  if (url !== placeholderImageUrl) {
+                    setEffectiveCoverImageUrl(placeholderImageUrl);
                   }
                 }}
               >
@@ -1753,13 +1758,13 @@ export function PostView({
                           placement="right"
                         >
                           <IconButton
+                            component={onNavigateStory ? 'button' : 'a'}
+                            href={onNavigateStory ? undefined : previousStory.href}
                             variant="soft"
                             color="neutral"
                             onClick={() => {
                               if (onNavigateStory) {
                                 onNavigateStory(previousStory.href);
-                              } else {
-                                window.location.assign(previousStory.href);
                               }
                             }}
                             aria-label="Go back to past story"
@@ -1798,13 +1803,13 @@ export function PostView({
                           placement="left"
                         >
                           <IconButton
+                            component={onNavigateStory ? 'button' : 'a'}
+                            href={onNavigateStory ? undefined : nextStory.href}
                             variant="soft"
                             color="neutral"
                             onClick={() => {
                               if (onNavigateStory) {
                                 onNavigateStory(nextStory.href);
-                              } else {
-                                window.location.assign(nextStory.href);
                               }
                             }}
                             aria-label="Go to next story"
@@ -1900,6 +1905,7 @@ export function PostView({
               speciesCareCards={speciesCareCards}
               effectiveCoverImageUrl={effectiveCoverImageUrl}
               gameCoverImage={gameCoverImage}
+              placeholderImageUrl={placeholderImageUrl}
               dialogueColor={dialogueColor}
               thinkingColor={thinkingColor}
               thinkingGlowColor={thinkingGlowColor}
@@ -1918,6 +1924,7 @@ export function PostView({
             speciesCareCards={speciesCareCards}
             effectiveCoverImageUrl={effectiveCoverImageUrl}
             gameCoverImage={gameCoverImage}
+            placeholderImageUrl={placeholderImageUrl}
             dialogueColor={dialogueColor}
             thinkingColor={thinkingColor}
             thinkingGlowColor={thinkingGlowColor}
@@ -1938,13 +1945,13 @@ export function PostView({
             enterTouchDelay={0}
           >
             <Button
+              component={onNavigateStory ? 'button' : 'a'}
+              href={onNavigateStory ? undefined : nextStory.href}
               variant="solid"
               color="primary"
               onClick={() => {
                 if (onNavigateStory) {
                   onNavigateStory(nextStory.href);
-                } else {
-                  window.location.assign(nextStory.href);
                 }
               }}
               sx={{

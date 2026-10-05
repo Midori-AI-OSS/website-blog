@@ -15,27 +15,32 @@ import {
   Youtube,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type { ParsedPost } from '../lib/blog/parser';
 import { BlogCard } from './blog/BlogCard';
+import { usePageTransition } from './PageTransitionProvider';
 
 interface HomePageClientProps {
   recentPosts: ParsedPost[];
   recentLorePosts: ParsedPost[];
+  placeholderImageUrl?: string;
 }
 
-export default function HomePageClient({ recentPosts, recentLorePosts }: HomePageClientProps) {
-  const router = useRouter();
+export default function HomePageClient({
+  recentPosts,
+  recentLorePosts,
+  placeholderImageUrl,
+}: HomePageClientProps) {
+  const navigate = usePageTransition();
 
   const handlePostClick = (post: ParsedPost) => {
     // Navigate to blog post
     const slug = post.filename.replace('.md', '');
-    router.push(`/blog/${slug}`);
+    navigate(`/blog/${slug}`);
   };
 
   const handleLorePostClick = (post: ParsedPost) => {
     const slug = post.filename.replace('.md', '');
-    router.push(`/lore/${slug}`);
+    navigate(`/lore/${slug}`);
   };
 
   return (
@@ -119,6 +124,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
             <BlogCard
               key={post.filename}
               post={post}
+              placeholderImageUrl={placeholderImageUrl}
               onClick={() => handlePostClick(post)}
               variant="outlined"
             />
@@ -157,6 +163,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
               key={post.filename}
               post={post}
               postType="lore"
+              placeholderImageUrl={placeholderImageUrl}
               onClick={() => handleLorePostClick(post)}
               variant="outlined"
             />
@@ -170,7 +177,7 @@ export default function HomePageClient({ recentPosts, recentLorePosts }: HomePag
       </Box>
 
       {/* Projects Section */}
-      <Box sx={{ mb: 8 }}>
+      <Box sx={{ mb: 8, px: { xs: 1, md: 0 } }}>
         <Typography level="h2" sx={{ mb: 3, px: { xs: '0.2rem', sm: 0 } }}>
           Projects
         </Typography>

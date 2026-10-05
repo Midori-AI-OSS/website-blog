@@ -8,6 +8,10 @@
 import { notFound } from 'next/navigation';
 import { getPostBySlug, loadAllPosts } from '@/lib/blog/loader';
 import {
+  fingerprintPostImages,
+  getFingerprintedPlaceholderImageUrl,
+} from '@/lib/content/imageFingerprint.server';
+import {
   extractIsoDateFromBlogFilename,
   formatLongDate,
   getPublishState,
@@ -67,10 +71,15 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   }
 
   const publishState = getPublishState(extractIsoDateFromBlogFilename(post.filename));
+  const [fingerprintedPost, placeholderImageUrl] = await Promise.all([
+    fingerprintPostImages(post),
+    getFingerprintedPlaceholderImageUrl(),
+  ]);
 
   return (
     <PostPageClient
-      post={post}
+      post={fingerprintedPost}
+      placeholderImageUrl={placeholderImageUrl}
       isScheduledPreview={publishState.isScheduled}
       scheduledPublishDate={publishState.publishDate ?? undefined}
     />

@@ -5,8 +5,10 @@ import {
   type AppRouterInstance,
 } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { PathnameContext } from 'next/dist/shared/lib/hooks-client-context.shared-runtime';
-import { act, type ReactNode } from 'react';
+import { act, type ReactNode, useLayoutEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { PageReadinessProvider, usePageReadiness } from '../PageReadinessProvider';
+import PageTransitionProvider from '../PageTransitionProvider';
 import { RadioAvailabilityGate, RadioAvailabilityProvider } from './RadioAvailabilityProvider';
 
 let testWindow: Window;
@@ -51,9 +53,25 @@ function AppRouterHarness({
 
   return (
     <AppRouterContext.Provider value={router}>
-      <PathnameContext.Provider value="/radio">{children}</PathnameContext.Provider>
+      <PathnameContext.Provider value="/radio">
+        <PageReadinessProvider>
+          <PageTransitionProvider>
+            <ReadyShell />
+            {children}
+          </PageTransitionProvider>
+        </PageReadinessProvider>
+      </PathnameContext.Provider>
     </AppRouterContext.Provider>
   );
+}
+
+function ReadyShell() {
+  const { markShellVisible, completeRouteEntry } = usePageReadiness();
+  useLayoutEffect(() => {
+    markShellVisible();
+    completeRouteEntry();
+  }, [markShellVisible, completeRouteEntry]);
+  return null;
 }
 
 async function flushEffects(): Promise<void> {
@@ -64,6 +82,7 @@ async function flushEffects(): Promise<void> {
 
 beforeEach(() => {
   testWindow = new Window({ url: 'http://localhost:3000/radio' });
+  testWindow.matchMedia = (() => ({ matches: true })) as typeof testWindow.matchMedia;
   originalFetch = globalThis.fetch;
   originalWindow = globalThis.window;
   originalDocument = globalThis.document;
