@@ -71,6 +71,26 @@ describe('TTS DOM highlights', () => {
     expect(root.textContent).toBe(originalText);
   });
 
+  test('highlights only the tagged words while their language audio is active', () => {
+    const document = deriveSpeechDocument('Before <celestial>bright stars</celestial> after.');
+    const languageSpan = document.language_spans[0];
+    if (!languageSpan) throw new Error('Expected a Celestial language span');
+    const { root } = createRoot(
+      '<p>Before "<span data-lang="celestial">bright stars</span>" after.</p>',
+    );
+
+    applyTtsHighlight(root, document, {
+      start: languageSpan.start,
+      end: languageSpan.end,
+      precision: 'statement',
+      handoff_ms: 250,
+    });
+
+    expect(root.querySelector('.tts-highlight')?.textContent).toBe('bright stars');
+    expect(root.querySelector('[data-lang="celestial"]')?.textContent).toBe('bright stars');
+    expect(root.textContent).toBe(document.text);
+  });
+
   test('keeps an outgoing paragraph mounted through a gap before the next block', () => {
     const document = deriveSpeechDocument('First paragraph.\n\nSecond paragraph.');
     const { root } = createRoot('<p>First paragraph.</p><p>Second paragraph.</p>');

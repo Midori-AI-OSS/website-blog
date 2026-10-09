@@ -1,6 +1,8 @@
 import hashlib
 import json
+import math
 import os
+import random
 import re
 import shutil
 import threading
@@ -21,7 +23,7 @@ from starlette.datastructures import MutableHeaders
 VOICE = "af_heart,af_bella"
 SAMPLE_RATE = 24000
 TTS_DIR = Path("/tmp/tts")
-CACHE_VERSION = "1-4"
+CACHE_VERSION = "1-5"
 CACHE_DIRNAME = f"cache-v{CACHE_VERSION}"
 LOCK_TIMEOUT = 300
 MIN_PLAYABLE_CHUNKS = 3
@@ -52,10 +54,18 @@ class SpeechParagraph(BaseModel):
     kind: Literal["prose", "layerone"]
 
 
+class SpeechLanguageSpan(BaseModel):
+    start: int
+    end: int
+    language: Literal["celestial", "abyssal"]
+    understood: bool
+
+
 class SpeechDocument(BaseModel):
     text: str
     offset_unit: Literal["utf16_code_units"]
     paragraphs: list[SpeechParagraph]
+    language_spans: list[SpeechLanguageSpan]
 
 
 class GenerateRequest(BaseModel):
@@ -103,7 +113,11 @@ def _document_hash_input(document: SpeechDocument) -> str:
         f"{paragraph.start}:{paragraph.end}:{paragraph.kind}"
         for paragraph in document.paragraphs
     )
-    return f"tts-document-v1\n{document.text}\n{paragraph_identity}"
+    language_identity = "\n".join(
+        f"{span.start}:{span.end}:{span.language}:{'understood' if span.understood else 'unknown'}"
+        for span in document.language_spans
+    )
+    return f"tts-document-v2\n{document.text}\n{paragraph_identity}\n{language_identity}"
 
 
 def _calculate_document_hash(document: SpeechDocument) -> str:
@@ -178,6 +192,22 @@ def _validate_document(document: SpeechDocument, content_hash: str) -> None:
         raise HTTPException(
             status_code=400, detail="Paragraph offsets do not cover speech text"
         )
+    previous_language_end = 0
+    for span in document.language_spans:
+        if span.start < previous_language_end or span.end <= span.start:
+            raise HTTPException(status_code=400, detail="Invalid language span offsets")
+        start = offsets.to_codepoint(span.start)
+        end = offsets.to_codepoint(span.end)
+        if start is None or end is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Language span offsets must align to UTF-16 code-point boundaries",
+            )
+        if not any(paragraph.start <= span.start and span.end <= paragraph.end for paragraph in document.paragraphs):
+            raise HTTPException(
+                status_code=400, detail="Language spans must be contained in one paragraph"
+            )
+        previous_language_end = span.end
     if _calculate_document_hash(document) != content_hash:
         raise HTTPException(
             status_code=409, detail="Content hash does not match speech document"
@@ -580,17 +610,77 @@ def _statement_ranges(document: SpeechDocument) -> list[dict[str, Any]]:
                 end -= 1
             if start >= end:
                 continue
-            for bounded_start, bounded_end in _split_long_range(
-                document.text, start, end
-            ):
-                statements.append(
-                    {
-                        "start": bounded_start,
-                        "end": bounded_end,
-                        "paragraph": paragraph_index,
-                        "kind": paragraph.kind,
-                    }
+            sentence_text = document.text[start:end]
+            if "!" in sentence_text:
+                contour = "emphatic"
+            elif "?" in sentence_text:
+                contour = "question"
+            else:
+                contour = "statement"
+            utf16_start = offsets.to_utf16(start)
+            utf16_end = offsets.to_utf16(end)
+            cuts = {start, end}
+            relevant_spans: list[tuple[int, int, SpeechLanguageSpan]] = []
+            for span in document.language_spans:
+                if span.start >= utf16_end or span.end <= utf16_start:
+                    continue
+                span_start = offsets.to_codepoint(span.start)
+                span_end = offsets.to_codepoint(span.end)
+                if span_start is None or span_end is None:
+                    raise ValueError("Validated language span offsets must align to code-point boundaries")
+                span_start = max(start, span_start)
+                span_end = min(end, span_end)
+                if span_start < span_end:
+                    cuts.update((span_start, span_end))
+                    relevant_spans.append((span_start, span_end, span))
+
+            ordered_cuts = sorted(cuts)
+            for segment_start, segment_end in zip(ordered_cuts, ordered_cuts[1:]):
+                while segment_start < segment_end and document.text[segment_start] == " ":
+                    segment_start += 1
+                while segment_end > segment_start and document.text[segment_end - 1] == " ":
+                    segment_end -= 1
+                if segment_start >= segment_end:
+                    continue
+                active_span = next(
+                    (
+                        span
+                        for span_start, span_end, span in relevant_spans
+                        if span_start <= segment_start and segment_end <= span_end
+                    ),
+                    None,
                 )
+                segment_text = document.text[segment_start:segment_end]
+                if not re.search(r"\w", segment_text, flags=re.UNICODE):
+                    continue
+                bounded_ranges = _split_long_range(
+                    document.text, segment_start, segment_end
+                )
+                active_span_end = (
+                    offsets.to_codepoint(active_span.end) if active_span else None
+                )
+                for bounded_start, bounded_end in bounded_ranges:
+                    speech_text = document.text[bounded_start:bounded_end]
+                    if (
+                        active_span_end == bounded_end
+                        and bounded_end < end
+                        and bounded_end == segment_end
+                    ):
+                        suffix = document.text[bounded_end:end]
+                        if re.fullmatch(r"[.!?]+[\"')\]]*", suffix):
+                            speech_text += suffix
+                    statements.append(
+                        {
+                            "start": bounded_start,
+                            "end": bounded_end,
+                            "speech_text": speech_text,
+                            "paragraph": paragraph_index,
+                            "kind": paragraph.kind,
+                            "language": active_span.language if active_span else None,
+                            "understood": active_span.understood if active_span else False,
+                            "contour": contour,
+                        }
+                    )
     return statements
 
 
@@ -658,6 +748,163 @@ def _synthesize_statement(text: str) -> np.ndarray:
     if not parts:
         return np.zeros(int(SAMPLE_RATE * 0.08), dtype=np.float32)
     return np.concatenate(parts)
+
+
+def _peak_normalize(audio: np.ndarray, peak: float = 0.46) -> np.ndarray:
+    source = np.asarray(audio, dtype=np.float32)
+    maximum = float(np.max(np.abs(source))) if source.size else 0.0
+    if maximum < 1e-9:
+        return source
+    return (source * (peak / maximum)).astype(np.float32)
+
+
+def _center_stereo(mono: np.ndarray) -> np.ndarray:
+    side = np.asarray(mono, dtype=np.float32) / math.sqrt(2.0)
+    return np.column_stack((side, side)).astype(np.float32)
+
+
+def _stable_seed(content_hash: str, start: int, end: int) -> int:
+    seed = hashlib.sha256(f"{content_hash}:{start}:{end}".encode("utf-8")).digest()
+    return int.from_bytes(seed[:4], byteorder="big")
+
+
+def _pan_drifting(mono: np.ndarray, seed: int, gain: float) -> np.ndarray:
+    source = np.asarray(mono, dtype=np.float32)
+    if source.size == 0:
+        return np.zeros((0, 2), dtype=np.float32)
+    rng = random.Random(seed)
+    hop = round(SAMPLE_RATE * 0.38)
+    knot_count = source.size // hop + 2
+    knots = np.asarray([rng.uniform(-0.42, 0.42) for _ in range(knot_count)])
+    sample_positions = np.arange(source.size, dtype=np.float32)
+    knot_positions = sample_positions / hop
+    lower = np.floor(knot_positions).astype(np.int32)
+    fraction = knot_positions - lower
+    fraction = fraction * fraction * (3.0 - 2.0 * fraction)
+    pan = knots[lower] * (1.0 - fraction) + knots[lower + 1] * fraction
+    angle = (pan + 1.0) * (math.pi / 4.0)
+    scaled = source * gain
+    return np.column_stack((scaled * np.cos(angle), scaled * np.sin(angle))).astype(
+        np.float32
+    )
+
+
+def _whisperize(mono: np.ndarray, seed: int, formant_lift: float = 1.065) -> np.ndarray:
+    """Remove periodic voicing while preserving the source syllable timing."""
+    source = np.asarray(mono, dtype=np.float32)
+    if source.size < 2:
+        return source.copy()
+    source = source / max(float(np.max(np.abs(source))), 1e-9)
+
+    fft_size = 2048
+    hop = 256
+    half = fft_size // 2
+    window = np.hanning(fft_size).astype(np.float32)
+    padded = np.pad(source, (half, half + hop), mode="constant")
+    output = np.zeros_like(padded, dtype=np.float64)
+    weight = np.zeros_like(padded, dtype=np.float64)
+    bins = np.arange(fft_size // 2 + 1, dtype=np.float64)
+    rng = np.random.default_rng(seed)
+
+    for start in range(0, len(padded) - fft_size + 1, hop):
+        frame = padded[start : start + fft_size] * window
+        spectrum = np.fft.rfft(frame)
+        magnitude = np.abs(spectrum)
+        lifted = np.interp(
+            bins / formant_lift, bins, magnitude, left=0.0, right=0.0
+        )
+        phases = rng.uniform(-math.pi, math.pi, size=lifted.size)
+        phases[0] = 0.0
+        phases[-1] = 0.0
+        noise_spectrum = lifted * np.exp(1j * phases)
+        noise_frame = np.fft.irfft(noise_spectrum, n=fft_size)
+        output[start : start + fft_size] += noise_frame * window
+        weight[start : start + fft_size] += window * window
+
+    valid = weight > 1e-8
+    output[valid] /= weight[valid]
+    whisper = output[half : half + len(source)].astype(np.float32)
+    return _peak_normalize(whisper, 1.0)
+
+
+def _add_stereo_layer(base: np.ndarray, layer: np.ndarray, offset: int = 0) -> None:
+    end = min(len(base), offset + len(layer))
+    if end > offset:
+        base[offset:end] += layer[: end - offset]
+
+
+def _whisper_mix(speech: np.ndarray, understood: bool, seed: int) -> np.ndarray:
+    whisper = _whisperize(speech, seed)
+    if understood:
+        main = _center_stereo(_peak_normalize(speech, 0.46))
+        layer = _pan_drifting(whisper, seed + 101, 0.026)
+        result = np.pad(main, ((0, max(0, len(layer) - len(main))), (0, 0)))
+        _add_stereo_layer(result, layer)
+        return result.astype(np.float32, copy=False)
+
+    forward = _pan_drifting(whisper, seed + 101, 0.065)
+    reverse = _pan_drifting(whisper[::-1].copy(), seed + 211, 0.060)
+    offset = round(SAMPLE_RATE * 0.12)
+    length = max(len(forward), offset + len(reverse))
+    result = np.zeros((length, 2), dtype=np.float32)
+    _add_stereo_layer(result, forward)
+    _add_stereo_layer(result, reverse, offset)
+    return result
+
+
+def _celestial_bells(contour: str, seed: int, length_seconds: float = 4.0) -> np.ndarray:
+    """Generate a fixed bell-only Celestial phrase, blended from handbells and a church-bell body."""
+    contours: dict[str, list[tuple[float, str, float]]] = {
+        "statement": [
+            (0.00, "C5", 0.42), (0.42, "E5", 0.38), (0.84, "G5", 0.38),
+            (1.31, "E5", 0.34), (1.68, "C5", 0.42),
+        ],
+        "question": [
+            (0.00, "C5", 0.35), (0.31, "D5", 0.34), (0.62, "E5", 0.35),
+            (0.93, "G5", 0.37), (1.24, "A5", 0.40), (1.58, "C6", 0.43),
+        ],
+        "emphatic": [
+            (0.00, "C5", 0.42), (0.00, "E5", 0.37), (0.00, "G5", 0.40),
+            (0.39, "C6", 0.48), (0.86, "G5", 0.40), (1.10, "E6", 0.43),
+        ],
+    }
+    pitches = {
+        "C5": 523.25, "D5": 587.33, "E5": 659.25, "G5": 783.99,
+        "A5": 880.00, "C6": 1046.50, "E6": 1318.51,
+    }
+    events = contours.get(contour, contours["statement"])
+    rng = random.Random(seed)
+    count = round(SAMPLE_RATE * length_seconds)
+    times = np.arange(count, dtype=np.float64) / SAMPLE_RATE
+    output = np.zeros(count, dtype=np.float64)
+    bell_ratios = (1.0, 2.01, 2.76, 4.08, 5.43, 6.82)
+    bell_weights = (1.0, 0.52, 0.31, 0.20, 0.13, 0.08)
+    gong_ratios = (0.50, 0.99, 1.49, 2.03, 2.71)
+    gong_weights = (0.20, 0.62, 0.34, 0.22, 0.12)
+
+    for event_start, note_name, velocity in events:
+        relative = times - event_start
+        active = relative >= 0
+        t = np.maximum(relative, 0.0)
+        bell_envelope = (1.0 - np.exp(-t / 0.010)) * np.exp(-t / 1.15)
+        gong_envelope = (1.0 - np.exp(-t / 0.085)) * np.exp(-t / 1.52)
+        shimmer = 0.93 + 0.07 * np.sin(2.0 * math.pi * 5.1 * t)
+        fundamental = pitches[note_name]
+        bell = np.zeros(count, dtype=np.float64)
+        gong = np.zeros(count, dtype=np.float64)
+        for ratio, weight in zip(bell_ratios, bell_weights):
+            bell += weight * np.sin(
+                2.0 * math.pi * fundamental * ratio * t + rng.uniform(0, 2.0 * math.pi)
+            )
+        for ratio, weight in zip(gong_ratios, gong_weights):
+            gong += weight * np.sin(
+                2.0 * math.pi * fundamental * ratio * t + rng.uniform(0, 2.0 * math.pi)
+            )
+        output += active * velocity * shimmer * (
+            0.77 * bell_envelope * bell + 0.23 * gong_envelope * gong
+        )
+
+    return _center_stereo(_peak_normalize(output.astype(np.float32), 0.66))
 
 
 def _fade_audio_fragment(fragment: np.ndarray, fade_ms: int = 4) -> np.ndarray:
@@ -830,9 +1077,9 @@ def _generate_chunks_worker(
                     previous_paragraph is not None
                     and paragraph_index != previous_paragraph
                 ):
-                    gap = np.zeros(PARAGRAPH_GAP_SAMPLES, dtype=np.float32)
+                    gap = np.zeros((PARAGRAPH_GAP_SAMPLES, 2), dtype=np.float32)
                     chunk_parts.append(gap)
-                    global_sample += gap.size
+                    global_sample += len(gap)
                     preceding = (
                         generated_statements[-1]
                         if generated_statements
@@ -842,14 +1089,35 @@ def _generate_chunks_worker(
                         global_sample * 1000 / SAMPLE_RATE, 3
                     )
 
-                statement_text = document.text[statement["start"] : statement["end"]]
-                statement_audio = _synthesize_statement(statement_text)
+                statement_text = statement.get("speech_text") or document.text[
+                    statement["start"] : statement["end"]
+                ]
                 if statement["kind"] == "layerone":
-                    statement_audio = _apply_layerone_effect(statement_audio)
+                    statement_audio = _center_stereo(
+                        _apply_layerone_effect(_synthesize_statement(statement_text))
+                    )
+                elif statement.get("language") == "celestial" and not statement.get(
+                    "understood", False
+                ):
+                    statement_audio = _celestial_bells(
+                        statement.get("contour", "statement"),
+                        _stable_seed(content_hash, statement["start"], statement["end"]),
+                    )
+                elif statement.get("language") == "abyssal":
+                    speech = _synthesize_statement(statement_text)
+                    statement_audio = _whisper_mix(
+                        speech,
+                        bool(statement.get("understood", False)),
+                        _stable_seed(content_hash, statement["start"], statement["end"]),
+                    )
+                else:
+                    statement_audio = _center_stereo(
+                        _peak_normalize(_synthesize_statement(statement_text), 0.46)
+                    )
 
                 start_sample = global_sample
                 chunk_parts.append(statement_audio)
-                global_sample += statement_audio.size
+                global_sample += len(statement_audio)
                 generated_statements.append(
                     {
                         "start": offsets.to_utf16(statement["start"]),
@@ -858,6 +1126,14 @@ def _generate_chunks_worker(
                         "chunk": plan["index"],
                         "start_ms": round(start_sample * 1000 / SAMPLE_RATE, 3),
                         "end_ms": round(global_sample * 1000 / SAMPLE_RATE, 3),
+                        **(
+                            {
+                                "language": statement["language"],
+                                "understood": statement["understood"],
+                            }
+                            if statement.get("language")
+                            else {}
+                        ),
                     }
                 )
                 previous_paragraph = paragraph_index
@@ -865,7 +1141,7 @@ def _generate_chunks_worker(
             chunk_audio = (
                 np.concatenate(chunk_parts)
                 if chunk_parts
-                else np.zeros(int(SAMPLE_RATE * 0.08), dtype=np.float32)
+                else np.zeros((int(SAMPLE_RATE * 0.08), 2), dtype=np.float32)
             )
             chunk_path = _chunk_path(type_, slug, content_hash, plan["index"])
             chunk_path.parent.mkdir(parents=True, exist_ok=True)
@@ -900,7 +1176,7 @@ def _generate_chunks_worker(
         full_audio = (
             np.concatenate(collected_chunks)
             if collected_chunks
-            else np.zeros(int(SAMPLE_RATE * 0.08), dtype=np.float32)
+            else np.zeros((int(SAMPLE_RATE * 0.08), 2), dtype=np.float32)
         )
         cache = _cache_path(type_, slug, content_hash)
         cache.parent.mkdir(parents=True, exist_ok=True)

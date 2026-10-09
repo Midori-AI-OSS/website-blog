@@ -119,6 +119,8 @@ that spans multiple lines.
 
 **Behavior:** Renders enclosed text in a custom Celestial font (a fictional sans-serif typeface). The reveal variant starts in Celestial, then on hover backspaces the fictional text, swaps to the inherited readable font, and types the text back in. On mouseleave, it waits 5 seconds before reversing back to Celestial. The cursor appears only while the typewriter animation is active.
 
+**TTS behavior:** An unmarked tag means the speaking viewpoint does not understand Celestial. TTS plays a bell-only phrase blended from bright handbells and a lower church-bell sound; the sound profile is shared regardless of speaker. A `:R` tag marks understood Celestial and uses the normal TTS voice. The tagged words are highlighted during playback. For unmarked Celestial, sentence punctuation selects a statement, question, or emphatic bell contour.
+
 **Usage rules:**
 - Inline only — always renders as `<span>`, never as a block element.
 - Tags must be properly opened and closed with matching language ID. `</celestial>` only closes `<celestial>`; `</abyssal>` only closes `<abyssal>`.
@@ -143,6 +145,8 @@ that spans multiple lines.
 ```
 
 **Behavior:** Renders enclosed text with a fictional Abyssal font treatment. The reveal variant starts in Abyssal, then on hover backspaces the fictional text, swaps to the inherited readable font, and types the text back in. On mouseleave, it waits 5 seconds before reversing back to Abyssal. The cursor appears only while the typewriter animation is active.
+
+**TTS behavior:** An unmarked tag means the speaking viewpoint does not understand Abyssal. TTS uses overlapping forward and reversed whispers without centered speech. A `:R` tag marks understood Abyssal and uses centered speech with one quiet forward whisper underneath. The tagged words are highlighted during playback.
 
 **Usage rules:**
 - Inline only — always renders as `<span>`, never as a block element.

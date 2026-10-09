@@ -81,6 +81,10 @@ This standalone thinking block should render as a larger styled block.
 
 <abyssal:R>A tag that should typewriter translate on hover</abyssal:R>
 
+TTS fixture: <celestial>unknown Celestial uses bell sounds</celestial>, while <celestial:R>understood Celestial uses the normal voice</celestial:R>.
+
+TTS fixture: <abyssal>unknown Abyssal uses layered whispers</abyssal> and <abyssal:R>understood Abyssal uses speech with a quiet whisper</abyssal:R>.
+
 When tags are mismatched or dropped, readers should still see the <celestial>text just fine.
 
 ## Final Paragraph
@@ -172,6 +176,10 @@ This standalone thinking block should remain visually distinct from normal narra
 In a lore post we can also use <celestial>celestial script</celestial> and <abyssal>abyssal text</abyssal> inline.
 
 The reveal variants typewriter translate too: <celestial:R>hover me</celestial:R> and <abyssal:R>hover me too</abyssal:R>.
+
+TTS fixture: <celestial>unknown Celestial sounds like bells</celestial>, while <celestial:R>understood Celestial uses the normal voice</celestial:R>.
+
+TTS fixture: <abyssal>unknown Abyssal uses layered whispers</abyssal> and <abyssal:R>understood Abyssal uses speech with a quiet whisper</abyssal:R>.
 
 Mismatched text like <celestial>opened but not closed and the stray <abyssal>text continues is readable.
 
