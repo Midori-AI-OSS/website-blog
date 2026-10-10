@@ -174,7 +174,31 @@ class TtsServerTest(unittest.TestCase):
         self.assertTrue(np.array_equal(unknown_a, unknown_b))
         self.assertEqual(unknown_a.shape, (len(speech) + round(SAMPLE_RATE * 0.12), 2))
         self.assertEqual(understood.shape, (len(speech), 2))
+        self.assertLess(float(np.max(np.abs(unknown_a))), 0.5)
         self.assertFalse(np.allclose(unknown_a[:, 0], unknown_a[:, 1]))
+        expected_bell_peak = (
+            0.66 * server.CELESTIAL_UNKNOWN_GAIN_FACTOR / np.sqrt(2.0)
+        )
+        self.assertAlmostEqual(
+            float(np.max(np.abs(bells_a))), expected_bell_peak, places=5
+        )
+
+        with patch.object(server, "_pan_drifting", wraps=server._pan_drifting) as pan:
+            _whisper_mix(speech, False, 123)
+        self.assertAlmostEqual(
+            pan.call_args_list[0].args[2],
+            0.065 * server.ABYSSAL_UNKNOWN_GAIN_FACTOR,
+            places=7,
+        )
+        self.assertAlmostEqual(
+            pan.call_args_list[1].args[2],
+            0.060 * server.ABYSSAL_UNKNOWN_GAIN_FACTOR,
+            places=7,
+        )
+
+        with patch.object(server, "_pan_drifting", wraps=server._pan_drifting) as pan:
+            _whisper_mix(speech, True, 123)
+        self.assertAlmostEqual(pan.call_args_list[0].args[2], 0.026, places=7)
 
     def test_statement_and_chunk_ranges_are_bounded_and_cover_long_prose(self):
         text = " ".join(f"word{index}" for index in range(500)) + "."
@@ -550,8 +574,8 @@ class TtsServerTest(unittest.TestCase):
             )
 
     def test_cache_version_is_explicit(self):
-        self.assertEqual(CACHE_VERSION, "1-5")
-        self.assertEqual(CACHE_DIRNAME, "cache-v1-5")
+        self.assertEqual(CACHE_VERSION, "1-6")
+        self.assertEqual(CACHE_DIRNAME, "cache-v1-6")
 
     def test_audio_range_responses_include_range_contract_headers(self):
         content_hash = "a" * 64

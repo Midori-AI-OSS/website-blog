@@ -23,8 +23,10 @@ from starlette.datastructures import MutableHeaders
 VOICE = "af_heart,af_bella"
 SAMPLE_RATE = 24000
 TTS_DIR = Path("/tmp/tts")
-CACHE_VERSION = "1-5"
+CACHE_VERSION = "1-6"
 CACHE_DIRNAME = f"cache-v{CACHE_VERSION}"
+CELESTIAL_UNKNOWN_GAIN_FACTOR = 10.0 ** (-6.0 / 20.0)
+ABYSSAL_UNKNOWN_GAIN_FACTOR = 10.0 ** (6.0 / 20.0)
 LOCK_TIMEOUT = 300
 MIN_PLAYABLE_CHUNKS = 3
 TARGET_CHUNK_CHARS = 640
@@ -842,8 +844,12 @@ def _whisper_mix(speech: np.ndarray, understood: bool, seed: int) -> np.ndarray:
         _add_stereo_layer(result, layer)
         return result.astype(np.float32, copy=False)
 
-    forward = _pan_drifting(whisper, seed + 101, 0.065)
-    reverse = _pan_drifting(whisper[::-1].copy(), seed + 211, 0.060)
+    forward = _pan_drifting(
+        whisper, seed + 101, 0.065 * ABYSSAL_UNKNOWN_GAIN_FACTOR
+    )
+    reverse = _pan_drifting(
+        whisper[::-1].copy(), seed + 211, 0.060 * ABYSSAL_UNKNOWN_GAIN_FACTOR
+    )
     offset = round(SAMPLE_RATE * 0.12)
     length = max(len(forward), offset + len(reverse))
     result = np.zeros((length, 2), dtype=np.float32)
@@ -904,7 +910,11 @@ def _celestial_bells(contour: str, seed: int, length_seconds: float = 4.0) -> np
             0.77 * bell_envelope * bell + 0.23 * gong_envelope * gong
         )
 
-    return _center_stereo(_peak_normalize(output.astype(np.float32), 0.66))
+    return _center_stereo(
+        _peak_normalize(
+            output.astype(np.float32), 0.66 * CELESTIAL_UNKNOWN_GAIN_FACTOR
+        )
+    )
 
 
 def _fade_audio_fragment(fragment: np.ndarray, fade_ms: int = 4) -> np.ndarray:
