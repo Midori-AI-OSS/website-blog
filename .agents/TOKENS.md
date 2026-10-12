@@ -67,7 +67,7 @@ An optional version parameter can be appended:
 
 **Usage rules:**
 - Only available in lore posts.
-- Blog test fixtures (at `/blog/test`) must not use `{{...}}` tokens, including speciescard.
+- Blog test fixtures (under `/blog/test/*`) must not use `{{...}}` tokens, including speciescard.
 - The slug references a species defined in lore data.
 - Token is not nestable.
 
@@ -119,6 +119,8 @@ that spans multiple lines.
 
 **Behavior:** Renders enclosed text in a custom Celestial font (a fictional sans-serif typeface). The reveal variant starts in Celestial, then on hover backspaces the fictional text, swaps to the inherited readable font, and types the text back in. On mouseleave, it waits 5 seconds before reversing back to Celestial. The cursor appears only while the typewriter animation is active.
 
+**TTS behavior:** An unmarked tag means the speaking viewpoint does not understand Celestial. TTS plays a bell-only phrase blended from bright handbells and a lower church-bell sound at 6 dB below the original effect level; the sound profile is shared regardless of speaker. A `:R` tag marks understood Celestial and uses the normal TTS voice. The tagged words are highlighted during playback. For unmarked Celestial, sentence punctuation selects a statement, question, or emphatic bell contour.
+
 **Usage rules:**
 - Inline only — always renders as `<span>`, never as a block element.
 - Tags must be properly opened and closed with matching language ID. `</celestial>` only closes `<celestial>`; `</abyssal>` only closes `<abyssal>`.
@@ -143,6 +145,8 @@ that spans multiple lines.
 ```
 
 **Behavior:** Renders enclosed text with a fictional Abyssal font treatment. The reveal variant starts in Abyssal, then on hover backspaces the fictional text, swaps to the inherited readable font, and types the text back in. On mouseleave, it waits 5 seconds before reversing back to Abyssal. The cursor appears only while the typewriter animation is active.
+
+**TTS behavior:** An unmarked tag means the speaking viewpoint does not understand Abyssal. TTS uses overlapping forward and reversed whispers without centered speech, with both layers 6 dB louder than their original effect levels. A `:R` tag marks understood Abyssal and uses centered speech with one quiet forward whisper underneath; this understood-language mix is unchanged. The tagged words are highlighted during playback.
 
 **Usage rules:**
 - Inline only — always renders as `<span>`, never as a block element.
@@ -205,6 +209,7 @@ Available front matter fields for both blog and lore posts:
 
 ## Cross-Cutting Rules
 
-- **Blog test fixtures** (`/blog/test`) must **not** use `{{...}}` token systems. This is a strict policy — the blog test page is for blog renderer testing only.
+- **Blog test fixtures** (under `/blog/test/*`) must **not** use `{{...}}` token systems. This is a strict policy — Blog renderer tests must not include Lore-only tokens.
+- Lore image and species card examples are covered together at `/lore/test/lore-tokens`.
 - **Curly quotes** (`""`) should be avoided in source markdown. Use straight double quotes (`"`) even though curly quotes are auto-normalized at render time.
 - **Tokens are not nestable.** Image tokens resolve first at the string level, then speciescard tokens split markdown into segments, then react-markdown handles everything else. You cannot put one token inside another.

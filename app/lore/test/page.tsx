@@ -1,117 +1,20 @@
-import { Box, Typography } from '@mui/joy';
-import type { Metadata } from 'next';
-import { PageTransitionTestControls } from '@/components/PageTransitionTestControls';
-
-import type { ParsedPost } from '@/lib/blog/parser';
-import {
-  fingerprintLoreGameGroups,
-  fingerprintPostImages,
-  fingerprintSpeciesCareCards,
-  getFingerprintedPlaceholderImageUrl,
-} from '@/lib/content/imageFingerprint.server';
-import { loreRendererTestPost } from '@/lib/content/test-posts';
-import type { LoreGameGroup } from '@/lib/lore/loader';
-import { loadSpeciesCareCardsForMarkdown } from '@/lib/species-care/loader';
-
-import { LorePostPageClient } from '../[slug]/LorePostPageClient';
-import { LoreListPageClient } from '../LoreListPageClient';
-
-const passwordProtectedLoreRendererTestPost = {
-  ...loreRendererTestPost,
-  metadata: {
-    ...loreRendererTestPost.metadata,
-    password: 'lore-test',
-  },
-};
-
-function createGameOrderingTestGroup(
-  slug: string,
-  title: string,
-  date: string | undefined,
-  displayWeight?: number,
-): LoreGameGroup {
-  const posts: ParsedPost[] = date
-    ? [
-        {
-          filename: `ordering-test-${slug}.md`,
-          content: `Ordering fixture for ${title}.`,
-          rawMarkdown: `Ordering fixture for ${title}.`,
-          metadata: {
-            title: `${title} Ordering Fixture`,
-            summary: `A hidden fixture demonstrating the position of ${title}.`,
-            tags: ['lore', slug, 'test-fixture', 'riley'],
-            cover_image: '/lore/placeholder.png',
-            date,
-            author: 'Website Test Fixture',
-            game: slug,
-            story_order: 1,
-          },
-        },
-      ]
-    : [];
-
-  return {
-    game: {
-      slug,
-      title,
-      summary: 'Hidden fixture for checking lore game ordering.',
-      displayWeight,
-      coverImage: '/lore/placeholder.png',
-      povsEnabled: false,
-      fullStoryPov: '',
-    },
-    posts,
-    characters: posts.length > 0 ? ['riley'] : [],
-  };
-}
-
-const loreGameOrderingTestGroups: LoreGameGroup[] = [
-  createGameOrderingTestGroup('real-moments', 'Real Moments', '2026-01-01', 300),
-  createGameOrderingTestGroup('side-moments', 'Side Moments', '2026-03-31', 200),
-  createGameOrderingTestGroup('archive-moments', 'Archive Moments', '2026-04-01', 100),
-  createGameOrderingTestGroup('new-lore-game', 'New Lore Game', '2026-05-01'),
-  createGameOrderingTestGroup('older-lore-game', 'Older Lore Game', '2026-04-30'),
-  createGameOrderingTestGroup('empty-lore-game', 'Empty Lore Game', undefined),
-];
+import { TestPageIndex } from '@/components/test/TestPageIndex';
+import { createTestPageMetadata } from '@/lib/content/test-page-metadata';
+import { loreTestPages } from '@/lib/lore/test-pages';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Lore Renderer Test',
-  description: 'Hidden lore renderer fixture page.',
-};
+export const metadata = createTestPageMetadata(
+  'Lore test pages',
+  'Explore examples of the parts of Lore stories that readers see, from story layout and Lore tokens to language display and audio.',
+);
 
-export default async function LoreRendererTestPage() {
-  const [groups, post, loadedSpeciesCareCards, placeholderImageUrl] = await Promise.all([
-    fingerprintLoreGameGroups(loreGameOrderingTestGroups),
-    fingerprintPostImages(loreRendererTestPost),
-    loadSpeciesCareCardsForMarkdown(loreRendererTestPost.content),
-    getFingerprintedPlaceholderImageUrl(),
-  ]);
-  const speciesCareCards = await fingerprintSpeciesCareCards(loadedSpeciesCareCards);
-
+export default function LoreTestIndexPage() {
   return (
-    <>
-      <PageTransitionTestControls returnTo="/lore/test" />
-      <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', px: { xs: 1, sm: 4 }, py: 4 }}>
-        <Typography level="h1" sx={{ mb: 1 }}>
-          Lore Game Ordering Test
-        </Typography>
-        <Typography level="body-md" sx={{ mb: 3, color: 'text.secondary' }}>
-          The three weighted games stay in priority order despite their post dates. Unweighted games
-          follow by recent post date, with an empty game last.
-        </Typography>
-        <LoreListPageClient gameGroups={groups} placeholderImageUrl={placeholderImageUrl} />
-      </Box>
-      <LorePostPageClient
-        post={{
-          ...passwordProtectedLoreRendererTestPost,
-          ...post,
-          metadata: { ...post.metadata, password: 'lore-test' },
-        }}
-        speciesCareCards={speciesCareCards}
-        placeholderImageUrl={placeholderImageUrl}
-      />
-    </>
+    <TestPageIndex
+      title="Lore test pages"
+      description="Explore examples of the parts of Lore stories that readers see, from story layout and game ordering to Lore tokens, language display, and audio. Choose a topic below to open its own page."
+      pages={loreTestPages}
+    />
   );
 }

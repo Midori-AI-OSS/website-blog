@@ -92,6 +92,44 @@ ONLINE
     ).toEqual(['Launch 🚀 now.', 'Second 🧡 paragraph.']);
   });
 
+  test('maps fictional-language ranges through formatting and UTF-16 text normalization', () => {
+    const document = deriveSpeechDocument(
+      'Launch <abyssal:R>**deep** `signal` 🚀 — clear.</abyssal:R> now.',
+    );
+    const expectedPhrase = 'deep signal 🚀 - clear.';
+    const start = document.text.indexOf(expectedPhrase);
+
+    expect(document.text).toBe('Launch "deep signal 🚀 - clear." now.');
+    expect(document.language_spans).toEqual([
+      {
+        start,
+        end: start + expectedPhrase.length,
+        language: 'abyssal',
+        understood: true,
+      },
+    ]);
+    expect(document.text.slice(start, start + expectedPhrase.length)).toBe(expectedPhrase);
+  });
+
+  test('uses the innermost fictional language mode for nested tags', () => {
+    const document = deriveSpeechDocument(
+      '<celestial>outer <abyssal:R>inner</abyssal:R> end</celestial>',
+    );
+
+    expect(document.text).toBe('"outer "inner" end"');
+    expect(
+      document.language_spans.map((span) => ({
+        text: document.text.slice(span.start, span.end),
+        language: span.language,
+        understood: span.understood,
+      })),
+    ).toEqual([
+      { text: 'outer "', language: 'celestial', understood: false },
+      { text: 'inner', language: 'abyssal', understood: true },
+      { text: '" end', language: 'celestial', understood: false },
+    ]);
+  });
+
   test('speaks inline code as its literal value alongside other prose', () => {
     const document = deriveSpeechDocument(
       'Cast `spells` and `statements` should be spoken. `spells` and `statements` should be spoken.',
@@ -126,6 +164,17 @@ ONLINE
     expect(await hashSpeechDocument(prose)).toBe(await hashSpeechDocument(prose));
   });
 
+  test('includes language and understanding mode in the content identity', async () => {
+    const unknown = deriveSpeechDocument('<celestial>same phrase</celestial>');
+    const understood = deriveSpeechDocument('<celestial:R>same phrase</celestial:R>');
+
+    expect(unknown.text).toBe(understood.text);
+    expect(serializeSpeechDocumentForHash(unknown)).not.toBe(
+      serializeSpeechDocumentForHash(understood),
+    );
+    expect(await hashSpeechDocument(unknown)).not.toBe(await hashSpeechDocument(understood));
+  });
+
   test('covers both hidden renderer fixtures with the same prose-first rules', () => {
     const blog = deriveSpeechDocument(blogRendererTestPost.content);
     const lore = deriveSpeechDocument(loreRendererTestPost.content);
@@ -141,8 +190,16 @@ ONLINE
     expect(blog.text).toContain('This blockquote should keep its contrast');
     expect(blog.text).toContain('short inline thinking');
     expect(blog.text).toContain('"text"');
+    expect(blog.language_spans.some((span) => span.language === 'celestial')).toBe(true);
+    expect(blog.language_spans.some((span) => span.language === 'abyssal' && span.understood)).toBe(
+      true,
+    );
     expect(lore.text).toContain('Dialogue should receive the lore dialogue treatment');
     expect(lore.text).toContain('inline private-style thought');
     expect(lore.text).not.toContain('speciescard');
+    expect(lore.language_spans.some((span) => span.language === 'celestial')).toBe(true);
+    expect(lore.language_spans.some((span) => span.language === 'abyssal' && span.understood)).toBe(
+      true,
+    );
   });
 });

@@ -18,7 +18,13 @@ export async function POST(request: NextRequest) {
       cache_version: string;
     };
 
-    if (!document?.text || !document.paragraphs?.length || !slug || !type) {
+    if (
+      !document?.text ||
+      !document.paragraphs?.length ||
+      !Array.isArray(document.language_spans) ||
+      !slug ||
+      !type
+    ) {
       return NextResponse.json(
         { error: 'Missing required fields: document, slug, type' },
         { status: 400 },

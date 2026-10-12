@@ -91,12 +91,10 @@ function shouldAddQuotes(children: Content[]): boolean {
   return !(text.startsWith('"') && text.endsWith('"'));
 }
 
-function transformContentChildren(children: Content[]): void {
-  for (const child of children) {
-    if (isParentContent(child)) {
-      transformParent(child);
-    }
-  }
+function transformContentChildren(children: Content[]): Content[] {
+  const wrapper = { type: 'root', children } as Root;
+  transformParent(wrapper);
+  return wrapper.children as Content[];
 }
 
 function findClosingTag(
@@ -176,8 +174,9 @@ function transformParent(parent: Parent | Root): void {
       }
 
       if (typeof closingResult === 'number') {
-        const innerChildren = (parent.children as Content[]).slice(index + 1, closingResult);
-        transformContentChildren(innerChildren);
+        const innerChildren = transformContentChildren(
+          (parent.children as Content[]).slice(index + 1, closingResult),
+        );
         const addQuotes = shouldAddQuotes(innerChildren);
         if (addQuotes) {
           transformedChildren.push({ type: 'text', value: '"' } as Content);
@@ -202,8 +201,8 @@ function transformParent(parent: Parent | Root): void {
         closingResult,
       );
 
-      transformContentChildren(innerChildren);
-      const addQuotes = shouldAddQuotes(innerChildren);
+      const transformedInnerChildren = transformContentChildren(innerChildren);
+      const addQuotes = shouldAddQuotes(transformedInnerChildren);
       if (addQuotes) {
         transformedChildren.push({ type: 'text', value: '"' } as Content);
       }
@@ -211,7 +210,7 @@ function transformParent(parent: Parent | Root): void {
         createFictionalLangNode(
           parsed.lang as 'celestial' | 'abyssal',
           parsed.reveal,
-          innerChildren,
+          transformedInnerChildren,
         ),
       );
       if (addQuotes) {

@@ -138,6 +138,7 @@ export default function PasswordGate({
             minHeight: 44,
             fontSize: '1rem',
             borderRadius: 0,
+            '& input': { minHeight: 44 },
             '&:focus-within': {
               borderColor: accent,
             },

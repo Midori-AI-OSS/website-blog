@@ -2,7 +2,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import soundfile as sf
@@ -18,9 +18,11 @@ from server import (
     PARAGRAPH_GAP_MS,
     SAMPLE_RATE,
     SpeechDocument,
+    SpeechLanguageSpan,
     SpeechParagraph,
     _apply_layerone_effect,
     _calculate_document_hash,
+    _celestial_bells,
     _chunk_plans,
     _cleanup_cache_versions,
     _delete_stale_hashes,
@@ -28,10 +30,15 @@ from server import (
     _manifest_path,
     _statement_ranges,
     _validate_document,
+    _whisper_mix,
 )
 
 
-def make_document(text: str, paragraphs: list[tuple[int, int, str]]) -> SpeechDocument:
+def make_document(
+    text: str,
+    paragraphs: list[tuple[int, int, str]],
+    language_spans: list[tuple[int, int, str, bool]] | None = None,
+) -> SpeechDocument:
     return SpeechDocument(
         text=text,
         offset_unit=OFFSET_UNIT,
@@ -39,10 +46,40 @@ def make_document(text: str, paragraphs: list[tuple[int, int, str]]) -> SpeechDo
             SpeechParagraph(start=start, end=end, kind=kind)
             for start, end, kind in paragraphs
         ],
+        language_spans=[
+            SpeechLanguageSpan(
+                start=start, end=end, language=language, understood=understood
+            )
+            for start, end, language, understood in (language_spans or [])
+        ],
     )
 
 
 class TtsServerTest(unittest.TestCase):
+    def test_synthesis_uses_configured_pipeline_and_model_speeds(self):
+        generated_audio = np.array([0.1, 0.2], dtype=np.float32)
+        pipeline = Mock(return_value=[("text", "phonemes", None)])
+        model = Mock()
+        model.return_value.numpy.return_value = generated_audio
+
+        with (
+            patch.object(server, "pipeline", pipeline),
+            patch.object(server, "model", model),
+            patch.object(server, "voice_pack", [None] * len("phonemes")),
+        ):
+            result = server._synthesize_statement("hello")
+
+        pipeline.assert_called_once_with(
+            "hello",
+            voice=server.VOICE,
+            speed=server.SYNTHESIS_SPEED,
+            split_pattern=server.SYNTHESIS_SPLIT_PATTERN,
+        )
+        model.assert_called_once_with(
+            "phonemes", None, server.MODEL_SYNTHESIS_SPEED
+        )
+        self.assertTrue(np.array_equal(result, generated_audio))
+
     def test_document_hash_and_offset_validation(self):
         document = make_document(
             "First paragraph. DIGITAL SIGNAL",
@@ -61,6 +98,131 @@ class TtsServerTest(unittest.TestCase):
         with self.assertRaises(HTTPException) as offsets:
             _validate_document(invalid, _calculate_document_hash(invalid))
         self.assertEqual(offsets.exception.status_code, 400)
+
+    def test_language_spans_are_hashed_and_validated_as_utf16_ranges(self):
+        text = "Go 🚀 Vale."
+        phrase_start = len("Go 🚀 ".encode("utf-16-le")) // 2
+        phrase_end = phrase_start + len("Vale")
+        document = make_document(
+            text,
+            [(0, len(text.encode("utf-16-le")) // 2, "prose")],
+            [(phrase_start, phrase_end, "celestial", False)],
+        )
+        understood = make_document(
+            text,
+            [(0, len(text.encode("utf-16-le")) // 2, "prose")],
+            [(phrase_start, phrase_end, "celestial", True)],
+        )
+
+        _validate_document(document, _calculate_document_hash(document))
+        self.assertNotEqual(
+            _calculate_document_hash(document), _calculate_document_hash(understood)
+        )
+
+        split_surrogate = make_document(
+            text,
+            [(0, len(text.encode("utf-16-le")) // 2, "prose")],
+            [(4, 5, "celestial", False)],
+        )
+        with self.assertRaises(HTTPException) as invalid_span:
+            _validate_document(split_surrogate, _calculate_document_hash(split_surrogate))
+        self.assertEqual(invalid_span.exception.status_code, 400)
+
+    def test_language_boundaries_keep_sentence_contour_and_mode(self):
+        text = "Elei? Texa."
+        document = make_document(
+            text,
+            [(0, len(text), "prose")],
+            [(0, 4, "celestial", False), (6, 10, "abyssal", True)],
+        )
+
+        statements = _statement_ranges(document)
+
+        self.assertEqual(
+            [(text[item["start"] : item["end"]], item["language"], item["understood"])
+             for item in statements],
+            [("Elei", "celestial", False), ("Texa", "abyssal", True)],
+        )
+        self.assertEqual([item["contour"] for item in statements], ["question", "statement"])
+        self.assertEqual([item["speech_text"] for item in statements], ["Elei?", "Texa."])
+
+    def test_language_audio_is_stereo_and_only_understood_abyssal_calls_tts_normally(self):
+        text = "Elei? Texa."
+        document = make_document(
+            text,
+            [(0, len(text), "prose")],
+            [(0, 4, "celestial", False), (6, 10, "abyssal", True)],
+        )
+        content_hash = _calculate_document_hash(document)
+        plans = _chunk_plans(_statement_ranges(document))
+        sample_positions = np.arange(SAMPLE_RATE // 10, dtype=np.float32) / SAMPLE_RATE
+        speech = (0.25 * np.sin(2.0 * np.pi * 220.0 * sample_positions)).astype(np.float32)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            with (
+                patch.object(server, "TTS_DIR", Path(temporary)),
+                patch.object(server, "_synthesize_statement", return_value=speech) as synthesize,
+            ):
+                _generate_chunks_worker("blog", "language-post", content_hash, document, plans)
+                manifest = json.loads(
+                    _manifest_path("blog", "language-post", content_hash).read_text(
+                        encoding="utf-8"
+                    )
+                )
+                audio, rate = sf.read(
+                    server._cache_path("blog", "language-post", content_hash),
+                    dtype="float32",
+                )
+
+        self.assertEqual(synthesize.call_count, 1)
+        synthesize.assert_called_once_with("Texa.")
+        self.assertEqual(rate, SAMPLE_RATE)
+        self.assertEqual(audio.shape, (SAMPLE_RATE * 4 + SAMPLE_RATE // 10, 2))
+        self.assertEqual(
+            [(entry.get("language"), entry.get("understood")) for entry in manifest["statements"]],
+            [("celestial", False), ("abyssal", True)],
+        )
+
+    def test_bell_and_whisper_generators_are_deterministic_stereo_profiles(self):
+        sample_positions = np.arange(SAMPLE_RATE // 4, dtype=np.float32) / SAMPLE_RATE
+        speech = (0.3 * np.sin(2.0 * np.pi * 180.0 * sample_positions)).astype(np.float32)
+
+        bells_a = _celestial_bells("question", 123)
+        bells_b = _celestial_bells("question", 123)
+        unknown_a = _whisper_mix(speech, False, 123)
+        unknown_b = _whisper_mix(speech, False, 123)
+        understood = _whisper_mix(speech, True, 123)
+
+        self.assertEqual(bells_a.shape, (SAMPLE_RATE * 4, 2))
+        self.assertTrue(np.array_equal(bells_a, bells_b))
+        self.assertTrue(np.array_equal(unknown_a, unknown_b))
+        self.assertEqual(unknown_a.shape, (len(speech) + round(SAMPLE_RATE * 0.12), 2))
+        self.assertEqual(understood.shape, (len(speech), 2))
+        self.assertLess(float(np.max(np.abs(unknown_a))), 0.5)
+        self.assertFalse(np.allclose(unknown_a[:, 0], unknown_a[:, 1]))
+        expected_bell_peak = (
+            0.66 * server.CELESTIAL_UNKNOWN_GAIN_FACTOR / np.sqrt(2.0)
+        )
+        self.assertAlmostEqual(
+            float(np.max(np.abs(bells_a))), expected_bell_peak, places=5
+        )
+
+        with patch.object(server, "_pan_drifting", wraps=server._pan_drifting) as pan:
+            _whisper_mix(speech, False, 123)
+        self.assertAlmostEqual(
+            pan.call_args_list[0].args[2],
+            0.065 * server.ABYSSAL_UNKNOWN_GAIN_FACTOR,
+            places=7,
+        )
+        self.assertAlmostEqual(
+            pan.call_args_list[1].args[2],
+            0.060 * server.ABYSSAL_UNKNOWN_GAIN_FACTOR,
+            places=7,
+        )
+
+        with patch.object(server, "_pan_drifting", wraps=server._pan_drifting) as pan:
+            _whisper_mix(speech, True, 123)
+        self.assertAlmostEqual(pan.call_args_list[0].args[2], 0.026, places=7)
 
     def test_statement_and_chunk_ranges_are_bounded_and_cover_long_prose(self):
         text = " ".join(f"word{index}" for index in range(500)) + "."
@@ -436,8 +598,8 @@ class TtsServerTest(unittest.TestCase):
             )
 
     def test_cache_version_is_explicit(self):
-        self.assertEqual(CACHE_VERSION, "1-4")
-        self.assertEqual(CACHE_DIRNAME, "cache-v1-4")
+        self.assertEqual(CACHE_VERSION, "1-6")
+        self.assertEqual(CACHE_DIRNAME, "cache-v1-6")
 
     def test_audio_range_responses_include_range_contract_headers(self):
         content_hash = "a" * 64
