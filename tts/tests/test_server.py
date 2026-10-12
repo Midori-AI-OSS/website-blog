@@ -2,7 +2,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import soundfile as sf
@@ -56,6 +56,30 @@ def make_document(
 
 
 class TtsServerTest(unittest.TestCase):
+    def test_synthesis_uses_configured_pipeline_and_model_speeds(self):
+        generated_audio = np.array([0.1, 0.2], dtype=np.float32)
+        pipeline = Mock(return_value=[("text", "phonemes", None)])
+        model = Mock()
+        model.return_value.numpy.return_value = generated_audio
+
+        with (
+            patch.object(server, "pipeline", pipeline),
+            patch.object(server, "model", model),
+            patch.object(server, "voice_pack", [None] * len("phonemes")),
+        ):
+            result = server._synthesize_statement("hello")
+
+        pipeline.assert_called_once_with(
+            "hello",
+            voice=server.VOICE,
+            speed=server.SYNTHESIS_SPEED,
+            split_pattern=server.SYNTHESIS_SPLIT_PATTERN,
+        )
+        model.assert_called_once_with(
+            "phonemes", None, server.MODEL_SYNTHESIS_SPEED
+        )
+        self.assertTrue(np.array_equal(result, generated_audio))
+
     def test_document_hash_and_offset_validation(self):
         document = make_document(
             "First paragraph. DIGITAL SIGNAL",

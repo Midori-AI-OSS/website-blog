@@ -20,19 +20,90 @@ from kokoro import KModel, KPipeline
 from pydantic import BaseModel
 from starlette.datastructures import MutableHeaders
 
-VOICE = "af_heart,af_bella"
-SAMPLE_RATE = 24000
-TTS_DIR = Path("/tmp/tts")
-CACHE_VERSION = "1-6"
-CACHE_DIRNAME = f"cache-v{CACHE_VERSION}"
-CELESTIAL_UNKNOWN_GAIN_FACTOR = 10.0 ** (-6.0 / 20.0)
-ABYSSAL_UNKNOWN_GAIN_FACTOR = 10.0 ** (6.0 / 20.0)
-LOCK_TIMEOUT = 300
-MIN_PLAYABLE_CHUNKS = 3
-TARGET_CHUNK_CHARS = 640
-MAX_CHUNK_CHARS = 960
-PARAGRAPH_GAP_MS = 500
-PARAGRAPH_GAP_SAMPLES = SAMPLE_RATE * PARAGRAPH_GAP_MS // 1000
+from config import (
+    ABYSSAL_FFT_HOP,
+    ABYSSAL_FFT_SIZE,
+    ABYSSAL_FORMANT_LIFT,
+    ABYSSAL_FORWARD_SEED_OFFSET,
+    ABYSSAL_MINIMUM_FRAME_WEIGHT,
+    ABYSSAL_REVERSE_OFFSET_SECONDS,
+    ABYSSAL_REVERSE_SEED_OFFSET,
+    ABYSSAL_UNKNOWN_FORWARD_GAIN,
+    ABYSSAL_UNKNOWN_GAIN_FACTOR,
+    ABYSSAL_UNKNOWN_REVERSE_GAIN,
+    ABYSSAL_UNDERSTOOD_WHISPER_GAIN,
+    ABYSSAL_WHISPER_NORMALIZATION_PEAK,
+    ACTIVE_AUDIO_PADDING_SECONDS,
+    ACTIVE_AUDIO_THRESHOLD_FLOOR,
+    ACTIVE_AUDIO_THRESHOLD_RATIO,
+    ACTIVE_AUDIO_WINDOW_SECONDS,
+    AUDIO_FRAGMENT_FADE_MS,
+    CACHE_DIRNAME,
+    CACHE_VERSION,
+    CELESTIAL_BELL_ATTACK_SECONDS,
+    CELESTIAL_BELL_BLEND,
+    CELESTIAL_BELL_DECAY_SECONDS,
+    CELESTIAL_BELL_PARTIALS,
+    CELESTIAL_CONTOURS,
+    CELESTIAL_DURATION_SECONDS,
+    CELESTIAL_GONG_ATTACK_SECONDS,
+    CELESTIAL_GONG_BLEND,
+    CELESTIAL_GONG_DECAY_SECONDS,
+    CELESTIAL_GONG_PARTIALS,
+    CELESTIAL_NORMALIZATION_PEAK,
+    CELESTIAL_PITCHES_HZ,
+    CELESTIAL_SHIMMER_BASE,
+    CELESTIAL_SHIMMER_DEPTH,
+    CELESTIAL_SHIMMER_FREQUENCY_HZ,
+    CELESTIAL_UNKNOWN_GAIN_FACTOR,
+    EMPTY_AUDIO_SECONDS,
+    KOKORO_LANGUAGE_CODE,
+    KOKORO_LEXICON_OVERRIDES,
+    KOKORO_LOAD_MODEL,
+    KOKORO_LOAD_TRANSFORMERS,
+    KOKORO_REPO_ID,
+    LAYERONE_CHOP_BASE_GAIN,
+    LAYERONE_CHOP_DEPTH,
+    LAYERONE_CHOP_FREQUENCY_HZ,
+    LAYERONE_ECHO_A_DELAY_SECONDS,
+    LAYERONE_ECHO_A_GAIN,
+    LAYERONE_ECHO_B_DELAY_SECONDS,
+    LAYERONE_ECHO_B_GAIN,
+    LAYERONE_ENVELOPE_DIPS,
+    LAYERONE_ENVELOPE_EDGE_SECONDS,
+    LAYERONE_FIRST_FRAGMENT_MAX_SECONDS,
+    LAYERONE_FIRST_FRAGMENT_MIN_SECONDS,
+    LAYERONE_FIRST_FRAGMENT_POSITION,
+    LAYERONE_FIRST_FRAGMENT_SPAN_DIVISOR,
+    LAYERONE_HOLD_STRIDE,
+    LAYERONE_MIX_WEIGHTS,
+    LAYERONE_PEAK_LIMIT,
+    LAYERONE_QUANTIZATION_LEVELS,
+    LAYERONE_RING_FREQUENCY_HZ,
+    LAYERONE_SECOND_FRAGMENT_MAX_SECONDS,
+    LAYERONE_SECOND_FRAGMENT_MIN_SECONDS,
+    LAYERONE_SECOND_FRAGMENT_POSITION,
+    LAYERONE_SECOND_FRAGMENT_SPAN_DIVISOR,
+    LOCK_TIMEOUT,
+    MAX_CHUNK_CHARS,
+    MAX_WORKERS,
+    MIN_PLAYABLE_CHUNKS,
+    MODEL_DEVICE,
+    MODEL_SYNTHESIS_SPEED,
+    NORMALIZATION_EPSILON,
+    PAN_DRIFT_EXTENT,
+    PAN_DRIFT_HOP_SECONDS,
+    PARAGRAPH_GAP_MS,
+    PARAGRAPH_GAP_SAMPLES,
+    SAMPLE_RATE,
+    SPEECH_NORMALIZATION_PEAK,
+    SYNTHESIS_SPEED,
+    SYNTHESIS_SPLIT_PATTERN,
+    TARGET_CHUNK_CHARS,
+    TTS_DIR,
+    VOICE,
+)
+
 VALID_TYPES = {"blog", "lore"}
 CONTENT_HASH_RE = re.compile(r"^[a-f0-9]{64}$")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$", flags=re.IGNORECASE)
@@ -47,7 +118,7 @@ state_lock = threading.Lock()
 model: KModel | None = None
 pipeline: KPipeline | None = None
 voice_pack = None
-executor = ThreadPoolExecutor(max_workers=1)
+executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 
 class SpeechParagraph(BaseModel):
@@ -743,19 +814,26 @@ def _synthesize_statement(text: str) -> np.ndarray:
         raise RuntimeError("TTS model is not initialized")
 
     parts: list[np.ndarray] = []
-    for _, ps, _ in pipeline(text, voice=VOICE, speed=0.85, split_pattern=r"\n+"):
+    for _, ps, _ in pipeline(
+        text,
+        voice=VOICE,
+        speed=SYNTHESIS_SPEED,
+        split_pattern=SYNTHESIS_SPLIT_PATTERN,
+    ):
         ref_s = voice_pack[len(ps) - 1]
-        audio = model(ps, ref_s, 1)
+        audio = model(ps, ref_s, MODEL_SYNTHESIS_SPEED)
         parts.append(audio.numpy().astype(np.float32, copy=False))
     if not parts:
-        return np.zeros(int(SAMPLE_RATE * 0.08), dtype=np.float32)
+        return np.zeros(int(SAMPLE_RATE * EMPTY_AUDIO_SECONDS), dtype=np.float32)
     return np.concatenate(parts)
 
 
-def _peak_normalize(audio: np.ndarray, peak: float = 0.46) -> np.ndarray:
+def _peak_normalize(
+    audio: np.ndarray, peak: float = SPEECH_NORMALIZATION_PEAK
+) -> np.ndarray:
     source = np.asarray(audio, dtype=np.float32)
     maximum = float(np.max(np.abs(source))) if source.size else 0.0
-    if maximum < 1e-9:
+    if maximum < NORMALIZATION_EPSILON:
         return source
     return (source * (peak / maximum)).astype(np.float32)
 
@@ -775,9 +853,11 @@ def _pan_drifting(mono: np.ndarray, seed: int, gain: float) -> np.ndarray:
     if source.size == 0:
         return np.zeros((0, 2), dtype=np.float32)
     rng = random.Random(seed)
-    hop = round(SAMPLE_RATE * 0.38)
+    hop = round(SAMPLE_RATE * PAN_DRIFT_HOP_SECONDS)
     knot_count = source.size // hop + 2
-    knots = np.asarray([rng.uniform(-0.42, 0.42) for _ in range(knot_count)])
+    knots = np.asarray(
+        [rng.uniform(-PAN_DRIFT_EXTENT, PAN_DRIFT_EXTENT) for _ in range(knot_count)]
+    )
     sample_positions = np.arange(source.size, dtype=np.float32)
     knot_positions = sample_positions / hop
     lower = np.floor(knot_positions).astype(np.int32)
@@ -791,15 +871,17 @@ def _pan_drifting(mono: np.ndarray, seed: int, gain: float) -> np.ndarray:
     )
 
 
-def _whisperize(mono: np.ndarray, seed: int, formant_lift: float = 1.065) -> np.ndarray:
+def _whisperize(
+    mono: np.ndarray, seed: int, formant_lift: float = ABYSSAL_FORMANT_LIFT
+) -> np.ndarray:
     """Remove periodic voicing while preserving the source syllable timing."""
     source = np.asarray(mono, dtype=np.float32)
     if source.size < 2:
         return source.copy()
-    source = source / max(float(np.max(np.abs(source))), 1e-9)
+    source = source / max(float(np.max(np.abs(source))), NORMALIZATION_EPSILON)
 
-    fft_size = 2048
-    hop = 256
+    fft_size = ABYSSAL_FFT_SIZE
+    hop = ABYSSAL_FFT_HOP
     half = fft_size // 2
     window = np.hanning(fft_size).astype(np.float32)
     padded = np.pad(source, (half, half + hop), mode="constant")
@@ -823,10 +905,10 @@ def _whisperize(mono: np.ndarray, seed: int, formant_lift: float = 1.065) -> np.
         output[start : start + fft_size] += noise_frame * window
         weight[start : start + fft_size] += window * window
 
-    valid = weight > 1e-8
+    valid = weight > ABYSSAL_MINIMUM_FRAME_WEIGHT
     output[valid] /= weight[valid]
     whisper = output[half : half + len(source)].astype(np.float32)
-    return _peak_normalize(whisper, 1.0)
+    return _peak_normalize(whisper, ABYSSAL_WHISPER_NORMALIZATION_PEAK)
 
 
 def _add_stereo_layer(base: np.ndarray, layer: np.ndarray, offset: int = 0) -> None:
@@ -838,19 +920,25 @@ def _add_stereo_layer(base: np.ndarray, layer: np.ndarray, offset: int = 0) -> N
 def _whisper_mix(speech: np.ndarray, understood: bool, seed: int) -> np.ndarray:
     whisper = _whisperize(speech, seed)
     if understood:
-        main = _center_stereo(_peak_normalize(speech, 0.46))
-        layer = _pan_drifting(whisper, seed + 101, 0.026)
+        main = _center_stereo(_peak_normalize(speech))
+        layer = _pan_drifting(
+            whisper, seed + ABYSSAL_FORWARD_SEED_OFFSET, ABYSSAL_UNDERSTOOD_WHISPER_GAIN
+        )
         result = np.pad(main, ((0, max(0, len(layer) - len(main))), (0, 0)))
         _add_stereo_layer(result, layer)
         return result.astype(np.float32, copy=False)
 
     forward = _pan_drifting(
-        whisper, seed + 101, 0.065 * ABYSSAL_UNKNOWN_GAIN_FACTOR
+        whisper,
+        seed + ABYSSAL_FORWARD_SEED_OFFSET,
+        ABYSSAL_UNKNOWN_FORWARD_GAIN * ABYSSAL_UNKNOWN_GAIN_FACTOR,
     )
     reverse = _pan_drifting(
-        whisper[::-1].copy(), seed + 211, 0.060 * ABYSSAL_UNKNOWN_GAIN_FACTOR
+        whisper[::-1].copy(),
+        seed + ABYSSAL_REVERSE_SEED_OFFSET,
+        ABYSSAL_UNKNOWN_REVERSE_GAIN * ABYSSAL_UNKNOWN_GAIN_FACTOR,
     )
-    offset = round(SAMPLE_RATE * 0.12)
+    offset = round(SAMPLE_RATE * ABYSSAL_REVERSE_OFFSET_SECONDS)
     length = max(len(forward), offset + len(reverse))
     result = np.zeros((length, 2), dtype=np.float32)
     _add_stereo_layer(result, forward)
@@ -858,66 +946,56 @@ def _whisper_mix(speech: np.ndarray, understood: bool, seed: int) -> np.ndarray:
     return result
 
 
-def _celestial_bells(contour: str, seed: int, length_seconds: float = 4.0) -> np.ndarray:
+def _celestial_bells(
+    contour: str, seed: int, length_seconds: float = CELESTIAL_DURATION_SECONDS
+) -> np.ndarray:
     """Generate a fixed bell-only Celestial phrase, blended from handbells and a church-bell body."""
-    contours: dict[str, list[tuple[float, str, float]]] = {
-        "statement": [
-            (0.00, "C5", 0.42), (0.42, "E5", 0.38), (0.84, "G5", 0.38),
-            (1.31, "E5", 0.34), (1.68, "C5", 0.42),
-        ],
-        "question": [
-            (0.00, "C5", 0.35), (0.31, "D5", 0.34), (0.62, "E5", 0.35),
-            (0.93, "G5", 0.37), (1.24, "A5", 0.40), (1.58, "C6", 0.43),
-        ],
-        "emphatic": [
-            (0.00, "C5", 0.42), (0.00, "E5", 0.37), (0.00, "G5", 0.40),
-            (0.39, "C6", 0.48), (0.86, "G5", 0.40), (1.10, "E6", 0.43),
-        ],
-    }
-    pitches = {
-        "C5": 523.25, "D5": 587.33, "E5": 659.25, "G5": 783.99,
-        "A5": 880.00, "C6": 1046.50, "E6": 1318.51,
-    }
-    events = contours.get(contour, contours["statement"])
+    events = CELESTIAL_CONTOURS.get(contour, CELESTIAL_CONTOURS["statement"])
     rng = random.Random(seed)
     count = round(SAMPLE_RATE * length_seconds)
     times = np.arange(count, dtype=np.float64) / SAMPLE_RATE
     output = np.zeros(count, dtype=np.float64)
-    bell_ratios = (1.0, 2.01, 2.76, 4.08, 5.43, 6.82)
-    bell_weights = (1.0, 0.52, 0.31, 0.20, 0.13, 0.08)
-    gong_ratios = (0.50, 0.99, 1.49, 2.03, 2.71)
-    gong_weights = (0.20, 0.62, 0.34, 0.22, 0.12)
 
     for event_start, note_name, velocity in events:
         relative = times - event_start
         active = relative >= 0
         t = np.maximum(relative, 0.0)
-        bell_envelope = (1.0 - np.exp(-t / 0.010)) * np.exp(-t / 1.15)
-        gong_envelope = (1.0 - np.exp(-t / 0.085)) * np.exp(-t / 1.52)
-        shimmer = 0.93 + 0.07 * np.sin(2.0 * math.pi * 5.1 * t)
-        fundamental = pitches[note_name]
+        bell_envelope = (1.0 - np.exp(-t / CELESTIAL_BELL_ATTACK_SECONDS)) * np.exp(
+            -t / CELESTIAL_BELL_DECAY_SECONDS
+        )
+        gong_envelope = (1.0 - np.exp(-t / CELESTIAL_GONG_ATTACK_SECONDS)) * np.exp(
+            -t / CELESTIAL_GONG_DECAY_SECONDS
+        )
+        shimmer = CELESTIAL_SHIMMER_BASE + CELESTIAL_SHIMMER_DEPTH * np.sin(
+            2.0 * math.pi * CELESTIAL_SHIMMER_FREQUENCY_HZ * t
+        )
+        fundamental = CELESTIAL_PITCHES_HZ[note_name]
         bell = np.zeros(count, dtype=np.float64)
         gong = np.zeros(count, dtype=np.float64)
-        for ratio, weight in zip(bell_ratios, bell_weights):
+        for ratio, weight in CELESTIAL_BELL_PARTIALS:
             bell += weight * np.sin(
                 2.0 * math.pi * fundamental * ratio * t + rng.uniform(0, 2.0 * math.pi)
             )
-        for ratio, weight in zip(gong_ratios, gong_weights):
+        for ratio, weight in CELESTIAL_GONG_PARTIALS:
             gong += weight * np.sin(
                 2.0 * math.pi * fundamental * ratio * t + rng.uniform(0, 2.0 * math.pi)
             )
         output += active * velocity * shimmer * (
-            0.77 * bell_envelope * bell + 0.23 * gong_envelope * gong
+            CELESTIAL_BELL_BLEND * bell_envelope * bell
+            + CELESTIAL_GONG_BLEND * gong_envelope * gong
         )
 
     return _center_stereo(
         _peak_normalize(
-            output.astype(np.float32), 0.66 * CELESTIAL_UNKNOWN_GAIN_FACTOR
+            output.astype(np.float32),
+            CELESTIAL_NORMALIZATION_PEAK * CELESTIAL_UNKNOWN_GAIN_FACTOR,
         )
     )
 
 
-def _fade_audio_fragment(fragment: np.ndarray, fade_ms: int = 4) -> np.ndarray:
+def _fade_audio_fragment(
+    fragment: np.ndarray, fade_ms: int = AUDIO_FRAGMENT_FADE_MS
+) -> np.ndarray:
     faded = fragment.astype(np.float32, copy=True)
     fade_samples = min(
         int(SAMPLE_RATE * fade_ms / 1000),
@@ -943,14 +1021,19 @@ def _insert_audio_fragment(
 def _active_audio_bounds(source: np.ndarray) -> tuple[int, int]:
     if source.size == 0:
         return 0, 0
-    window_size = min(source.size, max(1, int(SAMPLE_RATE * 0.012)))
+    window_size = min(
+        source.size, max(1, int(SAMPLE_RATE * ACTIVE_AUDIO_WINDOW_SECONDS))
+    )
     kernel = np.ones(window_size, dtype=np.float32) / window_size
     energy = np.convolve(np.abs(source), kernel, mode="same")
-    threshold = max(0.012, float(energy.max()) * 0.08)
+    threshold = max(
+        ACTIVE_AUDIO_THRESHOLD_FLOOR,
+        float(energy.max()) * ACTIVE_AUDIO_THRESHOLD_RATIO,
+    )
     active = np.flatnonzero(energy > threshold)
     if active.size == 0:
         return 0, source.size
-    padding = int(SAMPLE_RATE * 0.025)
+    padding = int(SAMPLE_RATE * ACTIVE_AUDIO_PADDING_SECONDS)
     return (
         max(0, int(active[0]) - padding),
         min(source.size, int(active[-1]) + padding),
@@ -962,38 +1045,48 @@ def _apply_layerone_effect(audio: np.ndarray) -> np.ndarray:
         return audio.astype(np.float32, copy=True)
 
     source = audio.astype(np.float32, copy=False)
-    held = np.repeat(source[::5], 5)[: source.size]
-    crushed = np.round(held * 16.0) / 16.0
+    held = np.repeat(source[::LAYERONE_HOLD_STRIDE], LAYERONE_HOLD_STRIDE)[: source.size]
+    crushed = (
+        np.round(held * LAYERONE_QUANTIZATION_LEVELS) / LAYERONE_QUANTIZATION_LEVELS
+    )
     sample_positions = np.arange(source.size, dtype=np.float32) / SAMPLE_RATE
     chopped = source * (
-        0.68
-        + 0.32
-        * (np.sin(2.0 * np.pi * 43.0 * sample_positions) >= 0.0)
+        LAYERONE_CHOP_BASE_GAIN
+        + LAYERONE_CHOP_DEPTH
+        * (
+            np.sin(2.0 * np.pi * LAYERONE_CHOP_FREQUENCY_HZ * sample_positions)
+            >= 0.0
+        )
     )
-    ringed = source * np.sin(2.0 * np.pi * 71.0 * sample_positions)
+    ringed = source * np.sin(2.0 * np.pi * LAYERONE_RING_FREQUENCY_HZ * sample_positions)
 
     echo = np.zeros_like(source)
-    delay_a = int(SAMPLE_RATE * 0.009)
-    delay_b = int(SAMPLE_RATE * 0.021)
+    delay_a = int(SAMPLE_RATE * LAYERONE_ECHO_A_DELAY_SECONDS)
+    delay_b = int(SAMPLE_RATE * LAYERONE_ECHO_B_DELAY_SECONDS)
     if source.size > delay_a:
-        echo[delay_a:] += 0.65 * source[:-delay_a]
+        echo[delay_a:] += LAYERONE_ECHO_A_GAIN * source[:-delay_a]
     if source.size > delay_b:
-        echo[delay_b:] += 0.35 * source[:-delay_b]
+        echo[delay_b:] += LAYERONE_ECHO_B_GAIN * source[:-delay_b]
 
     effected = (
-        0.34 * source
-        + 0.28 * crushed
-        + 0.18 * chopped
-        + 0.12 * echo
-        + 0.08 * ringed
+        LAYERONE_MIX_WEIGHTS[0] * source
+        + LAYERONE_MIX_WEIGHTS[1] * crushed
+        + LAYERONE_MIX_WEIGHTS[2] * chopped
+        + LAYERONE_MIX_WEIGHTS[3] * echo
+        + LAYERONE_MIX_WEIGHTS[4] * ringed
     )
 
     active_start, active_end = _active_audio_bounds(effected)
     active_span = max(1, active_end - active_start)
-    first_position = active_start + int(active_span * 0.34)
+    first_position = active_start + int(
+        active_span * LAYERONE_FIRST_FRAGMENT_POSITION
+    )
     first_size = min(
-        int(SAMPLE_RATE * 0.055),
-        max(int(SAMPLE_RATE * 0.032), active_span // 7),
+        int(SAMPLE_RATE * LAYERONE_FIRST_FRAGMENT_MAX_SECONDS),
+        max(
+            int(SAMPLE_RATE * LAYERONE_FIRST_FRAGMENT_MIN_SECONDS),
+            active_span // LAYERONE_FIRST_FRAGMENT_SPAN_DIVISOR,
+        ),
     )
     first_start = max(active_start, first_position - first_size)
     effected = _insert_audio_fragment(
@@ -1004,10 +1097,15 @@ def _apply_layerone_effect(audio: np.ndarray) -> np.ndarray:
 
     active_start, active_end = _active_audio_bounds(effected)
     active_span = max(1, active_end - active_start)
-    second_position = active_start + int(active_span * 0.67)
+    second_position = active_start + int(
+        active_span * LAYERONE_SECOND_FRAGMENT_POSITION
+    )
     second_size = min(
-        int(SAMPLE_RATE * 0.038),
-        max(int(SAMPLE_RATE * 0.022), active_span // 11),
+        int(SAMPLE_RATE * LAYERONE_SECOND_FRAGMENT_MAX_SECONDS),
+        max(
+            int(SAMPLE_RATE * LAYERONE_SECOND_FRAGMENT_MIN_SECONDS),
+            active_span // LAYERONE_SECOND_FRAGMENT_SPAN_DIVISOR,
+        ),
     )
     second_start = max(active_start, second_position - second_size)
     reversed_fragment = effected[second_start:second_position][::-1]
@@ -1016,11 +1114,7 @@ def _apply_layerone_effect(audio: np.ndarray) -> np.ndarray:
     active_start, active_end = _active_audio_bounds(effected)
     active_span = max(1, active_end - active_start)
     envelope = np.ones(effected.size, dtype=np.float32)
-    for fraction, duration_ms, floor in (
-        (0.23, 16, 0.06),
-        (0.51, 22, 0.10),
-        (0.79, 14, 0.04),
-    ):
+    for fraction, duration_ms, floor in LAYERONE_ENVELOPE_DIPS:
         center = active_start + int(active_span * fraction)
         dip_size = min(
             active_span,
@@ -1031,7 +1125,9 @@ def _apply_layerone_effect(audio: np.ndarray) -> np.ndarray:
             min(active_end - dip_size, center - dip_size // 2),
         )
         dip_end = dip_start + dip_size
-        edge = min(int(SAMPLE_RATE * 0.003), dip_size // 2)
+        edge = min(
+            int(SAMPLE_RATE * LAYERONE_ENVELOPE_EDGE_SECONDS), dip_size // 2
+        )
         envelope[dip_start:dip_end] = floor
         if edge > 0:
             envelope[dip_start : dip_start + edge] = np.linspace(
@@ -1043,8 +1139,8 @@ def _apply_layerone_effect(audio: np.ndarray) -> np.ndarray:
     effected *= envelope
 
     peak = float(np.max(np.abs(effected)))
-    if peak > 0.98:
-        effected *= 0.98 / peak
+    if peak > LAYERONE_PEAK_LIMIT:
+        effected *= LAYERONE_PEAK_LIMIT / peak
     return effected.astype(np.float32, copy=False)
 
 
@@ -1122,7 +1218,10 @@ def _generate_chunks_worker(
                     )
                 else:
                     statement_audio = _center_stereo(
-                        _peak_normalize(_synthesize_statement(statement_text), 0.46)
+                        _peak_normalize(
+                            _synthesize_statement(statement_text),
+                            SPEECH_NORMALIZATION_PEAK,
+                        )
                     )
 
                 start_sample = global_sample
@@ -1151,7 +1250,9 @@ def _generate_chunks_worker(
             chunk_audio = (
                 np.concatenate(chunk_parts)
                 if chunk_parts
-                else np.zeros((int(SAMPLE_RATE * 0.08), 2), dtype=np.float32)
+                else np.zeros(
+                    (int(SAMPLE_RATE * EMPTY_AUDIO_SECONDS), 2), dtype=np.float32
+                )
             )
             chunk_path = _chunk_path(type_, slug, content_hash, plan["index"])
             chunk_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1186,7 +1287,9 @@ def _generate_chunks_worker(
         full_audio = (
             np.concatenate(collected_chunks)
             if collected_chunks
-            else np.zeros((int(SAMPLE_RATE * 0.08), 2), dtype=np.float32)
+            else np.zeros(
+                (int(SAMPLE_RATE * EMPTY_AUDIO_SECONDS), 2), dtype=np.float32
+            )
         )
         cache = _cache_path(type_, slug, content_hash)
         cache.parent.mkdir(parents=True, exist_ok=True)
@@ -1230,11 +1333,15 @@ async def lifespan(app: FastAPI):
     (_version_root() / "blog").mkdir(parents=True, exist_ok=True)
     (_version_root() / "lore").mkdir(parents=True, exist_ok=True)
 
-    model = KModel().to("cpu").eval()
+    model = KModel().to(MODEL_DEVICE).eval()
     pipeline = KPipeline(
-        lang_code="a", model=False, trf=False, repo_id="hexgrad/Kokoro-82M"
+        lang_code=KOKORO_LANGUAGE_CODE,
+        model=KOKORO_LOAD_MODEL,
+        trf=KOKORO_LOAD_TRANSFORMERS,
+        repo_id=KOKORO_REPO_ID,
     )
-    pipeline.g2p.lexicon.golds["kokoro"] = "kˈOkəɹO"
+    for word, pronunciation in KOKORO_LEXICON_OVERRIDES.items():
+        pipeline.g2p.lexicon.golds[word] = pronunciation
     voice_pack = pipeline.load_voice(VOICE)
 
     yield
