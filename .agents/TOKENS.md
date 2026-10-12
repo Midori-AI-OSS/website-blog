@@ -210,5 +210,6 @@ Available front matter fields for both blog and lore posts:
 ## Cross-Cutting Rules
 
 - **Blog test fixtures** (under `/blog/test/*`) must **not** use `{{...}}` token systems. This is a strict policy — Blog renderer tests must not include Lore-only tokens.
+- Lore image and species card examples are covered together at `/lore/test/lore-tokens`.
 - **Curly quotes** (`""`) should be avoided in source markdown. Use straight double quotes (`"`) even though curly quotes are auto-normalized at render time.
 - **Tokens are not nestable.** Image tokens resolve first at the string level, then speciescard tokens split markdown into segments, then react-markdown handles everything else. You cannot put one token inside another.
