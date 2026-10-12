@@ -64,11 +64,14 @@
 - Token Reference: See `.agents/TOKENS.md` for the canonical reference of all content tokens, shortcodes, and front matter fields available in blog and lore posts. This file must be kept up to date when token systems change.
 
 ## Content System Test Pages
-- Hidden renderer test pages live at `/blog/test` and `/lore/test`.
-- When adding or changing any user-facing blog/lore content behavior, update the relevant test page in the same change.
-- Blog test fixtures must not use lore-only `{{...}}` token systems.
-- Test pages must stay unlinked from normal navigation and content lists, and must cover representative edge cases for the affected system.
-- When token systems documented in `.agents/TOKENS.md` change, update the relevant test page and the token reference together.
+- `/blog/test` and `/lore/test` are hidden indexes. Each distinct tested system has its own child page, and each index links to every test page for that content type with a short purpose.
+- Keep the Blog and Lore page registries in sync with the child routes. The shared `/transition-test` page appears in both indexes and preserves the Blog or Lore Markdown return context from its link.
+- Give each index and test page a plain-language explanation of what a visitor will see. Give each child page a clear link back to its matching test index.
+- Test pages must set `noindex` and `nofollow`, stay out of normal navigation and content lists, and cover representative cases for the affected system.
+- Keep Blog and Lore renderer fixtures separate. Blog test fixtures must not use Lore-only `{{...}}` tokens. Lore image and species card token coverage belongs on `/lore/test/lore-tokens`; its Markdown page may also keep representative examples.
+- Keep Blog and Lore TTS coverage on their respective `/tts` pages. Use the normal post audio controls and `/api/tts` generation/playback flow, and include normal speech plus fictional-language audio examples. Keep visual language reveal coverage on each content type's `/language-markup` page.
+- Keep the password gate only on `/lore/test/password-gate`. The Lore Markdown and TTS pages stay unlocked.
+- When user-facing Blog or Lore content behavior changes, update the relevant dedicated test page in the same change. When token systems documented in `.agents/TOKENS.md` change, update the relevant test page and token reference together.
 
 ## Agent Directory Integrity
 - The `.agents/` directory and all of its subdirectories are permanent infrastructure. Do not delete, move, or restructure them.

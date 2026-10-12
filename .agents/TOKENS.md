@@ -67,7 +67,7 @@ An optional version parameter can be appended:
 
 **Usage rules:**
 - Only available in lore posts.
-- Blog test fixtures (at `/blog/test`) must not use `{{...}}` tokens, including speciescard.
+- Blog test fixtures (under `/blog/test/*`) must not use `{{...}}` tokens, including speciescard.
 - The slug references a species defined in lore data.
 - Token is not nestable.
 
@@ -209,6 +209,6 @@ Available front matter fields for both blog and lore posts:
 
 ## Cross-Cutting Rules
 
-- **Blog test fixtures** (`/blog/test`) must **not** use `{{...}}` token systems. This is a strict policy — the blog test page is for blog renderer testing only.
+- **Blog test fixtures** (under `/blog/test/*`) must **not** use `{{...}}` token systems. This is a strict policy — Blog renderer tests must not include Lore-only tokens.
 - **Curly quotes** (`""`) should be avoided in source markdown. Use straight double quotes (`"`) even though curly quotes are auto-normalized at render time.
 - **Tokens are not nestable.** Image tokens resolve first at the string level, then speciescard tokens split markdown into segments, then react-markdown handles everything else. You cannot put one token inside another.

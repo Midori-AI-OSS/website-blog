@@ -2,59 +2,35 @@
 
 import { Box, Button, Stack, Typography } from '@mui/joy';
 import Link from 'next/link';
-import { usePageTransition } from './PageTransitionProvider';
 
 export function PageTransitionTestControls({
   returnTo,
 }: {
-  returnTo: '/blog/test' | '/lore/test';
+  returnTo: '/blog/test/markdown' | '/lore/test/markdown';
 }) {
-  const navigate = usePageTransition();
+  const delayedHref = `/transition-test?delay=1500&returnTo=${encodeURIComponent(returnTo)}`;
+  const fastHref = `/transition-test?delay=0&returnTo=${encodeURIComponent(returnTo)}`;
   return (
     <Box sx={{ px: 2, py: 3 }}>
-      <Typography level="h2" sx={{ mb: 2 }}>
-        Page loading fixtures
+      <Typography level="h2" sx={{ mb: 1 }}>
+        Try a page transition
       </Typography>
       <Typography level="body-md" sx={{ mb: 2 }}>
-        On desktop, let the radio artwork load, then switch between renderer fixtures. Its image
-        should stay the same while the song stays the same, including through delayed navigation.
+        Open either Markdown example, or compare a delayed destination with one that opens at once.
+        The delayed and fast destinations return to the matching Markdown example.
       </Typography>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <Button
-          component={Link}
-          href={returnTo === '/blog/test' ? '/lore/test' : '/blog/test'}
-          prefetch={false}
-          sx={{ minHeight: 44 }}
-        >
-          Switch renderer fixture
+        <Button component={Link} href="/blog/test/markdown" sx={{ minHeight: 44 }}>
+          Open Blog Markdown
         </Button>
-        <Button
-          component={Link}
-          href={`/transition-test?delay=1500&returnTo=${returnTo}`}
-          prefetch={false}
-          sx={{ minHeight: 44 }}
-        >
-          Delayed page
+        <Button component={Link} href="/lore/test/markdown" sx={{ minHeight: 44 }}>
+          Open Lore Markdown
         </Button>
-        <Button
-          onClick={() => navigate(`/transition-test?delay=0&returnTo=${returnTo}`)}
-          sx={{ minHeight: 44 }}
-        >
-          Fast page
+        <Button component={Link} href={delayedHref} prefetch={false} sx={{ minHeight: 44 }}>
+          Delayed destination
         </Button>
-        <Button
-          variant="outlined"
-          sx={{ minHeight: 44 }}
-          onClick={() => {
-            const url = new URL(window.location.href);
-            url.searchParams.set(
-              'loaderFixture',
-              url.searchParams.get('loaderFixture') === '1' ? '2' : '1',
-            );
-            navigate(url.pathname + url.search, { scroll: false });
-          }}
-        >
-          Change query
+        <Button component={Link} href={fastHref} prefetch={false} sx={{ minHeight: 44 }}>
+          Fast destination
         </Button>
       </Stack>
     </Box>
