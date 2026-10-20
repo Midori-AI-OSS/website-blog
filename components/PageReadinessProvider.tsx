@@ -80,8 +80,12 @@ export function PageReadinessProvider({ children }: { children: React.ReactNode 
   return <PageReadinessContext.Provider value={value}>{children}</PageReadinessContext.Provider>;
 }
 
+export function useOptionalPageReadiness(): PageReadinessContextValue | null {
+  return React.useContext(PageReadinessContext);
+}
+
 export function usePageReadiness(): PageReadinessContextValue {
-  const context = React.useContext(PageReadinessContext);
+  const context = useOptionalPageReadiness();
   if (!context) {
     throw new Error('usePageReadiness must be used inside PageReadinessProvider');
   }

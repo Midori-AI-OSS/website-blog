@@ -1,14 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { usePageReadiness } from './PageReadinessProvider';
+import { useOptionalPageReadiness } from './PageReadinessProvider';
 
 export function PageLoadingIndicator() {
-  const { registerLoadingFallback } = usePageReadiness();
+  const registerLoadingFallback = useOptionalPageReadiness()?.registerLoadingFallback;
   const useClientLayoutEffect =
     typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect;
 
-  useClientLayoutEffect(() => registerLoadingFallback(), [registerLoadingFallback]);
+  useClientLayoutEffect(() => registerLoadingFallback?.(), [registerLoadingFallback]);
 
   return <main className="page-loading" aria-busy="true"></main>;
 }
