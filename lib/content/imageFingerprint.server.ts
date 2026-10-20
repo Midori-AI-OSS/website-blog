@@ -95,7 +95,10 @@ export async function getFileFingerprint(filepath: string): Promise<string> {
   throw new Error(`Image changed while fingerprinting: ${filepath}`);
 }
 
-function getStaticImagePath(rawUrl: string): StaticImagePath | null {
+function getStaticImagePath(
+  rawUrl: string,
+  includeShared: boolean = false,
+): StaticImagePath | null {
   let parsed: URL;
   try {
     parsed = new URL(rawUrl, 'http://local.invalid');
@@ -104,7 +107,7 @@ function getStaticImagePath(rawUrl: string): StaticImagePath | null {
   }
   if (parsed.origin !== 'http://local.invalid') return null;
 
-  let area: 'blog' | 'lore';
+  let area: 'blog' | 'lore' | 'shared';
   let rawRelativePath: string;
   if (parsed.pathname.startsWith('/blog/')) {
     area = 'blog';
@@ -112,6 +115,9 @@ function getStaticImagePath(rawUrl: string): StaticImagePath | null {
   } else if (parsed.pathname.startsWith('/lore/')) {
     area = 'lore';
     rawRelativePath = parsed.pathname.slice('/lore/'.length);
+  } else if (includeShared && parsed.pathname.startsWith('/shared/')) {
+    area = 'shared';
+    rawRelativePath = parsed.pathname.slice('/shared/'.length);
   } else {
     return null;
   }
@@ -172,6 +178,18 @@ export async function fingerprintImageSource(rawUrl: string): Promise<string> {
   }
 }
 
+export async function fingerprintPostImageTokenSource(rawUrl: string): Promise<string> {
+  const staticPath = getStaticImagePath(rawUrl, true);
+  if (!staticPath) return rawUrl;
+
+  try {
+    const fingerprint = await getFileFingerprint(staticPath.filepath);
+    return withFingerprint(rawUrl, fingerprint);
+  } catch {
+    return rawUrl;
+  }
+}
+
 export async function getFingerprintedPlaceholderImageUrl(): Promise<string> {
   return transformPostImageUrl(await fingerprintImageSource(POST_COVER_PLACEHOLDER_IMAGE));
 }
@@ -185,7 +203,7 @@ async function fingerprintImageTokens(markdown: string): Promise<string> {
       const token = match[0];
       const rawPath = match[1]?.trim();
       if (!token || !rawPath) return [token ?? '', token ?? ''] as const;
-      const versionedPath = await fingerprintImageSource(rawPath);
+      const versionedPath = await fingerprintPostImageTokenSource(rawPath);
       return [token, token.replace(rawPath, versionedPath)] as const;
     }),
   );

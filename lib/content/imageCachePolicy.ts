@@ -37,6 +37,17 @@ export interface LoreImageReferenceIndex {
   gameCoverPaths: ReadonlySet<string>;
 }
 
+export type SharedImageOwnerDateIndex = ReadonlyMap<string, string>;
+
+interface SharedOwnerBlogPost {
+  filename: string;
+}
+
+interface SharedOwnerLorePost {
+  filename: string;
+  metadata: Pick<ParsedPost['metadata'], 'date'>;
+}
+
 interface ImageReferencePost {
   metadata: Pick<ParsedPost['metadata'], 'cover_image' | 'date'>;
   content: string;
@@ -130,6 +141,48 @@ export function getPostImageCacheSeconds(
 export function parseBlogImageDate(filename: string): string | null {
   const match = filename.match(/^(\d{4}-\d{2}-\d{2})\.(?:png|jpe?g|webp)$/i);
   return match?.[1] ? parseDateString(match[1]) : null;
+}
+
+export function buildSharedImageOwnerDateIndex(
+  blogPosts: readonly SharedOwnerBlogPost[],
+  lorePosts: readonly SharedOwnerLorePost[],
+): SharedImageOwnerDateIndex {
+  const ownerDates = new Map<string, string>();
+
+  const addOwnerDate = (owner: string, rawDate: string | undefined) => {
+    const date = parseDateString(rawDate);
+    if (!date) return;
+
+    const currentDate = ownerDates.get(owner);
+    if (!currentDate || date < currentDate) ownerDates.set(owner, date);
+  };
+
+  for (const post of blogPosts) {
+    const owner = post.filename.replace(/\.md$/i, '');
+    addOwnerDate(owner, owner);
+  }
+
+  for (const post of lorePosts) {
+    const owner = post.filename.replace(/\.md$/i, '');
+    addOwnerDate(owner, post.metadata.date);
+  }
+
+  return ownerDates;
+}
+
+export function getSharedImageCacheSeconds(
+  path: string | readonly string[],
+  ownerDates: SharedImageOwnerDateIndex,
+  now: Date = new Date(),
+): number {
+  const segments = typeof path === 'string' ? path.split('/') : path;
+  if (segments.length < 2) return IMAGE_CACHE_FALLBACK_SECONDS;
+
+  const owner = segments[0];
+  const publicationDate = owner ? ownerDates.get(owner) : undefined;
+  return publicationDate
+    ? getPostImageCacheSeconds(publicationDate, now)
+    : IMAGE_CACHE_FALLBACK_SECONDS;
 }
 
 export function getBlogImageCacheSeconds(

@@ -14,7 +14,7 @@ export const loreTestPages: readonly TestPageDefinition[] = [
   {
     href: '/lore/test/lore-tokens',
     title: 'Lore image and species card tokens',
-    purpose: 'View embedded Lore images and species care cards inside a story.',
+    purpose: 'View Lore images, shared owner-folder images, and species care cards inside a story.',
   },
   {
     href: '/lore/test/language-markup',

@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = createTestPageMetadata(
   'Lore token test',
-  'View embedded Lore images and species care cards inside a story.',
+  'View Lore and shared owner-folder images plus species care cards inside a story.',
 );
 
 export default async function LoreTokensTestPage() {
@@ -28,7 +28,7 @@ export default async function LoreTokensTestPage() {
   return (
     <TestPageShell
       title="Lore image and species card tokens"
-      description="This page demonstrates the image and species card embeds readers can see inside a Lore story."
+      description="This page demonstrates Lore and shared owner-folder image tokens and species card embeds inside a Lore story."
       indexHref="/lore/test"
       indexLabel="Lore"
     >

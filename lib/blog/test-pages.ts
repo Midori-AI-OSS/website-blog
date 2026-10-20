@@ -7,6 +7,12 @@ export const blogTestPages: readonly TestPageDefinition[] = [
     purpose: 'See how a Blog post presents headings, lists, links, images, tables, and dialogue.',
   },
   {
+    href: '/blog/test/image-tokens',
+    title: 'Image tokens',
+    purpose:
+      'View Blog image tokens using existing Lore images, shared owner folders, and the missing-image placeholder.',
+  },
+  {
     href: '/blog/test/archive',
     title: 'Archive browsing',
     purpose:

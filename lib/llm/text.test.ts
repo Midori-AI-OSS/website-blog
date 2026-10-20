@@ -89,7 +89,7 @@ describe('LLM text formatters', () => {
     expect(normalized.plainText).toContain('Heading');
     expect(normalized.plainText).toContain('guide (/lore/example)');
     expect(normalized.plainText).toContain(
-      'Image (Lore image): /api/lore-images/the-story-luna-midori/01-veiled-crossing-first-shift.png',
+      'Image (Post image): /api/lore-images/the-story-luna-midori/01-veiled-crossing-first-shift.png',
     );
     expect(normalized.plainText).toContain('Image (Cover): /api/blog-images/placeholder.png');
     expect(normalized.plainText).toContain('inline and bold text');
@@ -98,6 +98,25 @@ describe('LLM text formatters', () => {
       '/api/lore-images/the-story-luna-midori/01-veiled-crossing-first-shift.png',
     );
     expect(normalized.imageUrls).toContain('/api/blog-images/placeholder.png');
+  });
+
+  test('normalizeMarkdownForLlm converts shared image tokens', () => {
+    const normalized = normalizeMarkdownForLlm(
+      '{{image: /shared/the-story-luna-midori/scene.webp}}',
+    );
+
+    expect(normalized.plainText).toContain(
+      'Image (Post image): /api/shared-images/the-story-luna-midori/scene.webp',
+    );
+    expect(normalized.imageUrls).toContain('/api/shared-images/the-story-luna-midori/scene.webp');
+  });
+
+  test('keeps shared ordinary Markdown images outside image-token routing', () => {
+    const normalized = normalizeMarkdownForLlm(
+      '![Scene](/shared/the-story-luna-midori/scene.webp)',
+    );
+
+    expect(normalized.imageUrls).toEqual(['/shared/the-story-luna-midori/scene.webp']);
   });
 
   test('renderLlmIndexText lists entries with site and llm paths', () => {

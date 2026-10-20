@@ -8,7 +8,7 @@ This document is the canonical authoring guide for all custom tokens, shortcodes
 
 | Token / Field | Scope | Description |
 |---|---|---|
-| `{{image: <path>}}` | Lore only | Embeds a lore image with fallback chain |
+| `{{image: <path>}}` | Blog + Lore | Embeds a Lore or shared-folder image with post-specific fallback behavior |
 | `{{speciescard: lore/<slug>}}` | Lore only | Injects a species care card embed |
 | `<thinking>...</thinking>` | Blog + Lore | Renders text with animated gradient styling |
 | `<celestial>...</celestial>` | Blog + Lore | Renders text in a fictional Celestial font (sans-serif) |
@@ -20,11 +20,12 @@ This document is the canonical authoring guide for all custom tokens, shortcodes
 
 ## `{{image: <path>}}`
 
-**Scope:** Lore only
+**Scope:** Blog + Lore
 
 **Syntax:**
 ```
 {{image: /lore/slug/filename.png}}
+{{image: /shared/<owner>/filename.png}}
 ```
 
 Whitespace around the colons and path is flexible — all of these work:
@@ -34,15 +35,21 @@ Whitespace around the colons and path is flexible — all of these work:
 {{  image:  /lore/slug/file.png  }}
 ```
 
-**Behavior:** Replaced with an embedded lore image. If the specified image file is not found, the renderer falls back through this chain:
+**Behavior:** Replaced with an embedded post image. Paths under `/lore/` continue to use existing Lore assets. Paths under `/shared/<owner>/` use the shared owner folder in `public/shared/<owner>/`. Shared images can be referenced from Blog or Lore post bodies; `cover_image` and ordinary Markdown images are unchanged.
+
+If the specified image file is not found, fallback behavior depends on the content type:
 
 1. Requested image file
-2. The game's cover image (associated with the post)
+2. For Lore posts, the game's cover image associated with the post
 3. A static placeholder graphic
 
+Blog image tokens fall back directly to the static placeholder graphic.
+
 **Usage rules:**
-- Only available in lore posts. Blog posts must not use `{{...}}` tokens.
-- Paths are relative to the lore asset directory (prefix with `/lore/`).
+- Available in Blog and Lore post bodies. Blog posts may use this image token; other Lore-only `{{...}}` tokens remain unavailable.
+- Use `/lore/...` for existing Lore assets or `/shared/<owner>/...` for shared owner-folder assets.
+- Shared folders are flat by owner: Blog owners use the post date, and Lore owners use the stable post slug. Matching owner names intentionally share a folder.
+- Shared image cache freshness follows the owner post's age; when Blog and Lore owners share a folder, the older matching post date is used.
 - Token is not nestable — the image path must be a plain string.
 
 ---
@@ -67,7 +74,7 @@ An optional version parameter can be appended:
 
 **Usage rules:**
 - Only available in lore posts.
-- Blog test fixtures (under `/blog/test/*`) must not use `{{...}}` tokens, including speciescard.
+- Blog test fixtures must not use Lore-only tokens such as speciescard. The dedicated `/blog/test/image-tokens` page may use `{{image: ...}}`.
 - The slug references a species defined in lore data.
 - Token is not nestable.
 
@@ -209,7 +216,7 @@ Available front matter fields for both blog and lore posts:
 
 ## Cross-Cutting Rules
 
-- **Blog test fixtures** (under `/blog/test/*`) must **not** use `{{...}}` token systems. This is a strict policy — Blog renderer tests must not include Lore-only tokens.
+- Blog renderer fixtures must not use Lore-only tokens. The dedicated `/blog/test/image-tokens` fixture may use image tokens only; speciescard and other Lore-only tokens stay prohibited in Blog.
 - Lore image and species card examples are covered together at `/lore/test/lore-tokens`.
 - **Curly quotes** (`""`) should be avoided in source markdown. Use straight double quotes (`"`) even though curly quotes are auto-normalized at render time.
 - **Tokens are not nestable.** Image tokens resolve first at the string level, then speciescard tokens split markdown into segments, then react-markdown handles everything else. You cannot put one token inside another.

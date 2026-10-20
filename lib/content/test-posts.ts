@@ -160,6 +160,31 @@ export const blogTtsTestPost = makePostVariant(
   'Blog Audio Reading',
 );
 
+const blogImageTokenTestContent = `# Blog Image Tokens
+
+This hidden Blog example shows that image tokens can load an existing Lore image or an image stored in an owner-shared folder. A missing Blog token image uses the placeholder.
+
+## Existing Lore image
+
+{{image: /lore/the-story-luna-midori/01-veiled-crossing-first-shift.png}}
+
+## Shared owner folder
+
+{{image: /shared/the-story-luna-midori/01-veiled-crossing-first-shift.webp}}
+
+## Missing image fallback
+
+{{image: /shared/the-story-luna-midori/missing-example.webp}}
+`;
+
+export const blogImageTokenTestPost = makePostVariant(
+  blogRendererTestPost,
+  'blog-image-token-test.md',
+  'A Blog post with Lore and shared image tokens, including the missing-image placeholder.',
+  blogImageTokenTestContent,
+  'Blog Image Tokens',
+);
+
 const loreRendererTestPostMarkdown = `---
 title: "W.E.A.V.E. System Log: Sangre y Lux Residua, <thinking>Deeper Contact: Under Evaluation</thinking>"
 summary: "A hidden fixture for checking lore metadata, lore image tokens, species cards, story styling, and markdown rendering."
@@ -287,6 +312,10 @@ This story shows an embedded Lore image and species care cards.
 ## Lore image
 
 {{image: /lore/the-story-luna-midori/01-veiled-crossing-first-shift.png}}
+
+## Shared owner-folder image
+
+{{image: /shared/the-story-luna-midori/01-veiled-crossing-first-shift.webp}}
 
 ## Species cards
 

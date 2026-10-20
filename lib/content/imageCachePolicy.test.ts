@@ -44,6 +44,48 @@ describe('imageCachePolicy', () => {
     expect(getBlogImageCacheSeconds('years/2026/may.png')).toBe(IMAGE_STABLE_BLOG_CACHE_SECONDS);
   });
 
+  test('uses the older post date when a shared owner exists in Blog and Lore', async () => {
+    const policy = (await import('./imageCachePolicy')) as typeof import('./imageCachePolicy') & {
+      buildSharedImageOwnerDateIndex?: (
+        blogPosts: readonly { filename: string }[],
+        lorePosts: readonly { filename: string; metadata: { date?: string } }[],
+      ) => ReadonlyMap<string, string>;
+      getSharedImageCacheSeconds?: (
+        path: string | readonly string[],
+        ownerDates: ReadonlyMap<string, string>,
+        now?: Date,
+      ) => number;
+    };
+
+    expect(typeof policy.buildSharedImageOwnerDateIndex).toBe('function');
+    expect(typeof policy.getSharedImageCacheSeconds).toBe('function');
+    if (!policy.buildSharedImageOwnerDateIndex || !policy.getSharedImageCacheSeconds) return;
+
+    const ownerDates = policy.buildSharedImageOwnerDateIndex(
+      [{ filename: '2026-10-20.md' }],
+      [
+        {
+          filename: '2026-10-20.md',
+          metadata: { date: '2026-10-01' },
+        },
+        {
+          filename: 'the-story-luna-midori.md',
+          metadata: { date: '2026-04-18' },
+        },
+      ],
+    );
+    const now = new Date('2026-10-20T19:00:00.000Z');
+
+    expect(ownerDates.get('2026-10-20')).toBe('2026-10-01');
+    expect(ownerDates.get('the-story-luna-midori')).toBe('2026-04-18');
+    expect(policy.getSharedImageCacheSeconds('2026-10-20/scene.webp', ownerDates, now)).toBe(
+      getPostImageCacheSeconds('2026-10-01', now),
+    );
+    expect(policy.getSharedImageCacheSeconds('unowned/scene.webp', ownerDates, now)).toBe(
+      IMAGE_CACHE_FALLBACK_SECONDS,
+    );
+  });
+
   test('builds post owners from covers, image tokens, scheduled posts, and game covers', () => {
     const index = buildLoreImageReferenceIndex(
       [

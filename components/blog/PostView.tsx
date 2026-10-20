@@ -41,7 +41,7 @@ import {
   formatLongDate,
   normalizeIsoDateString,
 } from '@/lib/content/publish';
-import { LORE_IMAGE_TOKEN_TITLE, preparePostMarkdown } from '@/lib/markdown/postMarkdown';
+import { POST_IMAGE_TOKEN_TITLE, preparePostMarkdown } from '@/lib/markdown/postMarkdown';
 import rehypeDialogueQuotes from '@/lib/markdown/rehypeDialogueQuotes';
 import remarkFictionalLangTags from '@/lib/markdown/remarkFictionalLangTags';
 import remarkThinkingTags from '@/lib/markdown/remarkThinkingTags';
@@ -395,7 +395,7 @@ function PostContentSection({
         const { node: _node, ...imgProps } = props;
         const { src, alt, title } = imgProps;
 
-        if (title === LORE_IMAGE_TOKEN_TITLE && typeof src === 'string' && src.length > 0) {
+        if (title === POST_IMAGE_TOKEN_TITLE && typeof src === 'string' && src.length > 0) {
           const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
             const img = e.currentTarget;
             const depth = Number(img.getAttribute('data-fallback-depth') ?? 0);

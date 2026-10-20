@@ -1,5 +1,5 @@
 import type { ParsedPost } from '@/lib/blog/parser';
-import { toLoreImageApiUrl, transformPostImageUrl } from '@/lib/content/imageUrl';
+import { toPostImageApiUrl, transformPostImageUrl } from '@/lib/content/imageUrl';
 import { extractIsoDateFromBlogFilename, normalizeIsoDateString } from '@/lib/content/publish';
 
 export type LlmPostType = 'blog' | 'lore';
@@ -20,7 +20,7 @@ export interface NormalizedMarkdown {
   imageUrls: string[];
 }
 
-const LORE_IMAGE_TOKEN_PATTERN = /\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi;
+const POST_IMAGE_TOKEN_PATTERN = /\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi;
 const MARKDOWN_IMAGE_PATTERN = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\(([^)\s]+)\)/g;
 
@@ -98,12 +98,11 @@ function convertMarkdownToPlainText(markdown: string): string {
 
 export function normalizeMarkdownForLlm(markdown: string): NormalizedMarkdown {
   const expandedTokens = markdown.replace(
-    LORE_IMAGE_TOKEN_PATTERN,
+    POST_IMAGE_TOKEN_PATTERN,
     (_fullMatch, tokenValue: string) => {
-      const loreUrl = toLoreImageApiUrl(tokenValue);
-      const imageUrl = loreUrl ?? toContentImageUrl(tokenValue);
+      const imageUrl = toPostImageApiUrl(tokenValue) ?? toContentImageUrl(tokenValue);
       if (!imageUrl) return '';
-      return `\n\n![Lore image](${imageUrl})\n\n`;
+      return `\n\n![Post image](${imageUrl})\n\n`;
     },
   );
 

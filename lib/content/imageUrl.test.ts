@@ -5,6 +5,7 @@ import {
   POST_COVER_PLACEHOLDER_IMAGE_URL,
   resolvePostCoverImageUrl,
   toLoreImageApiUrl,
+  toPostImageApiUrl,
   transformPostImageUrl,
 } from './imageUrl';
 
@@ -27,9 +28,20 @@ describe('imageUrl', () => {
     expect(transformPostImageUrl(`/lore/story%20cover.png?v=${fingerprint}`)).toBe(
       `/api/lore-images/story%20cover.png?v=${fingerprint}`,
     );
+    expect(transformPostImageUrl(`/shared/owner/story%20cover.png?v=${fingerprint}`)).toBe(
+      `/shared/owner/story%20cover.png?v=${fingerprint}`,
+    );
     expect(toLoreImageApiUrl(`/lore/story cover.png?v=${fingerprint}`)).toBe(
       `/api/lore-images/story%20cover.png?v=${fingerprint}`,
     );
+  });
+
+  test('converts Lore and shared image-token paths but rejects unrelated paths', () => {
+    expect(toPostImageApiUrl('/lore/story.png')).toBe('/api/lore-images/story.png');
+    expect(toPostImageApiUrl('/shared/owner/story.png')).toBe('/api/shared-images/owner/story.png');
+    expect(toPostImageApiUrl('/shared/owner')).toBeNull();
+    expect(toPostImageApiUrl('/blog/2026-05-07.png')).toBeNull();
+    expect(toPostImageApiUrl('https://example.com/story.png')).toBeNull();
   });
 
   test('uses the blog placeholder when a cover is missing', () => {

@@ -1,12 +1,12 @@
-import { toLoreImageApiUrl } from '@/lib/content/imageUrl';
+import { toPostImageApiUrl } from '@/lib/content/imageUrl';
 
-export const LORE_IMAGE_TOKEN_TITLE = 'lore-token';
+export const POST_IMAGE_TOKEN_TITLE = 'post-image-token';
 
-export function replaceLoreImageTokens(markdown: string): string {
+export function replacePostImageTokens(markdown: string): string {
   return markdown.replace(
     /\{\{\s*image\s*:\s*([^}]+?)\s*\}\}/gi,
     (fullMatch, tokenValue: string) => {
-      const url = toLoreImageApiUrl(tokenValue);
+      const url = toPostImageApiUrl(tokenValue);
       if (!url) return fullMatch;
 
       const raw = tokenValue.trim();
@@ -16,9 +16,9 @@ export function replaceLoreImageTokens(markdown: string): string {
         basename
           .replace(/\.[a-z0-9]+$/i, '')
           .replace(/[_-]+/g, ' ')
-          .trim() || 'Lore image';
+          .trim() || 'Post image';
 
-      return `\n\n![${alt}](${url} "${LORE_IMAGE_TOKEN_TITLE}")\n\n`;
+      return `\n\n![${alt}](${url} "${POST_IMAGE_TOKEN_TITLE}")\n\n`;
     },
   );
 }
@@ -40,6 +40,6 @@ export function replaceFictionalLangTagTokens(markdown: string): string {
 
 export function preparePostMarkdown(markdown: string): string {
   return replaceFictionalLangTagTokens(
-    normalizeThinkingTagFormatting(replaceLoreImageTokens(markdown)),
+    normalizeThinkingTagFormatting(replacePostImageTokens(markdown)),
   );
 }

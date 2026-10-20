@@ -6,6 +6,7 @@ import BlogTestIndexPage from '@/app/blog/test/page';
 import LoreTestIndexPage from '@/app/lore/test/page';
 import { blogTestPages } from '@/lib/blog/test-pages';
 import {
+  blogImageTokenTestPost,
   blogLanguageMarkupTestPost,
   blogRendererTestPost,
   blogTtsTestPost,
@@ -38,6 +39,10 @@ function assertIndexContainsEntries(
 }
 
 describe('content test page indexes', () => {
+  test('registers a dedicated Blog image-token test page', () => {
+    expect(registeredPaths(blogTestPages)).toContain('/blog/test/image-tokens');
+  });
+
   test('blog index links to every registered test page with its purpose', () => {
     const markup = renderToStaticMarkup(<BlogTestIndexPage />);
 
@@ -81,6 +86,17 @@ describe('content test page indexes', () => {
       expect(post.content).not.toContain('{{');
       expect(post.rawMarkdown).not.toContain('{{');
     }
+  });
+
+  test('the dedicated Blog image-token fixture contains only image tokens', () => {
+    const tokenNames = [...blogImageTokenTestPost.content.matchAll(/\{\{\s*([^:}\s]+)\s*:/g)].map(
+      (match) => match[1]?.toLowerCase(),
+    );
+
+    expect(tokenNames.length).toBeGreaterThan(0);
+    expect(tokenNames.every((name) => name === 'image')).toBe(true);
+    expect(blogImageTokenTestPost.rawMarkdown).toContain('{{image:');
+    expect(blogImageTokenTestPost.rawMarkdown).not.toContain('{{speciescard:');
   });
 
   test('password protection stays on the dedicated Lore password-gate fixture', () => {

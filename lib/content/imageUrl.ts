@@ -5,6 +5,42 @@
 export const POST_COVER_PLACEHOLDER_IMAGE = '/blog/placeholder.png';
 export const POST_COVER_PLACEHOLDER_IMAGE_URL = '/api/blog-images/placeholder.png';
 
+type TokenImageArea = 'lore' | 'shared';
+
+function getTokenImageApiUrl(rawPath: string, area: TokenImageArea): string | null {
+  const raw = rawPath.trim();
+  if (!raw) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(raw, 'http://local.invalid');
+  } catch {
+    return null;
+  }
+  if (parsed.origin !== 'http://local.invalid') return null;
+
+  const prefix = `/${area}/`;
+  if (!parsed.pathname.toLowerCase().startsWith(prefix)) return null;
+
+  const normalized = parsed.pathname
+    .slice(prefix.length)
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
+    .trim();
+  if (!normalized) return null;
+
+  const segments = normalized.split('/').filter(Boolean);
+  if (segments.length === 0 || (area === 'shared' && segments.length < 2)) return null;
+
+  let encoded: string;
+  try {
+    encoded = segments.map((segment) => encodeURIComponent(decodeURIComponent(segment))).join('/');
+  } catch {
+    return null;
+  }
+  return `/api/${area}-images/${encoded}${parsed.search}${parsed.hash}`;
+}
+
 export function transformPostImageUrl(url: string): string {
   let parsed: URL;
   try {
@@ -19,22 +55,7 @@ export function transformPostImageUrl(url: string): string {
   }
 
   if (parsed.pathname.startsWith('/lore/')) {
-    const normalized = parsed.pathname
-      .slice('/lore/'.length)
-      .replace(/^\/+/, '')
-      .replace(/\/+$/, '')
-      .trim();
-    if (!normalized) return url;
-
-    const segments = normalized.split('/').filter(Boolean);
-    try {
-      const encoded = segments
-        .map((segment) => encodeURIComponent(decodeURIComponent(segment)))
-        .join('/');
-      return `/api/lore-images/${encoded}${parsed.search}${parsed.hash}`;
-    } catch {
-      return url;
-    }
+    return getTokenImageApiUrl(url, 'lore') ?? url;
   }
 
   return url;
@@ -46,36 +67,9 @@ export function resolvePostCoverImageUrl(url: string | null | undefined): string
 }
 
 export function toLoreImageApiUrl(rawPath: string): string | null {
-  const raw = rawPath.trim();
-  if (!raw) return null;
+  return getTokenImageApiUrl(rawPath, 'lore');
+}
 
-  let parsed: URL;
-  try {
-    parsed = new URL(raw, 'http://local.invalid');
-  } catch {
-    return null;
-  }
-  if (parsed.origin !== 'http://local.invalid') return null;
-
-  const lowerPath = parsed.pathname.toLowerCase();
-  if (!lowerPath.startsWith('/lore/') && lowerPath !== '/lore') return null;
-
-  const normalized = parsed.pathname
-    .replace(/^\/+/, '')
-    .slice('lore/'.length)
-    .replace(/^\/+/, '')
-    .replace(/\/+$/, '')
-    .trim();
-  if (!normalized) return null;
-
-  const segments = normalized.split('/').filter(Boolean);
-  if (segments.length === 0) return null;
-
-  let encoded: string;
-  try {
-    encoded = segments.map((segment) => encodeURIComponent(decodeURIComponent(segment))).join('/');
-  } catch {
-    return null;
-  }
-  return `/api/lore-images/${encoded}${parsed.search}${parsed.hash}`;
+export function toPostImageApiUrl(rawPath: string): string | null {
+  return getTokenImageApiUrl(rawPath, 'lore') ?? getTokenImageApiUrl(rawPath, 'shared');
 }
