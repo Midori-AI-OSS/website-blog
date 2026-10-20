@@ -21,6 +21,7 @@ import {
 } from '@/lib/theme/artPalette';
 import { toDarkMediumBackdropPalette } from '@/lib/theme/dynamicBackdrop';
 import type { ParsedPost } from '../../lib/blog/parser';
+import { useNearViewport } from './useNearViewport';
 
 const WEAVE_BLUE = '#bae6fd';
 
@@ -38,6 +39,7 @@ export type BlogCardProps = {
   secondaryCtaTooltip?: string;
   secondaryCtaAriaLabel?: string;
   placeholderImageUrl?: string;
+  deferArtwork?: boolean;
 };
 
 function toRgba(hex: string, alpha: number): string {
@@ -61,7 +63,10 @@ export const BlogCard = React.memo(
     secondaryCtaTooltip,
     secondaryCtaAriaLabel,
     placeholderImageUrl = POST_COVER_PLACEHOLDER_IMAGE_URL,
+    deferArtwork = false,
   }: BlogCardProps) => {
+    const { ref: artworkRef, shouldLoad: loadArtwork } =
+      useNearViewport<HTMLDivElement>(deferArtwork);
     const { metadata, filename } = post;
     const isThinkingLoreCard = postType === 'lore' && metadata.hasThinkingTitle;
     const resolvedDecorativeImageUrl = React.useMemo(
@@ -80,7 +85,7 @@ export const BlogCard = React.memo(
     }, [resolvedDecorativeImageUrl]);
 
     React.useEffect(() => {
-      if (decorativeImageUrl === placeholderImageUrl) {
+      if (!loadArtwork || decorativeImageUrl === placeholderImageUrl) {
         return;
       }
 
@@ -96,10 +101,10 @@ export const BlogCard = React.memo(
       return () => {
         active = false;
       };
-    }, [decorativeImageUrl, placeholderImageUrl]);
+    }, [decorativeImageUrl, placeholderImageUrl, loadArtwork]);
 
     React.useEffect(() => {
-      if (!decorativeImageUrl) {
+      if (!loadArtwork || !decorativeImageUrl) {
         return;
       }
 
@@ -118,7 +123,7 @@ export const BlogCard = React.memo(
       return () => {
         active = false;
       };
-    }, [decorativeImageUrl]);
+    }, [decorativeImageUrl, loadArtwork]);
 
     const tintStyles = React.useMemo(() => {
       if (!decorativeImageUrl) return null;
@@ -272,6 +277,7 @@ export const BlogCard = React.memo(
     // When href is provided, wrap the entire card in a Link
     const cardContent = (
       <Card
+        ref={artworkRef}
         role="article"
         variant={variant}
         color={color}
@@ -315,7 +321,7 @@ export const BlogCard = React.memo(
           }),
         }}
       >
-        {decorativeImageUrl && (
+        {loadArtwork && decorativeImageUrl && (
           <Box
             aria-hidden
             sx={{

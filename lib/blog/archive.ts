@@ -62,6 +62,8 @@ export interface ArchivePeriod {
   coverImageUrl: string | null;
   /** Fingerprinted API URLs for candidate artwork, populated by the server page. */
   imageCandidates?: string[];
+  /** Intrinsic dimensions of the initial cover, reserved before artwork loads. */
+  coverDimensions?: { width: number; height: number };
 }
 
 /**

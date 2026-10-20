@@ -9,7 +9,8 @@ export const blogTestPages: readonly TestPageDefinition[] = [
   {
     href: '/blog/test/archive',
     title: 'Archive browsing',
-    purpose: 'Explore date grouping, tag filtering, page controls, and artwork fallback.',
+    purpose:
+      'Explore immediate month sections, jump navigation, deferred artwork, filters, and pagination.',
   },
   {
     href: '/blog/test/language-markup',

@@ -3,6 +3,7 @@
 import { keyframes } from '@emotion/react';
 import { Box, Stack, Typography } from '@mui/joy';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNearViewport } from '@/components/blog/useNearViewport';
 
 const VISIBLE_CAP = 10;
 const HALF_WINDOW = Math.floor(VISIBLE_CAP / 2);
@@ -30,7 +31,6 @@ export interface PeriodPickerItem {
 
 interface PeriodPickerProps {
   periods: PeriodPickerItem[];
-  onSelectPeriod?: (slug: string) => void;
 }
 
 function hashSlug(slug: string): number {
@@ -49,8 +49,8 @@ export function getPeriodBreatheTiming(slug: string): { dur: number; delay: numb
   };
 }
 
-export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+export function BlogPeriodPicker({ periods }: PeriodPickerProps) {
+  const { ref: containerRef, shouldLoad: loadArtwork } = useNearViewport<HTMLDivElement>(true);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [coverErrors, setCoverErrors] = useState<Set<string>>(new Set());
 
@@ -130,7 +130,7 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
 
     rafId = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(rafId);
-  }, []);
+  }, [containerRef]);
 
   const handleCoverError = (slug: string) => {
     setCoverErrors((prev) => {
@@ -160,7 +160,8 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
           const isActive = activeSlug === period.slug;
           const timing = breatheTimings.get(period.slug) ?? { dur: 5, delay: 0 };
           const coverFailed = coverErrors.has(period.slug);
-          const effectiveCover = !coverFailed && period.coverUrl ? period.coverUrl : null;
+          const effectiveCover =
+            loadArtwork && !coverFailed && period.coverUrl ? period.coverUrl : null;
 
           return (
             <Box
@@ -172,7 +173,6 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
                 type="button"
                 aria-label={`Jump to ${period.title} archive section`}
                 onClick={() => {
-                  onSelectPeriod?.(period.slug);
                   document
                     .getElementById(`period-${period.slug}`)
                     ?.scrollIntoView({ behavior: 'smooth' });
@@ -230,7 +230,7 @@ export function BlogPeriodPicker({ periods, onSelectPeriod }: PeriodPickerProps)
                   },
                 }}
               >
-                {period.coverUrl && !coverFailed && (
+                {loadArtwork && period.coverUrl && !coverFailed && (
                   <Box
                     component="img"
                     src={period.coverUrl}

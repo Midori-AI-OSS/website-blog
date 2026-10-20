@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { open } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
+import sharp from 'sharp';
 import { type ArchivePeriod, getPeriodImageCandidates } from '@/lib/blog/archive';
 import type { ParsedPost } from '@/lib/blog/parser';
 import type { LoreGameGroup } from '@/lib/lore/loader';
@@ -9,6 +10,7 @@ import { POST_COVER_PLACEHOLDER_IMAGE, transformPostImageUrl } from './imageUrl'
 
 const FINGERPRINT_CACHE_MAX_ENTRIES = 2048;
 const imageFingerprintCache = new Map<string, CachedFingerprint>();
+const imageDimensionsCache = new Map<string, Promise<{ width: number; height: number }>>();
 
 interface CachedFingerprint {
   fingerprint: string;
@@ -221,15 +223,55 @@ export async function fingerprintArchivePeriods(
   periods: readonly ArchivePeriod[],
 ): Promise<ArchivePeriod[]> {
   return Promise.all(
-    periods.map(async (period) => ({
-      ...period,
-      imageCandidates: await Promise.all(
-        getPeriodImageCandidates(period.newestMonth, period.year).map(async (candidate) =>
-          transformPostImageUrl(await fingerprintImageSource(candidate)),
-        ),
-      ),
-    })),
+    periods.map(async (period) => {
+      const candidates = [
+        ...getPeriodImageCandidates(period.newestMonth, period.year),
+        POST_COVER_PLACEHOLDER_IMAGE,
+      ];
+      const artwork = await Promise.all(candidates.map(readArchiveArtwork));
+      const available = artwork.filter((image) => image !== null);
+      const first = available[0];
+      return {
+        ...period,
+        coverImageUrl: first?.url ?? null,
+        coverDimensions: first?.dimensions,
+        imageCandidates: available.map((image) => image.url),
+      };
+    }),
   );
+}
+
+async function readArchiveArtwork(source: string) {
+  const path = getStaticImagePath(source);
+  if (!path) return null;
+
+  try {
+    const fingerprint = await getFileFingerprint(path.filepath);
+    let dimensions = imageDimensionsCache.get(fingerprint);
+    if (!dimensions) {
+      dimensions = sharp(path.filepath)
+        .metadata()
+        .then((metadata) => {
+          if (!metadata.width || !metadata.height) throw new Error('Image has no dimensions');
+          const rotated = (metadata.orientation ?? 1) >= 5;
+          return {
+            width: rotated ? metadata.height : metadata.width,
+            height: rotated ? metadata.width : metadata.height,
+          };
+        });
+      imageDimensionsCache.set(fingerprint, dimensions);
+      if (imageDimensionsCache.size > FINGERPRINT_CACHE_MAX_ENTRIES) {
+        const oldest = imageDimensionsCache.keys().next().value;
+        if (oldest !== undefined) imageDimensionsCache.delete(oldest);
+      }
+    }
+    return {
+      url: transformPostImageUrl(withFingerprint(source, fingerprint)),
+      dimensions: await dimensions,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function fingerprintLoreGameGroups(
@@ -280,4 +322,5 @@ export async function fingerprintSpeciesCareCards(
 
 export function clearImageFingerprintCacheForTests(): void {
   imageFingerprintCache.clear();
+  imageDimensionsCache.clear();
 }

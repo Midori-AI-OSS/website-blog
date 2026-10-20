@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = createTestPageMetadata(
   'Blog archive test',
-  'Explore how Blog archive entries group by date and respond to filters and page controls.',
+  'Explore immediate archive sections, jump navigation, deferred artwork, filters, and page controls.',
 );
 
 function makeArchiveTestPost(
@@ -41,6 +41,25 @@ function makeArchiveTestPost(
 }
 
 const archiveFixturePeriods = groupPostsIntoArchivePeriods([
+  ...Array.from({ length: 5 }, (_, index) =>
+    makeArchiveTestPost(`2026-08-${20 - index}.md`, `Archive Fixture Aug ${index + 1}`, [
+      'release',
+    ]),
+  ),
+  ...[
+    { month: '07', count: 4 },
+    { month: '06', count: 2 },
+    { month: '04', count: 3, start: 26 },
+    { month: '03', count: 2 },
+  ].flatMap(({ month, count, start = 16 }) =>
+    Array.from({ length: count }, (_, index) =>
+      makeArchiveTestPost(
+        `2026-${month}-${String(start - index).padStart(2, '0')}.md`,
+        `Archive Fixture ${month} browsing ${index + 1}`,
+        ['notes'],
+      ),
+    ),
+  ),
   makeArchiveTestPost('2026-07-28.md', 'Archive Fixture Jul 1', ['release', 'ui']),
   makeArchiveTestPost('2026-06-24.md', 'Archive Fixture Jun 1', ['release', 'notes']),
   makeArchiveTestPost('2026-06-18.md', 'Archive Fixture Jun 2', ['notes']),
@@ -85,7 +104,7 @@ export default async function BlogArchiveTestPage() {
   return (
     <TestPageShell
       title="Blog archive browsing"
-      description="This page shows how Blog entries are grouped by date and how readers can browse tags, pages, and fallback artwork."
+      description="Every archive section is available immediately. Jump between months without scrolling first: artwork loads near the viewport while its space stays reserved. Visible desktop jump pills load their artwork immediately. Try tag filters and pagination, and compare landscape month covers with the portrait placeholder in the oldest section."
       indexHref="/blog/test"
       indexLabel="Blog"
     >

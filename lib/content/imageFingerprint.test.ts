@@ -4,9 +4,10 @@ import { mkdtemp, readFile, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { NextRequest } from 'next/server';
+import { groupPostsIntoArchivePeriods } from '@/lib/blog/archive';
 import { GET as getBlogImage } from '../../app/api/blog-images/[...path]/route';
 import { imageByteCache } from './imageByteCache.server';
-import { getFileFingerprint } from './imageFingerprint.server';
+import { fingerprintArchivePeriods, getFileFingerprint } from './imageFingerprint.server';
 
 let testDirectory = '';
 
@@ -20,6 +21,40 @@ afterEach(async () => {
 });
 
 describe('image fingerprints and image response caching', () => {
+  test('resolves archive artwork and reserves landscape and placeholder portrait dimensions', async () => {
+    const periods = groupPostsIntoArchivePeriods([
+      { filename: '2026-05-07.md', metadata: { title: 'Landscape' }, content: '', rawMarkdown: '' },
+      {
+        filename: '0005-02-07.md',
+        metadata: { title: 'Portrait placeholder' },
+        content: '',
+        rawMarkdown: '',
+      },
+    ]);
+    const [landscape, portrait] = await fingerprintArchivePeriods(periods);
+    expect(landscape?.coverImageUrl).toMatch(
+      /\/api\/blog-images\/years\/2026\/may.png\?v=[a-f0-9]{64}/,
+    );
+    expect(landscape?.coverDimensions).toEqual({ width: 1448, height: 1086 });
+    expect(portrait?.coverImageUrl).toMatch(/\/api\/blog-images\/placeholder.png\?v=[a-f0-9]{64}/);
+    expect(portrait?.coverDimensions).toEqual({ width: 1024, height: 1536 });
+    expect(portrait?.imageCandidates).toHaveLength(1);
+  });
+
+  test('resolves missing monthly artwork from the next available year before rendering', async () => {
+    const periods = groupPostsIntoArchivePeriods([
+      {
+        filename: '2028-05-07.md',
+        metadata: { title: 'Earlier year artwork' },
+        content: '',
+        rawMarkdown: '',
+      },
+    ]);
+    const [period] = await fingerprintArchivePeriods(periods);
+    expect(period?.coverImageUrl).toContain('/years/2027/may.png?v=');
+    expect(period?.coverDimensions?.width).toBeGreaterThan(0);
+    expect(period?.imageCandidates?.some((url) => url.includes('/years/2028/'))).toBe(false);
+  });
   test('recomputes a SHA-256 fingerprint after an in-place image edit', async () => {
     const filepath = join(testDirectory, 'edited.png');
     await writeFile(filepath, 'initial image bytes');

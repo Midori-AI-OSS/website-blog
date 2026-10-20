@@ -3,7 +3,7 @@
 import { keyframes } from '@emotion/react';
 import { Box, Divider, FormControl, Option, Select, Stack, Typography } from '@mui/joy';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AmbientCoverArt } from '@/components/blog/AmbientCoverArt';
 import { BlogCard } from '@/components/blog/BlogCard';
 import { usePageTransition } from '@/components/PageTransitionProvider';
@@ -56,60 +56,6 @@ export function BlogArchiveClient({ periods, placeholderImageUrl }: BlogArchiveC
   const [currentPageByPeriod, setCurrentPageByPeriod] = useState<Record<string, number>>({});
   const [coverErrorsByPeriod, setCoverErrorsByPeriod] = useState<Record<string, number>>({});
   const prevPageByPeriod = useRef<Record<string, number>>({});
-
-  // ── Lazy mounting: mount 2 newest sections initially ──
-  const [mountedKeys, setMountedKeys] = useState<Set<string>>(() => {
-    const initial = new Set<string>();
-    // periods are sorted newest-first; mount the first 2
-    for (let i = 0; i < Math.min(2, periods.length); i++) {
-      const p = periods[i];
-      if (p) initial.add(p.key);
-    }
-    return initial;
-  });
-
-  const mountPeriod = useCallback((key: string) => {
-    setMountedKeys((prev) => {
-      if (prev.has(key)) return prev;
-      const next = new Set(prev);
-      next.add(key);
-      return next;
-    });
-  }, []);
-
-  const handleSelectPeriod = useCallback(
-    (slug: string) => {
-      mountPeriod(slug);
-    },
-    [mountPeriod],
-  );
-
-  // IntersectionObserver for lazy-mounting placeholders
-  const mountPeriodRef = useRef(mountPeriod);
-  mountPeriodRef.current = mountPeriod;
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          const slug = entry.target.id.replace('period-', '');
-          mountPeriodRef.current(slug);
-          observer.unobserve(entry.target);
-        }
-      },
-      { rootMargin: '400px 0px' },
-    );
-
-    const placeholders = document.querySelectorAll<HTMLElement>(
-      '[id^="period-"][data-lazy="true"]',
-    );
-    for (const el of placeholders) {
-      observer.observe(el);
-    }
-
-    return () => observer.disconnect();
-  }, []);
 
   const periodsWithUi = useMemo(() => {
     return periods.map((period) => {
@@ -240,28 +186,9 @@ export function BlogArchiveClient({ periods, placeholderImageUrl }: BlogArchiveC
 
   return (
     <>
-      <BlogPeriodPicker periods={pickerItems} onSelectPeriod={handleSelectPeriod} />
+      <BlogPeriodPicker periods={pickerItems} />
       <Stack spacing={3}>
         {visiblePeriods.map((period) => {
-          const isMounted = mountedKeys.has(period.key);
-
-          if (!isMounted) {
-            // Placeholder: keeps the section in the DOM for picker IntersectionObserver
-            return (
-              <Box
-                key={period.key}
-                id={`period-${period.key}`}
-                data-lazy="true"
-                sx={{
-                  p: { xs: 1.25, sm: 2.25 },
-                  bgcolor: 'rgba(10, 12, 18, 0.72)',
-                  scrollMarginTop: '80px',
-                  minHeight: '120px',
-                }}
-              />
-            );
-          }
-
           const prevPage = prevPageByPeriod.current[period.key];
           let animationName: string | undefined;
           if (prevPage != null && period.currentPage !== prevPage) {
@@ -382,6 +309,8 @@ export function BlogArchiveClient({ periods, placeholderImageUrl }: BlogArchiveC
                 {/* Cover image — always render with AmbientCoverArt (falls back to placeholder) */}
                 <Box sx={{ width: '100%', minWidth: 0 }}>
                   <AmbientCoverArt
+                    deferArtwork
+                    intrinsicSize={period.coverDimensions}
                     coverImageUrl={period.coverImageUrl}
                     alt={`${period.label} cover art`}
                     minHeight={{ xs: '100px', sm: '100px' }}
@@ -420,6 +349,7 @@ export function BlogArchiveClient({ periods, placeholderImageUrl }: BlogArchiveC
                 ) : (
                   period.paginatedPosts.map((post) => (
                     <BlogCard
+                      deferArtwork
                       key={post.filename}
                       post={post}
                       postType="blog"
