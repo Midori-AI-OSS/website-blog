@@ -52,7 +52,10 @@ elif args[:2] == ["container", "inspect"]:
     name = args[-1]
     template = args[args.index("--format") + 1]
     if name in state.get("others", {}):
-        result = "\n".join(state["others"][name])
+        if "io.portainer.agent" in template:
+            result = state.get("management", {}).get(name, "<no value>|app:latest|null|/host")
+        else:
+            result = "\n".join(state["others"][name])
     else:
         container = state.get("container")
         if not container:
@@ -245,6 +248,39 @@ class DevContainerTest(unittest.TestCase):
         self.state["others"] = {"unrelated-id": ["/unrelated"]}
         self.save()
         self.assertEqual(self.run_helper("start").returncode, 0)
+
+    def test_portainer_management_root_does_not_prevent_startup(self):
+        self.state["others"] = {"portainer-id": ["/", "/var/run/docker.sock"]}
+        self.state["management"] = {
+            "portainer-id": 'true|portainer/agent:2.27.3|["./agent"]|/host',
+        }
+        self.save()
+        self.assertEqual(self.run_helper("start").returncode, 0)
+
+    def test_other_host_root_mounts_still_prevent_cleanup(self):
+        for management in [
+            '<no value>|app:latest|null|/host',
+            'true|app:latest|["./agent"]|/host',
+            'true|portainer/agent:2.27.3|["bash"]|/host',
+            'true|portainer/agent:2.27.3|["./agent"]|/app',
+            'true|portainer/agent:2.27.3|["./agent"]|/host|/app',
+        ]:
+            with self.subTest(management=management):
+                self.state["others"] = {"root-id": ["/"]}
+                self.state["management"] = {"root-id": management}
+                self.save()
+                self.assertNotEqual(self.run_helper("start").returncode, 0)
+                self.assertTrue(self.modules.exists())
+                self.assertIsNone(self.load()["container"])
+
+    def test_portainer_checkout_mount_still_prevents_cleanup(self):
+        self.state["others"] = {"portainer-id": ["/", str(self.root)]}
+        self.state["management"] = {
+            "portainer-id": 'true|portainer/agent:2.27.3|["./agent"]|/host',
+        }
+        self.save()
+        self.assertNotEqual(self.run_helper("start").returncode, 0)
+        self.assertTrue(self.modules.exists())
 
     def test_exec_preserves_arguments_and_exit_status(self):
         self.owned()

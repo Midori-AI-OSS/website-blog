@@ -76,7 +76,7 @@ validate_container() {
 }
 
 protect_other_containers() {
-  local ids id sources source
+  local ids id sources source management
   ids="$(docker ps -q)" || fail 'Cannot check running containers before cleanup.'
   while IFS= read -r id; do
     [[ -n "$id" ]] || continue
@@ -85,6 +85,14 @@ protect_other_containers() {
     while IFS= read -r source; do
       [[ -n "$source" ]] || continue
       source="$(realpath -m -- "$source")" || fail 'Cannot resolve a running container mount.'
+      if [[ "$source" == / ]]; then
+        management="$(docker container inspect --format '{{index .Config.Labels "io.portainer.agent"}}|{{.Config.Image}}|{{json .Config.Entrypoint}}{{range .Mounts}}{{if and (eq .Type "bind") (eq .Source "/")}}|{{.Destination}}{{end}}{{end}}' "$id")" \
+          || fail "Cannot inspect management mount for ${id}; refusing cleanup."
+        # Portainer exposes the host filesystem for management, not an app checkout.
+        case "$management" in
+          'true|portainer/agent:'*'|["./agent"]|/host') continue ;;
+        esac
+      fi
       if [[ "$source" == "$REPO_ROOT" || "$source" == "$REPO_ROOT/"* \
         || "$REPO_ROOT" == "${source%/}/"* ]]; then
         fail "Running container ${id} shares this checkout. Stop it before cleaning node_modules."

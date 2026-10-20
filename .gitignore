@@ -41,5 +41,5 @@ next-env.d.ts
 tts/.venv/
 tts/.python-version
 tts/uv.lock
-tts/__pycache__/
-tts/*.pyc
+__pycache__/
+*.pyc
