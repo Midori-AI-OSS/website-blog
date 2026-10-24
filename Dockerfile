@@ -10,9 +10,7 @@ RUN yay -Syu --noconfirm curl && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm wget && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm git && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm base-devel && yay -Yccc --noconfirm
-RUN yay -Syu --noconfirm nodejs && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm unzip && yay -Yccc --noconfirm
-RUN yay -Syu --noconfirm npm && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm bun && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm espeak-ng && yay -Yccc --noconfirm
 RUN yay -Syu --noconfirm ffmpeg && yay -Yccc --noconfirm
