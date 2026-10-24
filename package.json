@@ -4,9 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "bun --bun next dev",
+    "build": "bun --bun next build",
+    "start": "bun --bun next start",
     "test": "echo 'Tests require Bun runtime. Install Bun (https://bun.sh) and run: bun test' && exit 1",
     "test:bun": "bun test",
     "lint": "biome check ."
