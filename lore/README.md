@@ -64,3 +64,7 @@ Notes:
   - `Go back to past story` -> lower `story_order`
   - `Go to next story` -> higher `story_order`
 - Scheduled lore posts can still appear as navigation targets on lore detail pages.
+
+## Pull Request Front Matter Check
+
+New Markdown posts added in a pull request are checked for their front matter. A non-empty `cover_image` field is required, but the image file does not need to exist yet. Required fields must be populated, optional fields must use supported types, and unknown front matter keys are rejected to catch typos. Existing posts are not revalidated by this check.
