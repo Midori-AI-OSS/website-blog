@@ -3,12 +3,41 @@ name: New Post Front Matter
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'blog/posts/*.md'
+      - 'lore/posts/**/*.md'
 
 permissions:
   contents: read
 
 jobs:
+  detect-new-posts:
+    runs-on: ubuntu-latest
+    outputs:
+      has_new_posts: ${{ steps.detect.outputs.has_new_posts }}
+    steps:
+      - name: Check PR for newly added blog or lore posts
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Check GitHub's PR file statuses: edits to existing posts do not
+          # trigger the more expensive validation job.
+          new_paths="$(gh api --paginate "repos/$GH_REPO/pulls/$PR_NUMBER/files" \
+            --jq '.[] | select(.status == "added" or .status == "renamed" or .status == "copied") | .filename')"
+          if printf '%s\n' "$new_paths" | grep -Eq '^(blog/posts/[^/]+\.md|lore/posts/([^/]+/)*[^/]+\.md)$'; then
+            echo 'has_new_posts=true' >> "$GITHUB_OUTPUT"
+            echo 'New blog or lore post detected; validation will run.'
+          else
+            echo 'has_new_posts=false' >> "$GITHUB_OUTPUT"
+            echo 'No new blog or lore posts; validation job will be skipped.'
+          fi
+
   validate-new-posts:
+    needs: detect-new-posts
+    if: needs.detect-new-posts.outputs.has_new_posts == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
