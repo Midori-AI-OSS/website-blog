@@ -54,7 +54,8 @@ function isCalendarDate(value: string): boolean {
 }
 
 function isIsoDate(value: string): boolean {
-  const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2}))?$/.exec(value);
+  const match =
+    /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2}))?$/.exec(value);
   if (!match || !isCalendarDate(match[1] ?? '')) return false;
   if (!match[2]) return true;
 
@@ -77,7 +78,10 @@ function readRawDate(frontmatter: string): string | null {
   // another month. Check the authored value instead of the normalized Date.
   const line = frontmatter.split(/\r?\n/).find((entry) => /^date\s*:/.test(entry));
   if (!line) return null;
-  const value = line.slice(line.indexOf(':') + 1).replace(/\s+#.*$/, '').trim();
+  const value = line
+    .slice(line.indexOf(':') + 1)
+    .replace(/\s+#.*$/, '')
+    .trim();
   if (
     value.length >= 2 &&
     ((value.startsWith('"') && value.endsWith('"')) ||
@@ -232,7 +236,8 @@ export function findNewPostPaths(base: string, head: string): string[] {
 
   return selectNewPostPaths(
     changed,
-    (path) => spawnSync('git', ['cat-file', '-e', `${base}:${path}`], { stdio: 'ignore' }).status === 0,
+    (path) =>
+      spawnSync('git', ['cat-file', '-e', `${base}:${path}`], { stdio: 'ignore' }).status === 0,
   );
 }
 
