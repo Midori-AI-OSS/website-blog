@@ -29,3 +29,7 @@ Your content goes here...
 - `BlogCard`: Displays a preview of the post.
 - `PostView`: Displays the full post content.
 - `BlogList`: Renders the list of posts.
+
+## Pull Request Front Matter Check
+
+New Markdown posts added in a pull request are checked for their front matter. A non-empty `cover_image` field is required, but the image file does not need to exist yet. Required fields must be populated, optional fields must use supported types, and unknown front matter keys are rejected to catch typos. Existing posts are not revalidated by this check.
