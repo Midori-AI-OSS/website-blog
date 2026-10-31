@@ -19,7 +19,7 @@ const lore = [
   'summary: "A useful preview of this chapter"',
   'tags: [lore, real-moments, riley]',
   'author: Riley Midori',
-  'cover_image: /blog/pending.png',
+  'cover_image: /lore/pending.png',
   'date: 2026-10-31',
   'game: real-moments',
   'story_order: 42',
@@ -60,9 +60,10 @@ describe('blog metadata validation', () => {
   });
 
   test('requires non-empty cover_image but does not check that its file exists', () => {
-    const withImage = blog.replace('author: Riley Midori',
-  'cover_image: /blog/pending.png', 'author: Riley Midori\ncover_image: ""');
-    expect(validatePostFrontmatter('blog/posts/2026-10-31.md', withImage)).toEqual([]);
+    const emptyImage = blog.replace('cover_image: /blog/pending.png', 'cover_image: ""');
+    expect(validatePostFrontmatter('blog/posts/2026-10-31.md', emptyImage)).toContain(
+      'cover_image must be a non-empty string',
+    );
   });
 
   test('reports missing or empty required fields', () => {
