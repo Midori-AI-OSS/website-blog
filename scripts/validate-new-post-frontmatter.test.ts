@@ -96,7 +96,7 @@ describe('blog metadata validation', () => {
   });
 
   test('accepts plus delimiters and a UTF-8 BOM', () => {
-    const plus = '\uFEFF' + blog.replace(/^---/m, '+++').replace(/\n---\n/, '\n+++\n');
+    const plus = `\uFEFF${blog.replace(/^---/m, '+++').replace(/\n---\n/, '\n+++\n')}`;
     expect(validatePostFrontmatter('blog/posts/2026-10-31.md', plus)).toEqual([]);
   });
 });
@@ -136,7 +136,7 @@ describe('lore metadata validation', () => {
 
 describe('supported metadata schema', () => {
   test('rejects unknown keys and catches misspelled front matter', () => {
-    const bad = blog + '\n';
+    const bad = `${blog}\n`;
     expect(validatePostFrontmatter('blog/posts/2026-10-31.md', bad.replace('author:', 'auther:'))).toContain(
       'unknown front matter field "auther" (check for typos)',
     );
