@@ -6,7 +6,6 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import matter from 'gray-matter';
 
 const BLOG_PATH = /^blog\/posts\/[^/]+\.md$/;
 const LORE_PATH = /^lore\/posts\/(?:[^/]+\/)*[^/]+\.md$/;
@@ -127,7 +126,7 @@ export function validatePostFrontmatter(
 
   let data: Record<string, unknown>;
   try {
-    const parsed = matter(text, { delimiters: delimiter }).data;
+    const parsed = Bun.YAML.parse(lines.slice(1, closingLine).join('\n'));
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       errors.push('front matter must be a YAML mapping of field names to values');
       return errors;
