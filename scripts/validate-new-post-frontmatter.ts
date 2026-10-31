@@ -1,6 +1,6 @@
 /**
  * PR-only validation of front matter on newly added blog and lore posts.
- * Existing posts are deliberately ignored; cover_image is never checked.
+ * Existing posts are deliberately ignored. Image files are never checked.
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -12,6 +12,30 @@ const BLOG_PATH = /^blog\/posts\/[^/]+\.md$/;
 const LORE_PATH = /^lore\/posts\/(?:[^/]+\/)*[^/]+\.md$/;
 const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 const LORE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
+
+// Match the metadata consumed by lib/blog/parser.ts (shared by blog and lore).
+// Unknown keys are errors so typos never silently fall back to defaults.
+const TEXT_FIELDS = [
+  'title',
+  'summary',
+  'cover_image',
+  'author',
+  'episode_label',
+  'password',
+  'password_hint',
+  'full_story_pov',
+  'full_story_tooltip',
+] as const;
+const NUMERIC_FIELDS = ['story_order', 'display_weight'] as const;
+const ALLOWED_FIELDS = new Set([
+  ...TEXT_FIELDS,
+  ...NUMERIC_FIELDS,
+  'tags',
+  'date',
+  'game',
+  'povs_enabled',
+]);
+const REQUIRED_TEXT_FIELDS = ['title', 'summary', 'author', 'cover_image'] as const;
 
 export function isPostPath(path: string): boolean {
   return BLOG_PATH.test(path) || LORE_PATH.test(path);
@@ -30,12 +54,39 @@ function isCalendarDate(value: string): boolean {
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-function dateValue(value: unknown): string | null {
-  if (typeof value === 'string') return value.trim();
-  if (value instanceof Date && Number.isFinite(value.getTime())) {
-    return value.toISOString().slice(0, 10);
+function isIsoDate(value: string): boolean {
+  const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2}))?$/.exec(value);
+  if (!match || !isCalendarDate(match[1] ?? '')) return false;
+  if (!match[2]) return true;
+
+  const hours = Number(match[2]);
+  const minutes = Number(match[3]);
+  const seconds = Number(match[4]);
+  if (hours > 23 || minutes > 59 || seconds > 59) return false;
+
+  const timezone = match[5] ?? '';
+  if (timezone !== 'Z') {
+    const tzHours = Number(timezone.slice(1, 3));
+    const tzMinutes = Number(timezone.slice(4, 6));
+    if (tzHours > 23 || tzMinutes > 59) return false;
   }
-  return null;
+  return true;
+}
+
+function readRawDate(frontmatter: string): string | null {
+  // js-yaml converts unquoted YAML dates to Date, rolling invalid days into
+  // another month. Check the authored value instead of the normalized Date.
+  const line = frontmatter.split(/\r?\n/).find((entry) => /^date\s*:/.test(entry));
+  if (!line) return null;
+  const value = line.slice(line.indexOf(':') + 1).replace(/\s+#.*$/, '').trim();
+  if (
+    value.length >= 2 &&
+    ((value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'")))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
 }
 
 export function validatePostFrontmatter(
@@ -59,26 +110,53 @@ export function validatePostFrontmatter(
     errors.push('lore filename must be a lowercase hyphenated slug ending in .md');
   }
 
-  // The site parser supports both YAML delimiters.
+  // Match the delimiters supported by the runtime parser.
   const text = source.replace(/^\uFEFF/, '');
-  if (!/^(---|\+\+\+)\r?\n/.test(text)) {
+  const delimiter = text.startsWith('+++') ? '+++' : '---';
+  const lines = text.split(/\r?\n/);
+  if (lines[0] !== delimiter) {
     errors.push('YAML front matter must start at the top with --- or +++');
+    return errors;
+  }
+
+  const closingLine = lines.findIndex((line, index) => index > 0 && line === delimiter);
+  if (closingLine < 0) {
+    errors.push('front matter must have a matching closing ' + delimiter + ' delimiter');
     return errors;
   }
 
   let data: Record<string, unknown>;
   try {
-    data = matter(text, {
-      delimiters: text.startsWith('+++') ? '+++' : '---',
-    }).data as Record<string, unknown>;
+    const parsed = matter(text, { delimiters: delimiter }).data;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      errors.push('front matter must be a YAML mapping of field names to values');
+      return errors;
+    }
+    data = parsed as Record<string, unknown>;
   } catch {
     errors.push('front matter contains invalid YAML');
     return errors;
   }
 
-  for (const key of ['title', 'summary', 'author']) {
-    if (typeof data[key] !== 'string' || !(data[key] as string).trim()) {
+  for (const key of Object.keys(data)) {
+    if (!ALLOWED_FIELDS.has(key)) {
+      errors.push('unknown front matter field "' + key + '" (check for typos)');
+    }
+  }
+
+  for (const key of REQUIRED_TEXT_FIELDS) {
+    if (typeof data[key] !== 'string' || !data[key].trim()) {
       errors.push(key + ' must be a non-empty string');
+    }
+  }
+
+  for (const key of TEXT_FIELDS) {
+    if (
+      !REQUIRED_TEXT_FIELDS.includes(key as (typeof REQUIRED_TEXT_FIELDS)[number]) &&
+      data[key] !== undefined &&
+      (typeof data[key] !== 'string' || !data[key].trim())
+    ) {
+      errors.push(key + ' must be a non-empty string when provided');
     }
   }
 
@@ -92,24 +170,39 @@ export function validatePostFrontmatter(
     errors.push('lore tags must be lowercase without surrounding whitespace');
   }
 
-  if (isLore) {
-    const date = dateValue(data.date);
-    if (date === null || !isCalendarDate(date)) {
-      errors.push('date must be a real YYYY-MM-DD date');
+  const rawDate = readRawDate(lines.slice(1, closingLine).join('\n'));
+  if (isLore || data.date !== undefined) {
+    if (rawDate === null || !isIsoDate(rawDate)) {
+      errors.push('date must be a valid ISO 8601 date (YYYY-MM-DD or timestamp with timezone)');
     }
+  }
 
+  if (isLore || data.game !== undefined) {
     if (typeof data.game !== 'string' || !LORE_SLUG.test(data.game)) {
       errors.push('game must be an existing lowercase lore game slug');
     } else if (!gameExists(data.game)) {
       errors.push('game must refer to lore/games/' + data.game + '/index.md');
     }
+  }
 
-    if (typeof data.story_order !== 'number' || !Number.isFinite(data.story_order)) {
-      errors.push('story_order must be a finite number');
+  for (const key of NUMERIC_FIELDS) {
+    if (key === 'story_order' && isLore || data[key] !== undefined) {
+      if (typeof data[key] !== 'number' || !Number.isFinite(data[key])) {
+        errors.push(key + ' must be a finite number');
+      }
     }
   }
 
-  // Intentionally no validation of cover_image, image files or image tokens.
+  if (data.povs_enabled !== undefined && typeof data.povs_enabled !== 'boolean') {
+    errors.push('povs_enabled must be a boolean');
+  }
+
+  if (data.password_hint !== undefined && data.password === undefined) {
+    errors.push('password_hint requires password');
+  }
+
+  // A cover_image value is required, but neither its path nor the image file
+  // (or embedded image tokens) are validated. Images may be added later.
   return errors;
 }
 
