@@ -55,7 +55,7 @@ function isCalendarDate(value: string): boolean {
 }
 
 function isIsoDate(value: string): boolean {
-  const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2}))?$/.exec(value);
+  const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2}))?$/.exec(\n    value,\n  );
   if (!match || !isCalendarDate(match[1] ?? '')) return false;
   if (!match[2]) return true;
 
@@ -186,7 +186,7 @@ export function validatePostFrontmatter(
   }
 
   for (const key of NUMERIC_FIELDS) {
-    if (key === 'story_order' && isLore || data[key] !== undefined) {
+    if ((key === 'story_order' && isLore) || data[key] !== undefined) {
       if (typeof data[key] !== 'number' || !Number.isFinite(data[key])) {
         errors.push(key + ' must be a finite number');
       }
