@@ -49,7 +49,7 @@ export function selectNewPostPaths(
 
 function isCalendarDate(value: string): boolean {
   if (!DATE_FORMAT.test(value)) return false;
-  const date = new Date(value + 'T00:00:00.000Z');
+  const date = new Date(`${value}T00:00:00.000Z`);
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
@@ -120,7 +120,7 @@ export function validatePostFrontmatter(
 
   const closingLine = lines.findIndex((line, index) => index > 0 && line === delimiter);
   if (closingLine < 0) {
-    errors.push('front matter must have a matching closing ' + delimiter + ' delimiter');
+    errors.push(`front matter must have a matching closing ${delimiter} delimiter`);
     return errors;
   }
 
@@ -139,13 +139,13 @@ export function validatePostFrontmatter(
 
   for (const key of Object.keys(data)) {
     if (!ALLOWED_FIELDS.has(key)) {
-      errors.push('unknown front matter field "' + key + '" (check for typos)');
+      errors.push(`unknown front matter field "${key}" (check for typos)`);
     }
   }
 
   for (const key of REQUIRED_TEXT_FIELDS) {
     if (typeof data[key] !== 'string' || !data[key].trim()) {
-      errors.push(key + ' must be a non-empty string');
+      errors.push(`${key} must be a non-empty string`);
     }
   }
 
@@ -155,7 +155,7 @@ export function validatePostFrontmatter(
       data[key] !== undefined &&
       (typeof data[key] !== 'string' || !data[key].trim())
     ) {
-      errors.push(key + ' must be a non-empty string when provided');
+      errors.push(`${key} must be a non-empty string when provided`);
     }
   }
 
@@ -180,14 +180,14 @@ export function validatePostFrontmatter(
     if (typeof data.game !== 'string' || !LORE_SLUG.test(data.game)) {
       errors.push('game must be an existing lowercase lore game slug');
     } else if (!gameExists(data.game)) {
-      errors.push('game must refer to lore/games/' + data.game + '/index.md');
+      errors.push(`game must refer to lore/games/${data.game}/index.md`);
     }
   }
 
   for (const key of NUMERIC_FIELDS) {
     if ((key === 'story_order' && isLore) || data[key] !== undefined) {
       if (typeof data[key] !== 'number' || !Number.isFinite(data[key])) {
-        errors.push(key + ' must be a finite number');
+        errors.push(`${key} must be a finite number`);
       }
     }
   }
@@ -232,7 +232,7 @@ export function findNewPostPaths(base: string, head: string): string[] {
 
   return selectNewPostPaths(
     changed,
-    (path) => spawnSync('git', ['cat-file', '-e', base + ':' + path], { stdio: 'ignore' }).status === 0,
+    (path) => spawnSync('git', ['cat-file', '-e', `${base}:${path}`], { stdio: 'ignore' }).status === 0,
   );
 }
 
@@ -247,17 +247,17 @@ export function run(base: string, head: string): number {
   for (const path of paths) {
     const errors = validatePostFrontmatter(path, readFileSync(path, 'utf8'));
     if (errors.length === 0) {
-      console.info('PASS ' + path);
+      console.info(`PASS ${path}`);
       continue;
     }
 
     failures += 1;
     for (const error of errors) {
-      console.error('::error file=' + path + '::' + error);
+      console.error(`::error file=${path}::${error}`);
     }
   }
 
-  console.info('Validated ' + paths.length + ' new post(s); ' + failures + ' failed.');
+  console.info(`Validated ${paths.length} new post(s); ${failures} failed.`);
   return failures === 0 ? 0 : 1;
 }
 
