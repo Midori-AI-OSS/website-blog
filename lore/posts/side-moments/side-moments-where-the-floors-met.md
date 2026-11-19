@@ -2,7 +2,7 @@
 title: "Where the Floors Met"
 summary: "Three realities collapse into one hospital room, something wearing Grace reaches for Riley's body, and Riley gets four impossible minutes to stand, fight, and touch the people waiting for her."
 tags: [lore, side-moments]
-cover_image: /lore/side-moments-where-the-floors-met.png
+cover_image: /lore/side-moments-covers/side-moments-where-the-floors-met.png
 author: Riley Midori
 date: 2026-08-15
 game: side-moments

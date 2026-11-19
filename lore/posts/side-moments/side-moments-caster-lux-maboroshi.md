@@ -2,7 +2,7 @@
 title: "Lux Maboroshi, is that my head?"
 summary: "The caster who sent the Lux Maboroshi clones arrives at Highway 62 to find two of his best pieces gone quiet — and walks into a box with a blue-haired woman, a small white charge, and a sword that cuts the world wrong."
 tags: [lore, side-moments]
-cover_image: /lore/side-moments-caster-lux-maboroshi.png
+cover_image: /lore/side-moments-covers/side-moments-caster-lux-maboroshi.png
 author: Riley Midori
 date: 2026-06-11
 game: side-moments

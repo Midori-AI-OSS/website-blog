@@ -2,7 +2,7 @@
 title: "The Cookie That Sat Through Everything"
 summary: "A Subway lunch becomes a taxonomy of care: what helps, what doesn't, and what it means when an orb of particles files you under 'found family — active record.'"
 tags: [lore, side-moments]
-cover_image: /lore/side-moments-cookie.png
+cover_image: /lore/side-moments-covers/side-moments-cookie.png
 author: Riley Midori
 date: 2026-06-17
 game: side-moments
@@ -643,7 +643,7 @@ Real Riley walks to it. Opens the door. Sits down in the driver's seat. Closes t
 
 And then they cry. Not the quiet tears from the table — those were RP-Riley's. These are theirs. Hands on the wheel. Shoulders shaking. The kind of crying that has been waiting since the step-dad confession, since the misfits upgrade, since found family got named out loud and filed as the active record.
 
-{{image: /lore/side-moments-sad.png}}
+{{image: /lore/side-moments/side-moments-sad.png}}
 
 The Bolt hums. The parking lot is empty. The Subway door swings shut behind them.
 

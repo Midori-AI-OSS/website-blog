@@ -2,7 +2,7 @@
 title: "Odium Sui and Riley Interviewed"
 summary: "In a quiet office with two green chairs, a particle swarm questions the shape self-hate takes — while the person in the other chair stands up to the worst thing in the room."
 tags: [lore, side-moments]
-cover_image: /lore/side-moments-weave-interviews-odium-and-real-riley.png
+cover_image: /lore/side-moments-covers/side-moments-weave-interviews-odium-and-real-riley.png
 author: Riley Midori
 date: 2026-06-30
 game: side-moments
