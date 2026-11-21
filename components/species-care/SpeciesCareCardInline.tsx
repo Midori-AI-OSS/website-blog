@@ -30,6 +30,7 @@ function SmallLabel({ children }: { children: React.ReactNode }) {
         fontSize: '0.64rem',
         letterSpacing: '0.06em',
         lineHeight: 1.16,
+        overflowWrap: 'anywhere',
         textTransform: 'uppercase',
       }}
     >
@@ -40,7 +41,13 @@ function SmallLabel({ children }: { children: React.ReactNode }) {
 
 function CardFaceHeader() {
   return (
-    <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1.5}>
+    <Stack
+      direction="row"
+      justifyContent="space-between"
+      alignItems="baseline"
+      gap={1}
+      sx={{ flexWrap: 'wrap' }}
+    >
       <Typography
         component="span"
         sx={{
@@ -138,10 +145,7 @@ function CompactFieldRow({
           fontSize: strong ? { xs: '0.76rem', sm: '0.84rem' } : { xs: '0.66rem', sm: '0.73rem' },
           fontWeight: strong ? 700 : 600,
           lineHeight: 1.18,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
+          overflowWrap: 'anywhere',
         }}
       >
         {value}
@@ -193,10 +197,7 @@ function CompactFieldPair({
                     : { xs: '0.66rem', sm: '0.73rem' },
                   fontWeight: strong ? 700 : 600,
                   lineHeight: 1.18,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
+                  overflowWrap: 'anywhere',
                 }}
               >
                 {field.value}
@@ -241,10 +242,7 @@ function CompactFieldBlock({
           fontSize: strong ? { xs: '0.76rem', sm: '0.84rem' } : { xs: '0.66rem', sm: '0.73rem' },
           fontWeight: strong ? 700 : 600,
           lineHeight: 1.18,
-          display: '-webkit-box',
-          WebkitLineClamp: 4,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
+          overflowWrap: 'anywhere',
         }}
       >
         {value}
@@ -270,8 +268,11 @@ function FrontCard({
   return (
     <Box
       sx={{
-        position: 'absolute',
-        inset: 0,
+        gridArea: '1 / 1',
+        position: 'relative',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
         overflow: 'hidden',
         border: '1px solid rgba(148, 163, 184, 0.42)',
         borderRadius: { xs: '20px', sm: '28px' },
@@ -345,8 +346,7 @@ function FrontCard({
           zIndex: 1,
           display: 'flex',
           flexDirection: 'column',
-          height: '100%',
-          minHeight: 0,
+          flex: 1,
           p: { xs: 2, sm: 2.5 },
         }}
       >
@@ -356,7 +356,10 @@ function FrontCard({
             mt: { xs: 0.3, sm: 0.5 },
             display: 'grid',
             alignItems: 'center',
-            gridTemplateColumns: { xs: '38% 62%', sm: '40% 60%' },
+            gridTemplateColumns: {
+              xs: 'minmax(0, 38fr) minmax(0, 62fr)',
+              sm: 'minmax(0, 2fr) minmax(0, 3fr)',
+            },
             gap: { xs: 0.8, sm: 1.1 },
             flex: 1,
             minHeight: 0,
@@ -395,10 +398,7 @@ function FrontCard({
                 fontSize: { xs: '0.62rem', sm: '0.68rem' },
                 fontWeight: 700,
                 lineHeight: 1.24,
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
+                overflowWrap: 'anywhere',
               }}
             >
               {summary.identityCaution ?? 'Species/patient guidance only.'} Scan QR on reverse for
@@ -426,8 +426,11 @@ function BackCard({
   return (
     <Box
       sx={{
-        position: 'absolute',
-        inset: 0,
+        gridArea: '1 / 1',
+        position: 'relative',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
         overflow: 'hidden',
         border: '1px solid rgba(148, 163, 184, 0.42)',
         borderRadius: { xs: '20px', sm: '28px' },
@@ -490,8 +493,7 @@ function BackCard({
           zIndex: 1,
           display: 'flex',
           flexDirection: 'column',
-          height: '100%',
-          minHeight: 0,
+          flex: 1,
           p: { xs: 2, sm: 2.5 },
         }}
       >
@@ -505,6 +507,10 @@ function BackCard({
             gap: { xs: 1, sm: 1.4 },
             flex: 1,
             minHeight: 0,
+            '@container (max-width: 380px)': {
+              gridTemplateColumns: 'minmax(0, 1fr)',
+              '& > :last-child': { justifySelf: 'center' },
+            },
           }}
         >
           <Stack gap={{ xs: 0.5, sm: 0.65 }} sx={{ minWidth: 0 }}>
@@ -614,7 +620,7 @@ export function SpeciesCareCardInline({
     <Box
       sx={
         plain
-          ? { width: '100%' }
+          ? { width: '100%', minWidth: 0 }
           : {
               my: { xs: 3, sm: 5 },
               mx: 'auto',
@@ -645,6 +651,7 @@ export function SpeciesCareCardInline({
           width: '100%',
           maxWidth: plain ? undefined : { sm: 360, md: 580 },
           perspective: '1400px',
+          containerType: 'inline-size',
         }}
       >
         <Box
@@ -660,8 +667,17 @@ export function SpeciesCareCardInline({
             textAlign: 'start',
             position: 'relative',
             width: '100%',
-            aspectRatio: '534 / 336',
-            maxHeight: { xs: 300, sm: 280, md: 320 },
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr)',
+            // Reserve the ID-card proportions when space allows; either face can make the card taller.
+            '&::before': {
+              content: '""',
+              gridArea: '1 / 1',
+              width: '100%',
+              aspectRatio: '534 / 336',
+              maxHeight: { xs: 300, sm: 280, md: 320 },
+              pointerEvents: 'none',
+            },
             cursor: 'pointer',
             userSelect: 'none',
             border: 0,
@@ -677,8 +693,9 @@ export function SpeciesCareCardInline({
           <Box
             ref={tiltRef}
             sx={{
-              position: 'absolute',
-              inset: 0,
+              gridArea: '1 / 1',
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0, 1fr)',
               transformStyle: 'preserve-3d',
               willChange: 'transform',
               transform: flipped
@@ -689,8 +706,8 @@ export function SpeciesCareCardInline({
           >
             <Box
               sx={{
-                position: 'absolute',
-                inset: 0,
+                display: 'grid',
+                gridTemplateColumns: 'minmax(0, 1fr)',
                 transformStyle: 'preserve-3d',
                 transition: 'transform 650ms cubic-bezier(.2,.8,.2,1)',
                 transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
