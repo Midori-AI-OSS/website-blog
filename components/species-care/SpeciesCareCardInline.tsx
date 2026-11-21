@@ -19,6 +19,12 @@ const CARD_FONT_FAMILY = 'Inter, var(--joy-fontFamily-fallback)';
 const GUILLOCHE_SVG = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240"><path d="M0 60 Q 30 20, 60 60 T 120 60 T 180 60 T 240 60" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.18"/><path d="M0 60 Q 30 100, 60 60 T 120 60 T 180 60 T 240 60" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.14"/><path d="M0 120 Q 30 80, 60 120 T 120 120 T 180 120 T 240 120" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.18"/><path d="M0 120 Q 30 160, 60 120 T 120 120 T 180 120 T 240 120" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.14"/><path d="M0 180 Q 30 140, 60 180 T 120 180 T 180 180 T 240 180" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.18"/><path d="M0 180 Q 30 220, 60 180 T 120 180 T 180 180 T 240 180" fill="none" stroke="#94a3b8" stroke-width="0.5" opacity="0.14"/><path d="M60 0 Q 120 30, 60 60 T 60 120 T 60 180 T 60 240" fill="none" stroke="#94a3b8" stroke-width="0.4" opacity="0.12"/><path d="M120 0 Q 180 30, 120 60 T 120 120 T 120 180 T 120 240" fill="none" stroke="#94a3b8" stroke-width="0.4" opacity="0.12"/><path d="M180 0 Q 240 30, 180 60 T 180 120 T 180 180 T 180 240" fill="none" stroke="#94a3b8" stroke-width="0.4" opacity="0.12"/></svg>`)}`;
 
 const MAX_TILT = 2.5;
+const ELLIPSIS = {
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+} as const;
 
 function SmallLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -30,7 +36,7 @@ function SmallLabel({ children }: { children: React.ReactNode }) {
         fontSize: '0.64rem',
         letterSpacing: '0.06em',
         lineHeight: 1.16,
-        overflowWrap: 'anywhere',
+        ...ELLIPSIS,
         textTransform: 'uppercase',
       }}
     >
@@ -46,7 +52,7 @@ function CardFaceHeader() {
       justifyContent="space-between"
       alignItems="baseline"
       gap={1}
-      sx={{ flexWrap: 'wrap' }}
+      sx={{ flexShrink: 0 }}
     >
       <Typography
         component="span"
@@ -55,6 +61,7 @@ function CardFaceHeader() {
           fontSize: { xs: '0.74rem', sm: '0.82rem' },
           letterSpacing: '0.04em',
           textTransform: 'uppercase',
+          ...ELLIPSIS,
         }}
       >
         Species Healthcare Card
@@ -67,6 +74,7 @@ function CardFaceHeader() {
           letterSpacing: '0.04em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
+          flexShrink: 0,
         }}
       >
         ER / EMS
@@ -129,7 +137,7 @@ function CompactFieldRow({
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '78px minmax(0, 1fr)', sm: '84px minmax(0, 1fr)' },
+        gridTemplateColumns: 'minmax(0, min(78px, 52%)) minmax(0, 1fr)',
         gap: 0.6,
         borderBottom: '1px solid rgba(203, 213, 225, 0.72)',
         py: 0.55,
@@ -140,12 +148,11 @@ function CompactFieldRow({
       <Typography
         component="span"
         sx={{
-          minWidth: 0,
+          ...ELLIPSIS,
           color: '#0f172a',
           fontSize: strong ? { xs: '0.76rem', sm: '0.84rem' } : { xs: '0.66rem', sm: '0.73rem' },
           fontWeight: strong ? 700 : 600,
           lineHeight: 1.18,
-          overflowWrap: 'anywhere',
         }}
       >
         {value}
@@ -158,10 +165,12 @@ function CompactFieldPair({
   left,
   right,
   strong = false,
+  preferRightOnCompact = false,
 }: {
   left: { label: string; value?: string };
   right: { label: string; value?: string };
   strong?: boolean;
+  preferRightOnCompact?: boolean;
 }) {
   if (!left.value && !right.value) return null;
   return (
@@ -172,6 +181,13 @@ function CompactFieldPair({
         columnGap: { xs: 1, sm: 1.4 },
         borderBottom: '1px solid rgba(203, 213, 225, 0.72)',
         py: 0.5,
+        ...(preferRightOnCompact &&
+          right.value && {
+            '@container (max-width: 430px)': {
+              gridTemplateColumns: 'minmax(0, 1fr)',
+              '& > :first-child': { display: 'none' },
+            },
+          }),
       }}
     >
       {[left, right].map((field) => (
@@ -190,14 +206,13 @@ function CompactFieldPair({
               <Typography
                 component="span"
                 sx={{
-                  minWidth: 0,
+                  ...ELLIPSIS,
                   color: '#0f172a',
                   fontSize: strong
                     ? { xs: '0.76rem', sm: '0.84rem' }
                     : { xs: '0.66rem', sm: '0.73rem' },
                   fontWeight: strong ? 700 : 600,
                   lineHeight: 1.18,
-                  overflowWrap: 'anywhere',
                 }}
               >
                 {field.value}
@@ -243,6 +258,11 @@ function CompactFieldBlock({
           fontWeight: strong ? 700 : 600,
           lineHeight: 1.18,
           overflowWrap: 'anywhere',
+          display: '-webkit-box',
+          WebkitBoxOrient: 'vertical',
+          WebkitLineClamp: 3,
+          overflow: 'hidden',
+          '@container (max-width: 430px)': { WebkitLineClamp: 2 },
         }}
       >
         {value}
@@ -268,8 +288,8 @@ function FrontCard({
   return (
     <Box
       sx={{
-        gridArea: '1 / 1',
-        position: 'relative',
+        position: 'absolute',
+        inset: 0,
         minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
@@ -347,7 +367,8 @@ function FrontCard({
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          p: { xs: 2, sm: 2.5 },
+          minHeight: 0,
+          p: 'clamp(8px, 3.1cqw, 20px)',
         }}
       >
         <CardFaceHeader />
@@ -372,16 +393,24 @@ function FrontCard({
               <CompactFieldPair
                 left={{ label: 'Legal', value: summary.legalName }}
                 right={{ label: 'Preferred', value: summary.preferredName }}
+                preferRightOnCompact
                 strong
               />
               <CompactFieldPair
                 left={{ label: 'Pronouns', value: summary.pronouns }}
                 right={{ label: 'DOB / age', value: summary.dobAge }}
               />
-              <CompactFieldPair
-                left={{ label: 'Sex', value: summary.sex }}
-                right={{ label: 'Gender', value: summary.gender }}
-              />
+              <Box
+                sx={{
+                  display: 'contents',
+                  '@container (max-width: 430px)': { display: 'none' },
+                }}
+              >
+                <CompactFieldPair
+                  left={{ label: 'Sex', value: summary.sex }}
+                  right={{ label: 'Gender', value: summary.gender }}
+                />
+              </Box>
               <CompactFieldBlock
                 label="Primary care"
                 value={summary.primaryCareFlag}
@@ -398,7 +427,8 @@ function FrontCard({
                 fontSize: { xs: '0.62rem', sm: '0.68rem' },
                 fontWeight: 700,
                 lineHeight: 1.24,
-                overflowWrap: 'anywhere',
+                ...ELLIPSIS,
+                '@container (max-width: 430px)': { display: 'none' },
               }}
             >
               {summary.identityCaution ?? 'Species/patient guidance only.'} Scan QR on reverse for
@@ -426,8 +456,8 @@ function BackCard({
   return (
     <Box
       sx={{
-        gridArea: '1 / 1',
-        position: 'relative',
+        position: 'absolute',
+        inset: 0,
         minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
@@ -494,7 +524,8 @@ function BackCard({
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          p: { xs: 2, sm: 2.5 },
+          minHeight: 0,
+          p: 'clamp(8px, 3.1cqw, 20px)',
         }}
       >
         <CardFaceHeader />
@@ -507,21 +538,28 @@ function BackCard({
             gap: { xs: 1, sm: 1.4 },
             flex: 1,
             minHeight: 0,
-            '@container (max-width: 380px)': {
-              gridTemplateColumns: 'minmax(0, 1fr)',
-              '& > :last-child': { justifySelf: 'center' },
-            },
           }}
         >
-          <Stack gap={{ xs: 0.5, sm: 0.65 }} sx={{ minWidth: 0 }}>
+          <Stack gap={0} sx={{ minWidth: 0 }}>
             <CompactFieldRow label="Emergency" value={summary.emergencyContact} />
-            <CompactFieldRow label="Advocate" value={summary.advocateContact} />
-            <CompactFieldRow label="Issued by" value={summary.issuedBy} />
-            <CompactFieldRow label="Registry" value={summary.registeredWith} />
+            <Box
+              sx={{
+                display: 'contents',
+                '@container (max-width: 360px)': { display: 'none' },
+              }}
+            >
+              <CompactFieldRow label="Advocate" value={summary.advocateContact} />
+              <CompactFieldRow label="Issued by" value={summary.issuedBy} />
+              <CompactFieldRow label="Registry" value={summary.registeredWith} />
+            </Box>
             <CompactFieldRow label="Lookup" value={summary.fallbackLookupCode} />
             <CompactFieldRow label="DHS ID" value={summary.healthcareId} />
           </Stack>
-          <SpeciesCareQr value={summary.webScanPath} size={130} plain />
+          <Box
+            sx={{ width: 'clamp(50px, 24cqw, 130px)', '&& > *': { width: '100%', minWidth: 0 } }}
+          >
+            <SpeciesCareQr value={summary.webScanPath} size={130} plain />
+          </Box>
         </Box>
       </Box>
     </Box>
@@ -649,7 +687,7 @@ export function SpeciesCareCardInline({
         sx={{
           mx: plain ? undefined : 'auto',
           width: '100%',
-          maxWidth: plain ? undefined : { sm: 360, md: 580 },
+          maxWidth: plain ? 534 : { xs: 534, sm: 360, md: 534 },
           perspective: '1400px',
           containerType: 'inline-size',
         }}
@@ -667,17 +705,8 @@ export function SpeciesCareCardInline({
             textAlign: 'start',
             position: 'relative',
             width: '100%',
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr)',
-            // Reserve the ID-card proportions when space allows; either face can make the card taller.
-            '&::before': {
-              content: '""',
-              gridArea: '1 / 1',
-              width: '100%',
-              aspectRatio: '534 / 336',
-              maxHeight: { xs: 300, sm: 280, md: 320 },
-              pointerEvents: 'none',
-            },
+            display: 'block',
+            aspectRatio: '534 / 336',
             cursor: 'pointer',
             userSelect: 'none',
             border: 0,
@@ -693,9 +722,8 @@ export function SpeciesCareCardInline({
           <Box
             ref={tiltRef}
             sx={{
-              gridArea: '1 / 1',
-              display: 'grid',
-              gridTemplateColumns: 'minmax(0, 1fr)',
+              position: 'absolute',
+              inset: 0,
               transformStyle: 'preserve-3d',
               willChange: 'transform',
               transform: flipped
@@ -706,8 +734,8 @@ export function SpeciesCareCardInline({
           >
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1fr)',
+                position: 'absolute',
+                inset: 0,
                 transformStyle: 'preserve-3d',
                 transition: 'transform 650ms cubic-bezier(.2,.8,.2,1)',
                 transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
@@ -730,6 +758,22 @@ export function SpeciesCareCardInline({
             </Box>
           </Box>
         </Box>
+        <Typography
+          component="a"
+          href={record.summary.webScanPath}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: 44,
+            color: 'inherit',
+            textDecoration: 'underline',
+            textUnderlineOffset: '0.18em',
+            '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: '2px' },
+          }}
+        >
+          Open full record
+        </Typography>
       </Box>
     </Box>
   );
