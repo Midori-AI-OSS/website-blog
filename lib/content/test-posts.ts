@@ -321,6 +321,8 @@ This story shows an embedded Lore image and species care cards.
 
 These examples show one-card, two-card, and three-card layouts.
 
+For the responsive check, view the cards at 360px, 390px, 430px, tablet, and desktop widths. Flip each card with Enter. Both faces should keep credit-card proportions and stay the same height when flipped. Text that does not fit should end in an ellipsis, not overlap the header or card edge. Verify the QR stays inside the card and that Open full record leads to the unabridged record. Check the tablet layout too: the card can be narrow even on a wider screen.
+
 ### One card
 
 {{speciescard: /lore/w-e-a-v-e}}
