@@ -11,896 +11,420 @@ story_order: 11
 
 ## Leo and Weave
 
-Leo entered with his worn brown spellbook.
-
-Jalen watched him cross the field.
+Leo took the worn brown spellbook from his side as he walked out. Jalen, still leaning over Madi's shoulder, sat up a little.
 
 “He brought the book.”
 
-Madi looked toward the empty sky above midfield.
+“He saw what happened to his sister,” Madi said.
 
-“He watched the previous match.”
+“I saw what happened to his sister. I don't think the book is going to help.”
 
-“That seems responsible.”
+Leo opened it as he reached his circle. Weave gathered opposite him, a current of bismuth a little taller than he was. He glanced at the empty space above the field.
 
-The referee raised a hand.
+“Same arrangement as with Luna?”
 
-“Ready?”
+__This one may lift Leo during the match?__
 
-“Ready,” Leo said.
+“Go ahead.”
 
-__Ready, Leo.__
+At the referee's signal, Leo fitted five Sigillum planes around himself. Wind drew at the grass outside, Lightning crawled along the next plane, and Ice hardened beneath it. Darkness gathered between the ice and the inner layer of light.
 
-The stands flinched.
+Five rings separated from Weave's current. Leo followed them as they began to turn.
 
-Leo opened the spellbook.
+“You're going to go after the layers?”
 
-Five fitted Sigillum planes assembled around him.
+__Possibly.__
 
-Wind formed outside, pulling loose grass inward.
+The first green ring struck the Lightning plane from the side. Leo moved his book to reinforce it. A second ring hit the Wind from behind and the third drove into the turf near his feet. He shifted his weight as the ground moved. The fourth stayed where it was, and the fifth rose overhead.
 
-Lightning crawled through the next layer.
+He looked at the ring that hadn't moved.
 
-Ice hardened beneath it.
+“What's that one for?”
 
-Darkness swallowed the light along the fourth.
+Weave sent the high ring dipping toward the stands. The front row ducked before it turned at the boundary and came back.
 
-A bright inner plane rested close to his body.
-
-Weave formed five rings.
-
-Leo watched them.
-
-“You’re going to strike the layers in order.”
-
-__Incorrect.__
-
-The first green ring hit Lightning.
-
-The second struck Wind from behind.
-
-The third slammed into the turf and sent pressure through Leo’s footing.
-
-The fourth stayed still.
-
-The fifth circled above him.
-
-Leo kept his gaze level.
-
-“That one wants my attention.”
-
-__Correct.__
-
-A student called, “Professor, look up!”
-
-“You look up.”
-
-The student obeyed.
-
-The ring feinted toward the stands and stopped inside the boundary.
-
-The entire section ducked.
+Jalen raised his head. “Hey!”
 
 __Attention acquired.__
 
-“That was targeted harassment!”
+Leo smiled and broke the incoming ring's route with Nightglass Cascade. Smoked facets burst outward from the book, and he followed them with Prismatic Cascade as the stationary ring swept in. A rainbow spread across the grass between them.
 
-__It was a successful demonstration.__
+Priya leaned toward Madi. “Oh! That's the one Luna used earlier.”
 
-Leo broke one incoming ring with Nightglass Cascade. Smoked facets snapped outward from the spellbook.
+Madi stopped drawing and watched Leo turn the next ring away. “Yeah. I don't remember him doing that in class. I'm gonna ask him if we can try it.”
 
-He caught another with Luna’s Prismatic Cascade.
+Leo closed the book and secured it at his side. He drew his sword, turned the last ring away, and used the space it left to raise Eclipsing Sigil around Weave. Dark glass closed into a dome, and the students who'd seen the spell in class applauded.
 
-Rainbow light burst from his position.
-
-Priya leaned forward.
-
-“That one is hers.”
-
-Madi nodded.
-
-“Coming through his focus.”
-
-Jalen frowned.
-
-“That feels unfair.”
-
-Mara looked at him.
-
-“To whom?”
-
-Leo closed the book and drew his sword.
-
-Eclipsing Sigil swept around Weave.
-
-Smoked glass rose from the grass and locked into a dome.
-
-His students started cheering.
-
-__Containment quality: good.__
+__That is a good enclosure, Leo.__
 
 “Thank you.”
 
-__Containment duration: short.__
+The swarm divided. Bismuth streamed through narrow gaps at the base before the edges met. Leo closed the last of the seams, but Weave already had particles outside. Two rings struck the smoked glass from opposite sides. A crack traveled up it and the dome gave way.
 
-The particles divided.
+Mara drew a line on Caleb's sketch. “Right there. That's where she got through.”
 
-Some pressed against the inside. Others threaded through narrow spaces along the forming edges. Rings struck the enclosure from both sides.
+He looked back at the remnants of the dome. “Oh. I thought he'd already closed it along the bottom.”
 
-The dome failed in a single black crack.
+“He had most of it done. I would've been watching the little gap, too.” Mara looked up at the particles coming back together. “I'd have missed the rest of her.”
 
-Leo Misty Stepped away.
+Caleb moved the sketch between them. “Show me where she came out.”
 
-He opened Dimension Door and crossed the field.
+Leo Misty Stepped away from the broken dome, opened a doorway across midfield and went through with his sword. A ribbon of bismuth made it through before he closed the opening and caught at the sword mount on his hip. He turned and sent Shadow Blades from the glimmersteel. Weave let go and intercepted them. Leo conjured a dark longsword in his free hand and advanced with both blades, gradually driving Weave back.
 
-A thread of bismuth followed through the threshold and caught the sword mount at his hip.
+__Leo is moving much faster now.__
 
-Leo ended the doorway, drew his glimmersteel blade, and cut Shadow Blades into the air.
+“I'm trying to catch you.”
 
-Weave knocked them aside.
+The current opened in front of him. Madi stopped writing.
 
-Leo conjured a Dark Caelorum longsword in his free hand.
+“That's too much space.”
 
-For several exchanges he fought with both blades: physical glimmersteel as focus, raw darkness as a silent edge.
+Jalen cupped his hands around his mouth. “Professor, she's doing it again!”
 
-Weave yielded.
+Leo stepped into the gap. Weave closed around him and sent him upward.
 
-Leo pressed.
+Jalen stood. “Oh, there he goes.”
 
-__Leo, aggression increase observed.__
-
-“That is the exercise.”
-
-__This one is assisting.__
-
-The particle cloud opened.
-
-Madi looked up from her notebook.
-
-“That gap is too clean.”
-
-Jalen cupped his hands around his mouth.
-
-“Professor, the gap is suspicious!”
-
-Leo stepped through it.
-
-Weave closed around his torso and launched him upward.
-
-His cardigan snapped in the wind. His gold halo followed his head as he rose. He dismissed the conjured blade before passing the lights, then continued beyond one hundred feet.
-
-The students shouted over one another.
-
-“HE WENT HIGHER.”
-
-“EXTRA CREDIT FOR ALTITUDE.”
-
-“Professor Midori is assigning a reflection paper on gravity.”
-
-“At least three pages.”
-
-At the top of the arc, Weave caught Leo by one ankle.
-
-He stopped upside down.
-
-A second ribbon held his cardigan and tee at the waist. Another steadied his sword wrist.
-
-Weave rotated him until he faced his classes.
+Leo's cardigan snapped as he passed the temporary lamps. He dismissed the conjured blade and let his sword hand settle against a ribbon of particles. His green hair came loose at the nape just before Weave caught his ankle and turned him upside down.
 
 __Leo, your students are observing.__
 
-His green hair hung toward the field.
+“I know.”
 
-“I noticed.”
+Below him, half his class was standing. Madi leaned around Jalen, and Priya tugged at his sleeve.
 
-Jalen stood halfway.
+“Jalen.”
 
-“Professor?”
+“Yes, sir?”
 
 “Sit.”
 
-Jalen sat.
+Jalen sat. Luna made a small, delighted sound from the southern station and leaned into Riley's shoulder to laugh.
 
-__Surrender is recommended.__
+Leo started Misty Step. Weave moved him sideways, and the Darkness dispersed with him still dangling there.
 
-Leo began Misty Step.
+“Rude.”
 
-Weave shifted his suspended leg enough to spoil his destination.
-
-The spell faded.
-
-Leo looked toward Riley.
-
-Both her hands covered her mouth. Her shoulders shook.
-
-“Rude,” he said.
-
-__Accurate.__
+__Surrender is available.__
 
 “Tap.”
 
-Weave released him.
-
-He dropped.
-
-The crowd screamed.
-
-The particles caught him, rotated him upright, and lowered him until his sneakers touched the grass with the softness of a normal step.
+Weave released him. He dropped fast enough to bring another scream from the students, then the rising current caught him, turned him upright and lowered him until his shoes met the grass. Leo took a moment to find his footing before she loosened her hold.
 
 __This one still cares. Sorry for the toss.__
 
-Leo smoothed his cardigan.
+“Thank you.” Leo put his sword away and got his hair out of his face.
 
-“Apology accepted.”
+Luna met him at the line. “Wait. You said the exact same thing to me!”
 
-He looked toward his students.
+__Yes, Luna.__
 
-“Classroom replication requires written approval.”
+She started laughing again and put her arm around Leo. “Aw, look. She loves you too.”
 
-__Future classroom behavior remains undecided.__
+“I know.” He put his arm around her.
 
-His regular students lost control.
+Echo came up on his other side. “Could you hear people when you were up there? Because Jalen was yelling and I wasn't sure if you could hear him.”
 
-Echo met him at the boundary and hugged him around the middle.
+“Yeah, I heard him.” Leo looked toward the rail. Jalen waved.
 
-“You looked very educational.”
-
-“Thank you.”
-
-“That was an insult.”
-
-“I know.”
-
-“You also looked like a bat dressed for office hours.”
-
-“That one needs work.”
-
-Echo turned toward Weave and opened both arms.
-
-The swarm curled around her shoulders.
-
-“You treated both twins equally.”
-
-__Fairness matters.__
-
-Luna called from behind them.
-
-“I went first.”
-
-__Sequence differs from value.__
-
-“Traitor.”
+Echo opened her arms to Weave. The current folded around the three of them.
 
 ## Echo and Weave
 
-Echo returned for her third match.
+Echo carried her staff back to the center. Weave flowed after her and spread across the circle opposite her as the referee got into position.
 
-Her cardigan sleeves covered the bases of her fingers now. The belt sat slightly lower around her waist. Her face carried a different softness beneath the blunt bangs, difficult to place from the stands.
+“Okay,” Echo said. “I want violence this time. I want you to actually try and throw me and stuff, if you're okay with that. I saw what you did with them.”
 
-A student leaned toward James’s section.
+__Does Echo want this one to throw her as well?__
 
-“Is she changing shape?”
+“Yes!”
 
-A reply came without a glance.
+__This one can do that.__
 
-“Watch the match.”
+“Thank you.” Echo brought her staff up. “Let's go.”
 
-Echo entered the circle.
-
-Weave formed three rings.
-
-__Ready, Echo.__
-
-“Yes.”
-
-The referee began.
-
-Echo placed Driftlights near two pylons, the center stone, and visible seams in the safety lattice. Prismatic rings spiraled around the staff tip. Tiny clock hands shimmered in her eyes.
-
-She Misty Stepped through the first ring route.
-
-Weave corrected.
-
-Echo opened Dimension Door and left it hanging.
-
-One ring shifted toward the copper threshold. The main particle field stayed with her.
+The referee started the match. Echo set several more Driftlights near the pylons and center stone. Weave sent three rings across the field. Echo teleported past the closest ring and opened Dimension Door before the other two could turn. She stayed where she was and watched one of them veer toward the opening.
 
 __False destination identified.__
 
-“Eventually.”
+“Oh, you saw that one.” She closed the doorway and tried a second route. Weave had already moved toward the place she was looking. Echo turned and planted the staff against the grass. “Wait. Okay, I want to see something.”
 
-Echo set the brass staff on the grass.
+She set it down within the circle and stepped away from it. Weave gathered around her waist and shoulders, with a ribbon holding the outside of the dress close to her knees. Echo lifted her arms a little to make room for the current.
 
-Weave gathered around her waist and shoulders. An opaque ribbon settled around the outside of her dress from hip to knee, holding the fabric close. A second line secured the cardigan hem.
+Then Weave carried her past the boundary.
 
-Instead of carrying Echo toward the center, Weave lifted her over the boundary.
+“What are you doing?”
 
-Students in the front row began moving.
+Priya moved her notebook as the bismuth lowered Echo onto the bench between her and Jalen. Jalen scooted over quickly, getting his boots out of the way of her dress.
 
-The particle field seated Echo between Priya and Jalen.
+Echo looked at the two of them. “Hi.”
 
-Her dress settled over her boots. The sage cardigan fell across her lap.
+“Hi,” Priya said, still holding her notebook up.
 
-Echo looked between them.
+“Are you out?” Jalen asked.
 
-“Hi.”
+“I don't know.” Echo looked at Weave. “Am I out?”
 
-Jalen shifted farther down the bench.
+__Echo human, this one believes the students may teach you something. Beginning with how to sit still.__
 
-“Are you eliminated?”
+Priya pressed the notebook against her mouth.
 
-“I think I’m being displayed.”
+“Oh, come on!” Echo said. She started laughing. “Weave, I wanted to fight you.”
 
-__Echo requires a timeout.__
+The particles held their position above her.
 
-Echo looked up at the cloud.
+Jalen looked down at his knee, which was bouncing against the bench. “You picked the wrong part of the stands for that.”
 
-“I requested violence, actually.”
+Echo looked at him. “Do you have a lot of energy too?”
 
-__Observed behavior suggested seating.__
+“Right now, yeah.”
 
-Priya moved her notebook aside.
+“Me too. I really wanted to try the other thing.” She looked back at the staff lying in the circle. “Can I go do it, please?”
 
-“Do you need room?”
+Weave gathered around her again.
 
-“Apparently I needed an audience.”
+__Request accepted.__
 
-A student behind them asked, “What happens now?”
+“Thank you!” She waved at Priya and Jalen as the current lifted her. “Bye!”
 
-Echo looked toward Weave.
+Priya started laughing after Echo was already over the rail. Noor waited until the row had settled before she moved closer to her.
 
-“Something rude.”
+Priya watched the current carry Echo back. “She was smiling the whole time.”
 
-__Please remain seated.__
+“Yeah,” Noor said. “It was a lot quieter over here before everybody started shouting, though. She probably liked having a second to talk.”
 
-Jalen raised his hand.
+Across the field, Weave put Echo down beside her staff. She picked it up, then looked at the center stone and the marks near the boundary. She set the staff down again where the landing would be clear.
 
-“Which direction counts as seated?”
+“Okay, Weave. Fifty feet? Then put me through the field hard enough to trigger it. I want to see what the panels do when I come down.”
 
-__Down.__
+The referee looked at her and waited for the confirmation from the ward operator. A hand went up at the station.
 
-“You could have started from the field!”
+__Fifty feet. Confirmed.__
 
-__This route included additional observational value.__
-
-Echo pointed at Weave.
-
-“She wanted an audience.”
-
-__Also correct.__
-
-Weave lifted her from the bench and carried her beyond the boundary. The exterior bismuth screen stayed in place.
-
-Echo looked toward the center circle.
-
-“Fifty feet. Then put me through the field hard enough to trigger it.”
-
-The crowd shifted from laughter into attention.
-
-Weave launched her upward.
-
-The arc carried less violence than the twins’ throws, smooth and controlled, black dress and sage cardigan held close beneath the iridescent field.
-
-At roughly fifty feet, Echo looked down.
+Weave tossed Echo upward. Near the top of the arc, Echo looked down at the landing point.
 
 “Do it.”
 
-Weave drove her toward the center.
+Weave brought her down. Translucent force panels closed over the grass beneath her. She struck them, rebounded once and settled on the turf. She lay there for a moment with her arms spread beside her.
 
-The primary lattice recognized the velocity.
+Jalen shouted, “YOU BOUNCED!”
 
-Translucent force planes locked across the landing point.
+Echo sat up. “I know!”
 
-Echo hit.
+She reached for Weave as the particles drew near, then stopped to look at the part of the lattice that had caught her.
 
-Her shoulders, back, and hips rebounded together. Her whole body bounced once against the compressed surface before settling onto the grass.
+“Did the field catch me that time? Or did you catch me and I just hit the field after that?”
 
-Silence held for a beat.
+__The field caught Echo.__
 
-Then a student screamed:
+“Oh! Okay, that's what I wanted to see!” She wrapped both arms around the current. “Thank you. That was fun.”
 
-“YOU BOUNCED.”
+__This one enjoyed the match.__
 
-Echo sat up.
-
-“Yes.”
-
-Weave lowered beside her.
-
-Echo wrapped both arms around the particle cloud.
-
-“I know where your bad habits live now.”
-
-__Mutual knowledge confirmed.__
-
-“That sounded threatening.”
-
-__It was affectionate.__
-
-“Good.”
-
-Riley opened one arm when Echo returned.
-
-Echo stepped into it and stayed there through the reset.
+“Me too.” She retrieved her staff and went back to the station after the referee called the match. Riley opened an arm for her. Echo stood close against her through the reset, watching Leo and Luna gather their things.
 
 ## Luna and Leo
 
-The final one-on-one drew everyone to their feet.
+There was a longer break before the twins' match. They ate and drank while Leo replaced the damp wrap on his sword grip. Luna drank most of a soda and accepted a little healing for the soreness from her fall. Echo watched her set the can down.
 
-Luna retied her hair.
+“You have to actually fight each other,” she said.
 
-Leo changed the wrap on his sword grip.
+Luna laughed. “Oh, we will.”
 
-They ate, drank, and accepted brief healing before entering from opposite sides.
+Leo looked over at the staff by Luna's chair. “You're starting with that?”
 
-Luna carried the silver staff in her right hand. Her blue spellbook rested at her side. The glimmersteel sword hung at her left hip.
+“Yeah. Why? What've you got planned?”
 
-Leo held his physical sword. His gold staff rested across his back. His brown spellbook remained clipped at his side.
+“Nothing yet.”
 
-A student near the top of the stands asked, “Which one is Professor Midori?”
+“Bullshit.” Luna laughed and picked it up.
 
-“The one with the sword.”
+They walked to opposite circles and signaled to the referee. At his call, Luna gathered twelve Photon Blades around her staff. Leo raised his sword and sent twelve Shadow Blades into orbit behind him.
 
-“They both have swords.”
+Luna released four blades in pairs. Leo raised Wind and Dark planes, allowing the first pair to curve around the Wind before he caught them in the Darkness. He met the last with Nightglass Cascade. When the dark fragments cleared, his Shadow Blades were already on their way toward her.
 
-“The brown book.”
+Luna stepped sideways and broke three of them with Prismatic Cascade. She held her other blades back until the rainbow facets thinned, then sent them around the corner of his Wind plane. Leo turned one away with his sword. A second caught the edge of the plane as he moved it, and the third went through the gap and sliced the hem of his cardigan.
 
-“Currently.”
+Luna pointed at his torn cardigan. “You always put that Dark one too close.”
 
-The referee raised one hand.
+Leo looked down at the opening and shifted the plane. “All right. Try it again.”
 
-“Ready?”
+She sent two more blades toward the same place. He caught one in the new angle and turned the other into the grass.
 
-Leo looked directly at Luna.
+“Yeah, that's better.” Luna secured her staff and opened her book. Darkness gathered from the pages.
 
-“Ready.”
+Jalen pointed at her. “Wait, she's going to use his.”
 
-She rolled one shoulder.
+Madi pushed her glasses up with a finger. “Shadow Blade. I haven't seen her use it this many times.”
 
-“Yeah.”
+Leo sheathed his sword and pulled the gold staff from his back. Light-blue blades formed around it. Luna sent her Shadow Blades across the field, then turned Nightglass Cascade against the answering Photon Blades. Leo caught her darkness in a wash of prismatic facets. The two orbits thinned as their counterspells found each other.
 
-“Begin.”
+Mara leaned across Caleb. “Watch the corners behind him.”
 
-Twelve Photon Blades gathered around Luna’s staff.
+A dark Eclipsing Sigil rose around Leo. He put a Dawnbreak disc through the forming edge, making space for a doorway. Luna moved her book and opened Dimension Door behind the opening. Leo vanished in a shadowed Misty Step just as she emerged.
 
-Twelve Shadow Blades peeled from Leo’s sword.
+“Oh, come on, I just got over here!” Luna called.
 
-Their gold eyes ignited together.
+Leo laughed as he moved away.
 
-Matching halos appeared above identical faces.
+She put four little Dancing Lights around the field and drew her silver staff again, closing the book and clipping it away. Leo stepped toward the fourth light. Dawnbreak sealed the space behind him; he brought his staff across and opened another threshold under its edge. Luna opened one of her own at almost the same time.
 
-Luna released four blades.
+They each stepped through the other's doorway.
 
-Leo built Wind and Dark planes. Wind bent two routes. Darkness consumed most of the third. Nightglass shattered the fourth.
+They came out where the other had just been. Luna turned around and laughed.
 
-Leo’s Shadow Blades arrived from his return swing.
-
-Luna answered with Prismatic Cascade.
-
-Dark glass and rainbow light burst through the same air.
-
-Students shouted spell descriptions over one another.
-
-“Black glass!”
-
-“Rainbow counter!”
-
-“He used black glass.”
-
-“We saw it, Mara.”
-
-“I was helping.”
-
-Luna sent three Photon Blades through the weakening corner.
-
-“Still opening with the same layers.”
-
-“They worked.”
-
-“Past tense.”
-
-Leo shifted the dark plane, caught two blades, and let the third pass close enough to cut the edge of his cardigan.
-
-The stands reacted.
-
-“That was his good cardigan.”
-
-“He owns several.”
-
-“Why do you know that?”
-
-Luna locked the staff across her back and opened her blue spellbook.
-
-Darkness gathered around the rainbow-edged pages.
-
-Shadow Blades rose around her.
-
-Madi’s pen stopped.
-
-Jalen pointed.
-
-“She can use his spells.”
-
-Mara turned toward him.
-
-“You saw the course profile.”
-
-“I skimmed.”
-
-Leo magnet-locked his sword and drew the gold staff.
-
-Photon Blades formed around him.
-
-The crowd roared.
-
-Luna used Nightglass Cascade to shatter Leo’s Photon Blades.
-
-Leo used Prismatic Cascade to break Luna’s Shadow Blades.
-
-Luna closed Eclipsing Sigil behind him.
-
-Leo traced Dawnbreak through its edge, creating a warm-gold route.
-
-“You made a door,” Luna said.
-
-“I needed one.”
-
-She opened Dimension Door at the far end.
-
-Leo Misty Stepped as she emerged.
-
-Luna placed four Dancing Lights around likely destinations.
-
-Leo chose the fourth.
-
-A Dawnbreak disc sealed behind him.
-
-He opened Dimension Door beneath the lower edge.
-
-Luna opened her own threshold at the same instant.
-
-Each twin stepped through the other’s spell.
-
-They emerged in one another’s previous positions.
-
-Both paused.
-
-Luna cast Message.
-
-“That was stupid.”
-
-Leo’s answer reached her.
-
-“Your door.”
-
-“You used it.”
+“Did you seriously just use mine?”
 
 “You used mine.”
 
-Their smiles appeared together.
+“Fuck. Okay.” She brought her staff up as Leo began another cast.
 
-A student shouted, “What are they saying?”
+Leo raised another five-layer Sigillum. Luna watched where he set the edges, then began fitting her own planes around herself.
 
-Another answered, “Sibling insults.”
+Caleb moved his notebook closer to Mara. “She's putting it in the same place he did.”
 
-“How do you know?”
+Mara followed the edge with her finger. “Even there. I would've left a little more space between those two.”
 
-“I have siblings.”
+The two staffs tipped toward each other. Their formations matched so closely that for a moment the field looked divided by a mirror. Leo looked at her Ice plane.
 
-Leo planted the gold staff.
+“You put that one a bit close.”
 
-Five Sigillum layers built around him.
+Luna looked at his. “So did you.”
 
-Wind.
+He turned to see it. Her first blade hit the outer Wind plane before he looked back. He laughed and sent his own counter across the grass.
 
-Lightning.
+For several exchanges the five layers held. Each twin kept changing the corner of a plane that the other had just weakened. Luna sent her light through the place Leo had been using for his blade, and he split the approach with Darkness before it reached him. He shifted the Lightning toward a gap she had left near the ground. She caught the next strike with ice, closed the gap and made him abandon the route.
 
-Ice.
+The Wind tore away from both formations. Lightning crackled over the icy surfaces. A pair of Cascades broke the last of the Darkness, and both inner Light planes flared before dissolving. The twins took a couple of steps apart as their spells faded around them.
 
-Dark.
+Luna rested the end of her staff in the grass and caught her breath. Leo lowered his own.
 
-Light.
+She spoke in Celestial. The sound carried across the quiet field in bright handbells.
 
-Luna watched every fitted surface resolve.
+<celestial:R>Rua, can you quit being so careful with me?</celestial>
 
-Then she raised her silver staff.
+His answer came back in the low resonance of church gongs.
 
-An identical structure assembled around her.
+<celestial:R>I could ask you the same thing.</celestial>
 
-Same order.
+Luna raised her head and laughed. <celestial:R>Okay. Fine.</celestial>
 
-Same spacing.
+They secured their staffs against their backs. Luna drew her sword and closed both hands around the grip for a moment. Lightning spread along the glimmersteel. Leo conjured a Caelorum longsword, first Dark, then Wind, then Lightning curling through the smoke-edged blade.
 
-Same angles.
+Their first exchange happened so quickly that the lattice lit beneath Luna's shoes before the impact reached the students. Leo's Wind was gathering speed on every swing. She turned two strikes, then stepped inside the third and pushed his blade away. When he reset, she was already moving toward his other side.
 
-Same response lines.
+Rowan watched the turf bend under their feet. “The Professor's getting faster every time he swings.”
 
-The field became a mirror: identical twins inside matching magical architecture.
+Tessa tried to follow the two green heads. “I can't tell where either of them is going.”
 
-Madi leaned so far forward that Priya caught the back of her jacket.
+“He can't keep doing that if she makes him stop.” Rowan pointed as Luna turned him out of the exchange. “See? She made him take another step.”
 
-“She copied the spacing.”
+Leo caught Luna's sword with his Dark edge and held it there. She broke contact, backed away a few paces and came in again. His next strike reached her side and the lattice sent her sliding across the center circle. She rolled through the fall, got back to her feet and pulled the hair out of her face.
 
-Leo studied Luna’s structure.
+Leo waited while she got her feet under her.
 
-“You placed Ice too close to Lightning.”
+Luna came back at him grinning. He met her first swing and checked the next one just before it reached her. She caught his guard hard enough to drive him backward.
 
-“So did you.”
+<celestial:R>There! Why'd you stop?</celestial>
 
-They attacked.
+<celestial:R>You were still trying to get your feet under you.</celestial>
 
-Corresponding planes broke across the field in paired flashes. Wind collapsed into spirals. Lightning cracked through matching grids. Ice burst into white fragments. Dark surfaces split along smoked seams. Light flared bright enough to erase both twins for half a heartbeat.
+<celestial:R>Yeah, and I'm gonna do it to you if you give me the chance. You know I will.</celestial>
 
-The shells failed together.
+He laughed. <celestial:R>All right.</celestial>
 
-Luna and Leo separated at midfield.
+She drove him across the next yard line while he was laughing. He came back at her with three swings in quick succession. She had to turn aside to keep the last one from reaching her shoulder. The grass lit beneath their feet as the lattice caught the force of each blow.
 
-White breath drifted from both of them.
+Luna slipped back from the fourth strike and grinned at him. <celestial:R>There! Fuck, you can do that, you know.</celestial>
 
-Luna’s staff tip rested against the grass. Leo’s sword hung low.
+<celestial:R>I'm trying.</celestial>
 
-Luna spoke in Celestial.
+<celestial:R>You're teaching me again. Just fight me, Rua.</celestial>
 
-Her voice crossed the field like handbells in a high stone chamber.
+He caught her next swing. <celestial:R>Then stop leaving me all that room on the right.</celestial>
 
-“Quit being careful.”
+She glanced to the side and he came at her before she had a chance to answer. She barely got her sword across.
 
-Leo answered in his usual deeper register, broad church bells rolling beneath the cold air.
+<celestial:R>Oh, you asshole!</celestial> She laughed and pushed him back.
 
-“You first.”
+She came in close again. Leo caught the first swing and stepped out of the way of the next. He brought the Dark edge against her glimmersteel, but she broke the lock and caught him across the chest on the return. The lattice flared between them and he stumbled back.
 
-A few students reacted before the weapons formed.
+<celestial:R>That one hurt.</celestial> Leo rubbed his chest, still smiling.
 
-“She challenged him.”
+<celestial:R>Good!</celestial>
 
-“What did he say?”
+Luna backed away from him. <celestial:R>Hey, do you wanna try something with the blades again?</celestial>
 
-“He accepted.”
+<celestial:R>Go ahead.</celestial>
 
-Leo conjured one Caelorum longsword.
+His answer rang brighter than his earlier words.
 
-Dark formed first, a smoke-edged blade that swallowed its own sound.
+She let the Lightning leave her sword, put it back in its scabbard, and pulled her silver staff free. The blue book opened in her other hand. Photon Blades rose from the staff and Shadow Blades from the pages. Leo kept the stacked Caelorum sword, casting both sets through its Lightning edge.
 
-Wind wrapped the length.
+Luna sent the first set of blades toward Leo high and the darkness followed closer to the grass. He brought up Nightglass Cascade and then Prismatic Cascade, leaving a hole between the two waves. Luna sent a Photon Blade through it. He turned, caught the light, and sent the next pair toward her staff.
 
-Lightning crawled through the darkness.
+Light crossed the dark arcs. Rainbow facets and smoked glass hung in the air long enough for other blades to cut through them. Madi traced a light-blue line on her drawing as one of the formations broke apart.
 
-Luna closed her spellbook and clipped it securely at her side. She locked the staff across her back and drew her physical sword.
+“Is that one hers?” Jalen asked.
 
-Lightning Augment entered the glimmersteel.
+“No, I think it's his light. Wait.”
 
-Leo moved first.
+Another pair crossed.
 
-His blade reached Luna’s guard before most of the crowd saw his step.
+“Never mind,” she said, lowering the pen.
 
-She matched him.
+Luna closed one route too late. The staff spun out of her grip and landed near the eastern boundary. Leo dodged a returning blade and caught the next one with his conjured sword. The blow knocked the staff loose from his back and it landed near the western pylon. His brown book struck a yard marker when its clip gave way.
 
-The impact sound reached the stands after two more exchanges.
+Luna tried to keep the remaining Shadow Blades moving with her book. Leo crossed the intervening grass and met them with Darkness. One of the returning force panels caught the book as she twisted away, sending it skidding across the wet turf. She drew her physical sword to meet him.
 
-Leo’s Wind stack accelerated each consecutive swing.
+He drew his own as he came in, and for a short, noisy exchange the two physical blades met beneath the stacked Caelorum sword. Luna knocked his glimmersteel out of line and he lost it. Leo caught her next strike and turned her wrist; her sword slid away toward the eastern side. The remaining blade orbits completed their routes and faded. He dismissed the conjured sword.
 
-Luna broke every developing sequence. She turned one strike, drove her shoulder into him, checked his wrist with the pommel, disengaged half a step, then snapped back into range.
+They stood a few feet apart at midfield, both breathing hard. Leo looked toward the equipment lying by the boundary. Luna stepped toward him.
 
-Their halos became easier to follow than their bodies.
+<celestial:R>Still with me, Rua?</celestial>
 
-Jalen grabbed the railing.
+<celestial:R>Va, I'm good.</celestial>
 
-“I lost them.”
+His words rang in the same bright handbell register as hers now. Luna wiped her forehead on her sleeve.
 
-Madi pointed toward the turf.
+<celestial:R>Okay. Come here.</celestial>
 
-“Watch the grass.”
+He conjured a short Wind blade. She formed a short Light blade and stepped inside its reach.
 
-Priya said, “Watch the halos.”
+Leo caught her wrist. Luna drove her shoulder into him and the Wind blade scattered. He caught her arm and tried to turn her off her feet; her Light blade vanished as she twisted through the grip. She tried to pull free, but he still had her arm.
 
-Leo’s Dark edge caught Luna’s sword and drew energy through the contact.
+<celestial:R>Rua, ow. Fuck.</celestial>
 
-She broke the lock.
+He loosened his grip a little. She took the space and caught him around the shoulder.
 
-His next strike reached her side.
+<celestial:R>Really, Runa?</celestial>
 
-The lattice took the cutting force. The impact launched her across the center circle.
+She laughed and leaned her weight into him.
 
-Luna hit the grass, rolled through one shoulder, and came up with green hair across her face.
+They slipped apart again. Leo shifted forward, reaching to catch her around the waist before she could move. Luna turned through the hold and kicked out the supporting leg as he stepped. He went down onto a knee and one hand. She conjured one last Light blade and brought it up in front of him.
 
-The crowd was still reacting when she charged again.
+He looked up at her. His hair had fallen across one eye.
 
-Leo saw her expression.
+<celestial:R>That was cheap.</celestial>
 
-“There you are.”
+<celestial:R>Yeah, it was.</celestial>
 
-“Shut up.”
+He laughed and tapped the grass. Luna dismissed the blade and offered her hand as the referee called the match.
 
-She attacked harder.
+He took her hand. She pulled him upright and nearly went down with him. Leo caught her shoulder and Luna put both arms around him, laughing into his cardigan. He hugged her back.
 
-The twins crossed midfield in flashes.
+<celestial:R>You good?</celestial> Luna asked.
 
-Gold rings.
+<celestial:R>Na. You?</celestial>
 
-Smoke-dark steel.
+<celestial:R>Fuck no.</celestial>
 
-Lightning-white silver.
+Echo reached them while they were still holding each other. “Can I get in there too?”
 
-Grass flattening behind them.
+Luna moved one arm. Echo folded into the space between them.
 
-Impact sounds arriving late.
+“Are we back to English yet?”
 
-Luna caught Leo across the upper chest. The lattice took the edge. The force drove him backward.
+“Yeah.” Luna smiled at her. “Sorry.”
 
-Leo smiled.
-
-Luna saw it.
-
-“Oh, now you’re having fun?”
-
-“Yes.”
-
-“Asshole.”
-
-She pressed him across two yard lines.
-
-Leo spoke in Celestial as he reset.
-
-The words still carried the bronze depth of church bells, though brighter tones had begun gathering along their edges.
-
-Luna answered in clear handbells.
-
-He answered faster.
-
-The lower resonance shortened.
-
-Each phrase pulled closer to hers.
-
-Luna broke contact.
-
-She released her sword. Lightning left the steel. The blade returned to its scabbard at her hip.
-
-She pulled the silver staff from her back and opened the blue spellbook in her other hand.
-
-Photon Blades formed through the staff.
-
-Shadow Blades rose from the pages.
-
-Leo kept the stacked Caelorum sword. Lightning made the conjured blade his focus. He cast both blade sets through it.
-
-Four swarms filled the field.
-
-Light passed through darkness. Darkness crossed light. Prismatic and Nightglass Cascades broke the air into rainbow facets and smoked fragments.
-
-The students shouted themselves hoarse.
-
-“Light behind Leo!”
-
-“Dark behind Luna!”
-
-“Which blades belong to who?”
-
-“Watch the focus!”
-
-“I AM WATCHING EVERYTHING.”
-
-The field stripped their equipment away one piece at a time.
-
-Luna’s silver staff spun toward the eastern boundary.
-
-Leo’s gold staff landed near the western pylon.
-
-The blue spellbook skidded through wet grass.
-
-The brown book struck a yard marker and fell open.
-
-Their physical swords left their hands and stopped beyond practical reach.
-
-The remaining blade orbits completed their routes and faded.
-
-The twins stood at midfield with empty hands, loose green hair, damaged clothes, and bright halos.
-
-Luna spoke in Celestial.
-
-Her voice rang in a short handbell sequence.
-
-“Still with me?”
-
-Leo’s answer began with one low bell beneath it.
-
-“Until one of us falls.”
-
-“Then fall.”
-
-“Make me.”
-
-By the final words, the church-bell depth had thinned. His voice carried the same bright handbell resonance as Luna’s, distinguished through cadence and breath.
-
-A few students reacted before everyone else.
-
-“They forgot we’re here.”
-
-“What are they saying?”
-
-“She told him to fall.”
-
-Leo conjured a shorter Caelorum blade.
-
-Luna formed a Light blade in her hand.
-
-They closed inside grappling distance.
-
-The fight compressed.
-
-Wrist traps.
-
-Elbows.
-
-Shoulder drives.
-
-Knees.
-
-Hip turns.
-
-Low kicks.
-
-Short blades flashing between their bodies.
-
-Leo built the beginning of a Wind sequence. Luna jammed his arm against her shoulder before the chain gathered speed.
-
-Leo caught her casting wrist and forced the Light blade to dissolve.
-
-Luna trapped his sword arm, drove through his shoulder, and collapsed the stacked Caelorum blade.
-
-They kept fighting with empty hands.
-
-Their Celestial shortened between breaths.
-
-Both voices rang as handbells now, sometimes overlapping so closely that the stands relied on position and posture to know who spoke.
-
-Leo caught Luna around the waist and tried to put her down.
-
-She turned through the grip.
-
-They separated.
-
-Leo shifted his weight forward.
-
-Luna kicked the outside of his supporting leg.
-
-His knee folded.
-
-He dropped onto one knee and one hand.
-
-Luna conjured one final Light blade and pointed it at his face.
-
-Leo looked up.
-
-“That was cheap,” he said in Celestial.
-
-“That was your leg.”
-
-He tapped the grass.
-
-The students who understood laughed a fraction before the rest of the stadium caught the result.
-
-Luna dismissed the blade and offered her hand.
-
-Leo took it.
-
-She pulled him upright. Both lost balance. Leo caught her shoulder. Luna gripped the front of his cardigan.
-
-They hugged because it became the most stable position.
-
-Their halos dimmed together.
-
-Luna spoke quietly against his shoulder.
-
-“You good?”
-
-“No.”
-
-“Same.”
-
-Echo reached them and wrapped both twins in her arms.
-
-“Are we speaking languages everybody knows again?”
-
-“Probably,” Luna said.
-
-“Eventually,” Leo answered.
+Leo looked at the equipment scattered across the grass. “I think we'd better pick some things up.”

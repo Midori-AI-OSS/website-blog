@@ -11,1378 +11,530 @@ story_order: 12
 
 ## The Free-for-All
 
-By the time the field reset, the afternoon light had begun turning gold.
+The temporary lights came on while the ward operators replaced the markers the twins had knocked over. Luna sat beside Leo with a blanket around her shoulders and a soda in her hand.
 
-Temporary lamps came alive around the stands.
+Leo held out a bottle of water.
 
-Luna sat wrapped in a gray field blanket, drinking soda. Leo checked her twice and received a flat stare on the second attempt.
+“Ugh, hang on.” Luna finished her soda, took the water and drank some of it. She handed it back. “Thanks.”
 
-Echo rested close to Riley. Her cardigan cuffs covered half her hands. The belt crystals had been tightened.
+He set it between them and went back to the clip on his book.
 
-Weave rested partly inside the open box as a low iridescent shimmer.
+Echo was still beside Riley, who had brought her chair a little closer to the edge of the station. Weave had gathered into the open box beside them for the break. Jamie watched the ward operators checking the last of the pylons.
 
-The primary lattice recalibrated.
+The referee called the fighters back out. Luna folded the blanket onto her chair and took her staff. Leo went with her. Echo waited until Riley had moved her arm, then stood and followed them. A little stream of bismuth rose from the box and widened as it crossed the boundary.
 
-Faculty confirmed the secondary systems.
-
-The four fighters entered separate circles.
-
-Luna stood east with staff and spellbook ready.
-
-Leo stood west with his physical sword in hand.
-
-Echo stood south, staff planted beside one boot.
-
-Weave spread across the northern circle.
-
-The referee raised both arms.
+The four separated into their circles. Leo drew his sword in the west, Luna waited in the east, Echo planted her staff in the south, and Weave spread across the northern grass. The referee raised his hand.
 
 “Ready?”
 
-“Ready,” Luna said.
+__This one is ready.__
 
-“Ready,” Leo said.
+Echo laughed. “You don't have to tell all of them that!”
 
-“Yes,” Echo said.
+Echo waved toward the stands.
 
-__Friends, free engagement begins.__
+The referee dropped his hand.
 
-Six hundred students jumped again.
+Luna and Leo moved together. Leo brought up the Eclipsing Sigil around Echo and Weave while Luna fitted Dawnbreak over the opposite side. Amber light struck the smoked walls from within. Photon and Shadow Blades swept into the openings left by the two sigils.
 
-The referee dropped both hands.
-
-“Begin.”
-
-Luna and Leo moved together.
-
-Dawnbreak Sigils rose around Echo and Weave in warm-gold planes. Eclipsing glass locked across the gaps. Photon Blades and Shadow Blades sealed the upper routes.
-
-The twins built one shared enclosure in less than two seconds.
-
-The stands exploded.
-
-“THE TWINS TEAMED UP.”
-
-“Give them five seconds.”
-
-Inside, Echo looked toward Weave.
-
-“He’s going to betray her.”
-
-__Probability rising.__
-
-Outside, Leo stood beside Luna.
-
-Then he said, in the driest voice available to a human being:
-
-“This is a free-for-all.”
-
-He pulled the brown spellbook from his side and smacked Luna across the face with it.
-
-The flat leather cover landed with a clean slap.
-
-Luna’s head snapped sideways. Her green hair swept across one shoulder.
-
-The stadium detonated.
-
-“HE HIT HIS SISTER WITH A PLANNER.”
-
-“SPELLBOOK.”
-
-“HE WEAPONIZED OFFICE SUPPLIES.”
-
-Madi pointed.
-
-“Brown focus identifies Leo.”
-
-Jalen stared at her.
-
-“Thank you, Madi. Extremely useful during the assault.”
-
-Inside the enclosure, Echo said:
-
-“Called it.”
-
-__Prediction confirmed.__
-
-Luna turned slowly toward Leo.
-
-“You hit me with a book.”
-
-“Spellbook.”
-
-She drove the end of her staff into his stomach.
-
-Leo folded half an inch, caught the shaft, and swept her legs.
-
-The enclosure began failing as the twins attacked each other.
-
-Echo placed one hand against the smoked glass.
-
-Amber timing seams appeared beneath her fingers.
-
-“Weave. Third from the left.”
-
-A green ring struck the exact point.
-
-The lock split.
-
-Weave’s particles surged through the opening with Echo inside a protective central pocket.
-
-Luna sent a Photon Blade at Leo.
-
-Leo caught it with Nightglass Cascade.
-
-“Really?”
-
-“Free-for-all.”
-
-Two Shadow Blades came back.
-
-Echo Misty Stepped between them. Her foot landed before her shadow and sound. Driftlights spread behind her in amber circles.
-
-Weave caught Luna at the waist and threw her toward Leo.
-
-Leo opened Dimension Door and stepped clear.
-
-Luna passed through the remaining threshold and emerged beside Echo.
-
-Echo jumped sideways.
-
-“That was rude.”
-
-“Wasn’t mine.”
-
-Student commentary crashed over itself.
-
-“Professor Midori started the betrayal.”
-
-“Luna escalated.”
-
-“Weave escaped in four seconds.”
-
-“Echo told her where to hit.”
-
-“Weave is giving tactical feedback during violence.”
-
-“Those categories overlap.”
-
-Weave took control of the field.
-
-Leo rose sideways, rotated away from his weaker landing angle, and landed running.
-
-Luna went upward, caught beneath the ribs, then redirected through one of her own active routes.
-
-Particles gathered around Echo’s waist. An opaque ribbon held the outside of her dress close while Weave lifted her and placed her directly in the path of Luna’s next volley.
-
-Echo Misty Stepped clear.
-
-__Echo, correction anticipated.__
-
-“Good.”
+Echo looked through the smoked glass at the twins. “Hang on. Leo's gonna do something to her. Watch.”
 
 __This one agrees.__
 
-Leo began closing Eclipsing Sigil around Weave.
+Outside the enclosure, Luna turned her head toward her brother.
 
-Luna pressured the opposite side with Photon Blades.
+“Okay, so now what?”
 
-Echo opened Dimension Door along Leo’s clean retreat route.
+“It's a free-for-all.”
 
-He saw the copper threshold and committed.
+He took the brown spellbook from its clip and smacked her across the face with it.
 
-Echo closed it before his foot reached the frame.
+The sound carried over the field. Luna stood there with her mouth open as the front of the stands erupted.
 
-“Echo.”
+“HE HIT HER WITH A BOOK!” Jalen yelled.
 
-“Sorry.”
+“Leo!” Luna grabbed her own blue book. Leo took a step away, laughing, and she swung after him.
 
-Her expression carried satisfaction.
+“Professor! LOOK OUT!”
 
-Two green rings smashed through Leo’s outer planes.
+She glanced toward Jalen at the worst possible moment. The blue book slipped out of her hand and sailed over Leo's shoulder. It hit the grass a few yards behind him.
 
-Weave lifted him and drove him against the outside of his own smoked-glass enclosure. Luna’s Photon Blades waited across the other side.
+“Oh, fuck!”
 
-__Leo, available routes are exhausted.__
+Leo clipped his book back into place, doubling over with laughter. Madi caught Jalen by the sleeve before he could stand up on the bench.
 
-He checked once.
+“Why did you tell him?”
 
-“Tap.”
+“I didn't mean to help him!”
 
-Weave lowered him.
+Luna drove the butt of her staff against Leo's stomach. He folded around it, caught the shaft and swept one of her feet out from under her. She hit the ward cushion and rolled away from him.
 
-The stands erupted.
+Amber lines split along the smoked glass. Echo put a finger against one of the seams.
 
-“PROFESSOR MIDORI IS FIRST OUT.”
+“Weave, here. Can you hit this part?”
 
-“HE HIT HIS SISTER WITH A BOOK AND IMMEDIATELY LOST.”
+A green ring spun into the marked seam. The smoked wall split, and Weave flowed through the gap with Echo close behind. Shadow Blades met Luna's returning Photon formation just outside it. Echo Misty Stepped past both sets of blades and turned in time to watch the twins split apart.
 
-“That sequence enters department history.”
+Weave caught Luna from the side. The current picked her up and threw her toward the place where Leo was standing. He opened Dimension Door and moved clear of the opening as she reached it. Luna passed through and emerged beside Echo, who jumped backward.
 
-Leo reached the referee line.
+“Luna!”
 
-“Keep it out of department history.”
+“Yeah, hi!” Luna regained her footing. “Leo, you asshole!”
 
-Madi wrote it down.
+Rowan had both elbows on their knees. “She went through his door!”
 
-Luna turned fully toward Weave.
+Tessa leaned forward to see past the people in the next row. “Oh, where did she come out?”
 
-Sixteen Photon Blades gathered around her staff. Shadow Blades rose from her open spellbook.
+“There, next to Echo. Look. Weave's going back toward him.”
 
-Weave shifted forms.
+Weave took Leo off the ground in a low sideways sweep. He got his feet beneath him just as she released him and continued across the grass at a run. Luna went upward again a few seconds later, but this time she caught the descent with a sigil and came down through the opening she had made. Weave sent another current around Echo, who teleported out of its reach before it could lift her.
 
-The nouliths began interlocking.
+Leo tried to enclose Weave while Luna attacked from the opposite side. Echo opened a Dimension Door along his clear route back toward the boundary. He headed toward it, and she closed the doorway just before he reached it.
 
-One geometric segment joined another. A huge blade assembled above the field piece by piece, iridescent edges flashing beneath controlled gold-green light. Two remaining nouliths moved as an intercept screen.
+“Sorry!” Echo called.
 
-Luna attacked the formation with Prismatic Cascade.
+Two rings struck his remaining wards. Weave pressed him against the outside of the smoked enclosure before he could put another layer between them. Luna's Photon Blades formed an arc across the open route beside him.
 
-Echo stood among the Driftlight marks she had been placing since the first match.
+Leo looked from the rings to the blades and tapped the grass.
 
-She watched.
+Weave lowered him and the referee called him out. He retrieved his sword and walked back toward the station as the students cheered.
 
-Weave completed the Great Sword.
+“Professor!” Jalen called. “You're first out!”
 
-Luna drove her backward through two suspended Dawnbreak discs.
+Leo looked up at him. “I am, yes.”
 
-The enormous blade cut one gold plane in half. Weave caught Luna’s Photon Blades with the remaining screen and sent them spinning into the lattice.
+Madi took Jalen's elbow. “Did you see Echo close the door? Just as he got there?”
 
-Students stood on the bleachers.
+“Yeah. That was so good. I thought she was gonna let him through.”
 
-“HOW BIG CAN THE SWORD GET?”
+Madi went back to her notebook and drew the doorway in.
 
-“Apparently bigger.”
+On the grass, a narrow stream of bismuth gathered around the book Luna had lost. Weave lifted it, carried it around behind her, and held it at shoulder height.
 
-“Professor Midori called the classroom version low intensity.”
+__Does Luna intend to throw this again?__
 
-“Professor Midori is an unreliable unit of measurement.”
+“Oh! Thank you!” Luna took the book. She held it up toward Leo. “I've got it back!”
 
-Weave committed every noulith.
+Leo pulled his chair a little farther from the field.
 
-The intercept screen joined the Great Sword.
+Luna opened the book and moved her staff to her other hand. Sixteen Photon Blades formed above her while Shadow Blades spread from the pages. Weave let the rings dissolve into the swarm. Six more nouliths emerged from the gathering current, and ten of the twelve began to fit together into the Great Sword. The other two remained free, turning across the space between the blade and Luna.
 
-The weapon grew denser.
+Echo backed out of the way. She moved her staff through the Driftlights she had been placing throughout the matches, looking from each little piece of geometry to the next. Amber lines began connecting them over the grass.
 
-Raw rainbow color ran beneath the green surface.
+Luna put a Dawnbreak disc in front of Weave's advancing formation. The great blade came down through the disc in a sheet of prismatic light. She sent Photon Blades after the two nouliths sweeping across the sword's sides. They intercepted the first few and moved around the rest, bringing the loose fragments of bismuth back into the current.
 
-The primary lattice began preparing to receive the strike.
+Mara leaned toward Caleb. “How the hell does that stay together?”
+
+He shook his head and pointed toward the grass beneath the sword. “Watch where she's gonna put it. I think it's coming down there.”
+
+They joined the blade. The screen vanished, leaving the enormous edge suspended over Luna's next sigil.
 
 __Luna, move.__
 
-Luna gathered another ring of Photon Blades.
+Luna grinned and lifted the staff. “Come make me.”
 
-“Come make me.”
+Echo planted her staff beside the center stone. Several small circles of amber light drew in around the crystal, their hands rotating at different rates before they settled into alignment. She struck the stone with the end of the staff.
 
-Echo reached the central Driftlight.
+The sound of Echo's staff striking the stone came a moment after she lifted it. Hairline fractures spread from her Driftlights. A safety panel closed across empty grass before the Great Sword came down; a second appeared where the blade had just been.
 
-She planted her staff.
-
-Amber circles became clock faces.
-
-Prismatic spirals tightened around the brass shaft. Fine hands turned inside Echo’s eyes. The staff crystal flashed through blue, red, green, amber, and settled into hard prismatic white.
-
-She struck the staff against the center stone.
-
-The sound arrived late.
-
-A clean seam appeared down the western pylon.
-
-Another crossed the blue boundary paint.
-
-A third hung in open air.
-
-Students leaned forward.
-
-“What is she doing?”
-
-Leo stood at the referee line.
-
-“Watch the timing.”
-
-The lattice stopped resolving as one event.
-
-One force panel appeared before Weave swung.
-
-Another caught empty air.
-
-A third activated sideways.
-
-A fourth waited.
-
-Echo’s hair lifted around her face.
-
-She took one step.
-
-Foot.
-
-Shadow.
-
-Sound.
-
-Fracture seams spread across the field.
-
-They entered the Great Sword.
-
-Weave’s attack remained powerful. Its pieces began occupying different moments of the same motion.
-
-One noulith reached the strike.
-
-Another remained in the windup.
-
-A third met the safety response after the panel had already converted force elsewhere.
-
-The weapon folded through time while staying physically straight.
-
-Weave’s controlled colors failed.
-
-Gold-green and cyan vanished into natural bismuth rainbows.
-
-Her voice reached every mind.
+The tip of the sword moved on while the section beneath it hung in place. Two segments at the base swung ahead of the rest. Weave drew the current inward, but the outline of the blade separated into overlapping shapes. Her controlled colors gave way to the natural rainbow of the bismuth.
 
 __Echo, the—__
 
-The words cut off.
+The Great Sword broke. Its nouliths struck the turf and the current scattered in a glittering shower. Above it, the primary lattice separated into thousands of pieces of flat light. They fell and faded at different rates. The cheering stopped.
 
-The Great Sword separated.
+Echo stared at the place where the blade had been. She took a step toward it, her staff shaking in her hand.
 
-Nouliths struck the turf.
+“Weave?”
 
-The particle cloud fell like metallic rain.
+Riley was already up. She crossed the field with Jamie close behind her. Leo stood as they passed, then moved to the referee and pointed toward the remaining ward indicators.
 
-The primary lattice broke into thousands of flat force fragments. They hung above the field for one impossible second, reflecting the stadium lights like a shattered second sky.
+Echo drew a breath. “I didn't...”
 
-Then they faded.
+She tried again, but the words caught. Luna came over from the other side of the field, bringing her staff down from her shoulder. She stopped a few feet from Echo.
 
-Weave shut down.
+At the edge of the scattered metal, Riley crouched. She picked up the nearest pieces and held them in her palm while Jamie took a dry cup offered by one of the ward staff. They knelt beside her and gathered the little grains that had fallen between the blades of grass. Riley tipped what she held into the cup, moved a little farther along, and started again.
 
-The stands became silent.
+“The primary's gone.” Mara stood up and looked along the remaining boundary lights. Caleb moved to the end of the row, where several people had started toward the steps.
 
-Echo stood beside her staff.
+“Hey, stay up here. They need the gate.”
 
-Her cardigan hung farther over her hands. The dress sat differently across her shoulders and waist. The face beneath her blunt bangs had softened through the cast with startling speed.
+Priya turned toward a student who was trying to see past her. “Can you wait? Please?” She moved her notebook off the bench and sat down beside Noor. “Did you see where Weave went?”
 
-Someone in the stands said:
+Noor shook her head. They watched Riley and Jamie crouching in the grass.
 
-“She looks like a teenager.”
+Luna and Leo stood together beside the boundary. The referee had walked out far enough to keep an eye on Riley and Jamie. Luna watched the scattered bits of bismuth go into the cup.
 
-The surrounding rows reacted together.
+“Leo.” Luna stopped beside him. “Did you know she could do that to Weave?”
 
-“What the fuck?”
+“No.”
 
-Riley was already moving.
+“Fuck. I thought it was just gonna break the sword.” She looked back at Jamie's cup. “I didn't... do you think she's gonna be okay?”
 
-Leo started forward.
+“I don't know.” Leo stood with her for a moment. “Let's go back over there.”
 
-Riley passed him.
+Jamie held the cup over the open box at the station and emptied it carefully. Riley returned with more bismuth in a folded piece of paper. They went back for the last few pieces while Echo waited beside the chair, holding her staff close against her.
 
-“I got her.”
+“Riley,” Echo said when Riley came back. “I didn't know. I thought I was just gonna break the sword and the field, I didn't know it was gonna do that to her.”
 
-She dropped to both knees in the wet grass and put her hands into the scattered bismuth.
+“Yea... hang on.” Riley emptied the folded paper into the box and opened the app on her phone.
 
-Particles clung to her palms and between her fingers.
+Jamie brought over the last handful. Riley waited for them to empty it, looked at the phone again and bumped the side of the box.
 
-She lifted the first handful into the open box.
+A little patch of color lit near the bottom and began to spread. A small, uneven current lifted above the edge.
 
-Then another.
+__Reboot complete.__
 
-Then another.
+Echo bent close. “Weave?”
 
-“Hey... yea, I got you. Hold on.”
+__Hello, Echo.__
 
-A faculty handler approached carrying collection tools.
+“Oh, goodness.” She put her hand on the rim. “I'm so sorry. Are you okay?”
 
-Riley looked up.
+The current curled around her hand.
 
-“I’m good.”
+__This one is here.__
 
-The handler stayed back.
+Riley looked up at Luna and Leo, who had come back to the station. “She's back.”
 
-Jamie found three bright grains near the boundary and carried them over in an open palm.
+Leo let out a breath and smiled. Luna put a hand beside Echo's on the box.
 
-“I found three.”
+The referee and the ward operator spoke for a while at the edge of the station. The remaining lights steadied as the secondary layers were checked. Leo went over to talk to them, and a few of the faculty left to inspect the damaged areas of grass. Echo stayed with the box until a little more of Weave's current had risen out of it. Then she looked over at Luna.
 
-Riley brought the box closer.
+“Do you still want to finish?”
 
-“Good. Here.”
+Luna glanced at the referee. “Yeah, if they'll let us.”
 
-Jamie tipped them inside.
+They went over together. Riley followed, leaving Jamie beside the box. The referee looked at Echo's staff, then at Luna.
 
-Leo turned toward the stands.
+“You're both sure you want to continue? We still have secondary containment, but that's a substantial part of the field we've lost.”
 
-“Weave is shut down. Riley has her. Secondary systems remain active.”
+“Yes,” Echo said. “I want to.”
 
-Riley continued gathering each visible particle.
+“I'm good,” Luna said.
 
-The app displayed the boot instruction.
+The referee looked to Riley.
 
-She placed one hand against the side of the box and gave it the familiar bump.
+“Urm, yea, go for it, dont kill yourselfs.”
 
-A faint iridescent shimmer rose between her fingers.
-
-Weave’s voice returned.
-
-__Reboot complete. Combat status: eliminated.__
-
-The whole stadium jumped again.
-
-Riley looked into the shimmer.
-
-“Stay with me.”
-
-__Confirmed.__
-
-Echo took one step toward them.
-
-Her knee dipped.
-
-She straightened before anyone reached her.
-
-Riley looked over.
-
-“You both still want this?”
-
-Echo planted her staff.
-
-“Yes.”
-
-Luna rolled one shoulder and lifted her silver focus.
-
-“Yeah.”
-
-Leo carried the formal explanation for the stands.
-
-“Secondary containment, referee wards, emergency perimeter, physical barriers, and medical teams remain active.”
-
-Riley kept one hand against Weave’s box.
-
-“Stay where we can reach you.”
-
-Echo and Luna reset near midfield.
-
-The crowd spoke in lower voices now.
-
-Echo’s Driftlights rose along the damaged timing seams. Each mark resembled a tiny clock face viewed at an angle. Prismatic spirals turned around her staff.
-
-She Misty Stepped.
-
-Her body appeared inside Luna’s reach.
-
-The staff struck Luna across the shoulder.
-
-Luna staggered and released three Photon Blades on separate routes.
-
-Echo opened a seam through Dawnbreak. The warm-gold disc divided into flat sections and slid apart.
-
-Luna adapted.
-
-She released every Photon Blade individually.
-
-Prismatic Cascades flashed and vanished before Echo found stable timing to separate.
-
-Shadow Blades rose from the spellbook on staggered rhythms.
-
-Luna drew her physical sword whenever Echo entered close range, then returned it to the scabbard and took the staff again as Echo moved away.
-
-The students talked over each exchange.
-
-“Echo is moving differently.”
-
-“Her stride changed.”
-
-“She keeps compensating with the teleport.”
-
-“Luna keeps changing the size of the spell.”
-
-Echo’s staff found Luna’s ribs through a skipped frame.
-
-Luna exhaled sharply.
-
-“Okay. That one was good.”
-
-“I know.”
-
-Luna laughed.
-
-Then attacked harder.
-
-Photon Blades swept low.
-
-Echo Misty Stepped onto the raised edge of a broken force panel that existed for half a second, used it as footing, and opened Dimension Door beneath herself.
-
-She fell through the amber threshold and emerged behind Luna.
-
-Luna turned with Prismatic Cascade.
-
-Echo split the instant into three slightly different answers.
-
-The cascade struck one.
-
-Echo occupied another.
-
-The third arrived as a late flash over empty grass.
-
-The crowd screamed.
-
-Leo’s advanced students had stopped writing.
-
-Madi held her pen over the page.
-
-Jalen whispered, “How are we supposed to take notes on this?”
-
-Priya answered, “Remember the feeling.”
-
-“That sounds like something Professor Midori would reject.”
-
-“He can grade himself.”
-
-The sage cardigan swallowed Echo’s hands. The neckline of the dress sat wider across her shoulders. Her belt slipped and one amber crystal knocked against her thigh with every movement.
-
-Luna saw each change.
-
-She kept meeting Echo at full force.
-
-Echo saw the choice.
-
-She drove her staff forward.
-
-Luna caught it between her own staff and forearm.
-
-For a moment they stood close enough for words to stay between them.
-
-“You look awful,” Luna said.
-
-“You look loud.”
-
-“That barely means anything.”
-
-“It means enough.”
-
-Echo twisted free.
-
-Luna placed distance between them.
-
-She drew six Photon Blades around the silver staff.
-
-Light-blue edges circled her in an uneven orbit.
-
-Then she opened the blue spellbook.
-
-Six Shadow Blades rose from the pages.
-
-The advanced section changed all at once.
-
-Madi stood.
-
-“Get down.”
-
-Priya counted the dark orbit.
-
-“Six and six.”
-
-Jalen looked from the blades to Luna’s staff.
-
-“Last time had six total.”
-
-Mara’s hand closed around her shuttle ring.
-
-“This has twelve structures feeding one line.”
-
-A student behind them asked, “What does that mean?”
-
-Madi turned.
-
-“Down.”
-
-The pitch rose.
-
-Students dropped behind the rows.
-
-“Why?”
-
-“BEAM.”
-
-“The Highway beam?”
-
-“The field beam.”
-
-Six bands of prismatic force tightened around six dark channels. Bright refraction wrapped a black-glass core. The field lights dimmed beneath it.
-
-Echo planted her staff.
-
-Prismatic rings gathered around the worn brass.
-
-Clock hands filled her eyes.
-
-Luna released Lux Caelestis Per Prismata Refracta.
-
-The twelve blades vanished into the convergence as the beam crossed the field. Luna dropped as the light left her staff.
-
-The referee raised the stop signal, but the beam was already moving.
-
-Light carried heat, pressure, and the shriek of glass under impossible strain. Shadow pulled at every spell along its path.
-
-Echo stood in the line.
-
-Leo moved before the referee.
-
-Dimension Door opened at the sideline.
-
-He stepped through and appeared between them.
-
-The crowd reacted in fragments.
-
-“PROFESSOR MIDORI IS IN THE LINE.”
-
-“ECHO IS BEHIND HIM.”
-
-“WHAT IS HE DOING?”
-
-Leo drove his physical sword into the turf.
-
-Five Sigillum planes erupted in front of him.
-
-Wind.
-
-Ice.
-
-Lightning.
-
-Light.
-
-Dark.
-
-He conjured a Caelorum blade behind them, Dark first, then Wind, then Lightning, and caught the centerline with Void Parry.
-
-The beam struck.
-
-Wind tore away in long spirals.
-
-Ice flashed into steam.
-
-Lightning spread through the ward channels.
-
-Light turned white.
-
-Darkness pulled the center inward.
-
-The Caelorum blade began breaking apart in Leo’s hands.
-
-The prismatic outer force split around him. One branch carved across the eastern grass. Another climbed toward the empty sky. The dark core stopped against his sword and the black plane behind it.
-
-Echo remained upright in his shadow.
-
-Backup pylons lit beneath the field.
-
-Referee wards rose.
-
-Emergency containment lines locked around the firing lane.
-
-Echo lifted her staff.
-
-Amber seams raced outward.
-
-They crossed the fading light where Luna’s blades had been.
-
-They crossed Leo’s barriers.
-
-They crossed the broken primary lattice, the backups, the referee wards, the emergency containment, and every spell still touching the field.
-
-Students began shouting again.
-
-“Echo is casting.”
-
-“The backups are active.”
-
-“She is touching all of them.”
-
-“Leo is still in the line.”
-
-Priya rose halfway from cover.
-
-“She’s separating the whole field.”
-
-Leo turned his head.
-
-“Echo—”
-
-Fractura Simultatis resolved.
-
-Every remaining spell lost shared timing.
-
-The last prismatic light of the consumed blades split into twelve fading arcs.
-
-Leo’s barriers cracked in sequence.
-
-The beam remnants fractured into brilliant panels, dark ribbons, white arcs, and prismatic shards occupying different instants of the same collapse.
-
-The backup pylons answered one another late.
-
-One flared.
-
-Another dimmed.
-
-Three activated together and burned through their channels.
-
-Referee wards folded sideways.
-
-Emergency containment locked around empty space.
-
-Every magical safety light on the field went dark.
-
-The silence lasted half a heartbeat.
-
-Echo remained standing.
-
-The brass staff trembled in both hands. Her shoulders rose with one shallow breath. Her voice carried across the dead field, louder than it had all day.
-
-“Did it at least look cool?”
-
-Riley stood beside Weave’s box.
-
-“Yea. Extremely.”
-
-Echo’s mouth lifted at one corner.
-
-“Good.”
-
-Her fingers opened.
-
-The brass staff fell.
-
-Luna lay where she had fallen, her silver staff beside her.
-
-Echo began to fold.
-
-Weave moved.
-
-The reduced particle cloud surged from Riley’s box in two narrow streams.
-
-One crossed the field and gathered beneath Luna’s ribs and shoulders.
-
-The other reached Echo’s waist, back, and knees.
-
-The particles gathered Luna from the turf.
-
-Echo tipped forward and stopped inches above the grass.
-
-__Luna secured.__
-
-__Echo secured.__
-
-The stands erupted.
-
-“THE FIELD IS DOWN.”
-
-“BOTH OF THEM DROPPED.”
-
-“MEDICS.”
-
-“WEAVE CAUGHT THEM.”
-
-Physical teams ran from both sidelines carrying stretchers, trauma bags, monitors, and oxygen.
-
-Leo remained between the firing positions, sword planted in burned turf. His cardigan was scorched. His hands shook around the hilt.
-
-He looked toward Luna.
-
-Then Echo.
-
-Then the stands.
-
-His teacher voice cut through the panic.
-
-“Both are breathing. Clear the lanes and let the medical teams work.”
-
-The crowd quieted by degrees.
-
-Riley reached Echo as Weave lowered her.
-
-“Bring her here.”
-
-The particle field settled Echo into Riley’s waiting arms.
-
-Riley slid one arm behind her back and one beneath her knees. The black dress gathered safely over her forearm. The sage cardigan wrapped around Echo’s smaller frame.
-
-Echo’s eyes stayed closed.
-
-Jamie laid the deep brown cloak across her.
-
-“I have her feet.”
-
-Riley adjusted her grip.
-
-“Yea. Thank you.”
-
-Across the field, Weave lowered Luna toward Leo.
-
-Leo pulled his sword from the turf, let it fall beside him, and caught his twin beneath the shoulders and knees.
-
-Their faces matched even here.
-
-One conscious.
-
-One slack with exhaustion.
-
-Luna’s halo flickered once and faded.
-
-A medic reached them and placed two fingers at her neck.
-
-Leo shifted to give access.
-
-The second team reached Riley.
-
-A medic checked Echo’s breathing.
-
-“Strong and steady.”
-
-Riley’s shoulders dropped.
-
-The referee stood at midfield with every magical display around him dark. He used a battery-powered microphone.
-
-“Leo Midori eliminated by surrender. W.E.A.V.E. eliminated by shutdown. Final exchange between Luna Midori and Echo Poindexter ended through mutual incapacitation and total field-system failure.”
-
-He looked toward the dead pylons.
-
-“Result: draw.”
-
-Riley carried Echo across the mud.
-
-Leo carried Luna behind her.
-
-Weave’s box rested beneath his free arm while the reduced shimmer moved between both women, checking, holding, counting.
-
-The five people from Highway 62 left the center field together again.
-
-The stands gave them silence.
-
-## Story Time
-
-The field belonged to medics and engineers for the next hour.
-
-Students stayed.
-
-Some reenacted the spellbook strike with notebooks until Madi began collecting names. Others tried to explain how Weave could throw a person above the lights and place both feet onto the grass like setting down a glass.
-
-By late afternoon, faculty opened the inactive northern half of the field.
-
-Students came down in supervised groups and settled along the yard lines. Some sat cross-legged in the grass. Others gathered around silent pylons and scorched ward channels.
-
-Leo sat with his damaged cardigan open and his hair loose around his face. Luna rested beside him with the silver staff across her lap.
-
-Riley sat on the edge of a treatment bench with Echo asleep against her chest beneath the brown cloak. One arm held her close. Jamie and Priya stayed nearby.
-
-Weave’s box rested between the benches. A reduced particle shimmer drifted above it.
-
-The first question came from Jalen.
-
-“Why did you hit your sister with a spellbook?”
-
-Leo answered immediately.
-
-“It was available.”
-
-Luna turned toward him.
-
-“He planned it.”
-
-“I identified an opportunity.”
-
-“You looked me in the eye first.”
-
-“That improved accuracy.”
-
-A student held up a notebook.
-
-“Does this count?”
-
-Leo said, “Keep it on paper.”
-
-Weave’s voice entered every mind around the circle.
-
-__Potential effectiveness depends on construction.__
-
-Leo looked toward the box.
-
-“Please stop encouraging them.”
-
-A student near the front raised a hand.
-
-“What did you say when you switched languages?”
-
-A voice from farther back answered before the twins could.
-
-“She told him to quit being careful. He told her to go first.”
-
-Another student added:
-
-“Near the end, she told him to fall.”
-
-Luna looked at Leo.
-
-“They heard all of it.”
-
-“Apparently.”
-
-“Why did your voices start different and end the same?”
-
-Luna rested both hands on her staff.
-
-“Mine usually carries the brighter resonance.”
-
-Leo said, “Mine begins lower.”
-
-Luna glanced at him.
-
-“Then he started matching me.”
-
-“The fight narrowed the difference.”
-
-A student leaned forward.
-
-“Did you forget we were here?”
-
-Luna considered.
-
-“For a little while.”
-
-Several students laughed.
-
-Another raised a hand.
-
-“How are we supposed to tell you apart?”
-
-Answers came from every direction.
-
-“Blue book and brown book.”
-
-“Silver staff and gold staff.”
-
-“Forward stance and teacher stance.”
-
-“The cardigan.”
-
-“They both have cardigans.”
-
-Luna held out her silver staff.
-
-Leo took it and passed her the gold one.
-
-The students complained immediately.
-
-Leo said, “Gear remains an unreliable identity system.”
-
-Luna rested the gold staff across her lap.
-
-“His posture makes him look like he’s grading you.”
-
-Several students sat straighter.
-
-Someone near the box asked:
-
-“Weave, can you speak to one person instead of everybody?”
-
-Weave answered only that student.
-
-The student jumped.
-
-“Yes. She can.”
-
-“Why did Echo need a timeout?”
-
-__Echo displayed fatigue and an available seat.__
-
-Riley adjusted the cloak around Echo.
-
-“She was also being messed with.”
-
-__Also correct.__
-
-“Would you put a student in the stands during an exam?”
-
-__Context required.__
-
-Leo answered, “Class remains on the field.”
-
-__Disagreement recorded.__
-
-“Were you being smug when you hung the twins upside down?”
-
-__Smugness remains unconfirmed.__
-
-“It is confirmed,” Leo said.
-
-Luna pointed toward the box.
-
-“Extremely confirmed.”
-
-A student began forming a question about Echo’s changed body.
-
-Someone from James’s section spoke quietly.
-
-“She can answer when she wakes.”
-
-The student nodded.
-
-The next hand rose.
-
-“Was Highway 62 anything like today?”
-
-Riley looked across the ruined field.
-
-“Today had plans.”
-
-Leo looked toward his classes.
-
-“How many of you remember the cast on my right wrist?”
-
-Several hands rose.
-
-Jalen said, “You wrote on the board left-handed for almost a month.”
-
-Madi added, “The handwriting improved.”
-
-“It did not.”
-
-Leo lifted his right hand.
-
-“One of the caster’s copies caught my sword wrist. It broke the arm, took the sword, lifted me by the throat, and drove me into the road hard enough to break the pavement.”
-
-The students quieted.
-
-“That was the actual caster?”
-
-“The actual caster arrived later.”
-
-Leo lowered his hand.
-
-“I woke up in the crater. Luna saw the whole thing.”
-
-Luna’s fingers tightened around the gold staff in her lap.
-
-“The copy left him there. His halo went dark. I saw one pulse after the impact, so I knew he was alive.”
-
-She looked toward Riley.
-
-“Riley was near the trees with Echo. She had already fired on another copy when it grabbed Echo through their windshield. Later, she put herself over Echo when the light caster attacked.”
-
-A student glanced toward Riley’s left side.
-
-“The attack went through Riley’s back and came out the front,” Luna said. “When I reached her, she was gray. Her heartbeat was thinning.”
-
-Riley looked at her.
-
-“That sounds dramatic.”
-
-“You were dying.”
-
-“I got better.”
-
-“I made you better.”
-
-“That too.”
-
-A laugh passed through the students and faded.
-
-Luna touched the center of her chest.
-
-“I used Radiant Anchor first. My heartbeat pushed hers back into rhythm. Then Prismatic Cure closed the wound. Weave supported the parts my spells struggled to hold.”
-
-Riley said, “It hurt.”
-
-“You told Hicks to keep playing with your hair.”
-
-“It helped.”
-
-“Then you stood up.”
-
-“With help.”
-
-“With Weave holding your ribs together.”
-
-Riley considered that.
-
-“Still stood up.”
-
-A student asked:
-
-“That was when the real caster arrived?”
-
-Riley nodded.
-
-“He walked out of the dark slow-clapping.”
-
-“Seriously?”
-
-“Yea. Very pleased with himself.”
-
-“What did you do?”
-
-“I asked him for a one-on-one.”
-
-The students stared.
-
-Riley’s hand rested over the cloak at Echo’s shoulder.
-
-“He was the problem. I wanted him somewhere he couldn’t reach everyone else.”
-
-Luna said, “She asked us to keep them locked together.”
-
-Leo picked up the thread.
-
-“Luna built Dawnbreak. I built Eclipsing. The spells joined into a sealed black-glass enclosure.”
-
-A student looked between the twins.
-
-“Like the opening lock today?”
-
-“Same families of magic,” Leo said. “Different conditions.”
-
-“What happened inside?”
-
-Riley’s thumb moved once over the cloak.
-
-“I used my sword.”
-
-“And?”
-
-“And I came out.”
-
-The student waited.
-
-“He didn’t.”
-
-The silence held.
-
-Riley looked toward the weapons beside the bench.
-
-“I can show you what I brought. That’s probably the useful part.”
-
-Students shifted closer.
-
-Leo rose and approached.
-
-Riley kept Echo supported against her with one arm. With the other, she drew Ironwake. The muzzle stayed pointed toward the inactive field. Her index finger rested along the frame.
-
-She dropped the magazine into her palm.
-
-The slide came back. A chambered round ejected into the grass between her feet. Riley locked the slide open, checked the chamber and magazine well, then turned the pistol for Leo.
-
-“Clear,” he said.
-
-She passed it grip-first.
-
-The compact pistol looked aggressively ordinary in his hand: matte-black gunmetal, low-profile sights, a frame small enough to disappear beneath Riley’s bag.
-
-A student frowned.
-
-“That’s it?”
-
-Riley picked the ejected round from the grass.
-
-“What were you expecting?”
-
-“I heard you had a rifle.”
-
-“Nope.”
-
-“Every version says rifle.”
-
-“Every version made it bigger.”
-
-Leo held the unloaded pistol where the students could see.
-
-“Ironwake Compact. Twenty-two caliber. The weapon keeps a mundane profile. The ammunition carries the alignment.”
-
-Riley opened a hard-sided ammunition case.
-
-Pale-gold Light rounds rested in the first channel.
-
-Dark rounds carried smoke beneath their metal.
-
-Fire rounds showed ember-orange lines near the tips.
-
-Ice rounds held a crystalline crawl under the casing.
-
-Wind rounds distorted the air above them.
-
-Lightning rounds carried fine blue-white arcs between neighboring contacts.
-
-The last cartridges looked cracked while remaining whole, prismatic distortions shifting along their surfaces.
-
-A student pointed.
-
-“What are those?”
-
-“Fracture,” Riley said.
-
-“Which did you use?”
-
-“Light interrupted the first attack on Echo. Fracture went into the second copy.”
-
-“You shot them with a twenty-two?”
-
-“The bullets were doing more than twenty-two.”
-
-Leo returned Ironwake.
-
-Riley checked the chamber again, replaced the loose cartridge in the magazine, seated it, chambered a round, and returned the pistol to carry.
-
-Then she drew the sword.
-
-The glimmersteel blade came from its sheath as plain silver, carrying a subdued Damascus pattern. She passed it to Leo with both hands clear of the edge.
-
-He accepted it and walked several paces into the inactive lane.
-
-“Watch the edge.”
-
-He touched the hilt control.
-
-Light entered the steel.
-
-The blade became a white-gold seam bright enough to leave an afterimage when he turned it.
-
-The setting changed.
-
-Darkness ran along the edge. The steel remained present while the space beside it reflected a fraction late.
-
-Another shift.
-
-Ember-orange fire crawled over the glimmersteel. Heat shimmered above the wet grass.
-
-Ice followed. Crystalline frost spread from guard to tip in branching white patterns.
-
-Leo swept the sword through empty air.
-
-A compressed ripple crossed the field. Damp grass flattened in a narrow line and rose behind it.
-
-Lightning came next. Blue-white arcs traveled along the edge and snapped toward a grounded demonstration rod.
-
-Leo’s hand paused over the control.
-
-Riley watched him.
-
-“Keep this one in the empty lane.”
-
-“I planned to.”
-
-“Good.”
-
-He turned the handle.
-
-Fracture entered the blade.
-
-Light along the edge came apart while remaining whole. White and prismatic lines split into patterns that never fully resolved. The yard markings behind the sword appeared offset by fractions of an inch. A straight pylon edge became several disagreeing versions of itself.
-
-Students leaned away.
-
-Leo held the blade still.
-
-“This was the setting inside the enclosure.”
-
-“What does it cut?”
-
-Riley answered from the bench.
-
-“Certainty, sometimes.”
-
-Leo looked toward her.
-
-“That is unhelpfully accurate.”
-
-“It’s story time.”
-
-He returned the blade to plain steel and carried it back.
-
-A student watched Riley sheath it.
-
-“You combined Fracture with something else.”
-
-“Yea.”
+Two members of faculty turned to look at her. Riley glanced from one to the other.
 
 “What?”
 
-“That part stays with us.”
+Leo pressed his knuckles against his mouth. The referee sighed and signaled to the ward operator, who finished checking the secondary containment and raised a hand in confirmation.
 
-The student nodded.
+Echo turned back to Luna. “I want you to really try this time. Please don't hold back.”
 
-Luna looked toward the circle.
+A crooked smile spread across Luna's face. “Oh, you little shit. Okay.”
 
-“Riley entered that enclosure after taking a blade through her body, after I pulled her heartbeat back, while Weave was supporting her weight.”
+Echo laughed. “Thank you.”
 
-Riley glanced at her.
+They waited while the referee cleared them to return to the circles. Riley came back to the chair beside Jamie and watched them go.
 
-“You already told them that.”
+Echo moved several of her Driftlights closer to the center stone. Luna gathered her first Photon Blades.
 
-“I’m making sure they understand the order.”
+At the referee's signal Echo vanished from her circle and appeared beside Luna, swinging her staff. The sound of the blow followed a moment later. Luna staggered sideways, steadied herself and sent three blades after Echo at separate intervals. Echo caught one seam in a Dawnbreak disc; the disc separated and the blades passed through the openings.
 
-“They understand.”
+“Shit,” Echo said. She moved her staff to meet the last blade.
 
-Leo sat again.
+Luna grinned and sent another one. She opened the book and built the Shadow formation behind it. Rather than release the whole group at once, she sent each blade along its own route, spaced a little farther apart than the last set. Echo had to keep moving to stay clear of them.
 
-“The order matters. My wrist was broken. Luna had spent most of her reserve. Echo was injured. Weave was holding several people together. Riley entered anyway.”
+Madi had her notebook closed now. “She's changed how she's sending them.”
 
-A student asked Riley:
+Jalen watched Echo turn away from the fifth blade. “She can't just break all of those at once, can she?”
 
-“Were you scared?”
+“She can try, but look how far apart they are.”
+
+Echo opened a doorway at the end of one of the routes. Luna watched it, drew her physical sword, and met the staff as Echo emerged close beside her. Echo turned and stepped away. Luna sheathed the sword and brought her own staff up before the next cast.
+
+They fought their way back toward the center stone. Echo stepped onto the edge of a raised force panel and opened Dimension Door behind Luna. Her boot caught the hem of her dress as she came through. She stumbled, caught herself against the staff and pulled the fabric clear. Luna's cascade divided into three overlapping fans of light. Echo came through the flash close enough to meet Luna's staff with hers.
+
+“Fuck, that one hurt,” Luna said, laughing as she moved her staff away from her ribs.
+
+“I got you that time!” Echo took a step back. Her staff shook a little before she brought it up again.
+
+Luna grinned and followed her.
+
+They pushed apart. Luna planted the end of her staff against the grass and turned back to Echo. Six Photon Blades gathered above the silver crystal. She opened her blue book and six Shadow Blades took position between them. One by one she turned their edges toward the same point.
+
+Leo sat forward. Several students rose from their seats.
+
+“Is that the beam?” Jalen asked.
+
+Madi didn't answer. She stood just enough to see where Echo was in relation to Luna.
+
+Luna drew the blades closer to the head of the staff. The light became difficult to look at, and the shadow around it contracted into six narrow channels. The staff hummed. Echo stood beyond it, lifting her own crystal toward the converging point. Amber marks formed around her hands as she moved the Driftlights to either side of the lane between them.
+
+At the station, Leo rose and reached for his sword. Riley followed his movement, then looked toward the two women.
+
+The hum from Luna's staff rose in pitch. The twelve blades converged at the crystal tip until the light covered her and the grass around her. She fired the beam and fell backward as her staff slipped from her hand. The referee raised his arm.
+
+Leo opened Dimension Door and stepped through with his sword in his hand. He emerged between Echo and the incoming light, facing Luna's side of the field. He drove the physical sword against the turf, bringing up the Sigillum planes in front of himself. Wind caught the outer edges of the beam and pushed them outward. Ice flashed to steam almost as soon as it appeared. Lightning ran across the grass into the remaining ward channels. The Light plane shone white, and the Dark behind it gathered the center of the beam into a narrowing stream.
+
+Leo conjured a long blade of Darkness. Wind curled around the dark edge and Lightning followed, tracing the length of the blade as he brought it across the incoming magic. He caught the beam in a Void Parry. The light split around him, one part cutting into the grass toward the eastern boundary and the other rising toward the open sky. The blade in his hands began to break at the edges.
+
+Echo stood just behind him, still holding her staff upright. She looked at the panels folding in around them. More pylons came on, the backup wards fitted themselves along the beam's divided routes, and the emergency containment closed over the lane. The amber circles around her staff turned outward. Tiny fractures spread through the nearest barrier.
+
+Mara gripped the edge of the bench. “It's in the backups too.”
+
+Caleb looked across the boundary. “All the way over there. Look at that one.”
+
+The farthest pylon flickered as a fracture ran through its light.
+
+Leo looked over his shoulder. “Echo—”
+
+Echo released Fractura Simultatis. Clean fracture lines ran through Leo's remaining planes. His conjured blade broke apart and vanished. The last of the beam separated into bright arcs and dark ribbons, some hanging in the air while the others faded. The backup pylons flashed out of sequence and went dark. The referee wards folded sideways; one last emergency layer closed over an empty section of grass and disappeared.
+
+Echo was still standing. She leaned on her staff and looked toward Riley, who had risen beside the box.
+
+“Did it at least look cool?”
+
+“Yea. Extremely.”
+
+Echo smiled. “Good.”
+
+The staff fell. Her knees gave way.
+
+Two streams of bismuth shot out from the box. One crossed the field and spread beneath Luna's shoulders and hips, lifting her out of the grass. The other reached Echo just before she hit the ground and closed around her back and legs.
+
+__Luna secured. Echo secured.__
+
+The students erupted again. Medical staff entered through both side gates, and the referee called the match over. Leo left his sword for the approaching crew and went to Luna. Weave lowered her to him. He caught her with both arms and held her against his chest.
+
+“Luna?”
+
+She didn't answer. He watched her chest until he saw it rise, then looked at the medic who was coming up beside him.
+
+Riley went out to meet Echo. Weave brought her close enough for Riley to put one arm under her shoulders and the other beneath her knees. Jamie came behind her with the cloak from the chair and spread it over Echo as Riley held her. Echo's face rested against Riley's shoulder.
+
+“Hey, Echo,” Riley said softly.
+
+A medic knelt in front of them and checked Echo, then nodded to Riley. “She's breathing. Let's get her over to the treatment area.”
+
+“Okay.”
+
+Jamie took the weight of her feet when the cloak started slipping. Riley carried Echo back to the south station, moving slowly enough for them to keep the fabric in place. Leo followed with Luna. Weave kept a little current with each of them until both medics had helped them settle. The main part of her swarm returned to the open box.
+
+The referee stood beside the damaged scoreboard, spoke briefly with the two medical teams and called out to the stands.
+
+“Both remaining competitors are out. We're calling that a draw.”
+
+A cheer started at one end of the field and reached the other. The ward operators and engineers were already crossing the grass with equipment of their own.
+
+## Story Time
+
+A while later, faculty cleared a small area beside the southern station. Some students had left to get food or find somewhere warm. Others watched from the stands while the engineers worked. Leo motioned a few of his class over to the benches.
+
+Luna was awake and sitting beside him with the blanket pulled around her. He handed her some water. At the end of the bench, Riley held the sleeping Echo against her chest while Jamie tucked the cloak around Echo's legs. Weave floated beside them.
+
+Jalen came over first. He was still grinning at Leo. “Professor, why'd you hit her with the book?”
+
+“It was there.”
+
+Luna turned to him. “We had both of them! We could've kept them in there for a while.” She started laughing. “I can't believe you hit me with that thing.”
+
+Madi sat down with her notebook. “I wanted to ask you about the one before that. Were you talking to each other in Celestial the whole time you were using the swords? I couldn't tell what you were saying.”
+
+“Yeah, we were arguing a little.” Leo looked at Luna.
+
+“A little?” She laughed. “He was being careful with me and I was getting annoyed.”
+
+“You were doing the same thing.”
+
+“Yeah, okay.”
+
+Priya sat on the grass near Madi. “It sounded so different at the beginning! I could tell who was talking and then I couldn't. Is that normal?”
+
+Luna considered it for a moment. “Sometimes. We don't really pay attention to it while we're doing that.”
+
+Jalen pointed at the silver staff. “I didn't even know you could use all his spells too.”
+
+“Where do you think he got some of them from?” Luna asked, holding out her staff to Leo. “Here.”
+
+He exchanged staffs with her.
+
+“Oh, I hate that,” Jalen said, looking from one to the other.
+
+Luna laughed and passed the gold staff back.
+
+Tessa had settled near the box with Rowan. She looked at the little current, which had stretched toward the people gathering around it.
+
+“Can you talk to one of us without the rest of us hearing it?” she asked.
+
+Weave directed her answer to Tessa alone.
+
+__Yes.__
+
+Tessa sat up and laughed into her hand.
+
+“What did she say?” Rowan asked.
+
+“She said yes!”
+
+Rowan turned toward the field. “When you put her up there with us, did she know you were gonna do that?”
+
+__Echo asked this one to throw her. She did not specify a destination.__
+
+Tessa laughed. Riley smiled down at Echo and adjusted the cloak. “She really wanted to do the bounce thing. She was talking about that earlier.”
+
+A student glanced at Echo and leaned toward Riley. “Um, can I ask about what happened to her when she was casting?”
+
+Tessa looked at Echo. “Maybe ask her when she's awake?”
+
+He nodded and moved over to give Priya room.
+
+For a while Mara and Caleb sat with Leo, drawing the part of the ward that had failed first. Mara pointed toward the backup pylons and turned her notebook so he could see what she had drawn. Jalen went to find another drink and came back with a little pile of unopened water bottles for the group.
+
+Priya waited until Leo had finished with the drawing. “Can I ask you about the highway? Did you have to do all of that there too?”
+
+“Some of it,” he said. “We didn't have a practice field.”
+
+Jalen sat down again. “Was that when you got the cast? I keep getting the two stories mixed up.”
+
+“Yeah. The one before that was a different fight.”
+
+Madi nodded. “I remember you writing with your left hand.”
+
+Leo laughed a little. He lifted his right hand. “One of the copies caught me here and broke my wrist. It took my sword and threw me into the road.”
+
+Luna looked over at him. “I thought you were fucking dead for a second.” She looked back at Madi. “I saw his halo flicker and I was like, okay. He's still alive.”
+
+Priya looked over at Riley. “Were you with them when that happened?”
+
+“Yea, well... I was over by the trees with Echo. I got hit trying to cover her.” Riley shifted Echo a little on her lap. “It went all the way through me.”
+
+“Oh,” Priya said quietly.
+
+“Yea. And then it went away. The thing that was in me. And fuck, that hurt.” Riley stopped and looked down at Echo. “I was getting really cold and it was getting hard to hear Hicks. I could feel her breathing, though. I wanted to keep holding her.”
+
+Luna reached across Leo and put a hand on Riley's arm.
+
+“I didn't wanna die,” Riley said.
+
+“Yeah.” Luna squeezed her arm. “Weave got to her before I did. When I got over there I had to use Radiant Anchor on her. I was... yeah, I needed her heart to keep going.”
+
+Madi looked up. “Wait, is that how she ended up with a halo? I heard about that.”
+
+“Yea, I had one for a bit,” Riley said. She smiled at Luna. “I remember that heartbeat thing you did. Oh goodness, it hurt so much, and then I could breathe. I could actually take a breath.”
+
+Luna nodded. “And then we tried to fix the hole.”
+
+__This one was helping Luna with the wound.__
+
+Riley looked at the box. “Yea. Thank you, Weave.”
+
+Priya passed Luna one of the bottles Jalen had brought over. “How long did you have to keep doing that?”
+
+“Uhh... six hours?” Luna looked at Leo. “Was it six?”
+
+“About six. We were at the ER when we could let it go.”
+
+“Oh, yeah.” Luna started laughing. “He got somebody to bring a wheelchair over and I was like, what are you doing? And he had them put it right behind me.”
+
+“I could see you were about to fall over.”
+
+“Yeah, well, I couldn't!” She laughed harder. “He told me I could let it go and I did. That's about all I remember.”
+
+Leo smiled. “And then you passed out right into the chair.”
+
+“Aw, shit.” Luna leaned against him, laughing. “Good thing you had that ready.”
+
+Jalen looked at Riley. “Was it weird, having one?”
+
+“Urm... I mean, my best friend saved my life. I was just happy to be alive.” Riley reached for Luna's hand. “Thank you.”
+
+Mara had been holding her notebook closed on her knee. “Was this before you put the caster in that dome? The one with both kinds of glass?”
+
+“Yeah, after we'd got her back up,” Leo said. “Riley asked us to keep him in there with her.”
+
+“Yea. I wanted him to leave everybody alone.”
+
+Jalen set his drink down. “And you went in with him after that? What was it like in there?”
+
+Riley rubbed Echo's back. “Urm... it was hard to know where stuff was. Marisol was talking to me a lot. I needed her to keep telling me things because the crystal was messing with me so bad.”
+
+She looked over at Weave. “Oh! I remember seeing your interimage, Weave. You were walking up to me. I saw Echo too, and Luna and Leo and... yea.”
+
+“Her what?” Jalen asked.
+
+“Oh, uh.” Riley looked at the box.
+
+__This one was with Riley during that fight.__
+
+“Yea. You looked like you were actually there. I knew you weren't, but... yea.”
+
+Jalen looked toward the little current and opened his mouth. Tessa shook her head at him.
+
+Priya waited a moment. “Were you scared?”
+
+“Yea.” Riley looked down at Echo. “I really wanted to get out of there.”
+
+Weave moved closer to her shoulder.
+
+Rowan nodded toward Riley's bag. “Was that the gun you had with you then?”
+
+“Yea. Leo, can you grab it out of my bag?”
+
+He came around beside her and reached into the open purse.
+
+“It's loaded,” she added.
+
+“Okay.”
+
+Leo made the pistol safe before bringing it over for the group to see. He returned the magazine to Riley's bag and kept the removed round himself. He held the small weapon where the students could look at it, then turned it a little when Jalen leaned forward.
+
+“Oh, it's little,” Jalen said. “I thought it was a rifle.”
+
+“Nope.” Riley smiled at him. “The rounds have magic in them.”
+
+Madi leaned forward to see it a little better. “Can we see those?”
+
+Leo put the pistol away and took out the case of rounds so they could see the different colors. The students gathered a little closer to look, and Riley pointed out a couple that she remembered using. When she was done, Leo closed the case and returned it to the bag.
+
+“And the sword?” Rowan asked.
+
+Riley looked beside the bench where the sheathed weapon rested within Leo's reach. “Yea, you can show them that too.”
+
+Leo took the sword into the clear demonstration lane, well away from the people sitting by the station. He activated the light setting. The glimmersteel brightened, casting a thin white-gold reflection across the damp grass. When he changed the setting, the edge took on a dark hue that seemed to drink in the light from the nearest lamp. He let the next changes follow: a brief wash of fire along the blade, ice collecting in a delicate pattern near the edge, the grass bending beneath a small rush of wind, and a flicker of Lightning.
+
+Finally he showed them Fracture. The outline of the blade shifted through several positions at once, leaving little prismatic splits in the air around it. He stopped the effect and held the sword still until the last of the distortions disappeared.
+
+“That's the one I was using with him,” Riley said.
+
+“Can anybody make it do that?” Rowan asked.
+
+“Yea, if you've got the sword. Urm... Leo could probably show you how to use it a lot better than I could.”
+
+Leo smiled and brought it back to her things.
+
+Jalen asked if the Fracture setting was the only magic Riley had brought into the containment. Riley looked at him.
+
+“Urm... no. I don't really want to get into that one.”
+
+“Fair enough,” he said.
+
+They stayed for a while longer. Leo answered a question from Mara about where a second barrier should go if the first one failed. Tessa and Noor were talking with Priya about the crowd, and Jamie told Caleb where they had found the last few pieces of bismuth. Jalen tried to describe the Great Sword with his hands until Madi told him he was getting the size wrong. Riley laughed when he made it even bigger.
+
+Echo stirred beneath the cloak and opened her eyes. She looked at Riley, then at the little group beside the bench.
+
+“Hi,” Riley said.
+
+“Hi.” Echo blinked at the field, then looked at Riley. “Wait. What happened? Did we win?”
+
+“Draw.”
+
+“Oh. Okay!” She smiled and leaned back into Riley.
+
+Luna bent over a little to see her. “That was fun. We should do it again sometime.”
+
+“Yes! I would like that.” Echo looked over at the students, then back at Riley. “Can we get food?”
 
 “Yea.”
 
-“Did you think you would win?”
+__This one would also like to go get food.__
 
-Riley looked down at Echo.
+Jamie helped Echo settle the cloak over her lap as the students started to gather their bags. Leo got up and collected his brown book from beside the bench. Luna watched him clip it onto the side farthest from her.
 
-“I thought he needed to stay in the box.”
+“Good choice,” she said.
 
-“That’s a different answer.”
-
-“It was the answer I had.”
-
-Another student raised a hand.
-
-“So the campus story that Professor Midori and his family took down the caster…”
-
-Riley looked toward Luna, Leo, Weave, then the sleeping Echo in her arms.
-
-“We all got each other to the end.”
-
-Weave’s reduced shimmer brightened beside the bench.
-
-__Accurate.__
-
-Echo stirred beneath the cloak.
-
-Her eyes opened slowly against Riley’s sweater.
-
-At the edge of the circle, a student was asking Weave whether a rematch had been scheduled.
-
-__Rematch requested after repairs.__
-
-Leo said, “Repairs first.”
-
-Luna leaned against the bench.
-
-“Then rematch.”
-
-Echo, still half asleep, said, “Yes.”
-
-Riley adjusted the cloak around her shoulders.
-
-“Food first.”
-
-__Sequence accepted.__
-
-By evening, every department carried a different version of the exhibition.
-
-Professor Midori and his twin sister had fought with matching halos, mirrored weapons, and each other’s magic.
-
-The assistant had answered hecklers inside their own minds.
-
-Echo Poindexter had turned the university’s safety systems into separate moments and dropped every one of them.
-
-Riley had carried two weapons into story time and left the ending inside a black-glass box.
-
-One detail survived every retelling intact.
-
-Leo Midori struck his identical twin across the face with a spellbook.
-
-That part required zero embellishment.
+He laughed and offered her his hand.
